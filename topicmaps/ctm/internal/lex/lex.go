@@ -410,7 +410,7 @@ func (lx *Lexer) scanWord() lexState {
 	}
 	i := lx.inext
 	if lx.nextRune() == ':' && lx.nextRune() == '/' && lx.nextRune() == '/' {
-		lx.advanceWhileNot("", unicode.Space)
+		lx.advanceWhileNot(" \t\r\n", unicode.Space)
 		for lx.runes[lx.inext-1] == '.' {
 			lx.unreadRune()
 		}

@@ -28,13 +28,14 @@ import (
 type parserState func() parserState
 
 type parser struct {
-	lx      *lex.Lexer
-	l       *lex.Lexeme
-	rewound bool
-	state   parserState
-	err     error
-	m       topicmaps.Merger
-	topic   *topicmaps.Topic
+	lx       *lex.Lexer
+	l        *lex.Lexeme
+	rewound  bool
+	state    parserState
+	err      error
+	m        topicmaps.Merger
+	topic    *topicmaps.Topic
+	prefixes map[string]string
 	//association *topicmaps.Association
 }
 
@@ -44,8 +45,9 @@ type parser struct {
 // explaining why parsing stopped before EOF.
 func Parse(r io.Reader, m topicmaps.Merger) error {
 	parser := parser{
-		lx: lex.NewLexer(r),
-		m:  m,
+		lx:       lex.NewLexer(r),
+		m:        m,
+		prefixes: make(map[string]string),
 	}
 	parser.state = parser.parseProlog
 	for parser.state != nil {
@@ -69,7 +71,8 @@ func (p *parser) nextLexeme() bool {
 }
 
 // skipLexemes skips past the given lexeme types and returns true if there is
-// still something left to read.
+// still something left to read. When skipLexemes returns, the following lexeme
+// has already been read and is sitting at p.l.
 func (p *parser) skipLexemes(skips ...lex.Type) bool {
 Skipping:
 	for p.nextLexeme() {
@@ -127,8 +130,47 @@ func (p *parser) parseProlog() parserState {
 	case "version":
 		return p.parseVersion
 	default:
-		return p.parseErrorf("unrecognized directive")
+		p.rewind()
+		return p.parseDirective
 	}
+}
+
+func (p *parser) parseDirective() parserState {
+	log.Println("parsing directive")
+	if !p.nextLexeme() || p.l.Type != lex.Name {
+		return p.parseErrorf("expected directive name")
+	}
+	switch p.l.Value {
+	case "prefix":
+		p.skipLexemes(lex.Space)
+		return p.parsePrefix
+	default:
+		return p.parseErrorf("unrecognized directive %q", p.l.Value)
+	}
+}
+
+func (p *parser) parsePrefix() parserState {
+	log.Println("parsing prefix")
+	if p.l.Type != lex.Name {
+		return p.parseErrorf("expected prefix name")
+	}
+	name := p.l.Value
+	if !(p.skipLexemes(lex.Space) && p.l.Type == lex.IRI) {
+		return p.parseErrorf("expected IRI for prefix %q", name)
+	}
+	iri := p.l.Value
+	for p.nextLexeme() && (p.l.Type == lex.Name || p.l.Type == lex.Delimiter) {
+		iri += p.l.Value
+	}
+	if p.l.Type != lex.Break {
+		p.skipLexemes(lex.Space)
+		if p.l.Type != lex.Break {
+			return p.parseErrorf("unexpected trailing content after prefix directive")
+		}
+	}
+	log.Println("prefix", name, iri)
+	p.prefixes[name] = iri
+	return p.parseBody
 }
 
 func (p *parser) parseEncoding() parserState {
@@ -173,17 +215,63 @@ func (p *parser) parseBody() parserState {
 		return nil
 	} else if p.l.Type != lex.Name {
 		return p.parseErrorf("expected word in body")
+	} else if p.l.Value[0] == '%' {
+		return p.parseDirective
 	} else {
-		start := p.l
-		if !p.skipLexemes(lex.Space, lex.Break, lex.Comment) {
-			return p.parseErrorf("unexpected EOF")
-		} else if p.l.Match(lex.Delimiter, "(") {
-			return p.parseErrorf("associations not yet supported")
+		return p.parseTopicOrAssociation
+	}
+}
+
+func (p *parser) readRef() (ref topicmaps.TopicRef) {
+	switch p.l.Type {
+	case lex.IRI:
+		ref.Type = topicmaps.SI
+		ref.IRI = p.l.Value
+	case lex.Name:
+		log.Println("name as IRI", p.l)
+		base, qname := p.prefixes[p.l.Value]
+		if qname {
+			log.Printf("name matches prefix==%q", base)
+			if p.nextLexeme() && p.l.Match(lex.Delimiter, ":") {
+				if !(p.nextLexeme() && p.l.Type == lex.Name) {
+					p.parseErrorf("expected qualified name")
+					ref.IRI = ""
+				} else {
+					ref.Type = topicmaps.SI
+					ref.IRI = base + p.l.Value
+				}
+			} else {
+				// Ignore the delimiter since it's not part of the IRI after all.
+				p.rewind()
+				ref.Type = topicmaps.II
+				ref.IRI = p.l.Value
+			}
 		} else {
-			p.rewind()
-			p.topic = &topicmaps.Topic{SelfRefs: []topicmaps.TopicRef{{Type: topicmaps.II, IRI: start.Value}}}
-			return p.parseTopic
+			ref.Type = topicmaps.II
+			ref.IRI = p.l.Value
 		}
+	default:
+		p.parseErrorf("%s, want ref", p.l)
+	}
+	return ref
+}
+
+func (p *parser) parseTopicOrAssociation() parserState {
+	iri := p.readRef()
+	if iri.IRI == "" {
+		if p.err != nil {
+			return nil
+		}
+		return p.parseErrorf("expected ref")
+	}
+	if !p.skipLexemes(lex.Space, lex.Break, lex.Comment) {
+		return p.parseErrorf("unexpected EOF")
+	} else if p.l.Match(lex.Delimiter, "(") {
+		return p.parseErrorf("associations not yet supported")
+	} else {
+		p.topic = &topicmaps.Topic{SelfRefs: []topicmaps.TopicRef{iri}}
+		p.rewind()
+		return p.parseTopic
 	}
 }
 
@@ -197,7 +285,7 @@ func (p *parser) parseTopic() parserState {
 		p.topic = nil
 		return p.parseBody
 	} else {
-		return p.parseErrorf("got %s, want topic detail", p.l)
+		return p.parseErrorf("%s, want topic detail", p.l)
 	}
 }
 

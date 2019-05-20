@@ -40,10 +40,10 @@ func TestParser(t *testing.T) {
 		},
 		{
 			In: `
-						%encoding "UTF-8"
-						%version 1.0
-						# A topic map with one topic.
-						test_id - "Test Name".
+					%encoding "UTF-8"
+					%version 1.0
+					# A topic map with one topic.
+					test_id - "Test Name".
 					`,
 			Want: tm.TopicMap{
 				Topics: []*tm.Topic{
@@ -57,6 +57,29 @@ func TestParser(t *testing.T) {
 						Names: []*tm.Name{
 							{
 								Valued: tm.Valued{"Test Name"},
+							},
+						},
+					},
+				},
+			},
+		}, {
+			In: `
+					%prefix wiki http://en.wikipedia.org/wiki/
+					wiki:John_Lennon  # QName used as a subject identifier
+					- "John Lennon".
+					`,
+			Want: tm.TopicMap{
+				Topics: []*tm.Topic{
+					{
+						SelfRefs: []tm.TopicRef{
+							{
+								Type: tm.SI,
+								IRI:  "http://en.wikipedia.org/wiki/John_Lennon",
+							},
+						},
+						Names: []*tm.Name{
+							{
+								Valued: tm.Valued{"John Lennon"},
 							},
 						},
 					},

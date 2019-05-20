@@ -116,7 +116,7 @@ func (p *parser) parseProlog() parserState {
 		p.rewind()
 		return p.parseDirectiveOrReifier
 	}
-	if !p.nextLexeme() || p.l.Type != lex.Word {
+	if !p.nextLexeme() || p.l.Type != lex.Name {
 		log.Println("parsing prolog: that's weird", p.l)
 		return p.parseErrorf("expected directive name")
 	}
@@ -171,7 +171,7 @@ func (p *parser) parseBody() parserState {
 	log.Println("parsing body")
 	if !p.skipLexemes(lex.Space, lex.Break, lex.Comment) {
 		return nil
-	} else if p.l.Type != lex.Word {
+	} else if p.l.Type != lex.Name {
 		return p.parseErrorf("expected word in body")
 	} else {
 		start := p.l

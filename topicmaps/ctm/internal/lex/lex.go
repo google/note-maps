@@ -37,10 +37,11 @@ const (
 	Comment
 	Delimiter
 	EOF
+	IRI
+	Name
 	Number
 	Space
 	String
-	Word
 )
 
 func (t Type) String() string {
@@ -55,14 +56,16 @@ func (t Type) String() string {
 		return "Delimiter"
 	case EOF:
 		return "EOF"
+	case IRI:
+		return "IRI"
+	case Name:
+		return "Name"
 	case Number:
 		return "Number"
 	case Space:
 		return "Space"
 	case String:
 		return "String"
-	case Word:
-		return "Word"
 	default:
 		return "(unrecognized lexeme type)"
 	}
@@ -293,7 +296,7 @@ func (lx *Lexer) scanAny() lexState {
 		return lx.scanBreak
 	case unicode.IsSpace(r), unicode.In(r, unicode.Space):
 		return lx.scanSpace
-	case strings.IndexRune("%.", r) >= 0:
+	case strings.IndexRune("%.:", r) >= 0:
 		return lx.scanDelim
 	case unicode.IsLetter(r), unicode.IsDigit(r), strings.IndexRune("%.", r) >= 0:
 		return lx.scanWord
@@ -401,10 +404,20 @@ func (lx *Lexer) scanDelim() lexState {
 }
 
 func (lx *Lexer) scanWord() lexState {
-	if !lx.advanceIf("_", unicode.Letter) {
-		lx.err(fmt.Sprintf("expected word, found %q", string(lx.peekRune())), nil)
+	lx.advanceWhile("_.", unicode.Letter, unicode.Number)
+	for lx.runes[lx.inext-1] == '.' {
+		lx.unreadRune()
 	}
-	lx.advanceWhile("_", unicode.Letter, unicode.Number)
-	lx.emit(Word)
+	i := lx.inext
+	if lx.nextRune() == ':' && lx.nextRune() == '/' && lx.nextRune() == '/' {
+		lx.advanceWhileNot("", unicode.Space)
+		for lx.runes[lx.inext-1] == '.' {
+			lx.unreadRune()
+		}
+		lx.emit(IRI)
+	} else {
+		lx.inext = i
+		lx.emit(Name)
+	}
 	return lx.scanAny
 }

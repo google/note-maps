@@ -21,7 +21,7 @@ import (
 
 func TestLexer_Position(t *testing.T) {
 	lexer := NewLexer(bytes.NewReader([]byte("abc")))
-	lexer.nextRune()
+	lexer.readRune()
 	for itest, test := range []struct {
 		Index int
 		Want  Position

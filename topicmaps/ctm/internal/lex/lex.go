@@ -79,8 +79,10 @@ type Lexeme struct {
 	Type       Type
 	Value      string
 	Start, End Position
+	// ErrMessage is set only when Type==Error.
 	ErrMessage string
-	errInner   error
+	// ErrInner is set only when Type==Error.
+	ErrInner error
 }
 
 func (l Lexeme) String() string {
@@ -98,7 +100,7 @@ func (l Lexeme) err() *ErrorInfo {
 	} else {
 		return &ErrorInfo{
 			Message: l.ErrMessage,
-			Inner:   l.errInner,
+			Inner:   l.ErrInner,
 			Start:   l.Start,
 			End:     l.End,
 		}
@@ -223,7 +225,7 @@ func (lx *Lexer) lexeme(t Type) *Lexeme {
 func (lx *Lexer) err(m string, inner error) {
 	l := lx.lexeme(Error)
 	l.ErrMessage = m
-	l.errInner = inner
+	l.ErrInner = inner
 	lx.ch <- l
 }
 
@@ -237,7 +239,7 @@ func (lx *Lexer) emit(t Type) {
 	lx.ch <- l
 }
 
-func (lx *Lexer) nextRune() rune {
+func (lx *Lexer) readRune() rune {
 	lx.inext++
 	if lx.inext <= len(lx.runes) {
 		return lx.runes[lx.inext-1]
@@ -266,7 +268,7 @@ func (lx *Lexer) peekRune() rune {
 	if lx.inext < len(lx.runes) {
 		r = lx.runes[lx.inext]
 	} else {
-		r = lx.nextRune()
+		r = lx.readRune()
 		lx.unreadRune()
 	}
 	return r
@@ -277,6 +279,41 @@ func (lx *Lexer) unreadRune() {
 		panic("nothing to unread")
 	}
 	lx.inext--
+}
+
+func (lx *Lexer) advanceIf(runes string, ranges ...*unicode.RangeTable) bool {
+	r := lx.readRune()
+	if unicode.In(r, ranges...) || strings.IndexRune(runes, r) >= 0 {
+		return true
+	}
+	lx.unreadRune()
+	return false
+}
+
+// advanceWhile reads matching runes until EOF or a non-matching rune is found,
+// rewinds one step, and finally returns true if and only if at least one
+// matching rune was found.
+func (lx *Lexer) advanceWhile(runes string, ranges ...*unicode.RangeTable) bool {
+	start := lx.inext
+	r := lx.readRune()
+	for unicode.In(r, ranges...) || strings.IndexRune(runes, r) >= 0 {
+		r = lx.readRune()
+	}
+	lx.unreadRune()
+	return lx.inext > start
+}
+
+// advanceWhile reads non-matching runes until EOF or a matching rune is found,
+// rewinds one step, and finally returns true if and only if at least one
+// non-matching rune was found.
+func (lx *Lexer) advanceWhileNot(runes string, ranges ...*unicode.RangeTable) bool {
+	start := lx.inext
+	r := lx.readRune()
+	for !(r == eof || unicode.In(r, ranges...) || strings.IndexRune(runes, r) >= 0) {
+		r = lx.readRune()
+	}
+	lx.unreadRune()
+	return lx.inext > start
 }
 
 type lexState func() lexState
@@ -298,7 +335,7 @@ func (lx *Lexer) scanAny() lexState {
 		return lx.scanSpace
 	case strings.IndexRune("%.:", r) >= 0:
 		return lx.scanDelim
-	case unicode.IsLetter(r), unicode.IsDigit(r), strings.IndexRune("%.", r) >= 0:
+	case unicode.IsLetter(r), unicode.IsDigit(r):
 		return lx.scanWord
 	default:
 		lx.err("unexpected rune", nil)
@@ -307,7 +344,7 @@ func (lx *Lexer) scanAny() lexState {
 }
 
 func (lx *Lexer) scanBreak() (next lexState) {
-	if lx.nextRune() == '\r' {
+	if lx.readRune() == '\r' {
 		lx.advanceIf("\n")
 	}
 	lx.emit(Break)
@@ -315,12 +352,18 @@ func (lx *Lexer) scanBreak() (next lexState) {
 }
 
 func (lx *Lexer) scanComment() lexState {
-	if lx.nextRune() != '#' {
+	if lx.readRune() != '#' {
 		lx.err("expected comment", nil)
 		return nil
 	}
 	lx.advanceWhileNot("\r\n", unicode.Zl, unicode.Zp)
 	lx.emit(Comment)
+	return lx.scanAny
+}
+
+func (lx *Lexer) scanDelim() lexState {
+	lx.readRune()
+	lx.emit(Delimiter)
 	return lx.scanAny
 }
 
@@ -344,62 +387,20 @@ func (lx *Lexer) scanSpace() lexState {
 }
 
 func (lx *Lexer) scanString() lexState {
-	q := lx.nextRune()
+	q := lx.readRune()
 	if q != '\'' && q != '"' {
 		lx.err("expected string", nil)
 	}
 String:
 	for {
-		switch lx.nextRune() {
+		switch lx.readRune() {
 		case '\\':
-			lx.nextRune()
+			lx.readRune()
 		case q:
 			break String
 		}
 	}
 	lx.emit(String)
-	return lx.scanAny
-}
-
-func (lx *Lexer) advanceIf(runes string, ranges ...*unicode.RangeTable) bool {
-	r := lx.nextRune()
-	if unicode.In(r, ranges...) || strings.IndexRune(runes, r) >= 0 {
-		return true
-	}
-	lx.unreadRune()
-	return false
-}
-
-// advanceWhile reads matching runes until EOF or a non-matching rune is found,
-// rewinds one step, and finally returns true if and only if at least one
-// matching rune was found.
-func (lx *Lexer) advanceWhile(runes string, ranges ...*unicode.RangeTable) bool {
-	start := lx.inext
-	r := lx.nextRune()
-	for unicode.In(r, ranges...) || strings.IndexRune(runes, r) >= 0 {
-		r = lx.nextRune()
-	}
-	lx.unreadRune()
-	return lx.inext > start
-}
-
-// advanceWhile reads non-matching runes until EOF or a matching rune is found,
-// rewinds one step, and finally returns true if and only if at least one
-// non-matching rune was found.
-func (lx *Lexer) advanceWhileNot(runes string, ranges ...*unicode.RangeTable) bool {
-	start := lx.inext
-	r := lx.nextRune()
-	for !(r == eof || unicode.In(r, ranges...) || strings.IndexRune(runes, r) >= 0) {
-		r = lx.nextRune()
-	}
-	lx.unreadRune()
-	return lx.inext > start
-}
-
-// scanDelim emits nextRune as a Delimiter.
-func (lx *Lexer) scanDelim() lexState {
-	lx.nextRune()
-	lx.emit(Delimiter)
 	return lx.scanAny
 }
 
@@ -409,7 +410,7 @@ func (lx *Lexer) scanWord() lexState {
 		lx.unreadRune()
 	}
 	i := lx.inext
-	if lx.nextRune() == ':' && lx.nextRune() == '/' && lx.nextRune() == '/' {
+	if lx.readRune() == ':' && lx.readRune() == '/' && lx.readRune() == '/' {
 		lx.advanceWhileNot(" \t\r\n", unicode.Space)
 		for lx.runes[lx.inext-1] == '.' {
 			lx.unreadRune()

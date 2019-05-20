@@ -117,7 +117,7 @@ func (p *parser) parseProlog() parserState {
 	if !p.l.Match(lex.Delimiter, "%") {
 		log.Println("parsing prolog: ending prolog at", p.l, "and rewinding")
 		p.rewind()
-		return p.parseDirectiveOrReifier
+		return p.parseBody
 	}
 	if !p.nextLexeme() || p.l.Type != lex.Name {
 		log.Println("parsing prolog: that's weird", p.l)
@@ -126,9 +126,9 @@ func (p *parser) parseProlog() parserState {
 	log.Println("parsing prolog directive:", p.l.Value)
 	switch p.l.Value {
 	case "encoding":
-		return p.parseEncoding
+		return p.parseEncodingDirective
 	case "version":
-		return p.parseVersion
+		return p.parseVersionDirective
 	default:
 		p.rewind()
 		return p.parseDirective
@@ -143,13 +143,35 @@ func (p *parser) parseDirective() parserState {
 	switch p.l.Value {
 	case "prefix":
 		p.skipLexemes(lex.Space)
-		return p.parsePrefix
+		return p.parsePrefixDirective
 	default:
 		return p.parseErrorf("unrecognized directive %q", p.l.Value)
 	}
 }
 
-func (p *parser) parsePrefix() parserState {
+func (p *parser) parseEncodingDirective() parserState {
+	log.Println("parsing encoding")
+	if !(p.skipLexemes(lex.Space) && p.l.Type == lex.String) {
+		return p.parseErrorf("expected string, got %s", p.l)
+	} else if p.l.Value != "\"UTF-8\"" {
+		return p.parseErrorf("unsupported encoding")
+	} else {
+		return p.parseProlog
+	}
+}
+
+func (p *parser) parseVersionDirective() parserState {
+	log.Println("parsing version")
+	if !(p.skipLexemes(lex.Space, lex.Break) && p.l.Type == lex.Number) {
+		return p.parseErrorf("expected number")
+	} else if p.l.Value != "1.0" {
+		return p.parseErrorf("only CTM version 1.0 is supported")
+	} else {
+		return p.parseProlog
+	}
+}
+
+func (p *parser) parsePrefixDirective() parserState {
 	log.Println("parsing prefix")
 	if p.l.Type != lex.Name {
 		return p.parseErrorf("expected prefix name")
@@ -173,87 +195,17 @@ func (p *parser) parsePrefix() parserState {
 	return p.parseBody
 }
 
-func (p *parser) parseEncoding() parserState {
-	log.Println("parsing encoding")
-	if !(p.skipLexemes(lex.Space) && p.l.Type == lex.String) {
-		return p.parseErrorf("expected string, got %s", p.l)
-	} else if p.l.Value != "\"UTF-8\"" {
-		return p.parseErrorf("unsupported encoding")
-	} else {
-		return p.parseProlog
-	}
-}
-
-func (p *parser) parseVersion() parserState {
-	log.Println("parsing version")
-	if !(p.skipLexemes(lex.Space, lex.Break) && p.l.Type == lex.Number) {
-		return p.parseErrorf("expected number")
-	} else if p.l.Value != "1.0" {
-		return p.parseErrorf("only CTM version 1.0 is supported")
-	} else {
-		return p.parseDirectiveOrReifier
-	}
-}
-
-func (p *parser) parseDirectiveOrReifier() parserState {
-	log.Println("parsing directive or reifier")
-	if !p.skipLexemes(lex.Space, lex.Break, lex.Comment) {
-		return nil
-	} else if p.l.Match(lex.Delimiter, "%") {
-		return p.parseErrorf("additional directives not yet supported")
-	} else if p.l.Match(lex.Delimiter, "~") {
-		return p.parseErrorf("topic map reification not yet supported")
-	} else {
-		p.rewind()
-		return p.parseBody
-	}
-}
-
 func (p *parser) parseBody() parserState {
 	log.Println("parsing body")
 	if !p.skipLexemes(lex.Space, lex.Break, lex.Comment) {
 		return nil
 	} else if p.l.Type != lex.Name {
 		return p.parseErrorf("expected word in body")
-	} else if p.l.Value[0] == '%' {
+	} else if p.l.Match(lex.Delimiter, "%") {
 		return p.parseDirective
 	} else {
 		return p.parseTopicOrAssociation
 	}
-}
-
-func (p *parser) readRef() (ref topicmaps.TopicRef) {
-	switch p.l.Type {
-	case lex.IRI:
-		ref.Type = topicmaps.SI
-		ref.IRI = p.l.Value
-	case lex.Name:
-		log.Println("name as IRI", p.l)
-		base, qname := p.prefixes[p.l.Value]
-		if qname {
-			log.Printf("name matches prefix==%q", base)
-			if p.nextLexeme() && p.l.Match(lex.Delimiter, ":") {
-				if !(p.nextLexeme() && p.l.Type == lex.Name) {
-					p.parseErrorf("expected qualified name")
-					ref.IRI = ""
-				} else {
-					ref.Type = topicmaps.SI
-					ref.IRI = base + p.l.Value
-				}
-			} else {
-				// Ignore the delimiter since it's not part of the IRI after all.
-				p.rewind()
-				ref.Type = topicmaps.II
-				ref.IRI = p.l.Value
-			}
-		} else {
-			ref.Type = topicmaps.II
-			ref.IRI = p.l.Value
-		}
-	default:
-		p.parseErrorf("%s, want ref", p.l)
-	}
-	return ref
 }
 
 func (p *parser) parseTopicOrAssociation() parserState {
@@ -300,6 +252,40 @@ func (p *parser) parseName() parserState {
 		})
 		return p.parseTopic
 	}
+}
+
+func (p *parser) readRef() (ref topicmaps.TopicRef) {
+	switch p.l.Type {
+	case lex.IRI:
+		ref.Type = topicmaps.SI
+		ref.IRI = p.l.Value
+	case lex.Name:
+		log.Println("name as IRI", p.l)
+		base, qname := p.prefixes[p.l.Value]
+		if qname {
+			log.Printf("name matches prefix==%q", base)
+			if p.nextLexeme() && p.l.Match(lex.Delimiter, ":") {
+				if !(p.nextLexeme() && p.l.Type == lex.Name) {
+					p.parseErrorf("expected qualified name")
+					ref.IRI = ""
+				} else {
+					ref.Type = topicmaps.SI
+					ref.IRI = base + p.l.Value
+				}
+			} else {
+				// Ignore the delimiter since it's not part of the IRI after all.
+				p.rewind()
+				ref.Type = topicmaps.II
+				ref.IRI = p.l.Value
+			}
+		} else {
+			ref.Type = topicmaps.II
+			ref.IRI = p.l.Value
+		}
+	default:
+		p.parseErrorf("%s, want ref", p.l)
+	}
+	return ref
 }
 
 func unquote(s string) string {

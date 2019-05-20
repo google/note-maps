@@ -70,25 +70,27 @@ func (p *parser) nextLexeme() bool {
 	return !p.l.Type.Terminal()
 }
 
-// skipLexemes skips past the given lexeme types and returns true if there is
-// still something left to read. When skipLexemes returns, the following lexeme
-// has already been read and is sitting at p.l.
-func (p *parser) skipLexemes(skips ...lex.Type) bool {
-Skipping:
+func (p *parser) skipSpace() bool {
 	for p.nextLexeme() {
-		for _, t := range skips {
-			if t == p.l.Type {
-				continue Skipping
-			}
+		if p.l.Type != lex.Space {
+			break
 		}
-		break
+	}
+	return !p.l.Type.Terminal()
+}
+
+func (p *parser) skipMultiline() bool {
+	for p.nextLexeme() {
+		if p.l.Type != lex.Space && p.l.Type != lex.Break && p.l.Type != lex.Comment {
+			break
+		}
 	}
 	return !p.l.Type.Terminal()
 }
 
 func (p *parser) rewind() {
 	if p.rewound {
-		panic("cannot unread twice")
+		panic("cannot rewind twice")
 	}
 	p.rewound = true
 }
@@ -106,14 +108,12 @@ func (p *parser) parseErrorf(msg string, args ...interface{}) parserState {
 }
 
 func (p *parser) parseProlog() parserState {
-	if !p.skipLexemes(lex.Space, lex.Break) {
+	if !p.skipMultiline() {
 		return nil
-	}
-	if !p.l.Match(lex.Delimiter, "%") {
+	} else if !p.l.Match(lex.Delimiter, "%") {
 		p.rewind()
 		return p.parseBody
-	}
-	if !p.nextLexeme() || p.l.Type != lex.Name {
+	} else if !(p.nextLexeme() && p.l.Type == lex.Name) {
 		return p.parseErrorf("expected directive name")
 	}
 	switch p.l.Value {
@@ -127,21 +127,8 @@ func (p *parser) parseProlog() parserState {
 	}
 }
 
-func (p *parser) parseDirective() parserState {
-	if !p.nextLexeme() || p.l.Type != lex.Name {
-		return p.parseErrorf("expected directive name")
-	}
-	switch p.l.Value {
-	case "prefix":
-		p.skipLexemes(lex.Space)
-		return p.parsePrefixDirective
-	default:
-		return p.parseErrorf("unrecognized directive %q", p.l.Value)
-	}
-}
-
 func (p *parser) parseEncodingDirective() parserState {
-	if !(p.skipLexemes(lex.Space) && p.l.Type == lex.String) {
+	if !(p.skipSpace() && p.l.Type == lex.String) {
 		return p.parseErrorf("expected string, got %s", p.l)
 	} else if p.l.Value != "\"UTF-8\"" {
 		return p.parseErrorf("unsupported encoding")
@@ -151,7 +138,7 @@ func (p *parser) parseEncodingDirective() parserState {
 }
 
 func (p *parser) parseVersionDirective() parserState {
-	if !(p.skipLexemes(lex.Space, lex.Break) && p.l.Type == lex.Number) {
+	if !(p.skipMultiline() && p.l.Type == lex.Number) {
 		return p.parseErrorf("expected number")
 	} else if p.l.Value != "1.0" {
 		return p.parseErrorf("only CTM version 1.0 is supported")
@@ -160,30 +147,35 @@ func (p *parser) parseVersionDirective() parserState {
 	}
 }
 
+func (p *parser) parseDirective() parserState {
+	if !p.nextLexeme() || p.l.Type != lex.Name {
+		return p.parseErrorf("expected directive name")
+	}
+	switch p.l.Value {
+	case "prefix":
+		p.skipSpace()
+		return p.parsePrefixDirective
+	case "include", "mergemap":
+		return p.parseErrorf("unimplemented directive %q", p.l.Value)
+	default:
+		return p.parseErrorf("unrecognized directive %q", p.l.Value)
+	}
+}
+
 func (p *parser) parsePrefixDirective() parserState {
 	if p.l.Type != lex.Name {
 		return p.parseErrorf("expected prefix name")
 	}
 	name := p.l.Value
-	if !(p.skipLexemes(lex.Space) && p.l.Type == lex.IRI) {
+	if !(p.skipSpace() && p.l.Type == lex.IRI) {
 		return p.parseErrorf("expected IRI for prefix %q", name)
 	}
-	iri := p.l.Value
-	for p.nextLexeme() && (p.l.Type == lex.Name || p.l.Type == lex.Delimiter) {
-		iri += p.l.Value
-	}
-	if p.l.Type != lex.Break {
-		p.skipLexemes(lex.Space)
-		if p.l.Type != lex.Break {
-			return p.parseErrorf("unexpected trailing content after prefix directive")
-		}
-	}
-	p.prefixes[name] = iri
+	p.prefixes[name] = p.l.Value
 	return p.parseBody
 }
 
 func (p *parser) parseBody() parserState {
-	if !p.skipLexemes(lex.Space, lex.Break, lex.Comment) {
+	if !p.skipMultiline() {
 		return nil
 	} else if p.l.Type != lex.Name {
 		return p.parseErrorf("expected word in body")
@@ -199,7 +191,7 @@ func (p *parser) parseTopicOrAssociation() parserState {
 	if ref.IRI == "" {
 		return p.parseErrorf("expected ref")
 	}
-	if !p.skipLexemes(lex.Space, lex.Break, lex.Comment) {
+	if !p.skipMultiline() {
 		return p.parseErrorf("%s, expected topic or association", p.l)
 	} else if p.l.Match(lex.Delimiter, "(") {
 		p.association = &topicmaps.Association{Typed: topicmaps.Typed{ref}}
@@ -212,7 +204,7 @@ func (p *parser) parseTopicOrAssociation() parserState {
 }
 
 func (p *parser) parseTopic() parserState {
-	if !p.skipLexemes(lex.Space, lex.Break, lex.Comment) {
+	if !p.skipMultiline() {
 		return nil
 	} else if p.l.Match(lex.Delimiter, "-") {
 		return p.parseName
@@ -226,7 +218,7 @@ func (p *parser) parseTopic() parserState {
 }
 
 func (p *parser) parseName() parserState {
-	if !p.skipLexemes(lex.Space, lex.Break, lex.Comment) {
+	if !p.skipMultiline() {
 		return nil
 	} else if p.l.Type != lex.String {
 		return p.parseErrorf("expected string as name")
@@ -239,14 +231,14 @@ func (p *parser) parseName() parserState {
 }
 
 func (p *parser) parseAssociation() parserState {
-	p.skipLexemes(lex.Space, lex.Break, lex.Comment)
+	p.skipMultiline()
 	roleType := p.readRef()
 	if roleType.IRI == "" {
 		return p.parseErrorf("expected role type ref, got %s", p.l)
-	} else if !(p.skipLexemes(lex.Space, lex.Break, lex.Comment) && p.l.Match(lex.Delimiter, ":")) {
+	} else if !(p.skipMultiline() && p.l.Match(lex.Delimiter, ":")) {
 		return p.parseErrorf("expected colon ':' after role type ref, got %s", p.l)
 	}
-	p.skipLexemes(lex.Space, lex.Break, lex.Comment)
+	p.skipMultiline()
 	player := p.readRef()
 	if player.IRI == "" {
 		return p.parseErrorf("expected player ref")
@@ -255,7 +247,7 @@ func (p *parser) parseAssociation() parserState {
 		Typed:  topicmaps.Typed{Type: roleType},
 		Player: player,
 	})
-	p.skipLexemes(lex.Space, lex.Break, lex.Comment)
+	p.skipMultiline()
 	if p.l.Match(lex.Delimiter, ",") {
 		return p.parseAssociation
 	} else if p.l.Match(lex.Delimiter, ")") {

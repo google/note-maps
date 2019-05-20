@@ -85,6 +85,25 @@ func TestParser(t *testing.T) {
 					},
 				},
 			},
+		}, {
+			In: "member_of(group: The_Beatles, member: John_Lennon)",
+			Want: tm.TopicMap{
+				Associations: []*tm.Association{
+					{
+						Typed: tm.Typed{tm.TopicRef{tm.II, "member_of"}},
+						Roles: []*tm.Role{
+							{
+								Typed:  tm.Typed{tm.TopicRef{tm.II, "group"}},
+								Player: tm.TopicRef{tm.II, "The_Beatles"},
+							},
+							{
+								Typed:  tm.Typed{tm.TopicRef{tm.II, "member"}},
+								Player: tm.TopicRef{tm.II, "John_Lennon"},
+							},
+						},
+					},
+				},
+			},
 		},
 	} {
 		t.Logf("%d %q", itest, test.In)

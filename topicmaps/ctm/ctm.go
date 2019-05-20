@@ -19,7 +19,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 
 	"github.com/google/note-maps/topicmaps"
 	"github.com/google/note-maps/topicmaps/ctm/internal/lex"
@@ -28,14 +27,15 @@ import (
 type parserState func() parserState
 
 type parser struct {
-	lx       *lex.Lexer
-	l        *lex.Lexeme
-	rewound  bool
-	state    parserState
-	err      error
-	m        topicmaps.Merger
-	topic    *topicmaps.Topic
-	prefixes map[string]string
+	lx          *lex.Lexer
+	l           *lex.Lexeme
+	rewound     bool
+	state       parserState
+	err         error
+	m           topicmaps.Merger
+	topic       *topicmaps.Topic
+	association *topicmaps.Association
+	prefixes    map[string]string
 	//association *topicmaps.Association
 }
 
@@ -78,13 +78,11 @@ Skipping:
 	for p.nextLexeme() {
 		for _, t := range skips {
 			if t == p.l.Type {
-				log.Println("skipping", p.l)
 				continue Skipping
 			}
 		}
 		break
 	}
-	log.Println("stopped skipping", p.l)
 	return !p.l.Type.Terminal()
 }
 
@@ -104,26 +102,20 @@ func (p *parser) parseErrorf(msg string, args ...interface{}) parserState {
 		err.End.Column = p.l.End.Column
 	}
 	p.err = err
-	log.Println("returning error", err)
 	return nil
 }
 
 func (p *parser) parseProlog() parserState {
-	log.Println("parsing prolog")
 	if !p.skipLexemes(lex.Space, lex.Break) {
-		log.Println("parsing prolog: terminated")
 		return nil
 	}
 	if !p.l.Match(lex.Delimiter, "%") {
-		log.Println("parsing prolog: ending prolog at", p.l, "and rewinding")
 		p.rewind()
 		return p.parseBody
 	}
 	if !p.nextLexeme() || p.l.Type != lex.Name {
-		log.Println("parsing prolog: that's weird", p.l)
 		return p.parseErrorf("expected directive name")
 	}
-	log.Println("parsing prolog directive:", p.l.Value)
 	switch p.l.Value {
 	case "encoding":
 		return p.parseEncodingDirective
@@ -136,7 +128,6 @@ func (p *parser) parseProlog() parserState {
 }
 
 func (p *parser) parseDirective() parserState {
-	log.Println("parsing directive")
 	if !p.nextLexeme() || p.l.Type != lex.Name {
 		return p.parseErrorf("expected directive name")
 	}
@@ -150,7 +141,6 @@ func (p *parser) parseDirective() parserState {
 }
 
 func (p *parser) parseEncodingDirective() parserState {
-	log.Println("parsing encoding")
 	if !(p.skipLexemes(lex.Space) && p.l.Type == lex.String) {
 		return p.parseErrorf("expected string, got %s", p.l)
 	} else if p.l.Value != "\"UTF-8\"" {
@@ -161,7 +151,6 @@ func (p *parser) parseEncodingDirective() parserState {
 }
 
 func (p *parser) parseVersionDirective() parserState {
-	log.Println("parsing version")
 	if !(p.skipLexemes(lex.Space, lex.Break) && p.l.Type == lex.Number) {
 		return p.parseErrorf("expected number")
 	} else if p.l.Value != "1.0" {
@@ -172,7 +161,6 @@ func (p *parser) parseVersionDirective() parserState {
 }
 
 func (p *parser) parsePrefixDirective() parserState {
-	log.Println("parsing prefix")
 	if p.l.Type != lex.Name {
 		return p.parseErrorf("expected prefix name")
 	}
@@ -190,13 +178,11 @@ func (p *parser) parsePrefixDirective() parserState {
 			return p.parseErrorf("unexpected trailing content after prefix directive")
 		}
 	}
-	log.Println("prefix", name, iri)
 	p.prefixes[name] = iri
 	return p.parseBody
 }
 
 func (p *parser) parseBody() parserState {
-	log.Println("parsing body")
 	if !p.skipLexemes(lex.Space, lex.Break, lex.Comment) {
 		return nil
 	} else if p.l.Type != lex.Name {
@@ -209,19 +195,17 @@ func (p *parser) parseBody() parserState {
 }
 
 func (p *parser) parseTopicOrAssociation() parserState {
-	iri := p.readRef()
-	if iri.IRI == "" {
-		if p.err != nil {
-			return nil
-		}
+	ref := p.readRef()
+	if ref.IRI == "" {
 		return p.parseErrorf("expected ref")
 	}
 	if !p.skipLexemes(lex.Space, lex.Break, lex.Comment) {
-		return p.parseErrorf("unexpected EOF")
+		return p.parseErrorf("%s, expected topic or association", p.l)
 	} else if p.l.Match(lex.Delimiter, "(") {
-		return p.parseErrorf("associations not yet supported")
+		p.association = &topicmaps.Association{Typed: topicmaps.Typed{ref}}
+		return p.parseAssociation
 	} else {
-		p.topic = &topicmaps.Topic{SelfRefs: []topicmaps.TopicRef{iri}}
+		p.topic = &topicmaps.Topic{SelfRefs: []topicmaps.TopicRef{ref}}
 		p.rewind()
 		return p.parseTopic
 	}
@@ -254,16 +238,43 @@ func (p *parser) parseName() parserState {
 	}
 }
 
+func (p *parser) parseAssociation() parserState {
+	p.skipLexemes(lex.Space, lex.Break, lex.Comment)
+	roleType := p.readRef()
+	if roleType.IRI == "" {
+		return p.parseErrorf("expected role type ref, got %s", p.l)
+	} else if !(p.skipLexemes(lex.Space, lex.Break, lex.Comment) && p.l.Match(lex.Delimiter, ":")) {
+		return p.parseErrorf("expected colon ':' after role type ref, got %s", p.l)
+	}
+	p.skipLexemes(lex.Space, lex.Break, lex.Comment)
+	player := p.readRef()
+	if player.IRI == "" {
+		return p.parseErrorf("expected player ref")
+	}
+	p.association.Roles = append(p.association.Roles, &topicmaps.Role{
+		Typed:  topicmaps.Typed{Type: roleType},
+		Player: player,
+	})
+	p.skipLexemes(lex.Space, lex.Break, lex.Comment)
+	if p.l.Match(lex.Delimiter, ",") {
+		return p.parseAssociation
+	} else if p.l.Match(lex.Delimiter, ")") {
+		p.m.MergeAssociation(p.association)
+		p.association = nil
+		return p.parseBody
+	} else {
+		return p.parseErrorf("expected comma ',' or parenthesis ')'")
+	}
+}
+
 func (p *parser) readRef() (ref topicmaps.TopicRef) {
 	switch p.l.Type {
 	case lex.IRI:
 		ref.Type = topicmaps.SI
 		ref.IRI = p.l.Value
 	case lex.Name:
-		log.Println("name as IRI", p.l)
 		base, qname := p.prefixes[p.l.Value]
 		if qname {
-			log.Printf("name matches prefix==%q", base)
 			if p.nextLexeme() && p.l.Match(lex.Delimiter, ":") {
 				if !(p.nextLexeme() && p.l.Type == lex.Name) {
 					p.parseErrorf("expected qualified name")
@@ -273,7 +284,7 @@ func (p *parser) readRef() (ref topicmaps.TopicRef) {
 					ref.IRI = base + p.l.Value
 				}
 			} else {
-				// Ignore the delimiter since it's not part of the IRI after all.
+				// Ignore that lexeme as it's not part of the IRI after all.
 				p.rewind()
 				ref.Type = topicmaps.II
 				ref.IRI = p.l.Value

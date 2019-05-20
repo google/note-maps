@@ -333,7 +333,7 @@ func (lx *Lexer) scanAny() lexState {
 		return lx.scanBreak
 	case unicode.IsSpace(r), unicode.In(r, unicode.Space):
 		return lx.scanSpace
-	case strings.IndexRune("%.:", r) >= 0:
+	case strings.IndexRune("%.:(),", r) >= 0:
 		return lx.scanDelim
 	case unicode.IsLetter(r), unicode.IsDigit(r):
 		return lx.scanWord

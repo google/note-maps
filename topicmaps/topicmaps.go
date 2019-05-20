@@ -57,16 +57,47 @@ const (
 	SL
 )
 
+func (trt TopicRefType) String() string {
+	switch trt {
+	case II:
+		return "II"
+	case SI:
+		return "SI"
+	case SL:
+		return "SL"
+	default:
+		return "(unknown topic ref type)"
+	}
+}
+
+type Association struct {
+	Reifiable
+	Typed
+	Roles []*Role
+}
+
+type Role struct {
+	Typed
+	Player TopicRef
+}
+
 type Merger interface {
 	MergeTopic(t *Topic) error
+	MergeAssociation(a *Association) error
 }
 
 type TopicMap struct {
-	II     []string
-	Topics []*Topic
+	II           []string
+	Topics       []*Topic
+	Associations []*Association
 }
 
 func (tm *TopicMap) MergeTopic(t *Topic) error {
 	tm.Topics = append(tm.Topics, t)
+	return nil
+}
+
+func (tm *TopicMap) MergeAssociation(a *Association) error {
+	tm.Associations = append(tm.Associations, a)
 	return nil
 }

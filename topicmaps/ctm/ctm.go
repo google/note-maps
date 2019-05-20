@@ -95,10 +95,10 @@ func (p *parser) rewind() {
 func (p *parser) parseErrorf(msg string, args ...interface{}) parserState {
 	err := &lex.ErrorInfo{Message: fmt.Sprintf(msg, args...)}
 	if p.l != nil {
-		err.StartLine = p.l.StartLine
-		err.StartColumn = p.l.StartColumn
-		err.EndLine = p.l.EndLine
-		err.EndColumn = p.l.EndColumn
+		err.Start.Line = p.l.Start.Line
+		err.Start.Column = p.l.Start.Column
+		err.End.Line = p.l.End.Line
+		err.End.Column = p.l.End.Column
 	}
 	p.err = err
 	log.Println("returning error", err)

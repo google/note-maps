@@ -19,6 +19,25 @@ import (
 	"testing"
 )
 
+func TestLexer_Position(t *testing.T) {
+	lexer := NewLexer(bytes.NewReader([]byte("abc")))
+	lexer.nextRune()
+	for itest, test := range []struct {
+		Index int
+		Want  Position
+	}{
+		{0, Position{1, 1}},
+		{1, Position{1, 2}},
+		{-1, Position{1, 2}},
+		{-2, Position{1, 1}},
+	} {
+		got := lexer.position(test.Index)
+		if got != test.Want {
+			t.Error(itest, "got", got, "want", test.Want)
+		}
+	}
+}
+
 func TestLexer(t *testing.T) {
 	for itest, test := range []struct {
 		In   string
@@ -28,41 +47,41 @@ func TestLexer(t *testing.T) {
 		{
 			In: "%version 1.0\n# comment",
 			Want: []Lexeme{
-				{Delimiter, "%", 1, 1, 1, 1, "", nil},
-				{Word, "version", 1, 2, 1, 8, "", nil},
-				{Space, " ", 1, 9, 1, 9, "", nil},
-				{Number, "1.0", 1, 10, 1, 12, "", nil},
-				{Break, "\n", 1, 13, 1, 13, "", nil},
-				{Comment, "# comment", 2, 1, 2, 9, "", nil},
-				{EOF, "", 2, 10, 2, 10, "", nil},
+				{Delimiter, "%", Position{1, 1}, Position{1, 1}, "", nil},
+				{Word, "version", Position{1, 2}, Position{1, 8}, "", nil},
+				{Space, " ", Position{1, 9}, Position{1, 9}, "", nil},
+				{Number, "1.0", Position{1, 10}, Position{1, 12}, "", nil},
+				{Break, "\n", Position{1, 13}, Position{1, 13}, "", nil},
+				{Comment, "# comment", Position{2, 1}, Position{2, 9}, "", nil},
+				{EOF, "", Position{2, 10}, Position{2, 10}, "", nil},
 			},
 		},
 		{
 			In: `"string"`,
 			Want: []Lexeme{
-				{String, `"string"`, 1, 1, 1, 8, "", nil},
-				{EOF, ``, 1, 9, 1, 9, "", nil},
+				{String, `"string"`, Position{1, 1}, Position{1, 8}, "", nil},
+				{EOF, ``, Position{1, 9}, Position{1, 9}, "", nil},
 			},
 		},
 		{
 			In: `%encoding  "UTF-8"`,
 			Want: []Lexeme{
-				{Delimiter, `%`, 1, 1, 1, 1, "", nil},
-				{Word, `encoding`, 1, 2, 1, 9, "", nil},
-				{Space, `  `, 1, 10, 1, 11, "", nil},
-				{String, `"UTF-8"`, 1, 12, 1, 18, "", nil},
-				{EOF, ``, 1, 19, 1, 19, "", nil},
+				{Delimiter, `%`, Position{1, 1}, Position{1, 1}, "", nil},
+				{Word, `encoding`, Position{1, 2}, Position{1, 9}, "", nil},
+				{Space, `  `, Position{1, 10}, Position{1, 11}, "", nil},
+				{String, `"UTF-8"`, Position{1, 12}, Position{1, 18}, "", nil},
+				{EOF, ``, Position{1, 19}, Position{1, 19}, "", nil},
 			},
 		},
 		{
 			In: `item - "name"`,
 			Want: []Lexeme{
-				{Word, `item`, 1, 1, 1, 4, "", nil},
-				{Space, ` `, 1, 5, 1, 5, "", nil},
-				{Delimiter, `-`, 1, 6, 1, 6, "", nil},
-				{Space, ` `, 1, 7, 1, 7, "", nil},
-				{String, `"name"`, 1, 8, 1, 13, "", nil},
-				{EOF, ``, 1, 14, 1, 14, "", nil},
+				{Word, `item`, Position{1, 1}, Position{1, 4}, "", nil},
+				{Space, ` `, Position{1, 5}, Position{1, 5}, "", nil},
+				{Delimiter, `-`, Position{1, 6}, Position{1, 6}, "", nil},
+				{Space, ` `, Position{1, 7}, Position{1, 7}, "", nil},
+				{String, `"name"`, Position{1, 8}, Position{1, 13}, "", nil},
+				{EOF, ``, Position{1, 14}, Position{1, 14}, "", nil},
 			},
 		},
 		{
@@ -70,12 +89,12 @@ func TestLexer(t *testing.T) {
 					# multiline literal
 			`,
 			Want: []Lexeme{
-				{Break, "\n", 1, 1, 1, 1, "", nil},
-				{Space, "\t\t\t\t\t", 2, 1, 2, 5, "", nil},
-				{Comment, `# multiline literal`, 2, 6, 2, 24, "", nil},
-				{Break, "\n", 2, 25, 2, 25, "", nil},
-				{Space, "\t\t\t", 3, 1, 3, 3, "", nil},
-				{EOF, "", 3, 4, 3, 4, "", nil},
+				{Break, "\n", Position{1, 1}, Position{1, 1}, "", nil},
+				{Space, "\t\t\t\t\t", Position{2, 1}, Position{2, 5}, "", nil},
+				{Comment, `# multiline literal`, Position{2, 6}, Position{2, 24}, "", nil},
+				{Break, "\n", Position{2, 25}, Position{2, 25}, "", nil},
+				{Space, "\t\t\t", Position{3, 1}, Position{3, 3}, "", nil},
+				{EOF, "", Position{3, 4}, Position{3, 4}, "", nil},
 			},
 		},
 	} {

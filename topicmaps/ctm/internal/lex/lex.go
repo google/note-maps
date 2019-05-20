@@ -73,18 +73,17 @@ func (t Type) Terminal() bool { return t == EOF || t == Error }
 // Lexeme describes a lexical CTM atom, including its position in a source
 // text.
 type Lexeme struct {
-	Type                   Type
-	Value                  string
-	StartLine, StartColumn int
-	EndLine, EndColumn     int
-	ErrMessage             string
-	errInner               error
+	Type       Type
+	Value      string
+	Start, End Position
+	ErrMessage string
+	errInner   error
 }
 
 func (l Lexeme) String() string {
 	return fmt.Sprintf("[:%d:%d :%d:%d] %s %q",
-		l.StartLine, l.StartColumn,
-		l.EndLine, l.EndColumn,
+		l.Start.Line, l.Start.Column,
+		l.End.Line, l.End.Column,
 		l.Type, l.Value)
 }
 
@@ -95,12 +94,10 @@ func (l Lexeme) err() *ErrorInfo {
 		return nil
 	} else {
 		return &ErrorInfo{
-			Message:     l.ErrMessage,
-			Inner:       l.errInner,
-			StartLine:   l.StartLine,
-			StartColumn: l.StartColumn,
-			EndLine:     l.EndLine,
-			EndColumn:   l.EndColumn,
+			Message: l.ErrMessage,
+			Inner:   l.errInner,
+			Start:   l.Start,
+			End:     l.End,
 		}
 	}
 }
@@ -108,23 +105,22 @@ func (l Lexeme) err() *ErrorInfo {
 // ErrorInfo desribes an lexical error along with the position in a source where
 // the error occurred.
 type ErrorInfo struct {
-	Message                string
-	Inner                  error
-	StartLine, StartColumn int
-	EndLine, EndColumn     int
+	Message    string
+	Inner      error
+	Start, End Position
 }
 
 func (e ErrorInfo) Error() string {
 	buf := bytes.NewBuffer(nil)
-	if e.StartLine == e.EndLine && e.StartColumn == e.EndColumn {
+	if e.Start == e.End {
 		fmt.Fprintf(buf, ":%d:%d %s",
-			e.StartLine, e.StartColumn, e.Message)
-	} else if e.StartLine == e.EndLine {
+			e.Start.Line, e.Start.Column, e.Message)
+	} else if e.Start.Line == e.End.Line {
 		fmt.Fprintf(buf, ":%d:%d..%d %s",
-			e.StartLine, e.StartColumn, e.EndColumn, e.Message)
+			e.Start.Line, e.Start.Column, e.End.Column, e.Message)
 	} else {
 		fmt.Fprintf(buf, ":%d:%d..%d:%d %s",
-			e.StartLine, e.StartColumn, e.EndLine, e.EndColumn, e.Message)
+			e.Start.Line, e.Start.Column, e.End.Line, e.End.Column, e.Message)
 	}
 	if e.Inner != nil {
 		fmt.Fprintf(buf, ": %s", e.Inner.Error())
@@ -132,21 +128,31 @@ func (e ErrorInfo) Error() string {
 	return buf.String()
 }
 
+type Position struct {
+	Line, Column int
+}
+
 // Lexer supports lexing a CTM source into lexical atoms.
 type Lexer struct {
-	r          io.RuneReader
-	ch         chan *Lexeme
-	state      lexState
-	line0      int
-	column0    int
-	line1      int
-	column1    int
-	runes      []rune
-	prevRune   rune
-	prevColumn int
-	rewound    bool
-	lbr        bool
-	stop       *Lexeme
+	// Runes are read from Lexer.r and bufered into Lexer.runes. Each time a rune
+	// is appended to Lexer.runes, the position of the next rune is appended to
+	// Lexer.ps. Lexer.ps is initialized with the position of the first rune {1,1}.
+	//
+	// This implies the invariants len(Lexer.ps)==len(Lexer.runes)+1,
+	// Lexer.inext>=0, Lexer.inext is always a valid index into Lexer.ps, and
+	// always a valid upper found for a range within Lexer.runes.
+	//
+	// Lexer can also move backward through this buffer by decrementing
+	// Lexer.inext. Whenever inext<len(Lexer.runes), the next rune to read is
+	// Lexer.runes[inext]; otherwise the next rune is read from Lexer.r.
+
+	r     io.RuneReader
+	ch    chan *Lexeme
+	state lexState
+	ps    []Position
+	inext int
+	runes []rune
+	stop  *Lexeme
 }
 
 // NewLexer creates a lexer that can read lexical CTM atoms from r.
@@ -156,12 +162,9 @@ func NewLexer(r io.Reader) *Lexer {
 		rr = bufio.NewReader(r)
 	}
 	lx := &Lexer{
-		r:       rr,
-		ch:      make(chan *Lexeme, 2),
-		line0:   1,
-		column0: 1,
-		line1:   1,
-		column1: 0,
+		r:  rr,
+		ch: make(chan *Lexeme, 2),
+		ps: []Position{{1, 1}},
 	}
 	lx.state = lx.scanAny
 	return lx
@@ -191,93 +194,86 @@ func (lx *Lexer) Lexeme() *Lexeme {
 	return lx.stop
 }
 
-func (lx *Lexer) err(m string, inner error) {
-	lx.ch <- &Lexeme{
-		Type:        Error,
-		ErrMessage:  m,
-		errInner:    inner,
-		StartLine:   lx.line0,
-		StartColumn: lx.column0,
-		EndLine:     lx.line1,
-		EndColumn:   lx.column1,
+// position returns the position of the rune at position n within the current
+// lexeme, and supports negative indexing from the end.
+func (lx *Lexer) position(n int) Position {
+	if len(lx.ps) == 1 {
+		return lx.ps[0]
+	} else if n < 0 {
+		return lx.ps[lx.inext+1+n]
+	} else {
+		return lx.ps[n]
 	}
-	lx.line0, lx.column0 = lx.line1, lx.column1
+}
+
+// lexeme creates and returns a lexeme, respecting rewind operations, and has
+// no side-effects.
+func (lx *Lexer) lexeme(t Type) *Lexeme {
+	return &Lexeme{
+		Type:  t,
+		Value: string(lx.runes[0:lx.inext]),
+		Start: lx.position(0),
+		End:   lx.position(lx.inext - 1),
+	}
+}
+
+func (lx *Lexer) err(m string, inner error) {
+	l := lx.lexeme(Error)
+	l.ErrMessage = m
+	l.errInner = inner
+	lx.ch <- l
 }
 
 func (lx *Lexer) emit(t Type) {
-	line1, column1 := lx.line1, lx.column1
-	size := len(lx.runes)
-	// If emitting EOF then lx.prevRune should be eof. However, we may or may not
-	// have unread that rune. As a result, we get inconsistent results here.
-	if lx.rewound && t == EOF {
-		lx.rewound = false
-		size = 0
+	l := lx.lexeme(t)
+	if lx.inext > 0 {
+		lx.ps = lx.ps[lx.inext:]
+		lx.runes = lx.runes[lx.inext:]
+		lx.inext = 0
 	}
-	if lx.rewound {
-		size--
-		if column1 <= lx.prevColumn {
-			column1 = lx.prevColumn
-			line1--
-		} else {
-			column1--
-		}
-	}
-	lx.ch <- &Lexeme{
-		Type:        t,
-		Value:       string(lx.runes),
-		StartLine:   lx.line0,
-		StartColumn: lx.column0,
-		EndLine:     line1,
-		EndColumn:   column1,
-	}
-	lx.runes = lx.runes[0:0]
-	lx.line0, lx.column0 = lx.line1, lx.column1
+	lx.ch <- l
 }
 
 func (lx *Lexer) nextRune() rune {
-	lbr := false
-	if lx.rewound {
-		lx.rewound = false
-		lx.runes = append(lx.runes, lx.prevRune)
-	} else {
-		lbr = lx.prevRune == '\n'
-		var err error
-		lx.prevRune, _, err = lx.r.ReadRune()
-		if err != nil {
-			if err != io.EOF {
-				lx.err("while lexing", err)
-			}
-			lx.prevRune = eof
-		}
-		lx.prevColumn = lx.column1
-		if lbr {
-			lx.line1++
-			lx.column1 = 1
-		} else {
-			lx.column1++
-		}
-		if len(lx.runes) == 0 {
-			lx.line0, lx.column0 = lx.line1, lx.column1
-		}
-		lx.runes = append(lx.runes, lx.prevRune)
+	lx.inext++
+	if lx.inext <= len(lx.runes) {
+		return lx.runes[lx.inext-1]
 	}
-	return lx.prevRune
+	r, _, err := lx.r.ReadRune()
+	if err != nil {
+		if err != io.EOF {
+			lx.err("while lexing", err)
+		}
+		r = eof
+	}
+	lx.runes = append(lx.runes, r)
+	p := lx.ps[lx.inext-1]
+	if r == '\n' {
+		p.Line++
+		p.Column = 1
+	} else {
+		p.Column++
+	}
+	lx.ps = append(lx.ps, p)
+	return r
 }
 
 func (lx *Lexer) peekRune() rune {
-	r := lx.nextRune()
-	lx.unreadRune()
+	var r rune
+	if lx.inext < len(lx.runes) {
+		r = lx.runes[lx.inext]
+	} else {
+		r = lx.nextRune()
+		lx.unreadRune()
+	}
 	return r
 }
 
 func (lx *Lexer) unreadRune() {
-	if len(lx.runes) == 0 {
+	if lx.inext == 0 {
 		panic("nothing to unread")
-	} else if lx.rewound {
-		panic("cannot unread twice")
 	}
-	lx.rewound = true
-	lx.runes = lx.runes[:len(lx.runes)-1]
+	lx.inext--
 }
 
 type lexState func() lexState
@@ -371,24 +367,30 @@ func (lx *Lexer) advanceIf(runes string, ranges ...*unicode.RangeTable) bool {
 	return false
 }
 
+// advanceWhile reads matching runes until EOF or a non-matching rune is found,
+// rewinds one step, and finally returns true if and only if at least one
+// matching rune was found.
 func (lx *Lexer) advanceWhile(runes string, ranges ...*unicode.RangeTable) bool {
-	start := len(lx.runes)
+	start := lx.inext
 	r := lx.nextRune()
 	for unicode.In(r, ranges...) || strings.IndexRune(runes, r) >= 0 {
 		r = lx.nextRune()
 	}
 	lx.unreadRune()
-	return len(lx.runes) > start
+	return lx.inext > start
 }
 
+// advanceWhile reads non-matching runes until EOF or a matching rune is found,
+// rewinds one step, and finally returns true if and only if at least one
+// non-matching rune was found.
 func (lx *Lexer) advanceWhileNot(runes string, ranges ...*unicode.RangeTable) bool {
-	start := len(lx.runes)
+	start := lx.inext
 	r := lx.nextRune()
 	for !(r == eof || unicode.In(r, ranges...) || strings.IndexRune(runes, r) >= 0) {
 		r = lx.nextRune()
 	}
 	lx.unreadRune()
-	return len(lx.runes) > start
+	return lx.inext > start
 }
 
 // scanDelim emits nextRune as a Delimiter.

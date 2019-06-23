@@ -57,7 +57,7 @@ func TestCreateTopicMap(t *testing.T) {
 	func() {
 		transaction := store.NewTransaction(false)
 		defer transaction.Discard()
-		cursor := transaction.TopicMaps().Cursor()
+		cursor := transaction.TopicMaps(TopicMapsQuery{})
 		defer cursor.Discard()
 		for cursor.Next() {
 			info, err := cursor.Info()

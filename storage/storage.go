@@ -150,29 +150,17 @@ func (t *Transaction) CreateTopicMap() (*TopicMapInfo, error) {
 		value.Bytes())
 }
 
-// TopicMaps returns a TopicMapsQuery that can be used to find topic maps.
-//
-// TODO: Convert this API to accept a TopicMapsQuery value as a parameter and
-// return a TopicMapsCursor isntead, so that TopicMapsQuery values can be
-// constructed without access to a transaction. For example, a TopicMapsQuery
-// could some day be decoded from a human-written string.
-func (t *Transaction) TopicMaps() *TopicMapsQuery {
-	return &TopicMapsQuery{t: t}
+// TopicMaps creates and returns a TopicMapsCursor that will iterate over topic
+// maps according to query.
+func (t *Transaction) TopicMaps(query TopicMapsQuery) *TopicMapsCursor {
+	return &TopicMapsCursor{
+		iter: t.txn.NewIterator(badger.DefaultIteratorOptions),
+	}
 }
 
 // TopicMapsQuery describes how to fetch topic maps and then creates a cursor
 // to do so.
-type TopicMapsQuery struct {
-	t *Transaction
-}
-
-// Cursor creates and returns a TopicMapsCursor that will iterate over topic
-// maps as specified by q.
-func (q *TopicMapsQuery) Cursor() *TopicMapsCursor {
-	return &TopicMapsCursor{
-		iter: q.t.txn.NewIterator(badger.DefaultIteratorOptions),
-	}
-}
+type TopicMapsQuery struct{}
 
 // TopicMapsCursor supports iterating over a set of topic maps.
 //

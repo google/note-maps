@@ -26,9 +26,9 @@ import (
 	"github.com/dgraph-io/badger"
 )
 
-// Key returns a storage key built from a global single-byte prefix followed by
+// makeKey returns a storage key built from a global single-byte prefix followed by
 // a sequence of entities.
-func Key(buf []byte, prefix byte, entities ...uint64) []byte {
+func makeKey(buf []byte, prefix byte, entities ...uint64) []byte {
 	length := 1 + 8*len(entities)
 	if len(buf) < length {
 		buf = make([]byte, 1+8*len(entities))
@@ -130,7 +130,7 @@ type TopicMapInfo struct {
 // CreateTopicMap creates a new topic map in transaction t and returns a copy
 // of the topic map's new metadata.
 func (t *Transaction) CreateTopicMap() (*TopicMapInfo, error) {
-	sequence, err := t.s.db.GetSequence(Key(nil, TopicMapSequence), 1)
+	sequence, err := t.s.db.GetSequence(makeKey(nil, TopicMapSequence), 1)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (t *Transaction) CreateTopicMap() (*TopicMapInfo, error) {
 	value.WriteByte(GobFormat)
 	gob.NewEncoder(&value).Encode(&info)
 	return &info, t.txn.Set(
-		Key(nil, TopicMapPrefix, uint64(info.TopicMap)),
+		makeKey(nil, TopicMapPrefix, uint64(info.TopicMap)),
 		value.Bytes())
 }
 
@@ -186,7 +186,7 @@ type TopicMapsCursor struct {
 // if it has not been called before, and returns true if and only if a topic
 // map is found.
 func (c *TopicMapsCursor) Next() bool {
-	prefix := Key(nil, TopicMapPrefix)
+	prefix := makeKey(nil, TopicMapPrefix)
 	if !c.started {
 		c.iter.Seek(prefix)
 		c.started = true

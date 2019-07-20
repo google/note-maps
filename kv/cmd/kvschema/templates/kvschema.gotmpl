@@ -72,7 +72,7 @@ func (c *{{.Name}}Component) Set(e kv.Entity, v {{if .DirectEncoder}}{{else}}*{{
 	}
 	var (
 		lek = len(ek)
-		ik  = c.prefix.ConcatEntityComponent(0, kv.ComponentPrefix(0))
+		ik  = c.prefix.ConcatEntityComponent(0, kv.Component(0))
 		lik = len(ik)
 		es  kv.EntitySlice
 	){{ range .Indexes }}

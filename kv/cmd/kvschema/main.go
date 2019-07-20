@@ -151,7 +151,7 @@ func gen(pkg *types.Package, w io.Writer) error {
 				continue
 			} else if prefixType, ok := prefixConst.Type().(*types.Named); !ok {
 				verboseLogf("const %s is defined but want named type %s and got %s",
-					prefixName, "kv.ComponentPrefix", prefixConst.Type())
+					prefixName, "kv.Component", prefixConst.Type())
 				verboseLogf("%s", prefixConst)
 				verboseLogf("%#v", prefixConst)
 				verboseLogf("%#v", prefixConst.Type().Underlying())
@@ -159,9 +159,9 @@ func gen(pkg *types.Package, w io.Writer) error {
 			} else {
 				prefixTypeName := prefixType.Obj()
 				if prefixTypeName.Pkg().Path() != kvpath ||
-					prefixTypeName.Name() != "ComponentPrefix" {
+					prefixTypeName.Name() != "Component" {
 					verboseLogf("const %s is defined but want type %s and got %s",
-						prefixName, "kv.ComponentPrefix", prefixTypeName)
+						prefixName, "kv.Component", prefixTypeName)
 					continue
 				}
 			}

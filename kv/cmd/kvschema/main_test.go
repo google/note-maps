@@ -38,8 +38,8 @@ package input
 import "github.com/google/note-maps/kv"
 
 const (
-	DocumentPrefix kv.ComponentPrefix = 3
-	TitlePrefix    kv.ComponentPrefix = 4
+	DocumentPrefix kv.Component = 3
+	TitlePrefix                 = 4
 )
 
 type Document struct{ Title string }

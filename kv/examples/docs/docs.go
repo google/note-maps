@@ -32,8 +32,8 @@ import (
 )
 
 const (
-	DocumentPrefix kv.ComponentPrefix = 3
-	TitlePrefix    kv.ComponentPrefix = 4
+	DocumentPrefix kv.Component = 3
+	TitlePrefix    kv.Component = 4
 )
 
 // Document is a component value type.

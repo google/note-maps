@@ -46,7 +46,7 @@ func (c *DocumentComponent) Set(e kv.Entity, v *Document) error {
 	}
 	var (
 		lek = len(ek)
-		ik  = c.prefix.ConcatEntityComponent(0, kv.ComponentPrefix(0))
+		ik  = c.prefix.ConcatEntityComponent(0, kv.Component(0))
 		lik = len(ik)
 		es  kv.EntitySlice
 	)

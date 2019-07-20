@@ -135,53 +135,69 @@ func (p Prefix) ConcatEntity(e Entity) Prefix {
 
 // ConcatEntityComponent creates a new Prefix that contains p followed by e and
 // c.
-func (p Prefix) ConcatEntityComponent(e Entity, c ComponentPrefix) Prefix {
+func (p Prefix) ConcatEntityComponent(e Entity, c Component) Prefix {
 	b := make([]byte, len(p)+8+2)
 	copy(b, p)
 	e.EncodeAt(b[len(p):])
-	binary.BigEndian.PutUint16(b[len(p)+8:], uint16(c))
+	c.EncodeAt(b[len(p)+8:])
 	return b
 }
 
 // ConcatEntityComponentBytes creates a new Prefix that contains p followed by
 // e, c, and bs.
-func (p Prefix) ConcatEntityComponentBytes(e Entity, c ComponentPrefix, bs []byte) Prefix {
+func (p Prefix) ConcatEntityComponentBytes(e Entity, c Component, bs []byte) Prefix {
 	b := make([]byte, len(p)+8+2+len(bs))
 	copy(b, p)
 	e.EncodeAt(b[len(p):])
-	binary.BigEndian.PutUint16(b[len(p)+8:], uint16(c))
+	c.EncodeAt(b[len(p)+8:])
 	copy(b[len(p)+8+2:], bs)
 	return b
 }
 
-func (p Prefix) AppendComponent(c ComponentPrefix) Prefix {
-	var bs [2]byte
-	binary.BigEndian.PutUint16(bs[:], uint16(c))
-	return append(p, bs[:]...)
+// AppendComponent appends c to p and returns the result.
+func (p Prefix) AppendComponent(c Component) Prefix {
+	return append(p, c.Encode()...)
 }
 
-type ComponentPrefix uint16
-
-// Entity is an identifier that may be associated with values in across many
-// components.
+// Component is a hard-coded and globally unique identifier for a component
+// type.
 //
-// For example, an application modelling an ordered hierarchy of nodes may want
-// to store simple node metadata in one value and an ordered set of children
-// as a slice of entities in another value. By keeping the small metadata
-// separated from the potentially large list of children for a given node,
-// queries that only need to read metadata, or that only need to enumerate
-// children, can be answered more quickly.
+// Components are typically hard-coded constants.
+type Component uint16
+
+// EncodeAt encodes e into the first two bytes of dst and panics if len(dst) <
+// 2.
+func (c Component) EncodeAt(dst []byte) {
+	binary.BigEndian.PutUint16(dst, uint16(c))
+}
+
+// Encode encodes c into a new slice of two bytes.
+func (c Component) Encode() []byte {
+	var bs [2]byte
+	c.EncodeAt(bs[:])
+	return bs[:]
+}
+
+// Entity is an identifier that can be associated with Go values via
+// Components, and
+//
+// Entities are typically created through Store.Alloc().
 type Entity uint64
 
-// EncodeAt encodes e into dst and panics if len(dst) < 8.
-func (e Entity) EncodeAt(dst []byte) { binary.BigEndian.PutUint64(dst, uint64(e)) }
-
-func (e Entity) Encode() []byte {
-	bs := make([]byte, 8)
-	e.EncodeAt(bs)
-	return bs
+// EncodeAt encodes e into the first eight bytes of dst and panics if len(dst)
+// < 8.
+func (e Entity) EncodeAt(dst []byte) {
+	binary.BigEndian.PutUint64(dst, uint64(e))
 }
 
+// Encode encodes e into a new slice of eight bytes.
+func (e Entity) Encode() []byte {
+	var bs [8]byte
+	e.EncodeAt(bs[:])
+	return bs[:]
+}
+
+// Decode decodes the first eight bytes of src into e.
 func (e *Entity) Decode(src []byte) error {
 	*e = Entity(binary.BigEndian.Uint64(src))
 	return nil
@@ -191,11 +207,26 @@ func (e *Entity) Decode(src []byte) error {
 // as sort order preserving insertion and removal operations.
 type EntitySlice []Entity
 
-func (es EntitySlice) Len() int           { return len(es) }
-func (es EntitySlice) Less(a, b int) bool { return es[a] < es[b] }
-func (es EntitySlice) Swap(a, b int)      { es[a], es[b] = es[b], es[a] }
-func (es EntitySlice) Sort()              { sort.Sort(es) }
+// Len returns len(es).
+//
+// Len exists only to implement sort.Interface.
+func (es EntitySlice) Len() int { return len(es) }
 
+// Less returns true if and only if es[a] < es[b].
+//
+// Less exists only to implement sort.Interface.
+func (es EntitySlice) Less(a, b int) bool { return es[a] < es[b] }
+
+// Swap swaps the values of es[a] and es[b].
+//
+// Swap exists only to implement sort.Interface.
+func (es EntitySlice) Swap(a, b int) { es[a], es[b] = es[b], es[a] }
+
+// Sort sorts the values of es in ascending order.
+func (es EntitySlice) Sort() { sort.Sort(es) }
+
+// Equal returns true if and only if the contents of es match the contents of
+// o.
 func (es EntitySlice) Equal(o EntitySlice) bool {
 	if len(es) != len(o) {
 		return false
@@ -208,6 +239,13 @@ func (es EntitySlice) Equal(o EntitySlice) bool {
 	return true
 }
 
+// Search returns the index of the first element of es that is greater than or
+// equal to e.
+//
+// In other words, if e is an element of es, then es[es.Search(e)] == e.
+// However, if all elements in es are less than e, then es.Search(e) == len(e).
+//
+// If es is not sorted, the results are undefined.
 func (es EntitySlice) Search(e Entity) int {
 	return sort.Search(len(es), func(i int) bool { return es[i] >= e })
 }
@@ -242,6 +280,7 @@ func (es *EntitySlice) Remove(e Entity) bool {
 	return false
 }
 
+// Encode encodes es into a new slice of bytes.
 func (es EntitySlice) Encode() []byte {
 	bs := make([]byte, 8*len(es))
 	for i, e := range es {
@@ -250,6 +289,7 @@ func (es EntitySlice) Encode() []byte {
 	return bs
 }
 
+// Decode decodes src into es.
 func (es *EntitySlice) Decode(src []byte) error {
 	ln := len(src) / 8
 	if len(*es) < ln {
@@ -261,9 +301,14 @@ func (es *EntitySlice) Decode(src []byte) error {
 	return nil
 }
 
+// String is an alias for string that implements the Encoder and Decoder
+// interfaces.
 type String string
 
+// Encode encodes s into a new slice of bytes.
 func (s String) Encode() []byte { return []byte(s) }
+
+// Decode decodes src into s.
 func (s *String) Decode(src []byte) error {
 	*s = String(src)
 	return nil

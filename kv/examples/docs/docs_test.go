@@ -40,7 +40,7 @@ func TestSchemaSetScanLookup(t *testing.T) {
 	ds, err := schema.DocumentComponent(0).Scan([]kv.Entity{e, e})
 	if err != nil {
 		t.Error(err)
-	} else if len(ds) != 2 || ds[0].String() != sample.String() || ds[1].String() != sample.String() {
+	} else if len(ds) != 2 || ds[0] != sample || ds[1] != sample {
 		t.Error("want", []Document{sample, sample}, "got", ds)
 	}
 	matches, err := schema.DocumentComponent(0).LookupByTitle("test title")

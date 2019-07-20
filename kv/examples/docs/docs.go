@@ -19,14 +19,15 @@
 // components associated with entities in a key-value store.
 package docs
 
-//go:generate protoc --go_out=. docs.proto
 //go:generate kvschema
 
 import (
+	"bytes"
+	"encoding/gob"
+	"io"
 	"log"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/google/note-maps/kv"
 )
 
@@ -35,16 +36,23 @@ const (
 	TitlePrefix    kv.ComponentPrefix = 4
 )
 
+// Document is a component value type.
+type Document struct {
+	Title   string
+	Content string
+}
+
 // Encode implements kv.Encoder for storing documents in a kv.Store.
 //
 // The presence of Encode and Decode methods tells kvschema to produce the
 // DocumentComponent type.
 func (d *Document) Encode() []byte {
-	bs, err := proto.Marshal(d)
+	var buf bytes.Buffer
+	err := gob.NewEncoder(&buf).Encode(d)
 	if err != nil {
 		log.Println(err)
 	}
-	return bs
+	return buf.Bytes()
 }
 
 // Decode implements kv.Decoder for retrieving documents from a kv.Store.
@@ -52,7 +60,11 @@ func (d *Document) Encode() []byte {
 // The presence of Encode and Decode methods tells kvschema to produce the
 // DocumentComponent type.
 func (d *Document) Decode(src []byte) error {
-	return proto.Unmarshal(src, d)
+	err := gob.NewDecoder(bytes.NewBuffer(src)).Decode(d)
+	if err == io.EOF {
+		err = nil
+	}
+	return err
 }
 
 // IndexTitle provides values that should be mapped back to this document
@@ -62,6 +74,6 @@ func (d *Document) Decode(src []byte) error {
 // "Title" tells kvschema to define a DocumentTitleIndex type.
 func (d *Document) IndexTitle() []kv.String {
 	return []kv.String{
-		kv.String(strings.ToLower(d.GetTitle())),
+		kv.String(strings.ToLower(d.Title)),
 	}
 }

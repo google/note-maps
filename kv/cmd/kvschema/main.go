@@ -218,14 +218,15 @@ func gen(pkg *types.Package, w io.Writer) error {
 				}
 				indexName := strings.TrimPrefix(name, "Index")
 				c.Indexes = append(c.Indexes, &IndexInfo{
-					ComponentName: c.Name,
-					Name:          indexName,
-					PrefixName:    indexName + "Prefix",
-					MethodName:    name,
-					MethodDirect:  direct,
-					TypeExpr:      expr,
-					DirectEncoder: encoderImpl == DirectImplementation,
-					DirectDecoder: decoderImpl == DirectImplementation,
+					ComponentName:       c.Name,
+					ComponentPrefixName: c.PrefixName,
+					Name:                indexName,
+					PrefixName:          indexName + "Prefix",
+					MethodName:          name,
+					MethodDirect:        direct,
+					TypeExpr:            expr,
+					DirectEncoder:       encoderImpl == DirectImplementation,
+					DirectDecoder:       decoderImpl == DirectImplementation,
 				})
 				verboseLogf("index found: %v", c.Indexes[len(c.Indexes)-1])
 			}
@@ -263,14 +264,15 @@ type ComponentType struct {
 }
 
 type IndexInfo struct {
-	ComponentName string
-	Name          string
-	PrefixName    string
-	MethodName    string
-	MethodDirect  bool
-	TypeExpr      string
-	DirectEncoder bool
-	DirectDecoder bool
+	ComponentName       string
+	ComponentPrefixName string
+	Name                string
+	PrefixName          string
+	MethodName          string
+	MethodDirect        bool
+	TypeExpr            string
+	DirectEncoder       bool
+	DirectDecoder       bool
 }
 
 type Implementation int

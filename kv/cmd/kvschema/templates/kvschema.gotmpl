@@ -22,129 +22,130 @@ import (
 	"github.com/google/note-maps/kv"
 )
 
-// Schema provides entities, components, and indexes backed by a key-value
+// Store provides entities, components, and indexes backed by a key-value
 // store.
 //
 // Usage:
 //{{with index .ComponentTypes 0}}
-//   {{.SVar}}, err := Schema{Store: store}.{{.Name}}Component(0).Scan([]kv.Entity{7, 42})
+//   {{.SVar}}, err := Store{Store: store}.{{.Name}}Component(0).Scan([]kv.Entity{7, 42})
 //{{end}}
-type Schema struct {
-	Store kv.Store
+type Store struct {
+	kv.Store
+	parent kv.Entity
 }
 
-{{range .ComponentTypes}}{{template "component" .}}{{end}}
-{{end}}
-
-{{define "index"}}// {{.Name}}Index manages a map from {{.Name}} values to entities.
-type {{.Name}}Index struct {
-	s      kv.Store
-	prefix kv.Prefix
+func (s Store) Parent(e kv.Entity) *Store {
+	s.parent = e
+	return &s
 }
-{{end}}
+{{range .ComponentTypes}}{{template "component" .}}{{end}}{{end}}
 
-{{define "component"}}// {{.Name}}Component manages a map from entities to {{.Name}} values.
-type {{.Name}}Component struct {
-	s      kv.Store
-	prefix kv.Prefix
-}
-
-// {{.Name}}Component returns a {{.Name}}Component rooted at the given parent.
-func (s *Schema) {{.Name}}Component(parent kv.Entity) *{{.Name}}Component {
-	var prefix kv.Prefix
-	return &{{.Name}}Component{
-		s:      s.Store,
-		prefix: prefix.ConcatEntityComponent(parent, {{.PrefixName}}),
-	}
-}
-
-// Set sets the {{.Name}} associated with e to v.
+{{define "component"}}
+// Set{{.Name}} sets the {{.Name}} associated with e to v.
 //
 // Corresponding indexes are updated.
-func (c *{{.Name}}Component) Set(e kv.Entity, v {{if .DirectEncoder}}{{else}}*{{end}}{{.Name}}) error {
-	ek := c.prefix.ConcatEntity(e)
+func (s *Store) Set{{.Name}}(e kv.Entity, v {{if .DirectEncoder}}{{else}}*{{end}}{{.Name}}) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	{{.PrefixName}}.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
 	{{ if .Indexes }}var old {{.Name}}
-	if err := c.s.Get(ek, old.Decode); err != nil {
+	if err := s.Get(key, old.Decode); err != nil {
 		return err
 	}
-	if err := c.s.Set(ek, v.Encode()); err != nil {
+	if err := s.Set(key, v.Encode()); err != nil {
 		return err
 	}
+	lek := len(key)
+	kv.Entity(0).EncodeAt(key[10:])
+	key = append(key, kv.Component(0).Encode()...)
 	var (
-		lek = len(ek)
-		ik  = c.prefix.ConcatEntityComponent(0, kv.Component(0))
-		lik = len(ik)
+		lik = len(key)
 		es  kv.EntitySlice
 	){{ range .Indexes }}
 
 	// Update {{.Name}} index
-	ik = ik[:lek].AppendComponent({{.PrefixName}})
+	key = key[:lek].AppendComponent({{.PrefixName}})
 	for _, iv := range old.{{.MethodName}}() {
-		ik = append(ik[:lik], iv.Encode()...)
-		if err := c.s.Get(ik, es.Decode); err != nil {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
 			return err
 		}
 		if es.Remove(e) {
-			if err := c.s.Set(ik, es.Encode()); err != nil {
+			if err := s.Set(key, es.Encode()); err != nil {
 				return err
 			}
 		}
 	}
 	for _, iv := range v.{{.MethodName}}() {
-		ik = append(ik[:lik], iv.Encode()...)
-		if err := c.s.Get(ik, es.Decode); err != nil {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
 			return err
 		}
 		if es.Insert(e) {
-			if err := c.s.Set(ik, es.Encode()); err != nil {
+			if err := s.Set(key, es.Encode()); err != nil {
 				return err
 			}
 		}
 	}
-	return nil{{ end }}{{ else }}return c.s.Set(ek, v.Encode()){{ end }}
+	return nil{{ end }}{{ else }}return s.Set(key, v.Encode()){{ end }}
 }
 
-// Scan returns a {{.Name}} for each entity in es.
+// Get{{.Name}}Slice returns a {{.Name}} for each entity in es.
 //
 // If the underlying storage returns an empty value with no error for keys that
 // do not exist, and {{.Name}}.Decode() can decode an empty byte slice, then a
 // query for entities that are not associated with a {{.Name}} should return no
 // errors.
-func (c *{{.Name}}Component) Scan(es []kv.Entity) ([]{{.Name}}, error) {
+func (s *Store) Get{{.Name}}Slice(es []kv.Entity) ([]{{.Name}}, error) {
 	result := make([]{{.Name}}, len(es))
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	{{.PrefixName}}.EncodeAt(key[8:])
 	for i, e := range es {
-		err := c.s.Get(c.prefix.ConcatEntity(e), (&result[i]).Decode)
+		e.EncodeAt(key[10:])
+		err := s.Get(key, (&result[i]).Decode)
 		if err != nil {
 			return nil, err
 		}
 	}
 	return result, nil
-}
+}{{range .Indexes}}
 
-{{range .Indexes}}// LookupBy{{.Name}} returns entities with {{.ComponentName}}
-// values that return a matching {{.TypeExpr}} from their {{.MethodName}} method.
+// EntitiesMatching{{.ComponentName}}{{.Name}} returns entities with {{.ComponentName}} values that return a matching {{.TypeExpr}} from their {{.MethodName}} method.
 //
 // The returned EntitySlice is already sorted.
-func (c *{{.ComponentName}}Component) LookupBy{{.Name}}(v {{.TypeExpr}}) (kv.EntitySlice, error) {
-	key := c.prefix.ConcatEntityComponentBytes(0, {{.PrefixName}}, v.Encode())
+func (s *Store) EntitiesMatching{{.ComponentName}}{{.Name}}(v {{.TypeExpr}}) (kv.EntitySlice, error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	{{.ComponentPrefixName}}.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	{{.PrefixName}}.EncodeAt(key[18:])
+	key = append(key, v.Encode()...)
 	var es kv.EntitySlice
-	return es, c.s.Get(key, es.Decode)
+	return es, s.Get(key, es.Decode)
 }
 
 type {{.Name}}Cursor struct {
-	Value  kv.String
+	Value  {{.TypeExpr}}
 	Offset int
 }
 
-// AllBy{{.Name}} reads entities associated with {{.ComponentName}} values
-// ordered by {{.Name}}.
+// EntitiesBy{{.ComponentName}}{{.Name}} returns entities with
+// {{.ComponentName}} values ordered by the {{.TypeExpr}} values from their
+// {{.MethodName}} method.
 //
 // Reading begins at cursor, and ends when the length of the returned Entity
 // slice is less than n. When reading is not complete, cursor is updated such
 // that using it in a subequent call to By{{.Name}} would return next n
 // entities.
-func (c *{{.ComponentName}}Component) By{{.Name}}(cursor *{{.Name}}Cursor, n int) (es []kv.Entity, err error) {
-	iter := c.s.PrefixIterator(c.prefix.ConcatEntityComponent(0, {{.PrefixName}}))
+func (s *Store) EntitiesBy{{.ComponentName}}{{.Name}}(cursor *{{.Name}}Cursor, n int) (es []kv.Entity, err error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	{{.ComponentPrefixName}}.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	{{.PrefixName}}.EncodeAt(key[18:])
+	iter := s.PrefixIterator(key)
 	defer iter.Discard()
 	iter.Seek(cursor.Value.Encode())
 	if !iter.Valid() {
@@ -179,4 +180,5 @@ func (c *{{.ComponentName}}Component) By{{.Name}}(cursor *{{.Name}}Cursor, n int
 		}
 	}
 	return
-}{{end}}{{end}}
+}{{end}}
+{{end}}

@@ -23,8 +23,7 @@ import (
 )
 
 func TestSchemaSetScanLookup(t *testing.T) {
-	store := memory.New()
-	schema := Schema{store}
+	store := Store{Store: memory.New()}
 	e, err := store.Alloc()
 	if err != nil {
 		t.Error(e)
@@ -33,23 +32,23 @@ func TestSchemaSetScanLookup(t *testing.T) {
 		Title:   "Test Title",
 		Content: "Ipsum dolor etcetera",
 	}
-	err = schema.DocumentComponent(0).Set(e, &sample)
+	err = store.SetDocument(e, &sample)
 	if err != nil {
 		t.Error(err)
 	}
-	ds, err := schema.DocumentComponent(0).Scan([]kv.Entity{e, e})
+	ds, err := store.GetDocumentSlice([]kv.Entity{e, e})
 	if err != nil {
 		t.Error(err)
 	} else if len(ds) != 2 || ds[0] != sample || ds[1] != sample {
 		t.Error("want", []Document{sample, sample}, "got", ds)
 	}
-	matches, err := schema.DocumentComponent(0).LookupByTitle("test title")
+	matches, err := store.EntitiesMatchingDocumentTitle("test title")
 	if err != nil {
 		t.Error(err)
 	} else if len(matches) != 1 {
 		t.Error("want 1 match, got", len(matches), ":", matches)
 	} else {
-		ds, err = schema.DocumentComponent(0).Scan(matches)
+		ds, err = store.GetDocumentSlice(matches)
 		if err != nil {
 			t.Error(err)
 		} else if len(ds) != 1 {
@@ -62,15 +61,14 @@ func TestSchemaSetScanLookup(t *testing.T) {
 }
 
 func TestSchemaByTitle(t *testing.T) {
-	store := memory.New()
-	schema := Schema{store}
+	store := Store{Store: memory.New()}
 	for i := 0; i < 10; i++ {
 		for _, name := range []string{"Foo", "Bar", "Quux"} {
 			e, err := store.Alloc()
 			if err != nil {
 				t.Fatal(e)
 			}
-			err = schema.DocumentComponent(0).Set(e, &Document{
+			err = store.SetDocument(e, &Document{
 				Title:   fmt.Sprintf("%s #%v", name, i),
 				Content: "Ipsum dolor etcetera",
 			})
@@ -83,7 +81,7 @@ func TestSchemaByTitle(t *testing.T) {
 	var docs []Document
 	already := make(map[kv.Entity]bool)
 	for i := 0; ; i++ {
-		es, err := schema.DocumentComponent(0).ByTitle(&cursor, 5)
+		es, err := store.EntitiesByDocumentTitle(&cursor, 5)
 		if err != nil {
 			t.Error(err)
 			break
@@ -97,7 +95,7 @@ func TestSchemaByTitle(t *testing.T) {
 			}
 			already[e] = true
 		}
-		ds, err := schema.DocumentComponent(0).Scan(es)
+		ds, err := store.GetDocumentSlice(es)
 		if err != nil {
 			t.Error(err)
 			break

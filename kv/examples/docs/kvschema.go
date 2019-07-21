@@ -6,71 +6,66 @@ import (
 	"github.com/google/note-maps/kv"
 )
 
-// Schema provides entities, components, and indexes backed by a key-value
+// Store provides entities, components, and indexes backed by a key-value
 // store.
 //
 // Usage:
 //
-//   d, err := Schema{Store: store}.DocumentComponent(0).Scan([]kv.Entity{7, 42})
+//   d, err := Store{Store: store}.DocumentComponent(0).Scan([]kv.Entity{7, 42})
 //
-type Schema struct {
-	Store kv.Store
+type Store struct {
+	kv.Store
+	parent kv.Entity
 }
 
-// DocumentComponent manages a map from entities to Document values.
-type DocumentComponent struct {
-	s      kv.Store
-	prefix kv.Prefix
+func (s Store) Parent(e kv.Entity) *Store {
+	s.parent = e
+	return &s
 }
 
-// DocumentComponent returns a DocumentComponent rooted at the given parent.
-func (s *Schema) DocumentComponent(parent kv.Entity) *DocumentComponent {
-	var prefix kv.Prefix
-	return &DocumentComponent{
-		s:      s.Store,
-		prefix: prefix.ConcatEntityComponent(parent, DocumentPrefix),
-	}
-}
-
-// Set sets the Document associated with e to v.
+// SetDocument sets the Document associated with e to v.
 //
 // Corresponding indexes are updated.
-func (c *DocumentComponent) Set(e kv.Entity, v *Document) error {
-	ek := c.prefix.ConcatEntity(e)
+func (s *Store) SetDocument(e kv.Entity, v *Document) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	DocumentPrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
 	var old Document
-	if err := c.s.Get(ek, old.Decode); err != nil {
+	if err := s.Get(key, old.Decode); err != nil {
 		return err
 	}
-	if err := c.s.Set(ek, v.Encode()); err != nil {
+	if err := s.Set(key, v.Encode()); err != nil {
 		return err
 	}
+	lek := len(key)
+	kv.Entity(0).EncodeAt(key[10:])
+	key = append(key, kv.Component(0).Encode()...)
 	var (
-		lek = len(ek)
-		ik  = c.prefix.ConcatEntityComponent(0, kv.Component(0))
-		lik = len(ik)
+		lik = len(key)
 		es  kv.EntitySlice
 	)
 
 	// Update Title index
-	ik = ik[:lek].AppendComponent(TitlePrefix)
+	key = key[:lek].AppendComponent(TitlePrefix)
 	for _, iv := range old.IndexTitle() {
-		ik = append(ik[:lik], iv.Encode()...)
-		if err := c.s.Get(ik, es.Decode); err != nil {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
 			return err
 		}
 		if es.Remove(e) {
-			if err := c.s.Set(ik, es.Encode()); err != nil {
+			if err := s.Set(key, es.Encode()); err != nil {
 				return err
 			}
 		}
 	}
 	for _, iv := range v.IndexTitle() {
-		ik = append(ik[:lik], iv.Encode()...)
-		if err := c.s.Get(ik, es.Decode); err != nil {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
 			return err
 		}
 		if es.Insert(e) {
-			if err := c.s.Set(ik, es.Encode()); err != nil {
+			if err := s.Set(key, es.Encode()); err != nil {
 				return err
 			}
 		}
@@ -78,16 +73,20 @@ func (c *DocumentComponent) Set(e kv.Entity, v *Document) error {
 	return nil
 }
 
-// Scan returns a Document for each entity in es.
+// GetDocumentSlice returns a Document for each entity in es.
 //
 // If the underlying storage returns an empty value with no error for keys that
 // do not exist, and Document.Decode() can decode an empty byte slice, then a
 // query for entities that are not associated with a Document should return no
 // errors.
-func (c *DocumentComponent) Scan(es []kv.Entity) ([]Document, error) {
+func (s *Store) GetDocumentSlice(es []kv.Entity) ([]Document, error) {
 	result := make([]Document, len(es))
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	DocumentPrefix.EncodeAt(key[8:])
 	for i, e := range es {
-		err := c.s.Get(c.prefix.ConcatEntity(e), (&result[i]).Decode)
+		e.EncodeAt(key[10:])
+		err := s.Get(key, (&result[i]).Decode)
 		if err != nil {
 			return nil, err
 		}
@@ -95,14 +94,18 @@ func (c *DocumentComponent) Scan(es []kv.Entity) ([]Document, error) {
 	return result, nil
 }
 
-// LookupByTitle returns entities with Document
-// values that return a matching kv.String from their IndexTitle method.
+// EntitiesMatchingDocumentTitle returns entities with Document values that return a matching kv.String from their IndexTitle method.
 //
 // The returned EntitySlice is already sorted.
-func (c *DocumentComponent) LookupByTitle(v kv.String) (kv.EntitySlice, error) {
-	key := c.prefix.ConcatEntityComponentBytes(0, TitlePrefix, v.Encode())
+func (s *Store) EntitiesMatchingDocumentTitle(v kv.String) (kv.EntitySlice, error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	DocumentPrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	TitlePrefix.EncodeAt(key[18:])
+	key = append(key, v.Encode()...)
 	var es kv.EntitySlice
-	return es, c.s.Get(key, es.Decode)
+	return es, s.Get(key, es.Decode)
 }
 
 type TitleCursor struct {
@@ -110,15 +113,21 @@ type TitleCursor struct {
 	Offset int
 }
 
-// AllByTitle reads entities associated with Document values
-// ordered by Title.
+// EntitiesByDocumentTitle returns entities with
+// Document values ordered by the kv.String values from their
+// IndexTitle method.
 //
 // Reading begins at cursor, and ends when the length of the returned Entity
 // slice is less than n. When reading is not complete, cursor is updated such
 // that using it in a subequent call to ByTitle would return next n
 // entities.
-func (c *DocumentComponent) ByTitle(cursor *TitleCursor, n int) (es []kv.Entity, err error) {
-	iter := c.s.PrefixIterator(c.prefix.ConcatEntityComponent(0, TitlePrefix))
+func (s *Store) EntitiesByDocumentTitle(cursor *TitleCursor, n int) (es []kv.Entity, err error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	DocumentPrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	TitlePrefix.EncodeAt(key[18:])
+	iter := s.PrefixIterator(key)
 	defer iter.Discard()
 	iter.Seek(cursor.Value.Encode())
 	if !iter.Valid() {

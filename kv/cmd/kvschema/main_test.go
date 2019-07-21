@@ -39,7 +39,7 @@ import "github.com/google/note-maps/kv"
 
 const (
 	DocumentPrefix kv.Component = 3
-	TitlePrefix                 = 4
+	TitlePrefix    kv.Component = 4
 )
 
 type Document struct{ Title string }
@@ -49,8 +49,8 @@ func (d *Document) Decode(src []byte) error { return nil }
 func (d *Document) IndexTitle() []kv.String { return nil }
 `,
 		Substrings: []string{
-			`type DocumentComponent struct {`,
-			`func \(.*\*DocumentComponent\) Scan\(.*\[\]kv\.Entity\).*\[\]Document.*error`,
+			`type Store struct {`,
+			`func \(.*\*Store\) EntitiesMatchingDocumentTitle\(v kv\.String\)`,
 		},
 	},
 }

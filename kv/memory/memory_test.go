@@ -15,6 +15,7 @@
 package memory
 
 import (
+	"fmt"
 	"reflect"
 	"sync"
 	"testing"
@@ -84,18 +85,17 @@ func TestSetGet(t *testing.T) {
 
 func TestIterator(t *testing.T) {
 	store := New()
-	if err := store.Set([]byte("hello"), []byte("world")); err != nil {
-		t.Fatal(err)
+	for _, salutation := range []string{"hello", "good morning", "good afternoon"} {
+		for i, neighbor := range []string{"world", "friend", "desk"} {
+			s := fmt.Sprintf("%s%v", salutation, i)
+			if err := store.Set([]byte(s), []byte(neighbor)); err != nil {
+				t.Fatal(err)
+			}
+		}
 	}
-	if err := store.Set([]byte("good morning"), []byte("world")); err != nil {
-		t.Fatal(err)
-	}
-	if err := store.Set([]byte("good afternoon"), []byte("world")); err != nil {
-		t.Fatal(err)
-	}
-	prefix := "good "
 	got := make(map[string]kv.String)
-	iter := store.PrefixIterator([]byte(prefix))
+	iter := store.PrefixIterator([]byte("good afternoon"))
+	defer iter.Discard()
 	for iter.Seek(nil); iter.Valid(); iter.Next() {
 		sk := string(iter.Key())
 		var v kv.String
@@ -107,12 +107,13 @@ func TestIterator(t *testing.T) {
 		}
 		got[sk] = v
 	}
-	if len(got) != 2 {
-		t.Error("want 2 elements, got", len(got))
+	if len(got) != 3 {
+		t.Error("want 3 elements, got", len(got))
 	}
 	want := map[string]kv.String{
-		"morning":   "world",
-		"afternoon": "world",
+		"0": "world",
+		"1": "friend",
+		"2": "desk",
 	}
 	if !reflect.DeepEqual(want, got) {
 		t.Error("want", want, "got", got)

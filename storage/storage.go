@@ -77,9 +77,7 @@ type Storage struct {
 
 // Open returns a new Storage based on a Badger database stored at dir.
 func Open(dir string) (*Storage, error) {
-	opts := badger.DefaultOptions
-	opts.Dir = dir
-	opts.ValueDir = dir
+	opts := badger.DefaultOptions(dir)
 	db, err := badger.Open(opts)
 	if err != nil {
 		return nil, err

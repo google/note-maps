@@ -1,0 +1,10 @@
+language: go
+go:
+  - tip
+before_install:
+  - go get github.com/mattn/goveralls
+script:
+  - ./githooks/pre-commit
+  - go test -cpu=1 -v ./...
+  - go test -race -v ./...
+  - $GOPATH/bin/goveralls -service=travis-ci

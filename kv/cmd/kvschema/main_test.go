@@ -67,8 +67,6 @@ type ImplementerReport struct {
 }
 
 func TestStuff(t *testing.T) {
-	var bs []byte
-	bs = append(bs, []byte{1, 2, 3}...)
 	for _, test := range tests {
 		fset := token.NewFileSet()
 		f, err := parser.ParseFile(fset, "input.go", test.Source, 0)
@@ -92,7 +90,7 @@ func TestStuff(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s: %s", test.Name, err)
 		}
-		pkg, err = conf.Check("input", fset, []*ast.File{f, fgen}, nil)
+		_, err = conf.Check("input", fset, []*ast.File{f, fgen}, nil)
 		if err != nil {
 			t.Errorf("%s: %s", test.Name, err)
 		}

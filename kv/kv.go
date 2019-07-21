@@ -28,7 +28,7 @@
 // generated code will also support looking up entities or loading entities in
 // order according to each index. An index method must: have a name that starts
 // with "Index", receive no arguments, and return a slice of a type that also
-// implementes Encoder and Decoder.
+// implements Encoder and Decoder.
 //
 // Examples are included in the "examples" subdirectory.
 //
@@ -53,7 +53,7 @@ type Store interface {
 	// possible Entity values is exhausted.
 	//
 	// Alloc cannot be implemented through Get and Set operations on the Store
-	// interface itself becuase independent concurrent transactions require
+	// interface itself because independent concurrent transactions require
 	// mutually unique Entity values, and the Store interface maybe implemented
 	// by a transaction type.
 	Alloc() (Entity, error)

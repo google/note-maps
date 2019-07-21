@@ -26,7 +26,7 @@ func (s Store) Parent(e kv.Entity) *Store {
 // SetTopicMapInfo sets the TopicMapInfo associated with e to v.
 //
 // Corresponding indexes are updated.
-func (s *Store) SetTopicMapInfo(e kv.Entity, v TopicMapInfo) error {
+func (s *Store) SetTopicMapInfo(e kv.Entity, v *TopicMapInfo) error {
 	key := make(kv.Prefix, 8+2+8)
 	s.parent.EncodeAt(key)
 	TopicMapInfoPrefix.EncodeAt(key[8:])
@@ -53,4 +53,337 @@ func (s *Store) GetTopicMapInfoSlice(es []kv.Entity) ([]TopicMapInfo, error) {
 		}
 	}
 	return result, nil
+}
+
+// SetTopicRefList sets the TopicRefList associated with e to v.
+//
+// Corresponding indexes are updated.
+func (s *Store) SetTopicRefList(e kv.Entity, v *TopicRefList) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	TopicRefListPrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	var old TopicRefList
+	if err := s.Get(key, old.Decode); err != nil {
+		return err
+	}
+	if err := s.Set(key, v.Encode()); err != nil {
+		return err
+	}
+	lek := len(key)
+	kv.Entity(0).EncodeAt(key[10:])
+	key = append(key, kv.Component(0).Encode()...)
+	var (
+		lik = len(key)
+		es  kv.EntitySlice
+	)
+
+	// Update II index
+	key = key[:lek].AppendComponent(IIPrefix)
+	for _, iv := range old.IndexII() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Remove(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	for _, iv := range v.IndexII() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Insert(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+
+	// Update SI index
+	key = key[:lek].AppendComponent(SIPrefix)
+	for _, iv := range old.IndexSI() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Remove(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	for _, iv := range v.IndexSI() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Insert(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+
+	// Update SL index
+	key = key[:lek].AppendComponent(SLPrefix)
+	for _, iv := range old.IndexSL() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Remove(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	for _, iv := range v.IndexSL() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Insert(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// GetTopicRefListSlice returns a TopicRefList for each entity in es.
+//
+// If the underlying storage returns an empty value with no error for keys that
+// do not exist, and TopicRefList.Decode() can decode an empty byte slice, then a
+// query for entities that are not associated with a TopicRefList should return no
+// errors.
+func (s *Store) GetTopicRefListSlice(es []kv.Entity) ([]TopicRefList, error) {
+	result := make([]TopicRefList, len(es))
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	TopicRefListPrefix.EncodeAt(key[8:])
+	for i, e := range es {
+		e.EncodeAt(key[10:])
+		err := s.Get(key, (&result[i]).Decode)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
+}
+
+// EntitiesMatchingTopicRefListII returns entities with TopicRefList values that return a matching kv.String from their IndexII method.
+//
+// The returned EntitySlice is already sorted.
+func (s *Store) EntitiesMatchingTopicRefListII(v kv.String) (kv.EntitySlice, error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	TopicRefListPrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	IIPrefix.EncodeAt(key[18:])
+	key = append(key, v.Encode()...)
+	var es kv.EntitySlice
+	return es, s.Get(key, es.Decode)
+}
+
+type IICursor struct {
+	Value  kv.String
+	Offset int
+}
+
+// EntitiesByTopicRefListII returns entities with
+// TopicRefList values ordered by the kv.String values from their
+// IndexII method.
+//
+// Reading begins at cursor, and ends when the length of the returned Entity
+// slice is less than n. When reading is not complete, cursor is updated such
+// that using it in a subequent call to ByII would return next n
+// entities.
+func (s *Store) EntitiesByTopicRefListII(cursor *IICursor, n int) (es []kv.Entity, err error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	TopicRefListPrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	IIPrefix.EncodeAt(key[18:])
+	iter := s.PrefixIterator(key)
+	defer iter.Discard()
+	iter.Seek(cursor.Value.Encode())
+	if !iter.Valid() {
+		return
+	}
+	var buf kv.EntitySlice
+	if err = iter.Value(buf.Decode); err != nil {
+		return
+	}
+	if cursor.Offset < len(buf) {
+		es = append(es, buf[cursor.Offset:]...)
+		if len(es) >= n {
+			cursor.Offset += n
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	for iter.Next(); iter.Valid(); iter.Next() {
+		if err = iter.Value(buf.Decode); err != nil {
+			return
+		}
+		es = append(es, buf...)
+		if len(es) >= n {
+			err = cursor.Value.Decode(iter.Key())
+			cursor.Offset = len(buf) - (len(es) - n)
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	return
+}
+
+// EntitiesMatchingTopicRefListSI returns entities with TopicRefList values that return a matching kv.String from their IndexSI method.
+//
+// The returned EntitySlice is already sorted.
+func (s *Store) EntitiesMatchingTopicRefListSI(v kv.String) (kv.EntitySlice, error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	TopicRefListPrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	SIPrefix.EncodeAt(key[18:])
+	key = append(key, v.Encode()...)
+	var es kv.EntitySlice
+	return es, s.Get(key, es.Decode)
+}
+
+type SICursor struct {
+	Value  kv.String
+	Offset int
+}
+
+// EntitiesByTopicRefListSI returns entities with
+// TopicRefList values ordered by the kv.String values from their
+// IndexSI method.
+//
+// Reading begins at cursor, and ends when the length of the returned Entity
+// slice is less than n. When reading is not complete, cursor is updated such
+// that using it in a subequent call to BySI would return next n
+// entities.
+func (s *Store) EntitiesByTopicRefListSI(cursor *SICursor, n int) (es []kv.Entity, err error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	TopicRefListPrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	SIPrefix.EncodeAt(key[18:])
+	iter := s.PrefixIterator(key)
+	defer iter.Discard()
+	iter.Seek(cursor.Value.Encode())
+	if !iter.Valid() {
+		return
+	}
+	var buf kv.EntitySlice
+	if err = iter.Value(buf.Decode); err != nil {
+		return
+	}
+	if cursor.Offset < len(buf) {
+		es = append(es, buf[cursor.Offset:]...)
+		if len(es) >= n {
+			cursor.Offset += n
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	for iter.Next(); iter.Valid(); iter.Next() {
+		if err = iter.Value(buf.Decode); err != nil {
+			return
+		}
+		es = append(es, buf...)
+		if len(es) >= n {
+			err = cursor.Value.Decode(iter.Key())
+			cursor.Offset = len(buf) - (len(es) - n)
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	return
+}
+
+// EntitiesMatchingTopicRefListSL returns entities with TopicRefList values that return a matching kv.String from their IndexSL method.
+//
+// The returned EntitySlice is already sorted.
+func (s *Store) EntitiesMatchingTopicRefListSL(v kv.String) (kv.EntitySlice, error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	TopicRefListPrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	SLPrefix.EncodeAt(key[18:])
+	key = append(key, v.Encode()...)
+	var es kv.EntitySlice
+	return es, s.Get(key, es.Decode)
+}
+
+type SLCursor struct {
+	Value  kv.String
+	Offset int
+}
+
+// EntitiesByTopicRefListSL returns entities with
+// TopicRefList values ordered by the kv.String values from their
+// IndexSL method.
+//
+// Reading begins at cursor, and ends when the length of the returned Entity
+// slice is less than n. When reading is not complete, cursor is updated such
+// that using it in a subequent call to BySL would return next n
+// entities.
+func (s *Store) EntitiesByTopicRefListSL(cursor *SLCursor, n int) (es []kv.Entity, err error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	TopicRefListPrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	SLPrefix.EncodeAt(key[18:])
+	iter := s.PrefixIterator(key)
+	defer iter.Discard()
+	iter.Seek(cursor.Value.Encode())
+	if !iter.Valid() {
+		return
+	}
+	var buf kv.EntitySlice
+	if err = iter.Value(buf.Decode); err != nil {
+		return
+	}
+	if cursor.Offset < len(buf) {
+		es = append(es, buf[cursor.Offset:]...)
+		if len(es) >= n {
+			cursor.Offset += n
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	for iter.Next(); iter.Valid(); iter.Next() {
+		if err = iter.Value(buf.Decode); err != nil {
+			return
+		}
+		es = append(es, buf...)
+		if len(es) >= n {
+			err = cursor.Value.Decode(iter.Key())
+			cursor.Offset = len(buf) - (len(es) - n)
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	return
 }

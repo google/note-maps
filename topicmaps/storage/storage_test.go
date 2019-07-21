@@ -15,7 +15,6 @@
 package storage
 
 import (
-	"reflect"
 	"sort"
 	"testing"
 
@@ -35,13 +34,13 @@ func TestCreateTopicMap(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	es = append(es, stored[0].TopicMap)
+	es = append(es, kv.Entity(stored[0].TopicMap))
 	stored = append(stored, nil)
 	stored[1], err = store.CreateTopicMap()
 	if err != nil {
 		t.Fatal(err)
 	}
-	es = append(es, stored[1].TopicMap)
+	es = append(es, kv.Entity(stored[1].TopicMap))
 	if stored[0].TopicMap == stored[1].TopicMap {
 		t.Errorf("want distinct values, got %v==%v",
 			stored[0].TopicMap, stored[1].TopicMap)
@@ -53,7 +52,7 @@ func TestCreateTopicMap(t *testing.T) {
 		t.Errorf("want %v topic maps, got %v topic maps", len(stored), len(got))
 	} else {
 		for i := range stored {
-			if !reflect.DeepEqual(*stored[i], got[i]) {
+			if stored[i].String() != got[i].String() {
 				t.Errorf("want %v, got %v", stored[i], got[i])
 			}
 		}

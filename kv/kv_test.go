@@ -18,6 +18,122 @@ import (
 	"testing"
 )
 
+var (
+	testPrefixes = []struct {
+		Name   string
+		Prefix Prefix
+	}{
+		{"empty", Prefix{}},
+		{"spacious", make(Prefix, 1, 512)},
+		{"zero filled", Prefix{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+		{"monotonic", Prefix{0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb}},
+	}
+	testEntities = []struct {
+		Name   string
+		Entity Entity
+	}{
+		{"zero", 0},
+		{"HHGttG", 42},
+		{"monotonic", 0x0123456789ABCDEF},
+	}
+	testComponents = []struct {
+		Name      string
+		Component Component
+	}{
+		{"zero", 0},
+		{"HHGttG", 42},
+		{"monotonic lo", 0x1234},
+		{"monotonic hi", 0xCDEF},
+	}
+)
+
+func TestPrefixConcatEntity(t *testing.T) {
+	for _, p := range testPrefixes {
+		for _, e := range testEntities {
+			t.Run(p.Name+"/"+e.Name, func(t *testing.T) {
+				got := p.Prefix.ConcatEntity(e.Entity)
+				if len(p.Prefix) > 0 && &got[0] == &p.Prefix[0] {
+					t.Error("want concat result to use different backing array")
+				} else if string(p.Prefix) != string(got[:len(p.Prefix)]) {
+					t.Error("want concat result to share content of original")
+				}
+			})
+		}
+	}
+}
+
+func TestPrefixConcatEntityComponent(t *testing.T) {
+	for _, p := range testPrefixes {
+		for _, e := range testEntities {
+			for _, c := range testComponents {
+				t.Run(p.Name+"/"+e.Name+"/"+c.Name, func(t *testing.T) {
+					got := p.Prefix.ConcatEntityComponent(e.Entity, c.Component)
+					if len(got) != len(p.Prefix)+8+2 {
+						t.Error("want", len(p.Prefix)+8+2, "bytes, got", len(got))
+					} else if len(p.Prefix) > 0 && &got[0] == &p.Prefix[0] {
+						t.Error("want concat result to use different backing array")
+					} else if string(p.Prefix) != string(got[:len(p.Prefix)]) {
+						t.Error("want concat result to share content of original")
+					}
+				})
+			}
+		}
+	}
+}
+
+func TestPrefixConcatEntityComponentBytes(t *testing.T) {
+	for _, p := range testPrefixes {
+		for _, e := range testEntities {
+			for _, c := range testComponents {
+				for _, bs := range testPrefixes {
+					t.Run(p.Name+"/"+e.Name+"/"+c.Name+"/"+bs.Name, func(t *testing.T) {
+						got := p.Prefix.ConcatEntityComponentBytes(e.Entity, c.Component, []byte(bs.Prefix))
+						if len(got) != len(p.Prefix)+8+2+len(bs.Prefix) {
+							t.Error("want", len(p.Prefix)+8+2+len(bs.Prefix), "bytes, got", len(got))
+						} else if len(p.Prefix) > 0 && &got[0] == &p.Prefix[0] {
+							t.Error("want concat result to use different backing array")
+						} else if string(p.Prefix) != string(got[:len(p.Prefix)]) {
+							t.Error("want concat result to share content of original")
+						}
+					})
+				}
+			}
+		}
+	}
+}
+
+func TestPrefixAppendComponent(t *testing.T) {
+	for _, p := range testPrefixes {
+		for _, c := range testComponents {
+			t.Run(p.Name+"/"+c.Name, func(t *testing.T) {
+				wantShare := cap(p.Prefix) >= len(p.Prefix)+len(c.Name)
+				got := p.Prefix.AppendComponent(c.Component)
+				if wantShare && len(p.Prefix) > 0 && &got[0] != &p.Prefix[0] {
+					t.Error("want append result to share memory with original")
+				} else if string(p.Prefix) != string(got[:len(p.Prefix)]) {
+					t.Error("want append result to share content of original")
+				}
+			})
+		}
+	}
+}
+
+func TestComponentEncode(t *testing.T) {
+	for _, c := range testComponents {
+		t.Run(c.Name, func(t *testing.T) {
+			got := c.Component.Encode()
+			want0 := byte((c.Component & 0xff00) >> 8)
+			if want0 != got[0] {
+				t.Errorf("want %x, got %x", want0, got[0])
+			}
+			want1 := byte(c.Component & 0xff)
+			if want1 != got[1] {
+				t.Errorf("want %x, got %x", want1, got[1])
+			}
+		})
+	}
+}
+
 func TestEntityEncodeDecode(t *testing.T) {
 	for _, want := range []Entity{0, 42, 0x0123456789ABCDEF} {
 		var (

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package storage implements storage and retrieval of topic maps in a mounted
-// file system using the Badger key-value database libraries.
+// Package storage implements storage and retrieval of topic maps in a local
+// key-value store using package kv.
 package storage
 
 //go:generate kvschema
@@ -36,15 +36,8 @@ const (
 )
 
 const (
-	// MetaPrefix is the first byte in keys for metadata about a database.
-	//
-	// {MetaPrefix, Meta*} : see documentation for Meta* constant.
-	MetaPrefix byte = iota
-
 	// TopicMapPrefix is the first byte in keys where the following eight bytes
 	// identify a topic map.
-	//
-	// {TopicMapPrefix, TopicMap} : {GobFormat, TopicMapInfo}
 	TopicMapInfoPrefix kv.Component = 1
 )
 

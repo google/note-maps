@@ -1,0 +1,32 @@
+#!/bin/bash
+set -e
+
+if git rev-parse --verify HEAD >/dev/null 2>&1
+then
+	against=HEAD
+else
+	# Initial commit: diff against an empty tree object
+	against=$(git hash-object -t tree /dev/null)
+fi
+
+# Redirect output to stderr.
+exec 1>&2
+
+# If there are whitespace errors, print the offending file names and fail.
+git diff-index --check --cached $against --
+
+gopkgs="$(go list ./... | grep -v 'vendor|third_party')"
+
+gofmt="$(gofmt -d .)"
+if [ -n "${gofmt}" ]
+then
+	echo -e "${gofmt}"
+	false
+fi
+
+gotest="$(go test -timeout 30s -short ${gopkgs})"
+if [ $? -ne 0 ]
+then
+	echo -e "${gotest}"
+	false
+fi

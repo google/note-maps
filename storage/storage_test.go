@@ -15,66 +15,45 @@
 package storage
 
 import (
-	"io/ioutil"
-	"os"
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/google/note-maps/kv"
+	"github.com/google/note-maps/kv/memory"
 )
 
 func TestCreateTopicMap(t *testing.T) {
-	dir, err := ioutil.TempDir("", "storage-test")
+	var (
+		err    error
+		store  = Store{Store: memory.New()}
+		es     []kv.Entity
+		stored []*TopicMapInfo
+	)
+	stored = append(stored, nil)
+	stored[0], err = store.CreateTopicMap()
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(dir)
-	store, err := Open(dir)
+	es = append(es, stored[0].TopicMap)
+	stored = append(stored, nil)
+	stored[1], err = store.CreateTopicMap()
 	if err != nil {
 		t.Fatal(err)
 	}
-	var stored []*TopicMapInfo
-	func() {
-		transaction := store.NewTransaction(true)
-		stored = append(stored, nil)
-		stored[0], err = transaction.CreateTopicMap()
-		if err != nil {
-			t.Fatal(err)
-		}
-		stored = append(stored, nil)
-		stored[1], err = transaction.CreateTopicMap()
-		if err != nil {
-			t.Fatal(err)
-		}
-		if stored[0].TopicMap == stored[1].TopicMap {
-			t.Errorf("want distinct values, got %v==%v",
-				stored[0].TopicMap, stored[1].TopicMap)
-		}
-		transaction.Commit()
-	}()
+	es = append(es, stored[1].TopicMap)
+	if stored[0].TopicMap == stored[1].TopicMap {
+		t.Errorf("want distinct values, got %v==%v",
+			stored[0].TopicMap, stored[1].TopicMap)
+	}
 	sort.Slice(stored,
 		func(a, b int) bool { return stored[a].TopicMap < stored[b].TopicMap })
-	var got []*TopicMapInfo
-	func() {
-		transaction := store.NewTransaction(false)
-		defer transaction.Discard()
-		cursor := transaction.TopicMaps(TopicMapsQuery{})
-		defer cursor.Discard()
-		for cursor.Next() {
-			info, err := cursor.Info()
-			if err != nil {
-				t.Error(err)
-			} else {
-				got = append(got, info)
-			}
-		}
-	}()
-	sort.Slice(got,
-		func(a, b int) bool { return got[a].TopicMap < got[b].TopicMap })
+	got, err := store.GetTopicMapInfoSlice(es)
 	if len(stored) != len(got) {
 		t.Errorf("want %v topic maps, got %v topic maps", len(stored), len(got))
 	} else {
 		for i := range stored {
-			if !reflect.DeepEqual(stored[i], got[i]) {
+			if !reflect.DeepEqual(*stored[i], got[i]) {
 				t.Errorf("want %v, got %v", stored[i], got[i])
 			}
 		}

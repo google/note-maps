@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package storage implements storage and retrieval of topic maps in a local
+// Package kvschema implements storage and retrieval of topic maps in a local
 // key-value store using package kv.
-package storage
+package kvschema
 
-//go:generate protoc --go_out=. storage.proto
 //go:generate kvschema
 
 import (
@@ -26,7 +25,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/google/note-maps/kv"
-	"github.com/google/note-maps/topicmaps/storage/pb"
+	"github.com/google/note-maps/topicmaps/kvschema/pb"
 )
 
 // To allow complex values may be encoded differently in later versions, a
@@ -38,13 +37,14 @@ const (
 )
 
 const (
-	TopicMapInfoPrefix    kv.Component = 1
-	TopicRefListPrefix    kv.Component = 2
-	IIPrefix              kv.Component = 3
-	SIPrefix              kv.Component = 4
-	SLPrefix              kv.Component = 5
-	TopicNamePrefix       kv.Component = 6
-	TopicOccurrencePrefix kv.Component = 7
+	TopicMapInfoPrefix     kv.Component = 1
+	IIsPrefix              kv.Component = 3
+	SIsPrefix              kv.Component = 4
+	SLsPrefix              kv.Component = 5
+	TopicNamesPrefix       kv.Component = 6
+	TopicOccurrencesPrefix kv.Component = 7
+	NamePrefix             kv.Component = 8
+	OccurrencePrefix       kv.Component = 9
 )
 
 type TopicMapInfo struct{ pb.TopicMapInfo }
@@ -52,24 +52,26 @@ type TopicMapInfo struct{ pb.TopicMapInfo }
 func (tmi *TopicMapInfo) Encode() []byte          { return encode(tmi) }
 func (tmi *TopicMapInfo) Decode(src []byte) error { return decode(src, tmi) }
 
-type TopicRefList struct{ pb.TopicRefList }
+type Refs kv.StringSlice
 
-func (tr *TopicRefList) Encode() []byte          { return encode(tr) }
-func (tr *TopicRefList) Decode(src []byte) error { return decode(src, tr) }
-func (tr *TopicRefList) IndexII() []kv.String    { return normalizeURLs(tr.GetItemIdentifiers()) }
-func (tr *TopicRefList) IndexSI() []kv.String    { return normalizeURLs(tr.GetSubjectIndicators()) }
-func (tr *TopicRefList) IndexSL() []kv.String    { return normalizeURLs(tr.GetSubjectLocators()) }
+func (r Refs) IndexEntity() []kv.String { return []kv.String(r) }
+
+type (
+	ItemIdentifiers   Refs
+	SubjectIndicators Refs
+	SubjectLocators   Refs
+)
 
 // TopicNames holds a slice of all of a topic's names.
 //
 // TopicNames is not sorted: names are ordered according to user preferences,
-// and this is how that ordering is represented in storage.
+// and this is how that ordering is represented in kvschema.
 type TopicNames kv.EntitySlice
 
 // TopicOccurrences holds a slice of all of a topic's occurrences.
 //
 // TopicOccurrences is not sorted: occurrences are ordered according to user
-// preferences, and this is how that ordering is represented in storage.
+// preferences, and this is how that ordering is represented in kvschema.
 type TopicOccurrences kv.EntitySlice
 
 type Name struct{ pb.Name }

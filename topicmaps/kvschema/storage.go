@@ -84,18 +84,6 @@ type Occurrence struct{ pb.Occurrence }
 func (o *Occurrence) Encode() []byte          { return encode(o) }
 func (o *Occurrence) Decode(src []byte) error { return decode(src, o) }
 
-// CreateTopicMap creates a new topic map in s and returns a copy of the topic
-// map's new metadata.
-func (s *Store) CreateTopicMap() (*TopicMapInfo, error) {
-	entity, err := s.Alloc()
-	if err != nil {
-		return nil, err
-	}
-	info := &TopicMapInfo{}
-	info.TopicMap = uint64(entity)
-	return info, s.SetTopicMapInfo(entity, info)
-}
-
 // UnsupportedFormatError indicates that a value was found in the key-value
 // backing store with an unsupported format code, perhaps due to data
 // corruption.

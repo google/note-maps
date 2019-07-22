@@ -39,6 +39,8 @@ package kv
 
 import (
 	"encoding/binary"
+	"encoding/json"
+	"log"
 	"sort"
 )
 
@@ -312,4 +314,20 @@ func (s String) Encode() []byte { return []byte(s) }
 func (s *String) Decode(src []byte) error {
 	*s = String(src)
 	return nil
+}
+
+type StringSlice []String
+
+// Encode encodes s into a new slice of bytes.
+func (ss StringSlice) Encode() []byte {
+	bs, err := json.Marshal(ss)
+	if err != nil {
+		log.Println(err)
+	}
+	return bs
+}
+
+// Decode decodes src into s.
+func (ss *StringSlice) Decode(src []byte) error {
+	return json.Unmarshal(src, ss)
 }

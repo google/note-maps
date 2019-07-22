@@ -15,6 +15,7 @@
 package kv
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -266,6 +267,27 @@ func TestStringEncodeDecode(t *testing.T) {
 		if err := d.Decode(e.Encode()); err != nil {
 			t.Error("want", want, "got", err)
 		} else if want != got {
+			t.Error("want", want, "got", got)
+		}
+	}
+}
+
+func TestStringSliceEncodeDecode(t *testing.T) {
+	for _, want := range []StringSlice{
+		{},
+		{""},
+		{"Hello, World!", "0x0123456789ABCDEF"},
+	} {
+		var (
+			e   Encoder = want
+			got StringSlice
+			d   Decoder = &got
+		)
+		if err := d.Decode(e.Encode()); err != nil {
+			t.Error("want", want, "got", err)
+		} else if len(want) == 0 && len(got) == 0 {
+			// Handle the nil case that reflect.DeepEqual doesn't.
+		} else if !reflect.DeepEqual(want, got) {
 			t.Error("want", want, "got", got)
 		}
 	}

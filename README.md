@@ -27,15 +27,14 @@ JTM ([JTM 1.1][]).
 
 ## Architecture Overview
 
-The mobile app will be a [Flutter][] client that uses [GraphQL][] over HTTP to
-communicate with an embedded web server implemented in [Go][]. The embedded
-server will bind to a random port on `localhost`, will serve HTTPS using a
-unique self-signed certificate, and will provide the URL along with a randomly
-generated authentication token to the mobile app.
+The mobile app will be a [Flutter][] front end with a UI focused on entering
+and organizing notes, and that uses a [GraphQL][] based protocol to communicate
+with an embedded topic maps storage and query engine implemented in [Go][].
 
-The server will use an LSM based key-value store to keep topic maps in local
-storage, and will be responsible for serialization and deserialization of topic
-maps to standard data formats.
+The storage engine will use an LSM based key-value store to keep topic maps in
+local storage, where they may be included in system backups, and will be
+responsible for serialization and deserialization of topic maps to standard
+data formats.
 
 [Flutter]: https://flutter.dev
 [Go]: https://golang.org
@@ -44,8 +43,7 @@ maps to standard data formats.
 ## Plan
 
 1.  Develop a basic prototype to validate the entire architecture with a
-    simplified data model: only topics and names, no occurrences or
-    associations.
+    subset of the topic maps data model.
 
 ## Source Code Headers
 

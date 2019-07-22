@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-language: go
-go:
-  - 1.x
-before_install:
-  - go get github.com/mattn/goveralls
-script:
-  - ./githooks/pre-commit
-  - go test -cpu 1,4 -race -v ./...
-  - ./build/ci/travis-coverage
+# Prerequisites:
+#   go get github.com/mattn/goveralls
+
+set -e
+
+# Redirect output to stderr.
+exec 1>&2
+
+gopkgs="$(go list ./... | grep -Ev '/(vendor|third_party|pb)\>')"
+
+go test -v -covermode=count -coverprofile=coverage.out ${gopkgs}
+"${GOPATH}/bin/goveralls" -coverprofile=coverage.out -service=travis-ci

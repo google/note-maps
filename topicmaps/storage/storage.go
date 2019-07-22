@@ -26,6 +26,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/google/note-maps/kv"
+	"github.com/google/note-maps/topicmaps/storage/pb"
 )
 
 // To allow complex values may be encoded differently in later versions, a
@@ -46,8 +47,12 @@ const (
 	TopicOccurrencePrefix kv.Component = 7
 )
 
+type TopicMapInfo struct{ pb.TopicMapInfo }
+
 func (tmi *TopicMapInfo) Encode() []byte          { return encode(tmi) }
 func (tmi *TopicMapInfo) Decode(src []byte) error { return decode(src, tmi) }
+
+type TopicRefList struct{ pb.TopicRefList }
 
 func (tr *TopicRefList) Encode() []byte          { return encode(tr) }
 func (tr *TopicRefList) Decode(src []byte) error { return decode(src, tr) }
@@ -67,8 +72,13 @@ type TopicNames kv.EntitySlice
 // preferences, and this is how that ordering is represented in storage.
 type TopicOccurrences kv.EntitySlice
 
-func (n *Name) Encode() []byte                { return encode(n) }
-func (n *Name) Decode(src []byte) error       { return decode(src, n) }
+type Name struct{ pb.Name }
+
+func (n *Name) Encode() []byte          { return encode(n) }
+func (n *Name) Decode(src []byte) error { return decode(src, n) }
+
+type Occurrence struct{ pb.Occurrence }
+
 func (o *Occurrence) Encode() []byte          { return encode(o) }
 func (o *Occurrence) Decode(src []byte) error { return decode(src, o) }
 
@@ -79,9 +89,8 @@ func (s *Store) CreateTopicMap() (*TopicMapInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	info := &TopicMapInfo{
-		TopicMap: uint64(entity),
-	}
+	info := &TopicMapInfo{}
+	info.TopicMap = uint64(entity)
 	return info, s.SetTopicMapInfo(entity, info)
 }
 

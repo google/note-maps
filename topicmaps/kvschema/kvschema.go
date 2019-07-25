@@ -11,7 +11,7 @@ import (
 //
 // Usage:
 //
-//   n, err := Store{Store: store}.NameComponent(0).Scan([]kv.Entity{7, 42})
+//   i, err := Store{Store: store}.IIsComponent(0).Scan([]kv.Entity{7, 42})
 //
 type Store struct {
 	kv.Store
@@ -23,6 +23,142 @@ func (s Store) Parent(e kv.Entity) *Store {
 	return &s
 }
 
+// SetIIs sets the IIs associated with e to v.
+//
+// Corresponding indexes are updated.
+func (s *Store) SetIIs(e kv.Entity, v IIs) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	IIsPrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	var old IIs
+	if err := s.Get(key, old.Decode); err != nil {
+		return err
+	}
+	if err := s.Set(key, v.Encode()); err != nil {
+		return err
+	}
+	lek := len(key)
+	kv.Entity(0).EncodeAt(key[10:])
+	key = append(key, kv.Component(0).Encode()...)
+	var (
+		lik = len(key)
+		es  kv.EntitySlice
+	)
+
+	// Update Literal index
+	key = key[:lek].AppendComponent(LiteralPrefix)
+	for _, iv := range old.IndexLiteral() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Remove(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	for _, iv := range v.IndexLiteral() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Insert(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// GetIIsSlice returns a IIs for each entity in es.
+//
+// If the underlying storage returns an empty value with no error for keys that
+// do not exist, and IIs.Decode() can decode an empty byte slice, then a
+// query for entities that are not associated with a IIs should return no
+// errors.
+func (s *Store) GetIIsSlice(es []kv.Entity) ([]IIs, error) {
+	result := make([]IIs, len(es))
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	IIsPrefix.EncodeAt(key[8:])
+	for i, e := range es {
+		e.EncodeAt(key[10:])
+		err := s.Get(key, (&result[i]).Decode)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
+}
+
+// EntitiesMatchingIIsLiteral returns entities with IIs values that return a matching kv.String from their IndexLiteral method.
+//
+// The returned EntitySlice is already sorted.
+func (s *Store) EntitiesMatchingIIsLiteral(v kv.String) (kv.EntitySlice, error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	IIsPrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	LiteralPrefix.EncodeAt(key[18:])
+	key = append(key, v.Encode()...)
+	var es kv.EntitySlice
+	return es, s.Get(key, es.Decode)
+}
+
+// EntitiesByIIsLiteral returns entities with
+// IIs values ordered by the kv.String values from their
+// IndexLiteral method.
+//
+// Reading begins at cursor, and ends when the length of the returned Entity
+// slice is less than n. When reading is not complete, cursor is updated such
+// that using it in a subequent call to ByLiteral would return next n
+// entities.
+func (s *Store) EntitiesByIIsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	IIsPrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	LiteralPrefix.EncodeAt(key[18:])
+	iter := s.PrefixIterator(key)
+	defer iter.Discard()
+	iter.Seek(cursor.Key)
+	if !iter.Valid() {
+		return
+	}
+	var buf kv.EntitySlice
+	if err = iter.Value(buf.Decode); err != nil {
+		return
+	}
+	if cursor.Offset < len(buf) {
+		es = append(es, buf[cursor.Offset:]...)
+		if len(es) >= n {
+			cursor.Offset += n
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	for iter.Next(); iter.Valid(); iter.Next() {
+		if err = iter.Value(buf.Decode); err != nil {
+			return
+		}
+		es = append(es, buf...)
+		if len(es) >= n {
+			cursor.Key = append(cursor.Key[:], iter.Key()...)
+			cursor.Offset = len(buf) - (len(es) - n)
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	return
+}
+
 // SetName sets the Name associated with e to v.
 //
 // Corresponding indexes are updated.
@@ -31,7 +167,46 @@ func (s *Store) SetName(e kv.Entity, v *Name) error {
 	s.parent.EncodeAt(key)
 	NamePrefix.EncodeAt(key[8:])
 	e.EncodeAt(key[10:])
-	return s.Set(key, v.Encode())
+	var old Name
+	if err := s.Get(key, old.Decode); err != nil {
+		return err
+	}
+	if err := s.Set(key, v.Encode()); err != nil {
+		return err
+	}
+	lek := len(key)
+	kv.Entity(0).EncodeAt(key[10:])
+	key = append(key, kv.Component(0).Encode()...)
+	var (
+		lik = len(key)
+		es  kv.EntitySlice
+	)
+
+	// Update Value index
+	key = key[:lek].AppendComponent(ValuePrefix)
+	for _, iv := range old.IndexValue() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Remove(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	for _, iv := range v.IndexValue() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Insert(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // GetNameSlice returns a Name for each entity in es.
@@ -55,6 +230,71 @@ func (s *Store) GetNameSlice(es []kv.Entity) ([]Name, error) {
 	return result, nil
 }
 
+// EntitiesMatchingNameValue returns entities with Name values that return a matching kv.String from their IndexValue method.
+//
+// The returned EntitySlice is already sorted.
+func (s *Store) EntitiesMatchingNameValue(v kv.String) (kv.EntitySlice, error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	NamePrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	ValuePrefix.EncodeAt(key[18:])
+	key = append(key, v.Encode()...)
+	var es kv.EntitySlice
+	return es, s.Get(key, es.Decode)
+}
+
+// EntitiesByNameValue returns entities with
+// Name values ordered by the kv.String values from their
+// IndexValue method.
+//
+// Reading begins at cursor, and ends when the length of the returned Entity
+// slice is less than n. When reading is not complete, cursor is updated such
+// that using it in a subequent call to ByValue would return next n
+// entities.
+func (s *Store) EntitiesByNameValue(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	NamePrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	ValuePrefix.EncodeAt(key[18:])
+	iter := s.PrefixIterator(key)
+	defer iter.Discard()
+	iter.Seek(cursor.Key)
+	if !iter.Valid() {
+		return
+	}
+	var buf kv.EntitySlice
+	if err = iter.Value(buf.Decode); err != nil {
+		return
+	}
+	if cursor.Offset < len(buf) {
+		es = append(es, buf[cursor.Offset:]...)
+		if len(es) >= n {
+			cursor.Offset += n
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	for iter.Next(); iter.Valid(); iter.Next() {
+		if err = iter.Value(buf.Decode); err != nil {
+			return
+		}
+		es = append(es, buf...)
+		if len(es) >= n {
+			cursor.Key = append(cursor.Key[:], iter.Key()...)
+			cursor.Offset = len(buf) - (len(es) - n)
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	return
+}
+
 // SetOccurrence sets the Occurrence associated with e to v.
 //
 // Corresponding indexes are updated.
@@ -63,7 +303,46 @@ func (s *Store) SetOccurrence(e kv.Entity, v *Occurrence) error {
 	s.parent.EncodeAt(key)
 	OccurrencePrefix.EncodeAt(key[8:])
 	e.EncodeAt(key[10:])
-	return s.Set(key, v.Encode())
+	var old Occurrence
+	if err := s.Get(key, old.Decode); err != nil {
+		return err
+	}
+	if err := s.Set(key, v.Encode()); err != nil {
+		return err
+	}
+	lek := len(key)
+	kv.Entity(0).EncodeAt(key[10:])
+	key = append(key, kv.Component(0).Encode()...)
+	var (
+		lik = len(key)
+		es  kv.EntitySlice
+	)
+
+	// Update Value index
+	key = key[:lek].AppendComponent(ValuePrefix)
+	for _, iv := range old.IndexValue() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Remove(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	for _, iv := range v.IndexValue() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Insert(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // GetOccurrenceSlice returns a Occurrence for each entity in es.
@@ -85,6 +364,343 @@ func (s *Store) GetOccurrenceSlice(es []kv.Entity) ([]Occurrence, error) {
 		}
 	}
 	return result, nil
+}
+
+// EntitiesMatchingOccurrenceValue returns entities with Occurrence values that return a matching kv.String from their IndexValue method.
+//
+// The returned EntitySlice is already sorted.
+func (s *Store) EntitiesMatchingOccurrenceValue(v kv.String) (kv.EntitySlice, error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	OccurrencePrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	ValuePrefix.EncodeAt(key[18:])
+	key = append(key, v.Encode()...)
+	var es kv.EntitySlice
+	return es, s.Get(key, es.Decode)
+}
+
+// EntitiesByOccurrenceValue returns entities with
+// Occurrence values ordered by the kv.String values from their
+// IndexValue method.
+//
+// Reading begins at cursor, and ends when the length of the returned Entity
+// slice is less than n. When reading is not complete, cursor is updated such
+// that using it in a subequent call to ByValue would return next n
+// entities.
+func (s *Store) EntitiesByOccurrenceValue(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	OccurrencePrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	ValuePrefix.EncodeAt(key[18:])
+	iter := s.PrefixIterator(key)
+	defer iter.Discard()
+	iter.Seek(cursor.Key)
+	if !iter.Valid() {
+		return
+	}
+	var buf kv.EntitySlice
+	if err = iter.Value(buf.Decode); err != nil {
+		return
+	}
+	if cursor.Offset < len(buf) {
+		es = append(es, buf[cursor.Offset:]...)
+		if len(es) >= n {
+			cursor.Offset += n
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	for iter.Next(); iter.Valid(); iter.Next() {
+		if err = iter.Value(buf.Decode); err != nil {
+			return
+		}
+		es = append(es, buf...)
+		if len(es) >= n {
+			cursor.Key = append(cursor.Key[:], iter.Key()...)
+			cursor.Offset = len(buf) - (len(es) - n)
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	return
+}
+
+// SetSIs sets the SIs associated with e to v.
+//
+// Corresponding indexes are updated.
+func (s *Store) SetSIs(e kv.Entity, v SIs) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	SIsPrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	var old SIs
+	if err := s.Get(key, old.Decode); err != nil {
+		return err
+	}
+	if err := s.Set(key, v.Encode()); err != nil {
+		return err
+	}
+	lek := len(key)
+	kv.Entity(0).EncodeAt(key[10:])
+	key = append(key, kv.Component(0).Encode()...)
+	var (
+		lik = len(key)
+		es  kv.EntitySlice
+	)
+
+	// Update Literal index
+	key = key[:lek].AppendComponent(LiteralPrefix)
+	for _, iv := range old.IndexLiteral() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Remove(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	for _, iv := range v.IndexLiteral() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Insert(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// GetSIsSlice returns a SIs for each entity in es.
+//
+// If the underlying storage returns an empty value with no error for keys that
+// do not exist, and SIs.Decode() can decode an empty byte slice, then a
+// query for entities that are not associated with a SIs should return no
+// errors.
+func (s *Store) GetSIsSlice(es []kv.Entity) ([]SIs, error) {
+	result := make([]SIs, len(es))
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	SIsPrefix.EncodeAt(key[8:])
+	for i, e := range es {
+		e.EncodeAt(key[10:])
+		err := s.Get(key, (&result[i]).Decode)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
+}
+
+// EntitiesMatchingSIsLiteral returns entities with SIs values that return a matching kv.String from their IndexLiteral method.
+//
+// The returned EntitySlice is already sorted.
+func (s *Store) EntitiesMatchingSIsLiteral(v kv.String) (kv.EntitySlice, error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	SIsPrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	LiteralPrefix.EncodeAt(key[18:])
+	key = append(key, v.Encode()...)
+	var es kv.EntitySlice
+	return es, s.Get(key, es.Decode)
+}
+
+// EntitiesBySIsLiteral returns entities with
+// SIs values ordered by the kv.String values from their
+// IndexLiteral method.
+//
+// Reading begins at cursor, and ends when the length of the returned Entity
+// slice is less than n. When reading is not complete, cursor is updated such
+// that using it in a subequent call to ByLiteral would return next n
+// entities.
+func (s *Store) EntitiesBySIsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	SIsPrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	LiteralPrefix.EncodeAt(key[18:])
+	iter := s.PrefixIterator(key)
+	defer iter.Discard()
+	iter.Seek(cursor.Key)
+	if !iter.Valid() {
+		return
+	}
+	var buf kv.EntitySlice
+	if err = iter.Value(buf.Decode); err != nil {
+		return
+	}
+	if cursor.Offset < len(buf) {
+		es = append(es, buf[cursor.Offset:]...)
+		if len(es) >= n {
+			cursor.Offset += n
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	for iter.Next(); iter.Valid(); iter.Next() {
+		if err = iter.Value(buf.Decode); err != nil {
+			return
+		}
+		es = append(es, buf...)
+		if len(es) >= n {
+			cursor.Key = append(cursor.Key[:], iter.Key()...)
+			cursor.Offset = len(buf) - (len(es) - n)
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	return
+}
+
+// SetSLs sets the SLs associated with e to v.
+//
+// Corresponding indexes are updated.
+func (s *Store) SetSLs(e kv.Entity, v SLs) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	SLsPrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	var old SLs
+	if err := s.Get(key, old.Decode); err != nil {
+		return err
+	}
+	if err := s.Set(key, v.Encode()); err != nil {
+		return err
+	}
+	lek := len(key)
+	kv.Entity(0).EncodeAt(key[10:])
+	key = append(key, kv.Component(0).Encode()...)
+	var (
+		lik = len(key)
+		es  kv.EntitySlice
+	)
+
+	// Update Literal index
+	key = key[:lek].AppendComponent(LiteralPrefix)
+	for _, iv := range old.IndexLiteral() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Remove(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	for _, iv := range v.IndexLiteral() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Insert(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// GetSLsSlice returns a SLs for each entity in es.
+//
+// If the underlying storage returns an empty value with no error for keys that
+// do not exist, and SLs.Decode() can decode an empty byte slice, then a
+// query for entities that are not associated with a SLs should return no
+// errors.
+func (s *Store) GetSLsSlice(es []kv.Entity) ([]SLs, error) {
+	result := make([]SLs, len(es))
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	SLsPrefix.EncodeAt(key[8:])
+	for i, e := range es {
+		e.EncodeAt(key[10:])
+		err := s.Get(key, (&result[i]).Decode)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
+}
+
+// EntitiesMatchingSLsLiteral returns entities with SLs values that return a matching kv.String from their IndexLiteral method.
+//
+// The returned EntitySlice is already sorted.
+func (s *Store) EntitiesMatchingSLsLiteral(v kv.String) (kv.EntitySlice, error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	SLsPrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	LiteralPrefix.EncodeAt(key[18:])
+	key = append(key, v.Encode()...)
+	var es kv.EntitySlice
+	return es, s.Get(key, es.Decode)
+}
+
+// EntitiesBySLsLiteral returns entities with
+// SLs values ordered by the kv.String values from their
+// IndexLiteral method.
+//
+// Reading begins at cursor, and ends when the length of the returned Entity
+// slice is less than n. When reading is not complete, cursor is updated such
+// that using it in a subequent call to ByLiteral would return next n
+// entities.
+func (s *Store) EntitiesBySLsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
+	key := make(kv.Prefix, 8+2+8+2)
+	s.parent.EncodeAt(key)
+	SLsPrefix.EncodeAt(key[8:])
+	kv.Entity(0).EncodeAt(key[10:])
+	LiteralPrefix.EncodeAt(key[18:])
+	iter := s.PrefixIterator(key)
+	defer iter.Discard()
+	iter.Seek(cursor.Key)
+	if !iter.Valid() {
+		return
+	}
+	var buf kv.EntitySlice
+	if err = iter.Value(buf.Decode); err != nil {
+		return
+	}
+	if cursor.Offset < len(buf) {
+		es = append(es, buf[cursor.Offset:]...)
+		if len(es) >= n {
+			cursor.Offset += n
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	for iter.Next(); iter.Valid(); iter.Next() {
+		if err = iter.Value(buf.Decode); err != nil {
+			return
+		}
+		es = append(es, buf...)
+		if len(es) >= n {
+			cursor.Key = append(cursor.Key[:], iter.Key()...)
+			cursor.Offset = len(buf) - (len(es) - n)
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	return
 }
 
 // SetTopicMapInfo sets the TopicMapInfo associated with e to v.
@@ -109,6 +725,70 @@ func (s *Store) GetTopicMapInfoSlice(es []kv.Entity) ([]TopicMapInfo, error) {
 	key := make(kv.Prefix, 8+2+8)
 	s.parent.EncodeAt(key)
 	TopicMapInfoPrefix.EncodeAt(key[8:])
+	for i, e := range es {
+		e.EncodeAt(key[10:])
+		err := s.Get(key, (&result[i]).Decode)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
+}
+
+// SetTopicNames sets the TopicNames associated with e to v.
+//
+// Corresponding indexes are updated.
+func (s *Store) SetTopicNames(e kv.Entity, v TopicNames) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	TopicNamesPrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	return s.Set(key, v.Encode())
+}
+
+// GetTopicNamesSlice returns a TopicNames for each entity in es.
+//
+// If the underlying storage returns an empty value with no error for keys that
+// do not exist, and TopicNames.Decode() can decode an empty byte slice, then a
+// query for entities that are not associated with a TopicNames should return no
+// errors.
+func (s *Store) GetTopicNamesSlice(es []kv.Entity) ([]TopicNames, error) {
+	result := make([]TopicNames, len(es))
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	TopicNamesPrefix.EncodeAt(key[8:])
+	for i, e := range es {
+		e.EncodeAt(key[10:])
+		err := s.Get(key, (&result[i]).Decode)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
+}
+
+// SetTopicOccurrences sets the TopicOccurrences associated with e to v.
+//
+// Corresponding indexes are updated.
+func (s *Store) SetTopicOccurrences(e kv.Entity, v TopicOccurrences) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	TopicOccurrencesPrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	return s.Set(key, v.Encode())
+}
+
+// GetTopicOccurrencesSlice returns a TopicOccurrences for each entity in es.
+//
+// If the underlying storage returns an empty value with no error for keys that
+// do not exist, and TopicOccurrences.Decode() can decode an empty byte slice, then a
+// query for entities that are not associated with a TopicOccurrences should return no
+// errors.
+func (s *Store) GetTopicOccurrencesSlice(es []kv.Entity) ([]TopicOccurrences, error) {
+	result := make([]TopicOccurrences, len(es))
+	key := make(kv.Prefix, 8+2+8)
+	s.parent.EncodeAt(key)
+	TopicOccurrencesPrefix.EncodeAt(key[8:])
 	for i, e := range es {
 		e.EncodeAt(key[10:])
 		err := s.Get(key, (&result[i]).Decode)

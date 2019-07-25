@@ -19,6 +19,7 @@ package kvschema
 //go:generate kvschema
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -37,30 +38,55 @@ const (
 )
 
 const (
-	TopicMapInfoPrefix     kv.Component = 1
-	IIsPrefix              kv.Component = 3
-	SIsPrefix              kv.Component = 4
-	SLsPrefix              kv.Component = 5
-	TopicNamesPrefix       kv.Component = 6
-	TopicOccurrencesPrefix kv.Component = 7
-	NamePrefix             kv.Component = 8
-	OccurrencePrefix       kv.Component = 9
+	TopicMapInfoPrefix     kv.Component = 0x0001
+	LiteralPrefix          kv.Component = 0x0002
+	IIsPrefix              kv.Component = 0x0003
+	SIsPrefix              kv.Component = 0x0004
+	SLsPrefix              kv.Component = 0x0005
+	TopicNamesPrefix       kv.Component = 0x0006
+	TopicOccurrencesPrefix kv.Component = 0x0007
+	NamePrefix             kv.Component = 0x0008
+	OccurrencePrefix       kv.Component = 0x0009
+	ValuePrefix            kv.Component = 0x000A
 )
 
 type TopicMapInfo struct{ pb.TopicMapInfo }
 
-func (tmi *TopicMapInfo) Encode() []byte          { return encode(tmi) }
-func (tmi *TopicMapInfo) Decode(src []byte) error { return decode(src, tmi) }
-
-type Refs kv.StringSlice
-
-func (r Refs) IndexEntity() []kv.String { return []kv.String(r) }
+func (tmi *TopicMapInfo) Encode() []byte          { return encodeProto(tmi) }
+func (tmi *TopicMapInfo) Decode(src []byte) error { return decodeProto(src, tmi) }
 
 type (
-	ItemIdentifiers   Refs
-	SubjectIndicators Refs
-	SubjectLocators   Refs
+	IIs []string
+	SIs []string
+	SLs []string
 )
+
+func (iis IIs) Encode() []byte { return encodeStringSlice(iis) }
+func (sis SIs) Encode() []byte { return encodeStringSlice(sis) }
+func (sls SLs) Encode() []byte { return encodeStringSlice(sls) }
+
+func (iis *IIs) Decode(bs []byte) error {
+	ss := []string(*iis)
+	err := decodeStringSlice(&ss, bs)
+	*iis = IIs(ss)
+	return err
+}
+func (sis *SIs) Decode(bs []byte) error {
+	ss := []string(*sis)
+	err := decodeStringSlice(&ss, bs)
+	*sis = SIs(ss)
+	return err
+}
+func (sls *SLs) Decode(bs []byte) error {
+	ss := []string(*sls)
+	err := decodeStringSlice(&ss, bs)
+	*sls = SLs(ss)
+	return err
+}
+
+func (iis IIs) IndexLiteral() []kv.String { return literalStringSlice(iis) }
+func (sis SIs) IndexLiteral() []kv.String { return literalStringSlice(sis) }
+func (sls SLs) IndexLiteral() []kv.String { return literalStringSlice(sls) }
 
 // TopicNames holds a slice of all of a topic's names.
 //
@@ -68,21 +94,43 @@ type (
 // and this is how that ordering is represented in kvschema.
 type TopicNames kv.EntitySlice
 
+func (tns TopicNames) Encode() []byte {
+	return kv.EntitySlice(tns).Encode()
+}
+func (tns *TopicNames) Decode(bs []byte) error {
+	es := kv.EntitySlice(*tns)
+	err := es.Decode(bs)
+	*tns = TopicNames(es)
+	return err
+}
+
 // TopicOccurrences holds a slice of all of a topic's occurrences.
 //
 // TopicOccurrences is not sorted: occurrences are ordered according to user
 // preferences, and this is how that ordering is represented in kvschema.
 type TopicOccurrences kv.EntitySlice
 
+func (tos TopicOccurrences) Encode() []byte {
+	return kv.EntitySlice(tos).Encode()
+}
+func (tos *TopicOccurrences) Decode(bs []byte) error {
+	es := kv.EntitySlice(*tos)
+	err := es.Decode(bs)
+	*tos = TopicOccurrences(es)
+	return err
+}
+
 type Name struct{ pb.Name }
 
-func (n *Name) Encode() []byte          { return encode(n) }
-func (n *Name) Decode(src []byte) error { return decode(src, n) }
+func (n *Name) Encode() []byte          { return encodeProto(n) }
+func (n *Name) Decode(src []byte) error { return decodeProto(src, n) }
+func (n *Name) IndexValue() []kv.String { return []kv.String{kv.String(n.GetValue())} }
 
 type Occurrence struct{ pb.Occurrence }
 
-func (o *Occurrence) Encode() []byte          { return encode(o) }
-func (o *Occurrence) Decode(src []byte) error { return decode(src, o) }
+func (o *Occurrence) Encode() []byte          { return encodeProto(o) }
+func (o *Occurrence) Decode(src []byte) error { return decodeProto(src, o) }
+func (o *Occurrence) IndexValue() []kv.String { return []kv.String{kv.String(o.GetValue())} }
 
 // UnsupportedFormatError indicates that a value was found in the key-value
 // backing store with an unsupported format code, perhaps due to data
@@ -101,7 +149,7 @@ func normalizeURLs(us []string) []kv.String {
 	return normalized
 }
 
-func encode(src proto.Message) []byte {
+func encodeProto(src proto.Message) []byte {
 	bs, err := proto.Marshal(src)
 	if err != nil {
 		log.Println(err)
@@ -109,6 +157,26 @@ func encode(src proto.Message) []byte {
 	return bs
 }
 
-func decode(src []byte, dst proto.Message) error {
+func decodeProto(src []byte, dst proto.Message) error {
 	return proto.Unmarshal(src, dst)
+}
+
+func encodeStringSlice(src []string) []byte {
+	bs, err := json.Marshal(src)
+	if err != nil {
+		log.Println(err)
+	}
+	return bs
+}
+
+func decodeStringSlice(dst *[]string, src []byte) error {
+	return json.Unmarshal(src, dst)
+}
+
+func literalStringSlice(src []string) []kv.String {
+	dst := make([]kv.String, len(src))
+	for i := range src {
+		dst[i] = kv.String(src[i])
+	}
+	return dst
 }

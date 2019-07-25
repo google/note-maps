@@ -20,40 +20,44 @@ import (
 	"github.com/google/note-maps/kv"
 )
 
+var (
+	entitySequenceKey = []byte{0}
+)
+
+// DB holds some kv-specific state in addition to mixing in a badger.DB.
 type DB struct {
 	*badger.DB
 	seq *badger.Sequence
 }
 
+// Options describes the options that can be used when opening a new DB.
 type Options struct {
 	badger.Options
 }
 
+// DefaultOptions returns a recommended default Options value for a database
+// rooted at dir.
 func DefaultOptions(dir string) Options {
 	return Options{badger.DefaultOptions(dir)}
 }
 
+// Open creates a new DB with the given options.
 func Open(opt Options) (*DB, error) {
 	bdb, err := badger.Open(opt.Options)
 	if err != nil {
 		return nil, err
 	}
-	db, err := With(bdb)
+
+	seq, err := bdb.GetSequence(entitySequenceKey, 128)
 	if err != nil {
 		bdb.Close()
 		return nil, err
 	}
-	return db, err
+
+	return &DB{bdb, seq}, nil
 }
 
-func With(db *badger.DB) (*DB, error) {
-	seq, err := db.GetSequence([]byte{0}, 128)
-	if err != nil {
-		return nil, err
-	}
-	return &DB{db, seq}, nil
-}
-
+// Close releases unallocated Entity values and closes the database.
 func (db *DB) Close() error {
 	if db.seq != nil {
 		db.seq.Release()
@@ -61,11 +65,18 @@ func (db *DB) Close() error {
 	return db.DB.Close()
 }
 
+// NewStore creates a new kv.Store based on a the given transaction.
 func (db *DB) NewStore(txn *badger.Txn) kv.Store {
 	return NewStore(db.seq, txn)
 }
 
-// NewStore creates a new value that implements kv.Store over seq and tx.
+// NewStore creates a new kv.Store that uses seq to allocate new Entity values,
+// and tx for read and write operations.
+//
+// NewStore is a lower-level alternative to creating a kv.Store through
+// DB.NewStore. Applications that manage their own badger.DB, or that want to
+// do additional work on a given badger.Txn before it is committed, can use
+// NewStore to preserve those abilities.
 func NewStore(seq *badger.Sequence, tx *badger.Txn) kv.Store { return store{seq, tx} }
 
 type store struct {

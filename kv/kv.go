@@ -112,6 +112,13 @@ type Iterator interface {
 	Discard()
 }
 
+// IndexCursor describes a location within an index, to track the position of
+// an iterator within that index.
+type IndexCursor struct {
+	Key    []byte
+	Offset int
+}
+
 // Encoder is an interface implemented by any type that is to be stored in the
 // key or value of a key-value pair.
 type Encoder interface {

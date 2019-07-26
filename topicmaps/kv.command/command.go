@@ -21,7 +21,7 @@ import (
 	"github.com/google/note-maps/topicmaps/kv.models"
 )
 
-// Store adds some application logic to models.Store.
+// Store adds some command logic to models.Store.
 type Store struct{ models.Store }
 
 // CreateTopicMap creates a new topic map in s and returns the Entity.
@@ -42,6 +42,7 @@ func (s *Store) CreateTopicMap() (kv.Entity, error) {
 	return tm, s.SetTopicMapInfo(tm, &info)
 }
 
+// CreateTopicWithName creates a new topic including the given name.
 func (s *Store) CreateTopicWithName(name string) (kv.Entity, error) {
 	if s.Parent() == 0 {
 		return 0, fmt.Errorf("topic names can only be created with a non-zero parent")
@@ -66,6 +67,7 @@ func (s *Store) CreateTopicWithName(name string) (kv.Entity, error) {
 	return t, nil
 }
 
+// CreateTopicName creates a new name for topic t.
 func (s *Store) CreateTopicName(t kv.Entity, name string) (kv.Entity, error) {
 	if s.Parent() == 0 || t == 0 {
 		return 0, fmt.Errorf("topic names can only be created with a non-zero parent")
@@ -94,7 +96,8 @@ func (s *Store) CreateTopicName(t kv.Entity, name string) (kv.Entity, error) {
 	}
 }
 
-func (s *Store) CreateTopicOccurrence(t kv.Entity, value string) (kv.Entity, error) {
+// CreateTopicOccurrence creates a new occurrence of topic t with value v.
+func (s *Store) CreateTopicOccurrence(t kv.Entity, v string) (kv.Entity, error) {
 	if s.Parent() == 0 || t == 0 {
 		return 0, fmt.Errorf("topic occurrences can only be created with a non-zero parent")
 	}
@@ -108,7 +111,7 @@ func (s *Store) CreateTopicOccurrence(t kv.Entity, value string) (kv.Entity, err
 	// Describe the new occurrence with a models.Occurrence.
 	var m models.Occurrence
 	m.Topic = uint64(t)
-	m.Value = value
+	m.Value = v
 	if err := s.SetOccurrence(o, &m); err != nil {
 		return 0, err
 	}
@@ -120,20 +123,4 @@ func (s *Store) CreateTopicOccurrence(t kv.Entity, value string) (kv.Entity, err
 		tos[0] = append(tos[0], o)
 		return o, s.SetTopicOccurrences(t, tos[0])
 	}
-}
-
-func (s *Store) TopicsByName(c *kv.IndexCursor, n int) ([]kv.Entity, error) {
-	ns, err := s.EntitiesByNameValue(c, n)
-	if err != nil {
-		return nil, err
-	}
-	names, err := s.GetNameSlice(ns)
-	if err != nil {
-		return nil, err
-	}
-	ts := make([]kv.Entity, len(names))
-	for i := range names {
-		ts[i] = kv.Entity(names[i].Topic)
-	}
-	return ts, nil
 }

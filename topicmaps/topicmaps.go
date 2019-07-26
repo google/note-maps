@@ -39,9 +39,16 @@ type Name struct {
 	Valued
 }
 
+type Occurrence struct {
+	Reifiable
+	Typed
+	Valued
+}
+
 type Topic struct {
-	SelfRefs []TopicRef
-	Names    []*Name
+	SelfRefs    []TopicRef
+	Names       []*Name
+	Occurrences []*Occurrence
 }
 
 type TopicRef struct {

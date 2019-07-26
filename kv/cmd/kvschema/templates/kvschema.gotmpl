@@ -31,17 +31,17 @@ import (
 //{{end}}
 type Store struct {
 	kv.Store
-	parent kv.Entity
+	partition kv.Entity
 }
 
-// Parent returns the Entity that is used as a parent for all operations.
-func (s Store) Parent() kv.Entity {
-	return s.parent
+// Partition returns the Entity that is used as a partition for all operations.
+func (s Store) Partition() kv.Entity {
+	return s.partition
 }
 
-// WithParent returns a new Store with e as the parent for all operations.
-func (s Store) WithParent(e kv.Entity) *Store {
-	s.parent = e
+// WithPartition returns a new Store with e as the partition for all operations.
+func (s Store) WithPartition(e kv.Entity) *Store {
+	s.partition = e
 	return &s
 }
 {{range .ComponentTypes}}{{template "component" .}}{{end}}{{end}}
@@ -52,7 +52,7 @@ func (s Store) WithParent(e kv.Entity) *Store {
 // Corresponding indexes are updated.
 func (s *Store) Set{{.Name}}(e kv.Entity, v {{if .DirectEncoder}}{{else}}*{{end}}{{.Name}}) error {
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	{{.PrefixName}}.EncodeAt(key[8:])
 	e.EncodeAt(key[10:])
 	{{ if .Indexes }}var old {{.Name}}
@@ -106,7 +106,7 @@ func (s *Store) Set{{.Name}}(e kv.Entity, v {{if .DirectEncoder}}{{else}}*{{end}
 func (s *Store) Get{{.Name}}Slice(es []kv.Entity) ([]{{.Name}}, error) {
 	result := make([]{{.Name}}, len(es))
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	{{.PrefixName}}.EncodeAt(key[8:])
 	for i, e := range es {
 		e.EncodeAt(key[10:])
@@ -123,7 +123,7 @@ func (s *Store) Get{{.Name}}Slice(es []kv.Entity) ([]{{.Name}}, error) {
 // The returned EntitySlice is already sorted.
 func (s *Store) EntitiesMatching{{.ComponentName}}{{.Name}}(v {{.TypeExpr}}) (kv.EntitySlice, error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	{{.ComponentPrefixName}}.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	{{.PrefixName}}.EncodeAt(key[18:])
@@ -142,7 +142,7 @@ func (s *Store) EntitiesMatching{{.ComponentName}}{{.Name}}(v {{.TypeExpr}}) (kv
 // entities.
 func (s *Store) EntitiesBy{{.ComponentName}}{{.Name}}(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	{{.ComponentPrefixName}}.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	{{.PrefixName}}.EncodeAt(key[18:])

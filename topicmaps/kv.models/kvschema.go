@@ -15,17 +15,17 @@ import (
 //
 type Store struct {
 	kv.Store
-	parent kv.Entity
+	partition kv.Entity
 }
 
-// Parent returns the Entity that is used as a parent for all operations.
-func (s Store) Parent() kv.Entity {
-	return s.parent
+// Partition returns the Entity that is used as a partition for all operations.
+func (s Store) Partition() kv.Entity {
+	return s.partition
 }
 
-// WithParent returns a new Store with e as the parent for all operations.
-func (s Store) WithParent(e kv.Entity) *Store {
-	s.parent = e
+// WithPartition returns a new Store with e as the partition for all operations.
+func (s Store) WithPartition(e kv.Entity) *Store {
+	s.partition = e
 	return &s
 }
 
@@ -34,7 +34,7 @@ func (s Store) WithParent(e kv.Entity) *Store {
 // Corresponding indexes are updated.
 func (s *Store) SetIIs(e kv.Entity, v IIs) error {
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	IIsPrefix.EncodeAt(key[8:])
 	e.EncodeAt(key[10:])
 	var old IIs
@@ -88,7 +88,7 @@ func (s *Store) SetIIs(e kv.Entity, v IIs) error {
 func (s *Store) GetIIsSlice(es []kv.Entity) ([]IIs, error) {
 	result := make([]IIs, len(es))
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	IIsPrefix.EncodeAt(key[8:])
 	for i, e := range es {
 		e.EncodeAt(key[10:])
@@ -105,7 +105,7 @@ func (s *Store) GetIIsSlice(es []kv.Entity) ([]IIs, error) {
 // The returned EntitySlice is already sorted.
 func (s *Store) EntitiesMatchingIIsLiteral(v kv.String) (kv.EntitySlice, error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	IIsPrefix.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	LiteralPrefix.EncodeAt(key[18:])
@@ -124,7 +124,7 @@ func (s *Store) EntitiesMatchingIIsLiteral(v kv.String) (kv.EntitySlice, error) 
 // entities.
 func (s *Store) EntitiesByIIsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	IIsPrefix.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	LiteralPrefix.EncodeAt(key[18:])
@@ -170,7 +170,7 @@ func (s *Store) EntitiesByIIsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Ent
 // Corresponding indexes are updated.
 func (s *Store) SetName(e kv.Entity, v *Name) error {
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	NamePrefix.EncodeAt(key[8:])
 	e.EncodeAt(key[10:])
 	var old Name
@@ -224,7 +224,7 @@ func (s *Store) SetName(e kv.Entity, v *Name) error {
 func (s *Store) GetNameSlice(es []kv.Entity) ([]Name, error) {
 	result := make([]Name, len(es))
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	NamePrefix.EncodeAt(key[8:])
 	for i, e := range es {
 		e.EncodeAt(key[10:])
@@ -241,7 +241,7 @@ func (s *Store) GetNameSlice(es []kv.Entity) ([]Name, error) {
 // The returned EntitySlice is already sorted.
 func (s *Store) EntitiesMatchingNameValue(v kv.String) (kv.EntitySlice, error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	NamePrefix.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	ValuePrefix.EncodeAt(key[18:])
@@ -260,7 +260,7 @@ func (s *Store) EntitiesMatchingNameValue(v kv.String) (kv.EntitySlice, error) {
 // entities.
 func (s *Store) EntitiesByNameValue(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	NamePrefix.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	ValuePrefix.EncodeAt(key[18:])
@@ -306,7 +306,7 @@ func (s *Store) EntitiesByNameValue(cursor *kv.IndexCursor, n int) (es []kv.Enti
 // Corresponding indexes are updated.
 func (s *Store) SetOccurrence(e kv.Entity, v *Occurrence) error {
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	OccurrencePrefix.EncodeAt(key[8:])
 	e.EncodeAt(key[10:])
 	var old Occurrence
@@ -360,7 +360,7 @@ func (s *Store) SetOccurrence(e kv.Entity, v *Occurrence) error {
 func (s *Store) GetOccurrenceSlice(es []kv.Entity) ([]Occurrence, error) {
 	result := make([]Occurrence, len(es))
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	OccurrencePrefix.EncodeAt(key[8:])
 	for i, e := range es {
 		e.EncodeAt(key[10:])
@@ -377,7 +377,7 @@ func (s *Store) GetOccurrenceSlice(es []kv.Entity) ([]Occurrence, error) {
 // The returned EntitySlice is already sorted.
 func (s *Store) EntitiesMatchingOccurrenceValue(v kv.String) (kv.EntitySlice, error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	OccurrencePrefix.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	ValuePrefix.EncodeAt(key[18:])
@@ -396,7 +396,7 @@ func (s *Store) EntitiesMatchingOccurrenceValue(v kv.String) (kv.EntitySlice, er
 // entities.
 func (s *Store) EntitiesByOccurrenceValue(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	OccurrencePrefix.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	ValuePrefix.EncodeAt(key[18:])
@@ -442,7 +442,7 @@ func (s *Store) EntitiesByOccurrenceValue(cursor *kv.IndexCursor, n int) (es []k
 // Corresponding indexes are updated.
 func (s *Store) SetSIs(e kv.Entity, v SIs) error {
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	SIsPrefix.EncodeAt(key[8:])
 	e.EncodeAt(key[10:])
 	var old SIs
@@ -496,7 +496,7 @@ func (s *Store) SetSIs(e kv.Entity, v SIs) error {
 func (s *Store) GetSIsSlice(es []kv.Entity) ([]SIs, error) {
 	result := make([]SIs, len(es))
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	SIsPrefix.EncodeAt(key[8:])
 	for i, e := range es {
 		e.EncodeAt(key[10:])
@@ -513,7 +513,7 @@ func (s *Store) GetSIsSlice(es []kv.Entity) ([]SIs, error) {
 // The returned EntitySlice is already sorted.
 func (s *Store) EntitiesMatchingSIsLiteral(v kv.String) (kv.EntitySlice, error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	SIsPrefix.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	LiteralPrefix.EncodeAt(key[18:])
@@ -532,7 +532,7 @@ func (s *Store) EntitiesMatchingSIsLiteral(v kv.String) (kv.EntitySlice, error) 
 // entities.
 func (s *Store) EntitiesBySIsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	SIsPrefix.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	LiteralPrefix.EncodeAt(key[18:])
@@ -578,7 +578,7 @@ func (s *Store) EntitiesBySIsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Ent
 // Corresponding indexes are updated.
 func (s *Store) SetSLs(e kv.Entity, v SLs) error {
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	SLsPrefix.EncodeAt(key[8:])
 	e.EncodeAt(key[10:])
 	var old SLs
@@ -632,7 +632,7 @@ func (s *Store) SetSLs(e kv.Entity, v SLs) error {
 func (s *Store) GetSLsSlice(es []kv.Entity) ([]SLs, error) {
 	result := make([]SLs, len(es))
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	SLsPrefix.EncodeAt(key[8:])
 	for i, e := range es {
 		e.EncodeAt(key[10:])
@@ -649,7 +649,7 @@ func (s *Store) GetSLsSlice(es []kv.Entity) ([]SLs, error) {
 // The returned EntitySlice is already sorted.
 func (s *Store) EntitiesMatchingSLsLiteral(v kv.String) (kv.EntitySlice, error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	SLsPrefix.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	LiteralPrefix.EncodeAt(key[18:])
@@ -668,7 +668,7 @@ func (s *Store) EntitiesMatchingSLsLiteral(v kv.String) (kv.EntitySlice, error) 
 // entities.
 func (s *Store) EntitiesBySLsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	SLsPrefix.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	LiteralPrefix.EncodeAt(key[18:])
@@ -714,7 +714,7 @@ func (s *Store) EntitiesBySLsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Ent
 // Corresponding indexes are updated.
 func (s *Store) SetTopicMapInfo(e kv.Entity, v *TopicMapInfo) error {
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	TopicMapInfoPrefix.EncodeAt(key[8:])
 	e.EncodeAt(key[10:])
 	return s.Set(key, v.Encode())
@@ -729,7 +729,7 @@ func (s *Store) SetTopicMapInfo(e kv.Entity, v *TopicMapInfo) error {
 func (s *Store) GetTopicMapInfoSlice(es []kv.Entity) ([]TopicMapInfo, error) {
 	result := make([]TopicMapInfo, len(es))
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	TopicMapInfoPrefix.EncodeAt(key[8:])
 	for i, e := range es {
 		e.EncodeAt(key[10:])
@@ -746,7 +746,7 @@ func (s *Store) GetTopicMapInfoSlice(es []kv.Entity) ([]TopicMapInfo, error) {
 // Corresponding indexes are updated.
 func (s *Store) SetTopicNames(e kv.Entity, v TopicNames) error {
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	TopicNamesPrefix.EncodeAt(key[8:])
 	e.EncodeAt(key[10:])
 	return s.Set(key, v.Encode())
@@ -761,7 +761,7 @@ func (s *Store) SetTopicNames(e kv.Entity, v TopicNames) error {
 func (s *Store) GetTopicNamesSlice(es []kv.Entity) ([]TopicNames, error) {
 	result := make([]TopicNames, len(es))
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	TopicNamesPrefix.EncodeAt(key[8:])
 	for i, e := range es {
 		e.EncodeAt(key[10:])
@@ -778,7 +778,7 @@ func (s *Store) GetTopicNamesSlice(es []kv.Entity) ([]TopicNames, error) {
 // Corresponding indexes are updated.
 func (s *Store) SetTopicOccurrences(e kv.Entity, v TopicOccurrences) error {
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	TopicOccurrencesPrefix.EncodeAt(key[8:])
 	e.EncodeAt(key[10:])
 	return s.Set(key, v.Encode())
@@ -793,7 +793,7 @@ func (s *Store) SetTopicOccurrences(e kv.Entity, v TopicOccurrences) error {
 func (s *Store) GetTopicOccurrencesSlice(es []kv.Entity) ([]TopicOccurrences, error) {
 	result := make([]TopicOccurrences, len(es))
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	TopicOccurrencesPrefix.EncodeAt(key[8:])
 	for i, e := range es {
 		e.EncodeAt(key[10:])

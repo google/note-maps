@@ -15,17 +15,17 @@ import (
 //
 type Store struct {
 	kv.Store
-	parent kv.Entity
+	partition kv.Entity
 }
 
-// Parent returns the Entity that is used as a parent for all operations.
-func (s Store) Parent() kv.Entity {
-	return s.parent
+// Partition returns the Entity that is used as a partition for all operations.
+func (s Store) Partition() kv.Entity {
+	return s.partition
 }
 
-// WithParent returns a new Store with e as the parent for all operations.
-func (s Store) WithParent(e kv.Entity) *Store {
-	s.parent = e
+// WithPartition returns a new Store with e as the partition for all operations.
+func (s Store) WithPartition(e kv.Entity) *Store {
+	s.partition = e
 	return &s
 }
 
@@ -34,7 +34,7 @@ func (s Store) WithParent(e kv.Entity) *Store {
 // Corresponding indexes are updated.
 func (s *Store) SetDocument(e kv.Entity, v *Document) error {
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	DocumentPrefix.EncodeAt(key[8:])
 	e.EncodeAt(key[10:])
 	var old Document
@@ -88,7 +88,7 @@ func (s *Store) SetDocument(e kv.Entity, v *Document) error {
 func (s *Store) GetDocumentSlice(es []kv.Entity) ([]Document, error) {
 	result := make([]Document, len(es))
 	key := make(kv.Prefix, 8+2+8)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	DocumentPrefix.EncodeAt(key[8:])
 	for i, e := range es {
 		e.EncodeAt(key[10:])
@@ -105,7 +105,7 @@ func (s *Store) GetDocumentSlice(es []kv.Entity) ([]Document, error) {
 // The returned EntitySlice is already sorted.
 func (s *Store) EntitiesMatchingDocumentTitle(v kv.String) (kv.EntitySlice, error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	DocumentPrefix.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	TitlePrefix.EncodeAt(key[18:])
@@ -124,7 +124,7 @@ func (s *Store) EntitiesMatchingDocumentTitle(v kv.String) (kv.EntitySlice, erro
 // entities.
 func (s *Store) EntitiesByDocumentTitle(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.parent.EncodeAt(key)
+	s.partition.EncodeAt(key)
 	DocumentPrefix.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	TitlePrefix.EncodeAt(key[18:])

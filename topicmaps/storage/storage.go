@@ -15,20 +15,20 @@
 package storage
 
 import (
-	"github.com/google/note-maps/topicmaps/kvschema"
+	"github.com/google/note-maps/topicmaps/kv.models"
 )
 
-// Store adds business logic to topicmaps/kvschema.Store.
-type Store struct{ kvschema.Store }
+// Store adds business logic to models.Store.
+type Store struct{ models.Store }
 
 // CreateTopicMap creates a new topic map in s and returns a copy of the topic
 // map's new metadata.
-func (s *Store) CreateTopicMap() (*kvschema.TopicMapInfo, error) {
+func (s *Store) CreateTopicMap() (*models.TopicMapInfo, error) {
 	entity, err := s.Alloc()
 	if err != nil {
 		return nil, err
 	}
-	info := &kvschema.TopicMapInfo{}
+	info := &models.TopicMapInfo{}
 	info.TopicMap = uint64(entity)
 	return info, s.SetTopicMapInfo(entity, info)
 }

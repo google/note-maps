@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package kvschema implements storage and retrieval of topic maps in a local
+// Package models implements storage and retrieval of topic maps in a local
 // key-value store using package kv.
-package kvschema
+package models
 
 //go:generate kvschema
 
@@ -26,7 +26,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/google/note-maps/kv"
-	"github.com/google/note-maps/topicmaps/kvschema/pb"
+	"github.com/google/note-maps/topicmaps/kv.models/internal/pb"
 )
 
 // To allow complex values may be encoded differently in later versions, a
@@ -91,7 +91,7 @@ func (sls SLs) IndexLiteral() []kv.String { return literalStringSlice(sls) }
 // TopicNames holds a slice of all of a topic's names.
 //
 // TopicNames is not sorted: names are ordered according to user preferences,
-// and this is how that ordering is represented in kvschema.
+// and this is how that ordering is represented in kvmodels.
 type TopicNames kv.EntitySlice
 
 func (tns TopicNames) Encode() []byte {
@@ -107,7 +107,7 @@ func (tns *TopicNames) Decode(bs []byte) error {
 // TopicOccurrences holds a slice of all of a topic's occurrences.
 //
 // TopicOccurrences is not sorted: occurrences are ordered according to user
-// preferences, and this is how that ordering is represented in kvschema.
+// preferences, and this is how that ordering is represented in kvmodels.
 type TopicOccurrences kv.EntitySlice
 
 func (tos TopicOccurrences) Encode() []byte {

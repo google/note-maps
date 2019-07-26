@@ -16,6 +16,8 @@
 package badger
 
 import (
+	"fmt"
+
 	"github.com/dgraph-io/badger"
 	"github.com/google/note-maps/kv"
 )
@@ -86,6 +88,12 @@ type store struct {
 
 func (s store) Alloc() (kv.Entity, error) {
 	u64, err := s.seq.Next()
+	if u64 == 0 {
+		u64, err = s.seq.Next()
+		if u64 == 0 {
+			return 0, fmt.Errorf("Alloc returned zero twice in a row")
+		}
+	}
 	return kv.Entity(u64), err
 }
 

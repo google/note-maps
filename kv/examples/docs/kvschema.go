@@ -18,7 +18,13 @@ type Store struct {
 	parent kv.Entity
 }
 
-func (s Store) Parent(e kv.Entity) *Store {
+// Parent returns the Entity that is used as a parent for all operations.
+func (s Store) Parent() kv.Entity {
+	return s.parent
+}
+
+// WithParent returns a new Store with e as the parent for all operations.
+func (s Store) WithParent(e kv.Entity) *Store {
 	s.parent = e
 	return &s
 }

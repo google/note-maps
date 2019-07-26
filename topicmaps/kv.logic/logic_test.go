@@ -26,19 +26,19 @@ func TestCreateTopicMap(t *testing.T) {
 	stored, err := s.CreateTopicMap()
 	if err != nil {
 		t.Error(err)
-	} else if stored == nil {
-		t.Error("want not-nil, got nil")
+	} else if stored == 0 {
+		t.Error("want not-zero, got zero")
 	}
 	txn.Commit()
 	txn = db.NewTransaction(false)
 	defer txn.Discard()
 	s = Store{models.Store{Store: db.NewStore(txn)}}
-	gots, err := s.GetTopicMapInfoSlice([]kv.Entity{kv.Entity(stored.TopicMap)})
+	gots, err := s.GetTopicMapInfoSlice([]kv.Entity{kv.Entity(stored)})
 	if err != nil {
 		t.Error(err)
 	} else if len(gots) != 1 {
 		t.Error("want 1 result, got", len(gots))
-	} else if gots[0].String() != stored.String() {
-		t.Errorf("want %s, got %s", stored, &gots[0])
+	} else if kv.Entity(gots[0].TopicMap) != stored {
+		t.Errorf("want %v, got %v", stored, &gots[0].TopicMap)
 	}
 }

@@ -77,11 +77,12 @@ func TestSchemaByTitle(t *testing.T) {
 			}
 		}
 	}
-	var cursor TitleCursor
+	var cursor kv.IndexCursor
 	var docs []Document
 	already := make(map[kv.Entity]bool)
 	for i := 0; ; i++ {
 		es, err := store.EntitiesByDocumentTitle(&cursor, 5)
+		println(string(cursor.Key), cursor.Offset)
 		if err != nil {
 			t.Error(err)
 			break

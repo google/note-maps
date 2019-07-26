@@ -1,4 +1,4 @@
-package storage
+package logic
 
 import (
 	"io/ioutil"

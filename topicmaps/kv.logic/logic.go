@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package storage
+package logic
 
 import (
 	"github.com/google/note-maps/topicmaps/kv.models"

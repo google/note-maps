@@ -166,7 +166,7 @@ func (s *Store) EntitiesBy{{.ComponentName}}{{.Name}}(cursor *kv.IndexCursor, n 
 		}
 		es = append(es, buf...)
 		if len(es) >= n {
-			cursor.Key = append(cursor.Key[:], iter.Key()...)
+			cursor.Key = append(cursor.Key[0:0], iter.Key()...)
 			cursor.Offset = len(buf) - (len(es) - n)
 			if len(es) > n {
 				es = es[:n]

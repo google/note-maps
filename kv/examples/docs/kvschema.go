@@ -108,11 +108,6 @@ func (s *Store) EntitiesMatchingDocumentTitle(v kv.String) (kv.EntitySlice, erro
 	return es, s.Get(key, es.Decode)
 }
 
-type TitleCursor struct {
-	Value  kv.String
-	Offset int
-}
-
 // EntitiesByDocumentTitle returns entities with
 // Document values ordered by the kv.String values from their
 // IndexTitle method.
@@ -121,7 +116,7 @@ type TitleCursor struct {
 // slice is less than n. When reading is not complete, cursor is updated such
 // that using it in a subequent call to ByTitle would return next n
 // entities.
-func (s *Store) EntitiesByDocumentTitle(cursor *TitleCursor, n int) (es []kv.Entity, err error) {
+func (s *Store) EntitiesByDocumentTitle(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
 	key := make(kv.Prefix, 8+2+8+2)
 	s.parent.EncodeAt(key)
 	DocumentPrefix.EncodeAt(key[8:])
@@ -129,7 +124,7 @@ func (s *Store) EntitiesByDocumentTitle(cursor *TitleCursor, n int) (es []kv.Ent
 	TitlePrefix.EncodeAt(key[18:])
 	iter := s.PrefixIterator(key)
 	defer iter.Discard()
-	iter.Seek(cursor.Value.Encode())
+	iter.Seek(cursor.Key)
 	if !iter.Valid() {
 		return
 	}
@@ -153,7 +148,7 @@ func (s *Store) EntitiesByDocumentTitle(cursor *TitleCursor, n int) (es []kv.Ent
 		}
 		es = append(es, buf...)
 		if len(es) >= n {
-			err = cursor.Value.Decode(iter.Key())
+			cursor.Key = append(cursor.Key[0:0], iter.Key()...)
 			cursor.Offset = len(buf) - (len(es) - n)
 			if len(es) > n {
 				es = es[:n]

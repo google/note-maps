@@ -79,12 +79,23 @@ func (s *Store) SetDocument(e kv.Entity, v *Document) error {
 	return nil
 }
 
+// GetDocument returns the Document associated with e.
+//
+// If no Document has been explicitly set for e, and GetDocument will return
+// the result of decoding a Document from an empty slice of bytes.
+func (s *Store) GetDocument(e kv.Entity) (Document, error) {
+	var v Document
+	vs, err := s.GetDocumentSlice([]kv.Entity{e})
+	if len(vs) >= 1 {
+		v = vs[0]
+	}
+	return v, err
+}
+
 // GetDocumentSlice returns a Document for each entity in es.
 //
-// If the underlying storage returns an empty value with no error for keys that
-// do not exist, and Document.Decode() can decode an empty byte slice, then a
-// query for entities that are not associated with a Document should return no
-// errors.
+// If no Document has been explicitly set for an entity, and the result will
+// be a Document that has been decoded from an empty slice of bytes.
 func (s *Store) GetDocumentSlice(es []kv.Entity) ([]Document, error) {
 	result := make([]Document, len(es))
 	key := make(kv.Prefix, 8+2+8)

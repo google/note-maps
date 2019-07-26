@@ -97,12 +97,23 @@ func (s *Store) Set{{.Name}}(e kv.Entity, v {{if .DirectEncoder}}{{else}}*{{end}
 	return nil{{ end }}{{ else }}return s.Set(key, v.Encode()){{ end }}
 }
 
+// Get{{.Name}} returns the {{.Name}} associated with e.
+//
+// If no {{.Name}} has been explicitly set for e, and Get{{.Name}} will return
+// the result of decoding a {{.Name}} from an empty slice of bytes.
+func (s *Store) Get{{.Name}}(e kv.Entity) ({{.Name}}, error) {
+	var v {{.Name}}
+	vs, err := s.Get{{.Name}}Slice([]kv.Entity{e})
+	if len(vs) >= 1 {
+		v = vs[0]
+	}
+	return v, err
+}
+
 // Get{{.Name}}Slice returns a {{.Name}} for each entity in es.
 //
-// If the underlying storage returns an empty value with no error for keys that
-// do not exist, and {{.Name}}.Decode() can decode an empty byte slice, then a
-// query for entities that are not associated with a {{.Name}} should return no
-// errors.
+// If no {{.Name}} has been explicitly set for an entity, and the result will
+// be a {{.Name}} that has been decoded from an empty slice of bytes.
 func (s *Store) Get{{.Name}}Slice(es []kv.Entity) ([]{{.Name}}, error) {
 	result := make([]{{.Name}}, len(es))
 	key := make(kv.Prefix, 8+2+8)

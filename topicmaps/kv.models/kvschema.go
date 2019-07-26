@@ -79,12 +79,23 @@ func (s *Store) SetIIs(e kv.Entity, v IIs) error {
 	return nil
 }
 
+// GetIIs returns the IIs associated with e.
+//
+// If no IIs has been explicitly set for e, and GetIIs will return
+// the result of decoding a IIs from an empty slice of bytes.
+func (s *Store) GetIIs(e kv.Entity) (IIs, error) {
+	var v IIs
+	vs, err := s.GetIIsSlice([]kv.Entity{e})
+	if len(vs) >= 1 {
+		v = vs[0]
+	}
+	return v, err
+}
+
 // GetIIsSlice returns a IIs for each entity in es.
 //
-// If the underlying storage returns an empty value with no error for keys that
-// do not exist, and IIs.Decode() can decode an empty byte slice, then a
-// query for entities that are not associated with a IIs should return no
-// errors.
+// If no IIs has been explicitly set for an entity, and the result will
+// be a IIs that has been decoded from an empty slice of bytes.
 func (s *Store) GetIIsSlice(es []kv.Entity) ([]IIs, error) {
 	result := make([]IIs, len(es))
 	key := make(kv.Prefix, 8+2+8)
@@ -215,12 +226,23 @@ func (s *Store) SetName(e kv.Entity, v *Name) error {
 	return nil
 }
 
+// GetName returns the Name associated with e.
+//
+// If no Name has been explicitly set for e, and GetName will return
+// the result of decoding a Name from an empty slice of bytes.
+func (s *Store) GetName(e kv.Entity) (Name, error) {
+	var v Name
+	vs, err := s.GetNameSlice([]kv.Entity{e})
+	if len(vs) >= 1 {
+		v = vs[0]
+	}
+	return v, err
+}
+
 // GetNameSlice returns a Name for each entity in es.
 //
-// If the underlying storage returns an empty value with no error for keys that
-// do not exist, and Name.Decode() can decode an empty byte slice, then a
-// query for entities that are not associated with a Name should return no
-// errors.
+// If no Name has been explicitly set for an entity, and the result will
+// be a Name that has been decoded from an empty slice of bytes.
 func (s *Store) GetNameSlice(es []kv.Entity) ([]Name, error) {
 	result := make([]Name, len(es))
 	key := make(kv.Prefix, 8+2+8)
@@ -351,12 +373,23 @@ func (s *Store) SetOccurrence(e kv.Entity, v *Occurrence) error {
 	return nil
 }
 
+// GetOccurrence returns the Occurrence associated with e.
+//
+// If no Occurrence has been explicitly set for e, and GetOccurrence will return
+// the result of decoding a Occurrence from an empty slice of bytes.
+func (s *Store) GetOccurrence(e kv.Entity) (Occurrence, error) {
+	var v Occurrence
+	vs, err := s.GetOccurrenceSlice([]kv.Entity{e})
+	if len(vs) >= 1 {
+		v = vs[0]
+	}
+	return v, err
+}
+
 // GetOccurrenceSlice returns a Occurrence for each entity in es.
 //
-// If the underlying storage returns an empty value with no error for keys that
-// do not exist, and Occurrence.Decode() can decode an empty byte slice, then a
-// query for entities that are not associated with a Occurrence should return no
-// errors.
+// If no Occurrence has been explicitly set for an entity, and the result will
+// be a Occurrence that has been decoded from an empty slice of bytes.
 func (s *Store) GetOccurrenceSlice(es []kv.Entity) ([]Occurrence, error) {
 	result := make([]Occurrence, len(es))
 	key := make(kv.Prefix, 8+2+8)
@@ -487,12 +520,23 @@ func (s *Store) SetSIs(e kv.Entity, v SIs) error {
 	return nil
 }
 
+// GetSIs returns the SIs associated with e.
+//
+// If no SIs has been explicitly set for e, and GetSIs will return
+// the result of decoding a SIs from an empty slice of bytes.
+func (s *Store) GetSIs(e kv.Entity) (SIs, error) {
+	var v SIs
+	vs, err := s.GetSIsSlice([]kv.Entity{e})
+	if len(vs) >= 1 {
+		v = vs[0]
+	}
+	return v, err
+}
+
 // GetSIsSlice returns a SIs for each entity in es.
 //
-// If the underlying storage returns an empty value with no error for keys that
-// do not exist, and SIs.Decode() can decode an empty byte slice, then a
-// query for entities that are not associated with a SIs should return no
-// errors.
+// If no SIs has been explicitly set for an entity, and the result will
+// be a SIs that has been decoded from an empty slice of bytes.
 func (s *Store) GetSIsSlice(es []kv.Entity) ([]SIs, error) {
 	result := make([]SIs, len(es))
 	key := make(kv.Prefix, 8+2+8)
@@ -623,12 +667,23 @@ func (s *Store) SetSLs(e kv.Entity, v SLs) error {
 	return nil
 }
 
+// GetSLs returns the SLs associated with e.
+//
+// If no SLs has been explicitly set for e, and GetSLs will return
+// the result of decoding a SLs from an empty slice of bytes.
+func (s *Store) GetSLs(e kv.Entity) (SLs, error) {
+	var v SLs
+	vs, err := s.GetSLsSlice([]kv.Entity{e})
+	if len(vs) >= 1 {
+		v = vs[0]
+	}
+	return v, err
+}
+
 // GetSLsSlice returns a SLs for each entity in es.
 //
-// If the underlying storage returns an empty value with no error for keys that
-// do not exist, and SLs.Decode() can decode an empty byte slice, then a
-// query for entities that are not associated with a SLs should return no
-// errors.
+// If no SLs has been explicitly set for an entity, and the result will
+// be a SLs that has been decoded from an empty slice of bytes.
 func (s *Store) GetSLsSlice(es []kv.Entity) ([]SLs, error) {
 	result := make([]SLs, len(es))
 	key := make(kv.Prefix, 8+2+8)
@@ -720,12 +775,23 @@ func (s *Store) SetTopicMapInfo(e kv.Entity, v *TopicMapInfo) error {
 	return s.Set(key, v.Encode())
 }
 
+// GetTopicMapInfo returns the TopicMapInfo associated with e.
+//
+// If no TopicMapInfo has been explicitly set for e, and GetTopicMapInfo will return
+// the result of decoding a TopicMapInfo from an empty slice of bytes.
+func (s *Store) GetTopicMapInfo(e kv.Entity) (TopicMapInfo, error) {
+	var v TopicMapInfo
+	vs, err := s.GetTopicMapInfoSlice([]kv.Entity{e})
+	if len(vs) >= 1 {
+		v = vs[0]
+	}
+	return v, err
+}
+
 // GetTopicMapInfoSlice returns a TopicMapInfo for each entity in es.
 //
-// If the underlying storage returns an empty value with no error for keys that
-// do not exist, and TopicMapInfo.Decode() can decode an empty byte slice, then a
-// query for entities that are not associated with a TopicMapInfo should return no
-// errors.
+// If no TopicMapInfo has been explicitly set for an entity, and the result will
+// be a TopicMapInfo that has been decoded from an empty slice of bytes.
 func (s *Store) GetTopicMapInfoSlice(es []kv.Entity) ([]TopicMapInfo, error) {
 	result := make([]TopicMapInfo, len(es))
 	key := make(kv.Prefix, 8+2+8)
@@ -752,12 +818,23 @@ func (s *Store) SetTopicNames(e kv.Entity, v TopicNames) error {
 	return s.Set(key, v.Encode())
 }
 
+// GetTopicNames returns the TopicNames associated with e.
+//
+// If no TopicNames has been explicitly set for e, and GetTopicNames will return
+// the result of decoding a TopicNames from an empty slice of bytes.
+func (s *Store) GetTopicNames(e kv.Entity) (TopicNames, error) {
+	var v TopicNames
+	vs, err := s.GetTopicNamesSlice([]kv.Entity{e})
+	if len(vs) >= 1 {
+		v = vs[0]
+	}
+	return v, err
+}
+
 // GetTopicNamesSlice returns a TopicNames for each entity in es.
 //
-// If the underlying storage returns an empty value with no error for keys that
-// do not exist, and TopicNames.Decode() can decode an empty byte slice, then a
-// query for entities that are not associated with a TopicNames should return no
-// errors.
+// If no TopicNames has been explicitly set for an entity, and the result will
+// be a TopicNames that has been decoded from an empty slice of bytes.
 func (s *Store) GetTopicNamesSlice(es []kv.Entity) ([]TopicNames, error) {
 	result := make([]TopicNames, len(es))
 	key := make(kv.Prefix, 8+2+8)
@@ -784,12 +861,23 @@ func (s *Store) SetTopicOccurrences(e kv.Entity, v TopicOccurrences) error {
 	return s.Set(key, v.Encode())
 }
 
+// GetTopicOccurrences returns the TopicOccurrences associated with e.
+//
+// If no TopicOccurrences has been explicitly set for e, and GetTopicOccurrences will return
+// the result of decoding a TopicOccurrences from an empty slice of bytes.
+func (s *Store) GetTopicOccurrences(e kv.Entity) (TopicOccurrences, error) {
+	var v TopicOccurrences
+	vs, err := s.GetTopicOccurrencesSlice([]kv.Entity{e})
+	if len(vs) >= 1 {
+		v = vs[0]
+	}
+	return v, err
+}
+
 // GetTopicOccurrencesSlice returns a TopicOccurrences for each entity in es.
 //
-// If the underlying storage returns an empty value with no error for keys that
-// do not exist, and TopicOccurrences.Decode() can decode an empty byte slice, then a
-// query for entities that are not associated with a TopicOccurrences should return no
-// errors.
+// If no TopicOccurrences has been explicitly set for an entity, and the result will
+// be a TopicOccurrences that has been decoded from an empty slice of bytes.
 func (s *Store) GetTopicOccurrencesSlice(es []kv.Entity) ([]TopicOccurrences, error) {
 	result := make([]TopicOccurrences, len(es))
 	key := make(kv.Prefix, 8+2+8)

@@ -32,20 +32,15 @@ type DB struct {
 	seq *badger.Sequence
 }
 
-// Options describes the options that can be used when opening a new DB.
-type Options struct {
-	badger.Options
-}
-
 // DefaultOptions returns a recommended default Options value for a database
 // rooted at dir.
-func DefaultOptions(dir string) Options {
-	return Options{badger.DefaultOptions(dir)}
+func DefaultOptions(dir string) badger.Options {
+	return badger.DefaultOptions(dir)
 }
 
 // Open creates a new DB with the given options.
-func Open(opt Options) (*DB, error) {
-	bdb, err := badger.Open(opt.Options)
+func Open(opt badger.Options) (*DB, error) {
+	bdb, err := badger.Open(opt)
 	if err != nil {
 		return nil, err
 	}

@@ -20,6 +20,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"runtime/debug"
 	"sync/atomic"
 	"testing"
 
@@ -118,6 +119,7 @@ type Flaky struct {
 	errCheckCount int32
 	failAtCount   int
 	err           error
+	stackTrace    string
 }
 
 // ErrCheckCount returns the total number of error checks this Flaky has
@@ -126,8 +128,18 @@ func (s *Flaky) ErrCheckCount() int {
 	return int(atomic.LoadInt32(&s.errCheckCount))
 }
 
+// StackTrace returns a formatted stacktrace taken from the moment an error was
+// returned.
+func (s *Flaky) StackTrace() string {
+	return s.stackTrace
+}
+
 func (s *Flaky) fail() bool {
-	return int(atomic.AddInt32(&s.errCheckCount, 1)) == s.failAtCount
+	f := int(atomic.AddInt32(&s.errCheckCount, 1)) == s.failAtCount
+	if f {
+		s.stackTrace = string(debug.Stack())
+	}
+	return f
 }
 
 // Alloc fails if the count of error checks has reached failAtCount.
@@ -152,4 +164,34 @@ func (s *Flaky) Set(k, v []byte) error {
 		return s.err
 	}
 	return s.Store.Set(k, v)
+}
+
+// Deflake calls test repeatedly to check that all errors returned from
+// kv.Store methods produce failures in the test.
+//
+// Deflake(t, test) will pass if and only if: test completes when given a
+// well-behaved kv.Store that never returns errors, and test panics when given
+// a kv.Store that returns errors "unpredictably".
+//
+// The test func must use panic to communicate failures. It might be nice to
+// use a *testing.T like sane people do, but this approach requires a test that
+// can succeed successfully when the kv.Store doesn't return any errors, and
+// fail successfully when it does return an error. Unfortunately, the testing
+// package doesn't support this, and we have to panic instead.
+func Deflake(t *testing.T, test func(kv.Store)) {
+	successful := NewFlaky(t, 0)
+	t.Run("success", func(*testing.T) {
+		test(successful)
+	})
+	for want := 1; want < successful.ErrCheckCount(); want++ {
+		t.Run(Flake(want).Error(), func(t *testing.T) {
+			flaky := NewFlaky(t, want)
+			defer func() {
+				if r := recover(); r == nil {
+					t.Error("error did not cause test failure: " + flaky.StackTrace())
+				}
+			}()
+			test(flaky)
+		})
+	}
 }

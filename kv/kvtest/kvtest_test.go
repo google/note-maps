@@ -71,38 +71,16 @@ func callMethod(s kv.Store, m flakyMethod) error {
 	}
 }
 
-func TestFlaky(t *testing.T) {
+func TestFlakyDeflake(t *testing.T) {
 	var (
 		ms   = randMethods(10)
-		test = func(s kv.Store) (int, error) {
-			for i, m := range ms {
+		test = func(s kv.Store) {
+			for _, m := range ms {
 				if err := callMethod(s, m); err != nil {
-					return i + 1, err
+					panic(err)
 				}
 			}
-			return len(ms), nil
 		}
 	)
-	t.Run("success", func(t *testing.T) {
-		successful := NewFlaky(t, 0)
-		n, err := test(successful)
-		if n != len(ms) || err != nil {
-			t.Errorf("want n=%v err=nil, got n=%v err=%s",
-				len(ms), n, err)
-		}
-	})
-	for want := 1; want < len(ms); want++ {
-		t.Run(Flake(want).Error(), func(t *testing.T) {
-			flaky := NewFlaky(t, want)
-			got, err := test(flaky)
-			if err == nil {
-				t.Error("want error, got nil")
-			} else if _, ok := err.(Flake); !ok {
-				t.Errorf("expected %#v, got %#v", Flake(want), err)
-			}
-			if want != got {
-				t.Errorf("want %v, got %v", want, got)
-			}
-		})
-	}
+	Deflake(t, test)
 }

@@ -164,8 +164,8 @@ func (s *Store) EntitiesByDocumentTitle(cursor *kv.IndexCursor, n int) (es []kv.
 			return
 		}
 		es = append(es, buf...)
+		cursor.Key = append(cursor.Key[0:0], iter.Key()...)
 		if len(es) >= n {
-			cursor.Key = append(cursor.Key[0:0], iter.Key()...)
 			cursor.Offset = len(buf) - (len(es) - n)
 			if len(es) > n {
 				es = es[:n]
@@ -173,5 +173,6 @@ func (s *Store) EntitiesByDocumentTitle(cursor *kv.IndexCursor, n int) (es []kv.
 			return
 		}
 	}
+	cursor.Offset = len(buf)
 	return
 }

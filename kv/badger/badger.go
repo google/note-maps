@@ -96,10 +96,13 @@ func (s store) Set(key, value []byte) error { return s.tx.Set(key, value) }
 
 func (s store) Get(key []byte, f func([]byte) error) error {
 	item, err := s.tx.Get(key)
-	if err != nil {
+	if err == badger.ErrKeyNotFound {
+		return f(nil)
+	} else if err != nil {
 		return err
+	} else {
+		return item.Value(f)
 	}
-	return item.Value(f)
 }
 
 func (s store) PrefixIterator(prefix []byte) kv.Iterator {

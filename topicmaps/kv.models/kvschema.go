@@ -164,8 +164,8 @@ func (s *Store) EntitiesByIIsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Ent
 			return
 		}
 		es = append(es, buf...)
+		cursor.Key = append(cursor.Key[0:0], iter.Key()...)
 		if len(es) >= n {
-			cursor.Key = append(cursor.Key[0:0], iter.Key()...)
 			cursor.Offset = len(buf) - (len(es) - n)
 			if len(es) > n {
 				es = es[:n]
@@ -173,6 +173,7 @@ func (s *Store) EntitiesByIIsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Ent
 			return
 		}
 	}
+	cursor.Offset = len(buf)
 	return
 }
 
@@ -311,8 +312,8 @@ func (s *Store) EntitiesByNameValue(cursor *kv.IndexCursor, n int) (es []kv.Enti
 			return
 		}
 		es = append(es, buf...)
+		cursor.Key = append(cursor.Key[0:0], iter.Key()...)
 		if len(es) >= n {
-			cursor.Key = append(cursor.Key[0:0], iter.Key()...)
 			cursor.Offset = len(buf) - (len(es) - n)
 			if len(es) > n {
 				es = es[:n]
@@ -320,6 +321,7 @@ func (s *Store) EntitiesByNameValue(cursor *kv.IndexCursor, n int) (es []kv.Enti
 			return
 		}
 	}
+	cursor.Offset = len(buf)
 	return
 }
 
@@ -458,8 +460,8 @@ func (s *Store) EntitiesByOccurrenceValue(cursor *kv.IndexCursor, n int) (es []k
 			return
 		}
 		es = append(es, buf...)
+		cursor.Key = append(cursor.Key[0:0], iter.Key()...)
 		if len(es) >= n {
-			cursor.Key = append(cursor.Key[0:0], iter.Key()...)
 			cursor.Offset = len(buf) - (len(es) - n)
 			if len(es) > n {
 				es = es[:n]
@@ -467,6 +469,7 @@ func (s *Store) EntitiesByOccurrenceValue(cursor *kv.IndexCursor, n int) (es []k
 			return
 		}
 	}
+	cursor.Offset = len(buf)
 	return
 }
 
@@ -605,8 +608,8 @@ func (s *Store) EntitiesBySIsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Ent
 			return
 		}
 		es = append(es, buf...)
+		cursor.Key = append(cursor.Key[0:0], iter.Key()...)
 		if len(es) >= n {
-			cursor.Key = append(cursor.Key[0:0], iter.Key()...)
 			cursor.Offset = len(buf) - (len(es) - n)
 			if len(es) > n {
 				es = es[:n]
@@ -614,6 +617,7 @@ func (s *Store) EntitiesBySIsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Ent
 			return
 		}
 	}
+	cursor.Offset = len(buf)
 	return
 }
 
@@ -752,8 +756,8 @@ func (s *Store) EntitiesBySLsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Ent
 			return
 		}
 		es = append(es, buf...)
+		cursor.Key = append(cursor.Key[0:0], iter.Key()...)
 		if len(es) >= n {
-			cursor.Key = append(cursor.Key[0:0], iter.Key()...)
 			cursor.Offset = len(buf) - (len(es) - n)
 			if len(es) > n {
 				es = es[:n]
@@ -761,6 +765,7 @@ func (s *Store) EntitiesBySLsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Ent
 			return
 		}
 	}
+	cursor.Offset = len(buf)
 	return
 }
 

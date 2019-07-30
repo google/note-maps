@@ -19,94 +19,180 @@ import (
 	"testing"
 
 	"github.com/google/note-maps/kv"
-	"github.com/google/note-maps/kv/memory"
+	"github.com/google/note-maps/kv/kvtest"
 )
 
-func TestSchemaSetScanLookup(t *testing.T) {
-	store := Store{Store: memory.New()}
-	e, err := store.Alloc()
-	if err != nil {
-		t.Error(e)
+func sampleDocuments(t string, n int) []Document {
+	ds := make([]Document, n)
+	for i := range ds {
+		ds[i].Title = fmt.Sprintf("%v %v", t, i)
+		ds[i].Content = "Lorem ipsum something"
 	}
-	sample := Document{
-		Title:   "Test Title",
-		Content: "Ipsum dolor etcetera",
-	}
-	err = store.SetDocument(e, &sample)
-	if err != nil {
-		t.Error(err)
-	}
-	ds, err := store.GetDocumentSlice([]kv.Entity{e, e})
-	if err != nil {
-		t.Error(err)
-	} else if len(ds) != 2 || ds[0] != sample || ds[1] != sample {
-		t.Error("want", []Document{sample, sample}, "got", ds)
-	}
-	matches, err := store.EntitiesMatchingDocumentTitle("test title")
-	if err != nil {
-		t.Error(err)
-	} else if len(matches) != 1 {
-		t.Error("want 1 match, got", len(matches), ":", matches)
-	} else {
-		ds, err = store.GetDocumentSlice(matches)
+	return ds
+}
+
+func createDocuments(s *Store, ds []Document) []kv.Entity {
+	var (
+		err error
+		es  = make([]kv.Entity, len(ds))
+	)
+	for i := range ds {
+		es[i], err = s.Alloc()
 		if err != nil {
-			t.Error(err)
-		} else if len(ds) != 1 {
-			t.Error("want one documents, got", ds)
-		} else if ds[0].Title != "Test Title" {
-			t.Errorf("want %v, got %v",
-				"Test Title", ds[0].Title)
+			panic(err)
+		}
+		if err = s.SetDocument(es[i], &ds[i]); err != nil {
+			panic(err)
+		}
+	}
+	return es
+}
+
+func verifyDocuments(s *Store, des []kv.Entity, ds []Document) {
+	if len(des) != len(ds) {
+		panic(fmt.Sprintf("len(des)=%v, len(ds)=%v", len(des), len(ds)))
+	}
+	// Check by getting one at a time.
+	for i, e := range des {
+		want := ds[i]
+		got, err := s.GetDocument(e)
+		if err != nil {
+			panic(err)
+		} else if want.Title != got.Title || want.Content != got.Content {
+			panic(fmt.Sprintf("%v: want %#v, got %#v", e, want, got))
+		}
+	}
+	// Check by getting all at once.
+	slice, err := s.GetDocumentSlice(des)
+	if err != nil {
+		panic(err)
+	} else if len(slice) != len(des) {
+		panic(fmt.Sprintf("%v != %v", len(slice), len(des)))
+	}
+	for i, e := range des {
+		want := ds[i]
+		got := slice[i]
+		if err != nil {
+			panic(err)
+		} else if want.Title != got.Title || want.Content != got.Content {
+			panic(fmt.Sprintf("%v: want %#v, got %#v", e, want, got))
+		}
+	}
+	// Check the index.
+	for i, d := range ds {
+		matches, err := s.EntitiesMatchingDocumentTitle(d.IndexTitle()[0])
+		if err != nil {
+			panic(err)
+		} else if matches.Search(des[i]) >= len(matches) {
+			panic(fmt.Sprintf("did not find %v in documents matching %#v: %#v",
+				des[i], d.IndexTitle()[0], matches))
+		} else {
+			mds, err := s.GetDocumentSlice(matches)
+			if err != nil {
+				panic(err)
+			} else if 1 != len(mds) {
+				panic(fmt.Sprintf("want one documents, got %#v", mds))
+			} else if d.Title != mds[0].Title {
+				panic(fmt.Sprintf("want %v, got %v",
+					d.Title, mds[0].Title))
+			}
 		}
 	}
 }
 
-func TestSchemaByTitle(t *testing.T) {
-	store := Store{Store: memory.New()}
-	for i := 0; i < 10; i++ {
-		for _, name := range []string{"Foo", "Bar", "Quux"} {
-			e, err := store.Alloc()
+func TestCreateRead(t *testing.T) {
+	test := func(s_ kv.Store) {
+		s := Store{Store: s_}
+		samples := sampleDocuments("Test", 5)
+		des := createDocuments(&s, samples)
+		verifyDocuments(&s, des, samples)
+	}
+	kvtest.Deflake(t, test)
+}
+
+func TestCreateUpdateRead(t *testing.T) {
+	test := func(s_ kv.Store) {
+		s := Store{Store: s_}
+		des := createDocuments(&s, sampleDocuments("Initial", 5))
+		revised := sampleDocuments("Revised", 5)
+		for i, de := range des {
+			s.SetDocument(de, &revised[i])
+		}
+		verifyDocuments(&s, des, revised)
+	}
+	kvtest.Deflake(t, test)
+}
+
+func TestPartition(t *testing.T) {
+	s := Store{Store: kvtest.New(t)}
+	if s.Partition() != 0 {
+		t.Fatalf("want 0, got %v", s.Partition())
+	}
+	for p := kv.Entity(0); p < 10; p++ {
+		ps := s.WithPartition(p)
+		if err := ps.SetDocument(p+1, &Document{Title: "partition test"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for p := kv.Entity(0); p < 10; p++ {
+		t.Run(fmt.Sprintf("partition %v", p), func(t *testing.T) {
+			es, err := s.WithPartition(p).EntitiesMatchingDocumentTitle("partition test")
 			if err != nil {
-				t.Fatal(e)
+				t.Fatal(err)
 			}
-			err = store.SetDocument(e, &Document{
-				Title:   fmt.Sprintf("%s #%v", name, i),
-				Content: "Ipsum dolor etcetera",
-			})
-			if err != nil {
-				t.Error(err)
+			if len(es) != 1 || es[0] != p+1 {
+				t.Errorf("want %v, got %#v", p+1, es)
+			}
+		})
+	}
+}
+
+func TestIterator(t *testing.T) {
+	test := func(s_ kv.Store) {
+		s := Store{Store: s_}
+		createDocuments(&s, sampleDocuments("Foo", 5))
+		createDocuments(&s, sampleDocuments("Foo", 5))
+		createDocuments(&s, sampleDocuments("Bar", 5))
+		for pageSize := 1; pageSize < 11; pageSize++ {
+			println("pageSize", pageSize)
+			var (
+				cursor  kv.IndexCursor
+				docs    []Document
+				already = make(map[kv.Entity]bool)
+			)
+			for i := 0; ; i++ {
+				println("page", i)
+				es, err := s.EntitiesByDocumentTitle(&cursor, pageSize)
+				if err != nil {
+					panic(err)
+					break
+				}
+				if len(es) == 0 {
+					break
+				}
+				for k := 0; k < len(es); k++ {
+					println(es[k])
+				}
+				for _, e := range es {
+					if already[e] {
+						panic(fmt.Sprintf("duplicate %v", e))
+					}
+					already[e] = true
+				}
+				ds, err := s.GetDocumentSlice(es)
+				if err != nil {
+					panic(err)
+					break
+				}
+				docs = append(docs, ds...)
+			}
+			for i := 1; i < len(docs); i++ {
+				if docs[i-1].Title > docs[i].Title {
+					panic(fmt.Sprintf("want %#v before %#v, got after",
+						docs[i-1].Title, docs[i].Title))
+				}
 			}
 		}
 	}
-	var cursor kv.IndexCursor
-	var docs []Document
-	already := make(map[kv.Entity]bool)
-	for i := 0; ; i++ {
-		es, err := store.EntitiesByDocumentTitle(&cursor, 5)
-		println(string(cursor.Key), cursor.Offset)
-		if err != nil {
-			t.Error(err)
-			break
-		}
-		if len(es) == 0 {
-			break
-		}
-		for _, e := range es {
-			if already[e] {
-				t.Error("duplicate", e)
-			}
-			already[e] = true
-		}
-		ds, err := store.GetDocumentSlice(es)
-		if err != nil {
-			t.Error(err)
-			break
-		}
-		docs = append(docs, ds...)
-	}
-	for i := 1; i < len(docs); i++ {
-		if docs[i-1].Title > docs[i].Title {
-			t.Errorf("want %#v before %#v, got after",
-				docs[i-1].Title, docs[i].Title)
-		}
-	}
+	kvtest.Deflake(t, test)
 }

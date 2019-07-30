@@ -23,6 +23,7 @@ import (
 // Store adds some query logic to models.Store.
 type Store struct{ models.Store }
 
+// TopicsByName returns a page of topics ordered by name.
 func (s *Store) TopicsByName(c *kv.IndexCursor, n int) ([]kv.Entity, error) {
 	ns, err := s.EntitiesByNameValue(c, n)
 	if err != nil {
@@ -39,17 +40,24 @@ func (s *Store) TopicsByName(c *kv.IndexCursor, n int) ([]kv.Entity, error) {
 	return ts, nil
 }
 
-type Flag int
+// Mask describes which fields should be included in a response.
+type Mask int
 
 const (
-	Refs Flag = 1 << iota
+	// Refs indicates IIs, SIs, and SLs should be included in a response.
+	Refs Mask = 1 << iota
+	// TopicMaps indicates TopicMaps should be included in a response.
 	TopicMaps
+	// Topics indicates Topics should be included in a response.
 	Topics
+	// Names indicates Names should be included in a response.
 	Names
+	// Occurrences indicates Occurrences should be included in a response.
 	Occurrences
 )
 
-func (s *Store) LoadTopic(te kv.Entity, f Flag) (*topicmaps.Topic, error) {
+// LoadTopic retrieves f fields of te into a topicmaps.Topic.
+func (s *Store) LoadTopic(te kv.Entity, f Mask) (*topicmaps.Topic, error) {
 	var topic topicmaps.Topic
 
 	if (f & Refs) != 0 {

@@ -323,6 +323,8 @@ func (s *String) Decode(src []byte) error {
 	return nil
 }
 
+// StringSlice is a slice of strings that implements the Encoder and Decoder
+// interfaces.
 type StringSlice []String
 
 // Encode encodes s into a new slice of bytes.

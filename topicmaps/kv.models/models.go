@@ -50,6 +50,8 @@ const (
 	ValuePrefix            kv.Component = 0x000A
 )
 
+// TopicMapInfo wraps pb.TopicMapInfo to implement kv.Encoder and kv.Decoder
+// interfaces.
 type TopicMapInfo struct{ pb.TopicMapInfo }
 
 func (tmi *TopicMapInfo) Encode() []byte          { return encodeProto(tmi) }
@@ -120,12 +122,14 @@ func (tos *TopicOccurrences) Decode(bs []byte) error {
 	return err
 }
 
+// Names wraps pb.Names to implement kv.Encoder and kv.Decoder interfaces.
 type Name struct{ pb.Name }
 
 func (n *Name) Encode() []byte          { return encodeProto(n) }
 func (n *Name) Decode(src []byte) error { return decodeProto(src, n) }
 func (n *Name) IndexValue() []kv.String { return []kv.String{kv.String(n.GetValue())} }
 
+// Occurrence wraps pb.Names to implement kv.Encoder and kv.Decoder interfaces.
 type Occurrence struct{ pb.Occurrence }
 
 func (o *Occurrence) Encode() []byte          { return encodeProto(o) }

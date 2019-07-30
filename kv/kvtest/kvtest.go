@@ -39,29 +39,29 @@ func New(t *testing.T) StoreCloser {
 			Store:  memory.New(),
 			closer: func() error { return nil },
 		}
-	} else {
-		dir, err := ioutil.TempDir("", "kvtest-badger")
-		if err != nil {
-			t.Fatal(err)
-		}
-		b, err := badger.Open(badger.DefaultOptions(dir).WithLogger(badgerLogger{t}))
-		if err != nil {
+	}
+	dir, err := ioutil.TempDir("", "kvtest-badger")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := badger.Open(badger.DefaultOptions(dir).WithLogger(badgerLogger{t}))
+	if err != nil {
+		os.RemoveAll(dir)
+		t.Fatal(err)
+	}
+	txn := b.NewTransaction(true)
+	return &tmpStore{
+		Store: b.NewStore(txn),
+		closer: func() error {
+			txn.Discard()
+			b.Close()
 			os.RemoveAll(dir)
-			t.Fatal(err)
-		}
-		txn := b.NewTransaction(true)
-		return &tmpStore{
-			Store: b.NewStore(txn),
-			closer: func() error {
-				txn.Discard()
-				b.Close()
-				os.RemoveAll(dir)
-				return nil
-			},
-		}
+			return nil
+		},
 	}
 }
 
+// StoreCloser combines the kv.Store and io.Closer interfaces.
 type StoreCloser interface {
 	kv.Store
 	io.Closer

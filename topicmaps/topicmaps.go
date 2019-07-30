@@ -105,7 +105,7 @@ type Role struct {
 	Player TopicRef
 }
 
-// Merge is a sink for TMDM items.
+// Merger is a sink for TMDM items.
 type Merger interface {
 	MergeTopic(t *Topic) error
 	MergeAssociation(a *Association) error

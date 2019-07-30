@@ -58,6 +58,9 @@ func TestCreateTopicMap(t *testing.T) {
 	sort.Slice(stored,
 		func(a, b int) bool { return stored[a].TopicMap < stored[b].TopicMap })
 	got, err := store.GetTopicMapInfoSlice(es)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(stored) != len(got) {
 		t.Errorf("want %v topic maps, got %v topic maps", len(stored), len(got))
 	} else {

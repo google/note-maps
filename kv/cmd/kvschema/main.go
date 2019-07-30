@@ -166,8 +166,8 @@ func gen(pkg *types.Package, w io.Writer) error {
 					continue
 				}
 			}
-			encoderImpl := Implements(named, encoderType)
-			decoderImpl := Implements(named, decoderType)
+			encoderImpl := implements(named, encoderType)
+			decoderImpl := implements(named, decoderType)
 			if encoderImpl == noImplementation || decoderImpl == noImplementation {
 				verboseLogf(
 					"%s does not implement both kv.Encoder and kv.Decoder",
@@ -205,8 +205,8 @@ func gen(pkg *types.Package, w io.Writer) error {
 					verboseLogf("%s is not a named type", elem)
 					continue
 				}
-				encoderImpl = Implements(elem, encoderType)
-				decoderImpl = Implements(elem, decoderType)
+				encoderImpl = implements(elem, encoderType)
+				decoderImpl = implements(elem, decoderType)
 				if encoderImpl == noImplementation || decoderImpl == noImplementation {
 					verboseLogf(
 						"%v does not implement encoder/decoder interfaces", elem)
@@ -284,7 +284,7 @@ const (
 	indirectImplementation
 )
 
-func Implements(v types.Type, t *types.Interface) implementation {
+func implements(v types.Type, t *types.Interface) implementation {
 	if types.Implements(v, t) {
 		return directImplementation
 	} else if types.Implements(types.NewPointer(v), t) {

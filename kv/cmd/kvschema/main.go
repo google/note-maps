@@ -14,7 +14,7 @@
 
 package main
 
-//go:generate go-bindata templates/
+//go:generate go-bindata -o ./bindata/bindata.go -pkg bindata templates/
 
 import (
 	"bytes"
@@ -35,6 +35,7 @@ import (
 	"text/template"
 
 	"github.com/google/note-maps/kv"
+	"github.com/google/note-maps/kv/cmd/kvschema/bindata"
 )
 
 var (
@@ -237,7 +238,7 @@ func gen(pkg *types.Package, w io.Writer) error {
 	if len(componentTypes) == 0 {
 		return fmt.Errorf("did not find any component types")
 	}
-	tbs, err := Asset("templates/kvschema.gotmpl")
+	tbs, err := bindata.Asset("templates/kvschema.gotmpl")
 	if err != nil {
 		return err
 	}

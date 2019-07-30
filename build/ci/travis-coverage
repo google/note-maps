@@ -21,7 +21,7 @@ set -e
 # Redirect output to stderr.
 exec 1>&2
 
-gopkgs="$(go list ./... | grep -Ev '/(vendor|third_party|pb)\>')"
+gopkgs="$(go list ./... | grep -Ev '/(bindata|pb|third_party|vendor)\>')"
 
 go test -v -covermode=count -coverprofile=coverage.out ${gopkgs}
 "${GOPATH}/bin/goveralls" -coverprofile=coverage.out -service=travis-ci

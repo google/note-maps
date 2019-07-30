@@ -1,0 +1,55 @@
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# A Topic Maps GraphQL specification designed to be compatible with
+# http://www.isotopicmaps.org/sam/sam-model/#sect-topic-name
+
+type TopicMap {
+  id: ID!
+  identifiers: [String!]!
+  reifier: Topic!
+}
+
+type Topic {
+  id: ID!
+  identifiers: [String!]!
+  subject_identifiers: [String!]!
+  subject_locators: [String!]!
+  names: [Name!]!
+  occurrences: [Occurrence!]!
+  parent: TopicMap!
+}
+
+type Name {
+  id: ID!
+  identifiers: [String!]!
+  value: String!
+  parent: Topic!
+  scope: [Topic!]!
+  type: Topic!
+}
+
+type Occurrence {
+  id: ID!
+  identifiers: [String!]!
+  value: String!
+  datatype: Topic!
+  parent: Topic!
+  scope: [Topic!]!
+  type: Topic!
+}
+
+type Query {
+  topic_maps: [TopicMap!]!
+}

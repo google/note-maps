@@ -48,7 +48,7 @@ func verboseLogf(format string, v ...interface{}) {
 	}
 }
 
-func Usage() {
+func usage() {
 	fmt.Fprintf(os.Stderr, "Usage of kvschemer:\n")
 	fmt.Fprintf(os.Stderr, "\tkvschemer [flags] [directory]\n")
 	fmt.Fprintf(os.Stderr, "Flags:\n")
@@ -56,7 +56,7 @@ func Usage() {
 }
 
 func main() {
-	flag.Usage = Usage
+	flag.Usage = usage
 	flag.Parse()
 	args := flag.Args()
 	if len(args) == 0 {
@@ -135,7 +135,7 @@ func gen(pkg *types.Package, w io.Writer) error {
 	var (
 		encoderType    = kvInterface("Encoder")
 		decoderType    = kvInterface("Decoder")
-		componentTypes []*ComponentType
+		componentTypes []*componentType
 	)
 	for _, name := range pkg.Scope().Names() {
 		if obj, ok := pkg.Scope().Lookup(name).(*types.TypeName); ok {
@@ -167,18 +167,18 @@ func gen(pkg *types.Package, w io.Writer) error {
 			}
 			encoderImpl := Implements(named, encoderType)
 			decoderImpl := Implements(named, decoderType)
-			if encoderImpl == NoImplementation || decoderImpl == NoImplementation {
+			if encoderImpl == noImplementation || decoderImpl == noImplementation {
 				verboseLogf(
 					"%s does not implement both kv.Encoder and kv.Decoder",
 					typeName.Name())
 				continue
 			}
-			c := &ComponentType{
+			c := &componentType{
 				Name:          typeName.Name(),
 				SVar:          strings.ToLower(typeName.Name())[0:1],
 				PrefixName:    prefixName,
-				DirectEncoder: encoderImpl == DirectImplementation,
-				DirectDecoder: decoderImpl == DirectImplementation,
+				DirectEncoder: encoderImpl == directImplementation,
+				DirectDecoder: decoderImpl == directImplementation,
 			}
 			methods := types.NewMethodSet(types.NewPointer(named))
 			for i := 0; i < methods.Len(); i++ {
@@ -206,7 +206,7 @@ func gen(pkg *types.Package, w io.Writer) error {
 				}
 				encoderImpl = Implements(elem, encoderType)
 				decoderImpl = Implements(elem, decoderType)
-				if encoderImpl == NoImplementation || decoderImpl == NoImplementation {
+				if encoderImpl == noImplementation || decoderImpl == noImplementation {
 					verboseLogf(
 						"%v does not implement encoder/decoder interfaces", elem)
 					continue
@@ -217,7 +217,7 @@ func gen(pkg *types.Package, w io.Writer) error {
 					expr = elemPkg.Name() + "." + expr
 				}
 				indexName := strings.TrimPrefix(name, "Index")
-				c.Indexes = append(c.Indexes, &IndexInfo{
+				c.Indexes = append(c.Indexes, &indexInfo{
 					ComponentName:       c.Name,
 					ComponentPrefixName: c.PrefixName,
 					Name:                indexName,
@@ -225,8 +225,8 @@ func gen(pkg *types.Package, w io.Writer) error {
 					MethodName:          name,
 					MethodDirect:        direct,
 					TypeExpr:            expr,
-					DirectEncoder:       encoderImpl == DirectImplementation,
-					DirectDecoder:       decoderImpl == DirectImplementation,
+					DirectEncoder:       encoderImpl == directImplementation,
+					DirectDecoder:       decoderImpl == directImplementation,
 				})
 				verboseLogf("index found: %v", c.Indexes[len(c.Indexes)-1])
 			}
@@ -247,23 +247,23 @@ func gen(pkg *types.Package, w io.Writer) error {
 	}
 	return t.ExecuteTemplate(w, "kvschema.go", &struct {
 		Package        *types.Package
-		ComponentTypes []*ComponentType
+		ComponentTypes []*componentType
 	}{
 		pkg,
 		componentTypes,
 	})
 }
 
-type ComponentType struct {
+type componentType struct {
 	PrefixName    string
 	Name          string
 	SVar          string
 	DirectEncoder bool
 	DirectDecoder bool
-	Indexes       []*IndexInfo
+	Indexes       []*indexInfo
 }
 
-type IndexInfo struct {
+type indexInfo struct {
 	ComponentName       string
 	ComponentPrefixName string
 	Name                string
@@ -275,20 +275,20 @@ type IndexInfo struct {
 	DirectDecoder       bool
 }
 
-type Implementation int
+type implementation int
 
 const (
-	NoImplementation Implementation = iota
-	DirectImplementation
-	IndirectImplementation
+	noImplementation implementation = iota
+	directImplementation
+	indirectImplementation
 )
 
-func Implements(v types.Type, t *types.Interface) Implementation {
+func Implements(v types.Type, t *types.Interface) implementation {
 	if types.Implements(v, t) {
-		return DirectImplementation
+		return directImplementation
 	} else if types.Implements(types.NewPointer(v), t) {
-		return IndirectImplementation
+		return indirectImplementation
 	} else {
-		return NoImplementation
+		return noImplementation
 	}
 }

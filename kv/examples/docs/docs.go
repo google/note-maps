@@ -32,8 +32,11 @@ import (
 )
 
 const (
+	// DocumentPrefix is a unique identifier for the Document component in this schema.
 	DocumentPrefix kv.Component = 3
-	TitlePrefix    kv.Component = 4
+
+	// TitlePrefix is a unique identifier for the Title component in this schema.
+	TitlePrefix kv.Component = 4
 )
 
 // Document is a component value type.

@@ -111,6 +111,37 @@ func (s *Store) GetDocumentSlice(es []kv.Entity) ([]Document, error) {
 	return result, nil
 }
 
+// AllDocumentEntities returns the first n entities that have a Document, beginning
+// with the first entity greater than or equal to *start.
+//
+// A nil start value will be interpreted as a pointer to zero.
+//
+// A value of n less than or equal to zero will be interpretted as the largest
+// possible value.
+func (s *Store) AllDocumentEntities(start *kv.Entity, n int) (es []kv.Entity, err error) {
+	prefix := make(kv.Prefix, 8+2)
+	s.partition.EncodeAt(prefix)
+	DocumentPrefix.EncodeAt(prefix[8:])
+	iter := s.PrefixIterator(prefix[:10])
+	defer iter.Discard()
+	var actualStart kv.Entity
+	if start == nil || *start == 0 {
+		actualStart = 1
+	} else {
+		actualStart = *start
+	}
+	bstart := actualStart.Encode()
+	for iter.Seek(bstart); iter.Valid() && (n <= 0 || len(es) < n); iter.Next() {
+		var e kv.Entity
+		e.Decode(iter.Key())
+		es = append(es, e)
+	}
+	if start != nil && len(es) > 0 {
+		*start = es[len(es)-1] + 1
+	}
+	return
+}
+
 // EntitiesMatchingDocumentTitle returns entities with Document values that return a matching kv.String from their IndexTitle method.
 //
 // The returned EntitySlice is already sorted.

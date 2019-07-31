@@ -16,6 +16,7 @@ package docs
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/google/note-maps/kv"
@@ -175,7 +176,7 @@ func TestIterator(t *testing.T) {
 				}
 				for _, e := range es {
 					if already[e] {
-						panic(fmt.Sprintf("duplicate %v", e))
+						t.Fatalf("duplicate %v", e)
 					}
 					already[e] = true
 				}
@@ -188,9 +189,40 @@ func TestIterator(t *testing.T) {
 			}
 			for i := 1; i < len(docs); i++ {
 				if docs[i-1].Title > docs[i].Title {
-					panic(fmt.Sprintf("want %#v before %#v, got after",
-						docs[i-1].Title, docs[i].Title))
+					t.Fatalf("want %#v before %#v, got after",
+						docs[i-1].Title, docs[i].Title)
 				}
+			}
+		}
+	}
+	kvtest.Deflake(t, test)
+}
+
+func TestAllDocumentEntities(t *testing.T) {
+	test := func(s_ kv.Store) {
+		s := Store{Store: s_}
+		want := createDocuments(&s, sampleDocuments("All", 5))
+		kv.EntitySlice(want).Sort()
+		for pageSize := 1; pageSize < len(want)+1; pageSize++ {
+			var (
+				start kv.Entity
+				got   []kv.Entity
+			)
+			for {
+				buf, err := s.AllDocumentEntities(&start, pageSize)
+				if err != nil {
+					panic(err)
+				}
+				got = append(got, buf...)
+				if pageSize < len(buf) {
+					t.Fatalf("want <= %d entities, got %d", pageSize, len(buf))
+				} else if len(buf) < pageSize {
+					break
+				}
+			}
+			kv.EntitySlice(got).Sort()
+			if !reflect.DeepEqual(want, got) {
+				t.Fatalf("want %#v, got %#v", want, got)
 			}
 		}
 	}

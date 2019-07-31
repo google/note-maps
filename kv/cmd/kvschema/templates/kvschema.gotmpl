@@ -127,6 +127,37 @@ func (s *Store) Get{{.Name}}Slice(es []kv.Entity) ([]{{.Name}}, error) {
 		}
 	}
 	return result, nil
+}
+
+// All{{.Name}}Entities returns the first n entities that have a {{.Name}}, beginning
+// with the first entity greater than or equal to *start.
+//
+// A nil start value will be interpreted as a pointer to zero.
+//
+// A value of n less than or equal to zero will be interpretted as the largest
+// possible value.
+func (s *Store) All{{.Name}}Entities(start *kv.Entity, n int) (es []kv.Entity, err error) {
+	prefix := make(kv.Prefix, 8+2)
+	s.partition.EncodeAt(prefix)
+	{{.PrefixName}}.EncodeAt(prefix[8:])
+	iter := s.PrefixIterator(prefix[:10])
+	defer iter.Discard()
+	var actualStart kv.Entity
+	if start == nil || *start == 0 {
+		actualStart = 1
+	} else {
+		actualStart = *start
+	}
+	bstart := actualStart.Encode()
+	for iter.Seek(bstart); iter.Valid() && (n <= 0 || len(es) < n); iter.Next() {
+		var e kv.Entity
+		e.Decode(iter.Key())
+		es = append(es, e)
+	}
+	if start != nil && len(es) > 0 {
+		*start = es[len(es)-1] + 1
+	}
+	return
 }{{range .Indexes}}
 
 // EntitiesMatching{{.ComponentName}}{{.Name}} returns entities with {{.ComponentName}} values that return a matching {{.TypeExpr}} from their {{.MethodName}} method.

@@ -111,6 +111,37 @@ func (s *Store) GetIIsSlice(es []kv.Entity) ([]IIs, error) {
 	return result, nil
 }
 
+// AllIIsEntities returns the first n entities that have a IIs, beginning
+// with the first entity greater than or equal to *start.
+//
+// A nil start value will be interpreted as a pointer to zero.
+//
+// A value of n less than or equal to zero will be interpretted as the largest
+// possible value.
+func (s *Store) AllIIsEntities(start *kv.Entity, n int) (es []kv.Entity, err error) {
+	prefix := make(kv.Prefix, 8+2)
+	s.partition.EncodeAt(prefix)
+	IIsPrefix.EncodeAt(prefix[8:])
+	iter := s.PrefixIterator(prefix[:10])
+	defer iter.Discard()
+	var actualStart kv.Entity
+	if start == nil || *start == 0 {
+		actualStart = 1
+	} else {
+		actualStart = *start
+	}
+	bstart := actualStart.Encode()
+	for iter.Seek(bstart); iter.Valid() && (n <= 0 || len(es) < n); iter.Next() {
+		var e kv.Entity
+		e.Decode(iter.Key())
+		es = append(es, e)
+	}
+	if start != nil && len(es) > 0 {
+		*start = es[len(es)-1] + 1
+	}
+	return
+}
+
 // EntitiesMatchingIIsLiteral returns entities with IIs values that return a matching kv.String from their IndexLiteral method.
 //
 // The returned EntitySlice is already sorted.
@@ -257,6 +288,37 @@ func (s *Store) GetNameSlice(es []kv.Entity) ([]Name, error) {
 		}
 	}
 	return result, nil
+}
+
+// AllNameEntities returns the first n entities that have a Name, beginning
+// with the first entity greater than or equal to *start.
+//
+// A nil start value will be interpreted as a pointer to zero.
+//
+// A value of n less than or equal to zero will be interpretted as the largest
+// possible value.
+func (s *Store) AllNameEntities(start *kv.Entity, n int) (es []kv.Entity, err error) {
+	prefix := make(kv.Prefix, 8+2)
+	s.partition.EncodeAt(prefix)
+	NamePrefix.EncodeAt(prefix[8:])
+	iter := s.PrefixIterator(prefix[:10])
+	defer iter.Discard()
+	var actualStart kv.Entity
+	if start == nil || *start == 0 {
+		actualStart = 1
+	} else {
+		actualStart = *start
+	}
+	bstart := actualStart.Encode()
+	for iter.Seek(bstart); iter.Valid() && (n <= 0 || len(es) < n); iter.Next() {
+		var e kv.Entity
+		e.Decode(iter.Key())
+		es = append(es, e)
+	}
+	if start != nil && len(es) > 0 {
+		*start = es[len(es)-1] + 1
+	}
+	return
 }
 
 // EntitiesMatchingNameValue returns entities with Name values that return a matching kv.String from their IndexValue method.
@@ -407,6 +469,37 @@ func (s *Store) GetOccurrenceSlice(es []kv.Entity) ([]Occurrence, error) {
 	return result, nil
 }
 
+// AllOccurrenceEntities returns the first n entities that have a Occurrence, beginning
+// with the first entity greater than or equal to *start.
+//
+// A nil start value will be interpreted as a pointer to zero.
+//
+// A value of n less than or equal to zero will be interpretted as the largest
+// possible value.
+func (s *Store) AllOccurrenceEntities(start *kv.Entity, n int) (es []kv.Entity, err error) {
+	prefix := make(kv.Prefix, 8+2)
+	s.partition.EncodeAt(prefix)
+	OccurrencePrefix.EncodeAt(prefix[8:])
+	iter := s.PrefixIterator(prefix[:10])
+	defer iter.Discard()
+	var actualStart kv.Entity
+	if start == nil || *start == 0 {
+		actualStart = 1
+	} else {
+		actualStart = *start
+	}
+	bstart := actualStart.Encode()
+	for iter.Seek(bstart); iter.Valid() && (n <= 0 || len(es) < n); iter.Next() {
+		var e kv.Entity
+		e.Decode(iter.Key())
+		es = append(es, e)
+	}
+	if start != nil && len(es) > 0 {
+		*start = es[len(es)-1] + 1
+	}
+	return
+}
+
 // EntitiesMatchingOccurrenceValue returns entities with Occurrence values that return a matching kv.String from their IndexValue method.
 //
 // The returned EntitySlice is already sorted.
@@ -553,6 +646,37 @@ func (s *Store) GetSIsSlice(es []kv.Entity) ([]SIs, error) {
 		}
 	}
 	return result, nil
+}
+
+// AllSIsEntities returns the first n entities that have a SIs, beginning
+// with the first entity greater than or equal to *start.
+//
+// A nil start value will be interpreted as a pointer to zero.
+//
+// A value of n less than or equal to zero will be interpretted as the largest
+// possible value.
+func (s *Store) AllSIsEntities(start *kv.Entity, n int) (es []kv.Entity, err error) {
+	prefix := make(kv.Prefix, 8+2)
+	s.partition.EncodeAt(prefix)
+	SIsPrefix.EncodeAt(prefix[8:])
+	iter := s.PrefixIterator(prefix[:10])
+	defer iter.Discard()
+	var actualStart kv.Entity
+	if start == nil || *start == 0 {
+		actualStart = 1
+	} else {
+		actualStart = *start
+	}
+	bstart := actualStart.Encode()
+	for iter.Seek(bstart); iter.Valid() && (n <= 0 || len(es) < n); iter.Next() {
+		var e kv.Entity
+		e.Decode(iter.Key())
+		es = append(es, e)
+	}
+	if start != nil && len(es) > 0 {
+		*start = es[len(es)-1] + 1
+	}
+	return
 }
 
 // EntitiesMatchingSIsLiteral returns entities with SIs values that return a matching kv.String from their IndexLiteral method.
@@ -703,6 +827,37 @@ func (s *Store) GetSLsSlice(es []kv.Entity) ([]SLs, error) {
 	return result, nil
 }
 
+// AllSLsEntities returns the first n entities that have a SLs, beginning
+// with the first entity greater than or equal to *start.
+//
+// A nil start value will be interpreted as a pointer to zero.
+//
+// A value of n less than or equal to zero will be interpretted as the largest
+// possible value.
+func (s *Store) AllSLsEntities(start *kv.Entity, n int) (es []kv.Entity, err error) {
+	prefix := make(kv.Prefix, 8+2)
+	s.partition.EncodeAt(prefix)
+	SLsPrefix.EncodeAt(prefix[8:])
+	iter := s.PrefixIterator(prefix[:10])
+	defer iter.Discard()
+	var actualStart kv.Entity
+	if start == nil || *start == 0 {
+		actualStart = 1
+	} else {
+		actualStart = *start
+	}
+	bstart := actualStart.Encode()
+	for iter.Seek(bstart); iter.Valid() && (n <= 0 || len(es) < n); iter.Next() {
+		var e kv.Entity
+		e.Decode(iter.Key())
+		es = append(es, e)
+	}
+	if start != nil && len(es) > 0 {
+		*start = es[len(es)-1] + 1
+	}
+	return
+}
+
 // EntitiesMatchingSLsLiteral returns entities with SLs values that return a matching kv.String from their IndexLiteral method.
 //
 // The returned EntitySlice is already sorted.
@@ -812,6 +967,37 @@ func (s *Store) GetTopicMapInfoSlice(es []kv.Entity) ([]TopicMapInfo, error) {
 	return result, nil
 }
 
+// AllTopicMapInfoEntities returns the first n entities that have a TopicMapInfo, beginning
+// with the first entity greater than or equal to *start.
+//
+// A nil start value will be interpreted as a pointer to zero.
+//
+// A value of n less than or equal to zero will be interpretted as the largest
+// possible value.
+func (s *Store) AllTopicMapInfoEntities(start *kv.Entity, n int) (es []kv.Entity, err error) {
+	prefix := make(kv.Prefix, 8+2)
+	s.partition.EncodeAt(prefix)
+	TopicMapInfoPrefix.EncodeAt(prefix[8:])
+	iter := s.PrefixIterator(prefix[:10])
+	defer iter.Discard()
+	var actualStart kv.Entity
+	if start == nil || *start == 0 {
+		actualStart = 1
+	} else {
+		actualStart = *start
+	}
+	bstart := actualStart.Encode()
+	for iter.Seek(bstart); iter.Valid() && (n <= 0 || len(es) < n); iter.Next() {
+		var e kv.Entity
+		e.Decode(iter.Key())
+		es = append(es, e)
+	}
+	if start != nil && len(es) > 0 {
+		*start = es[len(es)-1] + 1
+	}
+	return
+}
+
 // SetTopicNames sets the TopicNames associated with e to v.
 //
 // Corresponding indexes are updated.
@@ -855,6 +1041,37 @@ func (s *Store) GetTopicNamesSlice(es []kv.Entity) ([]TopicNames, error) {
 	return result, nil
 }
 
+// AllTopicNamesEntities returns the first n entities that have a TopicNames, beginning
+// with the first entity greater than or equal to *start.
+//
+// A nil start value will be interpreted as a pointer to zero.
+//
+// A value of n less than or equal to zero will be interpretted as the largest
+// possible value.
+func (s *Store) AllTopicNamesEntities(start *kv.Entity, n int) (es []kv.Entity, err error) {
+	prefix := make(kv.Prefix, 8+2)
+	s.partition.EncodeAt(prefix)
+	TopicNamesPrefix.EncodeAt(prefix[8:])
+	iter := s.PrefixIterator(prefix[:10])
+	defer iter.Discard()
+	var actualStart kv.Entity
+	if start == nil || *start == 0 {
+		actualStart = 1
+	} else {
+		actualStart = *start
+	}
+	bstart := actualStart.Encode()
+	for iter.Seek(bstart); iter.Valid() && (n <= 0 || len(es) < n); iter.Next() {
+		var e kv.Entity
+		e.Decode(iter.Key())
+		es = append(es, e)
+	}
+	if start != nil && len(es) > 0 {
+		*start = es[len(es)-1] + 1
+	}
+	return
+}
+
 // SetTopicOccurrences sets the TopicOccurrences associated with e to v.
 //
 // Corresponding indexes are updated.
@@ -896,4 +1113,35 @@ func (s *Store) GetTopicOccurrencesSlice(es []kv.Entity) ([]TopicOccurrences, er
 		}
 	}
 	return result, nil
+}
+
+// AllTopicOccurrencesEntities returns the first n entities that have a TopicOccurrences, beginning
+// with the first entity greater than or equal to *start.
+//
+// A nil start value will be interpreted as a pointer to zero.
+//
+// A value of n less than or equal to zero will be interpretted as the largest
+// possible value.
+func (s *Store) AllTopicOccurrencesEntities(start *kv.Entity, n int) (es []kv.Entity, err error) {
+	prefix := make(kv.Prefix, 8+2)
+	s.partition.EncodeAt(prefix)
+	TopicOccurrencesPrefix.EncodeAt(prefix[8:])
+	iter := s.PrefixIterator(prefix[:10])
+	defer iter.Discard()
+	var actualStart kv.Entity
+	if start == nil || *start == 0 {
+		actualStart = 1
+	} else {
+		actualStart = *start
+	}
+	bstart := actualStart.Encode()
+	for iter.Seek(bstart); iter.Valid() && (n <= 0 || len(es) < n); iter.Next() {
+		var e kv.Entity
+		e.Decode(iter.Key())
+		es = append(es, e)
+	}
+	if start != nil && len(es) > 0 {
+		*start = es[len(es)-1] + 1
+	}
+	return
 }

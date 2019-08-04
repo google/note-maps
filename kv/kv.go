@@ -44,19 +44,15 @@ import (
 	"sort"
 )
 
-// Store represents a the functions a key-value store must implement in order
-// to be used as a backing store in this package.
-//
-// It is valid, even recommended, for Store to be implemented by a type that
-// represents a transaction, rather than one that represents an open
-// connection.
-type Store interface {
+// Txn represents the functions a key-value store transaction must implement in
+// order to be used as a backing transaction in this package.
+type Txn interface {
 	// Alloc should never return the same Entity value twice until the space of
 	// possible Entity values is exhausted.
 	//
-	// Alloc cannot be implemented through Get and Set operations on the Store
+	// Alloc cannot be implemented through Get and Set operations on the Txn
 	// interface itself because independent concurrent transactions require
-	// mutually unique Entity values, and the Store interface maybe implemented
+	// mutually unique Entity values, and the Txn interface maybe implemented
 	// by a transaction type.
 	Alloc() (Entity, error)
 
@@ -190,7 +186,7 @@ func (c Component) Encode() []byte {
 // Entity is an identifier that can be associated with Go values via
 // Components, and
 //
-// Entities are typically created through Store.Alloc().
+// Entities are typically created through Txn.Alloc().
 type Entity uint64
 
 // EncodeAt encodes e into the first eight bytes of dst and panics if len(dst)

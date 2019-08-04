@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package badger providers a Badger-backed implementation of kv.Store.
+// Package badger providers a Badger-backed implementation of kv.Txn.
 package badger
 
 import (
@@ -62,26 +62,26 @@ func (db *DB) Close() error {
 	return db.DB.Close()
 }
 
-// NewStore creates a new kv.Store based on a the given transaction.
-func (db *DB) NewStore(txn *badger.Txn) kv.Store {
-	return NewStore(db.seq, txn)
+// NewTxn creates a new kv.Txn based on a the given transaction.
+func (db *DB) NewTxn(txn *badger.Txn) kv.Txn {
+	return NewTxn(db.seq, txn)
 }
 
-// NewStore creates a new kv.Store that uses seq to allocate new Entity values,
+// NewTxn creates a new kv.Txn that uses seq to allocate new Entity values,
 // and tx for read and write operations.
 //
-// NewStore is a lower-level alternative to creating a kv.Store through
-// DB.NewStore. Applications that manage their own badger.DB, or that want to
+// NewTxn is a lower-level alternative to creating a kv.Txn through
+// DB.NewTxn. Applications that manage their own badger.DB, or that want to
 // do additional work on a given badger.Txn before it is committed, can use
-// NewStore to preserve those abilities.
-func NewStore(seq *badger.Sequence, tx *badger.Txn) kv.Store { return store{seq, tx} }
+// NewTxn to preserve those abilities.
+func NewTxn(seq *badger.Sequence, tx *badger.Txn) kv.Txn { return txn{seq, tx} }
 
-type store struct {
+type txn struct {
 	seq *badger.Sequence
 	tx  *badger.Txn
 }
 
-func (s store) Alloc() (kv.Entity, error) {
+func (s txn) Alloc() (kv.Entity, error) {
 	u64, err := s.seq.Next()
 	if u64 == 0 {
 		u64, err = s.seq.Next()
@@ -92,9 +92,9 @@ func (s store) Alloc() (kv.Entity, error) {
 	return kv.Entity(u64), err
 }
 
-func (s store) Set(key, value []byte) error { return s.tx.Set(key, value) }
+func (s txn) Set(key, value []byte) error { return s.tx.Set(key, value) }
 
-func (s store) Get(key []byte, f func([]byte) error) error {
+func (s txn) Get(key []byte, f func([]byte) error) error {
 	item, err := s.tx.Get(key)
 	if err == badger.ErrKeyNotFound {
 		return f(nil)
@@ -105,7 +105,7 @@ func (s store) Get(key []byte, f func([]byte) error) error {
 	}
 }
 
-func (s store) PrefixIterator(prefix []byte) kv.Iterator {
+func (s txn) PrefixIterator(prefix []byte) kv.Iterator {
 	opts := badger.DefaultIteratorOptions
 	opts.Prefix = prefix
 	return iterator{

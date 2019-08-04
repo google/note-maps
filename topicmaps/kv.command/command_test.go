@@ -36,7 +36,7 @@ func TestCreateTopicMap(t *testing.T) {
 	}
 	txn := db.NewTransaction(true)
 	defer txn.Discard()
-	s := Store{models.Store{Store: db.NewStore(txn)}}
+	s := Txn{models.Txn{Txn: db.NewTxn(txn)}}
 	stored, err := s.CreateTopicMap()
 	if err != nil {
 		t.Error(err)
@@ -46,7 +46,7 @@ func TestCreateTopicMap(t *testing.T) {
 	txn.Commit()
 	txn = db.NewTransaction(false)
 	defer txn.Discard()
-	s = Store{models.Store{Store: db.NewStore(txn)}}
+	s = Txn{models.Txn{Txn: db.NewTxn(txn)}}
 	gots, err := s.GetTopicMapInfoSlice([]kv.Entity{kv.Entity(stored)})
 	if err != nil {
 		t.Error(err)

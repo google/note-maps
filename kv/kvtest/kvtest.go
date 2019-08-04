@@ -29,14 +29,14 @@ import (
 	"github.com/google/note-maps/kv/memory"
 )
 
-// New returns a new kv.Store suitable for use in a unit test.
+// New returns a new kv.Txn suitable for use in a unit test.
 //
 // It's still important to call Close() in order to delete any temporary files
-// created by the kv.Store.
-func New(t *testing.T) StoreCloser {
+// created by the kv.Txn.
+func New(t *testing.T) TxnCloser {
 	if testing.Short() {
-		return &tmpStore{
-			Store:  memory.New(),
+		return &tmpTxn{
+			Txn:    memory.New(),
 			closer: func() error { return nil },
 		}
 	}
@@ -50,8 +50,8 @@ func New(t *testing.T) StoreCloser {
 		t.Fatal(err)
 	}
 	txn := b.NewTransaction(true)
-	return &tmpStore{
-		Store: b.NewStore(txn),
+	return &tmpTxn{
+		Txn: b.NewTxn(txn),
 		closer: func() error {
 			txn.Discard()
 			b.Close()
@@ -61,18 +61,18 @@ func New(t *testing.T) StoreCloser {
 	}
 }
 
-// StoreCloser combines the kv.Store and io.Closer interfaces.
-type StoreCloser interface {
-	kv.Store
+// TxnCloser combines the kv.Txn and io.Closer interfaces.
+type TxnCloser interface {
+	kv.Txn
 	io.Closer
 }
 
-type tmpStore struct {
-	kv.Store
+type tmpTxn struct {
+	kv.Txn
 	closer func() error
 }
 
-func (s *tmpStore) Close() error {
+func (s *tmpTxn) Close() error {
 	return s.closer()
 }
 
@@ -85,14 +85,14 @@ func (l badgerLogger) Warningf(f string, v ...interface{}) { l.Logf(f, v...) }
 func (l badgerLogger) Infof(f string, v ...interface{})    { l.Logf(f, v...) }
 func (l badgerLogger) Debugf(f string, v ...interface{})   { l.Logf(f, v...) }
 
-// NewFlaky returns a new Flaky that wraps the given a kv.Store and will fail
+// NewFlaky returns a new Flaky that wraps the given a kv.Txn and will fail
 // when the count of error checks reaches failAtCount.
 //
 // If failAtCount is zero, the resulting Flaky will never deliberately return
 // an error.
 func NewFlaky(t *testing.T, failAtCount int) *Flaky {
 	return &Flaky{
-		Store:       memory.New(),
+		Txn:         memory.New(),
 		failAtCount: failAtCount,
 		err:         Flake(failAtCount),
 	}
@@ -104,7 +104,7 @@ type Flake int
 // Error returns a simple human-readable string describing this flake.
 func (f Flake) Error() string { return fmt.Sprintf("flake#%d", int(f)) }
 
-// Flaky is a kv.Store implemention that
+// Flaky is a kv.Txn implemention that
 //
 // Flaky counts each call to any method that could return an error as another
 // error check. When, during a call to such a method, the number of error
@@ -115,7 +115,7 @@ func (f Flake) Error() string { return fmt.Sprintf("flake#%d", int(f)) }
 // again for each possible value of failAtCount from 1 to the number of error
 // checks, to make sure all errors are handled appropriately.
 type Flaky struct {
-	kv.Store
+	kv.Txn
 	errCheckCount int32
 	failAtCount   int
 	err           error
@@ -147,7 +147,7 @@ func (s *Flaky) Alloc() (kv.Entity, error) {
 	if s.fail() {
 		return 0, s.err
 	}
-	return s.Store.Alloc()
+	return s.Txn.Alloc()
 }
 
 // Get fails if the count of error checks has reached failAtCount.
@@ -155,7 +155,7 @@ func (s *Flaky) Get(k []byte, f func([]byte) error) error {
 	if s.fail() {
 		return s.err
 	}
-	return s.Store.Get(k, f)
+	return s.Txn.Get(k, f)
 }
 
 // Set fails if the count of error checks has reached failAtCount.
@@ -163,22 +163,22 @@ func (s *Flaky) Set(k, v []byte) error {
 	if s.fail() {
 		return s.err
 	}
-	return s.Store.Set(k, v)
+	return s.Txn.Set(k, v)
 }
 
 // Deflake calls test repeatedly to check that all errors returned from
-// kv.Store methods produce failures in the test.
+// kv.Txn methods produce failures in the test.
 //
 // Deflake(t, test) will pass if and only if: test completes when given a
-// well-behaved kv.Store that never returns errors, and test panics when given
-// a kv.Store that returns errors "unpredictably".
+// well-behaved kv.Txn that never returns errors, and test panics when given
+// a kv.Txn that returns errors "unpredictably".
 //
 // The test func must use panic to communicate failures. It might be nice to
 // use a *testing.T like sane people do, but this approach requires a test that
-// can succeed successfully when the kv.Store doesn't return any errors, and
+// can succeed successfully when the kv.Txn doesn't return any errors, and
 // fail successfully when it does return an error. Unfortunately, the testing
 // package doesn't support this, and we have to panic instead.
-func Deflake(t *testing.T, test func(kv.Store)) {
+func Deflake(t *testing.T, test func(kv.Txn)) {
 	successful := NewFlaky(t, 0)
 	t.Run("success", func(*testing.T) {
 		test(successful)

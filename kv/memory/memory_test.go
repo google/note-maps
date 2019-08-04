@@ -24,7 +24,7 @@ import (
 )
 
 func TestAlloc(t *testing.T) {
-	store := New()
+	txn := New()
 	done := make(map[kv.Entity]bool)
 	var wg sync.WaitGroup
 	ch := make(chan kv.Entity, 100)
@@ -32,7 +32,7 @@ func TestAlloc(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			for k := 0; k < 1000; k++ {
-				e, err := store.Alloc()
+				e, err := txn.Alloc()
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -67,15 +67,15 @@ func TestSetGet(t *testing.T) {
 			Value: "what",
 		},
 	}
-	store := New()
+	txn := New()
 	for _, test := range tests {
-		if err := store.Set(test.Key.Encode(), test.Value.Encode()); err != nil {
+		if err := txn.Set(test.Key.Encode(), test.Value.Encode()); err != nil {
 			t.Error(err)
 		}
 	}
 	for _, test := range tests {
 		var got kv.String
-		if err := store.Get(test.Key.Encode(), got.Decode); err != nil {
+		if err := txn.Get(test.Key.Encode(), got.Decode); err != nil {
 			t.Error(err)
 		} else if test.Value != got {
 			t.Error("want", test.Value, "got", got)
@@ -84,17 +84,17 @@ func TestSetGet(t *testing.T) {
 }
 
 func TestIterator(t *testing.T) {
-	store := New()
+	txn := New()
 	for _, salutation := range []string{"hello", "good morning", "good afternoon"} {
 		for i, neighbor := range []string{"world", "friend", "desk"} {
 			s := fmt.Sprintf("%s%v", salutation, i)
-			if err := store.Set([]byte(s), []byte(neighbor)); err != nil {
+			if err := txn.Set([]byte(s), []byte(neighbor)); err != nil {
 				t.Fatal(err)
 			}
 		}
 	}
 	got := make(map[string]kv.String)
-	iter := store.PrefixIterator([]byte("good afternoon"))
+	iter := txn.PrefixIterator([]byte("good afternoon"))
 	defer iter.Discard()
 	for iter.Seek(nil); iter.Valid(); iter.Next() {
 		sk := string(iter.Key())

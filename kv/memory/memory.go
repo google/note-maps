@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package memory provides an in-memory implementation of kv.Store.
+// Package memory provides an in-memory implementation of kv.Txn.
 package memory
 
 import (
@@ -23,41 +23,41 @@ import (
 	"github.com/google/note-maps/kv"
 )
 
-// New returns a memory-backed implementation of the kv.Store interface
+// New returns a memory-backed implementation of the kv.Txn interface
 // intended exclusively for use in tests, and not in production.
-func New() kv.Store {
-	return &store{
+func New() kv.Txn {
+	return &txn{
 		m: make(map[string][]byte),
 	}
 }
 
-type store struct {
+type txn struct {
 	m     map[string][]byte
 	next  kv.Entity
 	mutex sync.Mutex
 }
 
-func (s *store) Alloc() (kv.Entity, error) {
+func (s *txn) Alloc() (kv.Entity, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.next++
 	return s.next, nil
 }
 
-func (s *store) Get(k []byte, f func([]byte) error) error {
+func (s *txn) Get(k []byte, f func([]byte) error) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	return f(s.m[string(k)])
 }
 
-func (s *store) Set(k, v []byte) error {
+func (s *txn) Set(k, v []byte) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.m[string(k)] = v
 	return nil
 }
 
-func (s *store) PrefixIterator(prefix []byte) kv.Iterator {
+func (s *txn) PrefixIterator(prefix []byte) kv.Iterator {
 	var iter iterator
 	p := string(prefix)
 	for k, v := range s.m {

@@ -6,25 +6,25 @@ import (
 	"github.com/google/note-maps/kv"
 )
 
-// Store provides entities, components, and indexes backed by a key-value
+// Txn provides entities, components, and indexes backed by a key-value
 // store.
 //
 // Usage:
 //
-//   d, err := Store{Store: store}.DocumentComponent(0).Scan([]kv.Entity{7, 42})
+//   d, err := Txn{Txn: txn}.DocumentComponent(0).Scan([]kv.Entity{7, 42})
 //
-type Store struct {
-	kv.Store
+type Txn struct {
+	kv.Txn
 	partition kv.Entity
 }
 
 // Partition returns the Entity that is used as a partition for all operations.
-func (s Store) Partition() kv.Entity {
+func (s Txn) Partition() kv.Entity {
 	return s.partition
 }
 
-// WithPartition returns a new Store with e as the partition for all operations.
-func (s Store) WithPartition(e kv.Entity) *Store {
+// WithPartition returns a new Txn with e as the partition for all operations.
+func (s Txn) WithPartition(e kv.Entity) *Txn {
 	s.partition = e
 	return &s
 }
@@ -32,7 +32,7 @@ func (s Store) WithPartition(e kv.Entity) *Store {
 // SetDocument sets the Document associated with e to v.
 //
 // Corresponding indexes are updated.
-func (s *Store) SetDocument(e kv.Entity, v *Document) error {
+func (s *Txn) SetDocument(e kv.Entity, v *Document) error {
 	key := make(kv.Prefix, 8+2+8)
 	s.partition.EncodeAt(key)
 	DocumentPrefix.EncodeAt(key[8:])
@@ -83,7 +83,7 @@ func (s *Store) SetDocument(e kv.Entity, v *Document) error {
 //
 // If no Document has been explicitly set for e, and GetDocument will return
 // the result of decoding a Document from an empty slice of bytes.
-func (s *Store) GetDocument(e kv.Entity) (Document, error) {
+func (s *Txn) GetDocument(e kv.Entity) (Document, error) {
 	var v Document
 	vs, err := s.GetDocumentSlice([]kv.Entity{e})
 	if len(vs) >= 1 {
@@ -96,7 +96,7 @@ func (s *Store) GetDocument(e kv.Entity) (Document, error) {
 //
 // If no Document has been explicitly set for an entity, and the result will
 // be a Document that has been decoded from an empty slice of bytes.
-func (s *Store) GetDocumentSlice(es []kv.Entity) ([]Document, error) {
+func (s *Txn) GetDocumentSlice(es []kv.Entity) ([]Document, error) {
 	result := make([]Document, len(es))
 	key := make(kv.Prefix, 8+2+8)
 	s.partition.EncodeAt(key)
@@ -118,7 +118,7 @@ func (s *Store) GetDocumentSlice(es []kv.Entity) ([]Document, error) {
 //
 // A value of n less than or equal to zero will be interpretted as the largest
 // possible value.
-func (s *Store) AllDocumentEntities(start *kv.Entity, n int) (es []kv.Entity, err error) {
+func (s *Txn) AllDocumentEntities(start *kv.Entity, n int) (es []kv.Entity, err error) {
 	prefix := make(kv.Prefix, 8+2)
 	s.partition.EncodeAt(prefix)
 	DocumentPrefix.EncodeAt(prefix[8:])
@@ -145,7 +145,7 @@ func (s *Store) AllDocumentEntities(start *kv.Entity, n int) (es []kv.Entity, er
 // EntitiesMatchingDocumentTitle returns entities with Document values that return a matching kv.String from their IndexTitle method.
 //
 // The returned EntitySlice is already sorted.
-func (s *Store) EntitiesMatchingDocumentTitle(v kv.String) (kv.EntitySlice, error) {
+func (s *Txn) EntitiesMatchingDocumentTitle(v kv.String) (kv.EntitySlice, error) {
 	key := make(kv.Prefix, 8+2+8+2)
 	s.partition.EncodeAt(key)
 	DocumentPrefix.EncodeAt(key[8:])
@@ -164,7 +164,7 @@ func (s *Store) EntitiesMatchingDocumentTitle(v kv.String) (kv.EntitySlice, erro
 // slice is less than n. When reading is not complete, cursor is updated such
 // that using it in a subequent call to ByTitle would return next n
 // entities.
-func (s *Store) EntitiesByDocumentTitle(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
+func (s *Txn) EntitiesByDocumentTitle(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
 	key := make(kv.Prefix, 8+2+8+2)
 	s.partition.EncodeAt(key)
 	DocumentPrefix.EncodeAt(key[8:])

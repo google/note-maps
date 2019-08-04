@@ -21,7 +21,7 @@ func TestNew(t *testing.T) {
 	defer db.Close()
 	txn := db.NewTransaction(true)
 	defer txn.Discard()
-	var s kv.Store = db.NewStore(txn)
+	var s kv.Txn = db.NewTxn(txn)
 	want := "value"
 	if err = s.Set([]byte("key"), []byte(want)); err != nil {
 		t.Fatal(err)

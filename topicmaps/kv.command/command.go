@@ -21,11 +21,11 @@ import (
 	"github.com/google/note-maps/topicmaps/kv.models"
 )
 
-// Store adds some command logic to models.Store.
-type Store struct{ models.Store }
+// Txn adds some command logic to models.Txn.
+type Txn struct{ models.Txn }
 
 // CreateTopicMap creates a new topic map in s and returns the Entity.
-func (s *Store) CreateTopicMap() (kv.Entity, error) {
+func (s *Txn) CreateTopicMap() (kv.Entity, error) {
 	if s.Partition() != 0 {
 		return 0, fmt.Errorf("topic maps can only be created with parent zero")
 	}
@@ -43,7 +43,7 @@ func (s *Store) CreateTopicMap() (kv.Entity, error) {
 }
 
 // CreateTopicWithName creates a new topic including the given name.
-func (s *Store) CreateTopicWithName(name string) (kv.Entity, error) {
+func (s *Txn) CreateTopicWithName(name string) (kv.Entity, error) {
 	if s.Partition() == 0 {
 		return 0, fmt.Errorf("topic names can only be created with a non-zero parent")
 	}
@@ -68,7 +68,7 @@ func (s *Store) CreateTopicWithName(name string) (kv.Entity, error) {
 }
 
 // CreateTopicName creates a new name for topic t.
-func (s *Store) CreateTopicName(t kv.Entity, name string) (kv.Entity, error) {
+func (s *Txn) CreateTopicName(t kv.Entity, name string) (kv.Entity, error) {
 	if s.Partition() == 0 || t == 0 {
 		return 0, fmt.Errorf("topic names can only be created with a non-zero parent")
 	}
@@ -97,7 +97,7 @@ func (s *Store) CreateTopicName(t kv.Entity, name string) (kv.Entity, error) {
 }
 
 // CreateTopicOccurrence creates a new occurrence of topic t with value v.
-func (s *Store) CreateTopicOccurrence(t kv.Entity, v string) (kv.Entity, error) {
+func (s *Txn) CreateTopicOccurrence(t kv.Entity, v string) (kv.Entity, error) {
 	if s.Partition() == 0 || t == 0 {
 		return 0, fmt.Errorf("topic occurrences can only be created with a non-zero parent")
 	}

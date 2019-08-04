@@ -55,7 +55,7 @@ func randBytes(n int) []byte {
 	return ms
 }
 
-func callMethod(s kv.Store, m flakyMethod) error {
+func callMethod(s kv.Txn, m flakyMethod) error {
 	switch m {
 	case Alloc:
 		_, err := s.Alloc()
@@ -74,7 +74,7 @@ func callMethod(s kv.Store, m flakyMethod) error {
 func TestFlakyDeflake(t *testing.T) {
 	var (
 		ms   = randMethods(10)
-		test = func(s kv.Store) {
+		test = func(s kv.Txn) {
 			for _, m := range ms {
 				if err := callMethod(s, m); err != nil {
 					panic(err)

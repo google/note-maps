@@ -32,7 +32,7 @@ func sampleDocuments(t string, n int) []Document {
 	return ds
 }
 
-func createDocuments(s *Store, ds []Document) []kv.Entity {
+func createDocuments(s *Txn, ds []Document) []kv.Entity {
 	var (
 		err error
 		es  = make([]kv.Entity, len(ds))
@@ -49,7 +49,7 @@ func createDocuments(s *Store, ds []Document) []kv.Entity {
 	return es
 }
 
-func verifyDocuments(s *Store, des []kv.Entity, ds []Document) {
+func verifyDocuments(s *Txn, des []kv.Entity, ds []Document) {
 	if len(des) != len(ds) {
 		panic(fmt.Sprintf("len(des)=%v, len(ds)=%v", len(des), len(ds)))
 	}
@@ -102,8 +102,8 @@ func verifyDocuments(s *Store, des []kv.Entity, ds []Document) {
 }
 
 func TestCreateRead(t *testing.T) {
-	test := func(s_ kv.Store) {
-		s := Store{Store: s_}
+	test := func(s_ kv.Txn) {
+		s := Txn{Txn: s_}
 		samples := sampleDocuments("Test", 5)
 		des := createDocuments(&s, samples)
 		verifyDocuments(&s, des, samples)
@@ -112,8 +112,8 @@ func TestCreateRead(t *testing.T) {
 }
 
 func TestCreateUpdateRead(t *testing.T) {
-	test := func(s_ kv.Store) {
-		s := Store{Store: s_}
+	test := func(s_ kv.Txn) {
+		s := Txn{Txn: s_}
 		des := createDocuments(&s, sampleDocuments("Initial", 5))
 		revised := sampleDocuments("Revised", 5)
 		for i, de := range des {
@@ -125,7 +125,7 @@ func TestCreateUpdateRead(t *testing.T) {
 }
 
 func TestPartition(t *testing.T) {
-	s := Store{Store: kvtest.New(t)}
+	s := Txn{Txn: kvtest.New(t)}
 	if s.Partition() != 0 {
 		t.Fatalf("want 0, got %v", s.Partition())
 	}
@@ -149,8 +149,8 @@ func TestPartition(t *testing.T) {
 }
 
 func TestIterator(t *testing.T) {
-	test := func(s_ kv.Store) {
-		s := Store{Store: s_}
+	test := func(s_ kv.Txn) {
+		s := Txn{Txn: s_}
 		createDocuments(&s, sampleDocuments("Foo", 5))
 		createDocuments(&s, sampleDocuments("Foo", 5))
 		createDocuments(&s, sampleDocuments("Bar", 5))
@@ -199,8 +199,8 @@ func TestIterator(t *testing.T) {
 }
 
 func TestAllDocumentEntities(t *testing.T) {
-	test := func(s_ kv.Store) {
-		s := Store{Store: s_}
+	test := func(s_ kv.Txn) {
+		s := Txn{Txn: s_}
 		want := createDocuments(&s, sampleDocuments("All", 5))
 		kv.EntitySlice(want).Sort()
 		for pageSize := 1; pageSize < len(want)+1; pageSize++ {

@@ -22,7 +22,7 @@ import (
 	"github.com/google/note-maps/kv/memory"
 )
 
-func createTopicMap(s *Store) (*TopicMapInfo, error) {
+func createTopicMap(s *Txn) (*TopicMapInfo, error) {
 	entity, err := s.Alloc()
 	if err != nil {
 		return nil, err
@@ -35,18 +35,18 @@ func createTopicMap(s *Store) (*TopicMapInfo, error) {
 func TestCreateTopicMap(t *testing.T) {
 	var (
 		err    error
-		store  = Store{Store: memory.New()}
+		txn    = Txn{Txn: memory.New()}
 		es     []kv.Entity
 		stored []*TopicMapInfo
 	)
 	stored = append(stored, nil)
-	stored[0], err = createTopicMap(&store)
+	stored[0], err = createTopicMap(&txn)
 	if err != nil {
 		t.Fatal(err)
 	}
 	es = append(es, kv.Entity(stored[0].TopicMap))
 	stored = append(stored, nil)
-	stored[1], err = createTopicMap(&store)
+	stored[1], err = createTopicMap(&txn)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,7 @@ func TestCreateTopicMap(t *testing.T) {
 	}
 	sort.Slice(stored,
 		func(a, b int) bool { return stored[a].TopicMap < stored[b].TopicMap })
-	got, err := store.GetTopicMapInfoSlice(es)
+	got, err := txn.GetTopicMapInfoSlice(es)
 	if err != nil {
 		t.Fatal(err)
 	}

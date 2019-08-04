@@ -22,25 +22,25 @@ import (
 	"github.com/google/note-maps/kv"
 )
 
-// Store provides entities, components, and indexes backed by a key-value
+// Txn provides entities, components, and indexes backed by a key-value
 // store.
 //
 // Usage:
 //{{with index .ComponentTypes 0}}
-//   {{.SVar}}, err := Store{Store: store}.{{.Name}}Component(0).Scan([]kv.Entity{7, 42})
+//   {{.SVar}}, err := Txn{Txn: txn}.{{.Name}}Component(0).Scan([]kv.Entity{7, 42})
 //{{end}}
-type Store struct {
-	kv.Store
+type Txn struct {
+	kv.Txn
 	partition kv.Entity
 }
 
 // Partition returns the Entity that is used as a partition for all operations.
-func (s Store) Partition() kv.Entity {
+func (s Txn) Partition() kv.Entity {
 	return s.partition
 }
 
-// WithPartition returns a new Store with e as the partition for all operations.
-func (s Store) WithPartition(e kv.Entity) *Store {
+// WithPartition returns a new Txn with e as the partition for all operations.
+func (s Txn) WithPartition(e kv.Entity) *Txn {
 	s.partition = e
 	return &s
 }
@@ -50,7 +50,7 @@ func (s Store) WithPartition(e kv.Entity) *Store {
 // Set{{.Name}} sets the {{.Name}} associated with e to v.
 //
 // Corresponding indexes are updated.
-func (s *Store) Set{{.Name}}(e kv.Entity, v {{if .DirectEncoder}}{{else}}*{{end}}{{.Name}}) error {
+func (s *Txn) Set{{.Name}}(e kv.Entity, v {{if .DirectEncoder}}{{else}}*{{end}}{{.Name}}) error {
 	key := make(kv.Prefix, 8+2+8)
 	s.partition.EncodeAt(key)
 	{{.PrefixName}}.EncodeAt(key[8:])
@@ -101,7 +101,7 @@ func (s *Store) Set{{.Name}}(e kv.Entity, v {{if .DirectEncoder}}{{else}}*{{end}
 //
 // If no {{.Name}} has been explicitly set for e, and Get{{.Name}} will return
 // the result of decoding a {{.Name}} from an empty slice of bytes.
-func (s *Store) Get{{.Name}}(e kv.Entity) ({{.Name}}, error) {
+func (s *Txn) Get{{.Name}}(e kv.Entity) ({{.Name}}, error) {
 	var v {{.Name}}
 	vs, err := s.Get{{.Name}}Slice([]kv.Entity{e})
 	if len(vs) >= 1 {
@@ -114,7 +114,7 @@ func (s *Store) Get{{.Name}}(e kv.Entity) ({{.Name}}, error) {
 //
 // If no {{.Name}} has been explicitly set for an entity, and the result will
 // be a {{.Name}} that has been decoded from an empty slice of bytes.
-func (s *Store) Get{{.Name}}Slice(es []kv.Entity) ([]{{.Name}}, error) {
+func (s *Txn) Get{{.Name}}Slice(es []kv.Entity) ([]{{.Name}}, error) {
 	result := make([]{{.Name}}, len(es))
 	key := make(kv.Prefix, 8+2+8)
 	s.partition.EncodeAt(key)
@@ -136,7 +136,7 @@ func (s *Store) Get{{.Name}}Slice(es []kv.Entity) ([]{{.Name}}, error) {
 //
 // A value of n less than or equal to zero will be interpretted as the largest
 // possible value.
-func (s *Store) All{{.Name}}Entities(start *kv.Entity, n int) (es []kv.Entity, err error) {
+func (s *Txn) All{{.Name}}Entities(start *kv.Entity, n int) (es []kv.Entity, err error) {
 	prefix := make(kv.Prefix, 8+2)
 	s.partition.EncodeAt(prefix)
 	{{.PrefixName}}.EncodeAt(prefix[8:])
@@ -163,7 +163,7 @@ func (s *Store) All{{.Name}}Entities(start *kv.Entity, n int) (es []kv.Entity, e
 // EntitiesMatching{{.ComponentName}}{{.Name}} returns entities with {{.ComponentName}} values that return a matching {{.TypeExpr}} from their {{.MethodName}} method.
 //
 // The returned EntitySlice is already sorted.
-func (s *Store) EntitiesMatching{{.ComponentName}}{{.Name}}(v {{.TypeExpr}}) (kv.EntitySlice, error) {
+func (s *Txn) EntitiesMatching{{.ComponentName}}{{.Name}}(v {{.TypeExpr}}) (kv.EntitySlice, error) {
 	key := make(kv.Prefix, 8+2+8+2)
 	s.partition.EncodeAt(key)
 	{{.ComponentPrefixName}}.EncodeAt(key[8:])
@@ -182,7 +182,7 @@ func (s *Store) EntitiesMatching{{.ComponentName}}{{.Name}}(v {{.TypeExpr}}) (kv
 // slice is less than n. When reading is not complete, cursor is updated such
 // that using it in a subequent call to By{{.Name}} would return next n
 // entities.
-func (s *Store) EntitiesBy{{.ComponentName}}{{.Name}}(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
+func (s *Txn) EntitiesBy{{.ComponentName}}{{.Name}}(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
 	key := make(kv.Prefix, 8+2+8+2)
 	s.partition.EncodeAt(key)
 	{{.ComponentPrefixName}}.EncodeAt(key[8:])

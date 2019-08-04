@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package docs defines a schema for storing documents in a kv.Store.
+// Package docs defines a schema for storing documents in a kv.Txn.
 //
 // This package is an example of using the kv package and its included kvschema
 // command line tool to generate a strongly-typed API for storing documents as
@@ -45,7 +45,7 @@ type Document struct {
 	Content string
 }
 
-// Encode implements kv.Encoder for storing documents in a kv.Store.
+// Encode implements kv.Encoder for storing documents in a kv.Txn.
 //
 // The presence of Encode and Decode methods tells kvschema to produce the
 // DocumentComponent type.
@@ -58,7 +58,7 @@ func (d *Document) Encode() []byte {
 	return buf.Bytes()
 }
 
-// Decode implements kv.Decoder for retrieving documents from a kv.Store.
+// Decode implements kv.Decoder for retrieving documents from a kv.Txn.
 //
 // The presence of Encode and Decode methods tells kvschema to produce the
 // DocumentComponent type.

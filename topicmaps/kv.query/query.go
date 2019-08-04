@@ -20,11 +20,11 @@ import (
 	"github.com/google/note-maps/topicmaps/kv.models"
 )
 
-// Store adds some query logic to models.Store.
-type Store struct{ models.Store }
+// Txn adds some query logic to models.Txn.
+type Txn struct{ models.Txn }
 
 // TopicsByName returns a page of topics ordered by name.
-func (s *Store) TopicsByName(c *kv.IndexCursor, n int) ([]kv.Entity, error) {
+func (s *Txn) TopicsByName(c *kv.IndexCursor, n int) ([]kv.Entity, error) {
 	ns, err := s.EntitiesByNameValue(c, n)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ const (
 )
 
 // LoadTopic retrieves f fields of te into a topicmaps.Topic.
-func (s *Store) LoadTopic(te kv.Entity, f Mask) (*topicmaps.Topic, error) {
+func (s *Txn) LoadTopic(te kv.Entity, f Mask) (*topicmaps.Topic, error) {
 	var topic topicmaps.Topic
 
 	if (f & Refs) != 0 {

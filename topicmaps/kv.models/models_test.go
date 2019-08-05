@@ -35,7 +35,7 @@ func createTopicMap(s *Txn) (*TopicMapInfo, error) {
 func TestCreateTopicMap(t *testing.T) {
 	var (
 		err    error
-		txn    = Txn{Txn: memory.New()}
+		txn    = New(memory.New())
 		es     []kv.Entity
 		stored []*TopicMapInfo
 	)

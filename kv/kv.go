@@ -115,6 +115,45 @@ type IndexCursor struct {
 	Offset int
 }
 
+// Partitioned combines a Txn with a partition identified by an Entity in order
+// to provide useful common functions.
+type Partitioned struct {
+	Txn
+	Partition Entity
+}
+
+// AllComponentEntities returns the first n entities that have values
+// associated with c, beginning with the first entity greater than or equal to
+// *start.
+//
+// A nil start value will be interpreted as a pointer to zero.
+//
+// A value of n less than or equal to zero will be interpretted as the largest
+// possible value.
+func (t Partitioned) AllComponentEntities(c Component, start *Entity, n int) (es []Entity, err error) {
+	prefix := make(Prefix, 8+2)
+	t.Partition.EncodeAt(prefix)
+	c.EncodeAt(prefix[8:])
+	iter := t.PrefixIterator(prefix[:10])
+	defer iter.Discard()
+	var actualStart Entity
+	if start == nil || *start == 0 {
+		actualStart = 1
+	} else {
+		actualStart = *start
+	}
+	bstart := actualStart.Encode()
+	for iter.Seek(bstart); iter.Valid() && (n <= 0 || len(es) < n); iter.Next() {
+		var e Entity
+		e.Decode(iter.Key())
+		es = append(es, e)
+	}
+	if start != nil && len(es) > 0 {
+		*start = es[len(es)-1] + 1
+	}
+	return
+}
+
 // Encoder is an interface implemented by any type that is to be stored in the
 // key or value of a key-value pair.
 type Encoder interface {

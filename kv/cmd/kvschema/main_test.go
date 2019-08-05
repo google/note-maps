@@ -49,8 +49,8 @@ func (d *Document) Decode(src []byte) error { return nil }
 func (d *Document) IndexTitle() []kv.String { return nil }
 `,
 		Substrings: []string{
-			`type Txn struct {`,
-			`func \(.*\*Txn\) EntitiesMatchingDocumentTitle\(v kv\.String\)`,
+			`type Txn struct.?{`,
+			`func \(.* Txn\) EntitiesMatchingDocumentTitle\(v kv\.String\)`,
 		},
 	},
 }

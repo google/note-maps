@@ -6,35 +6,17 @@ import (
 	"github.com/google/note-maps/kv"
 )
 
-// Txn provides entities, components, and indexes backed by a key-value
-// store.
-//
-// Usage:
-//
-//   d, err := Txn{Txn: txn}.DocumentComponent(0).Scan([]kv.Entity{7, 42})
-//
-type Txn struct {
-	kv.Txn
-	partition kv.Entity
-}
+// Txn provides entities, components, and indexes backed by a key-value store.
+type Txn struct{ kv.Partitioned }
 
-// Partition returns the Entity that is used as a partition for all operations.
-func (s Txn) Partition() kv.Entity {
-	return s.partition
-}
-
-// WithPartition returns a new Txn with e as the partition for all operations.
-func (s Txn) WithPartition(e kv.Entity) *Txn {
-	s.partition = e
-	return &s
-}
+func New(t kv.Txn) Txn { return Txn{kv.Partitioned{t, 0}} }
 
 // SetDocument sets the Document associated with e to v.
 //
 // Corresponding indexes are updated.
-func (s *Txn) SetDocument(e kv.Entity, v *Document) error {
+func (s Txn) SetDocument(e kv.Entity, v *Document) error {
 	key := make(kv.Prefix, 8+2+8)
-	s.partition.EncodeAt(key)
+	s.Partition.EncodeAt(key)
 	DocumentPrefix.EncodeAt(key[8:])
 	e.EncodeAt(key[10:])
 	var old Document
@@ -83,7 +65,7 @@ func (s *Txn) SetDocument(e kv.Entity, v *Document) error {
 //
 // If no Document has been explicitly set for e, and GetDocument will return
 // the result of decoding a Document from an empty slice of bytes.
-func (s *Txn) GetDocument(e kv.Entity) (Document, error) {
+func (s Txn) GetDocument(e kv.Entity) (Document, error) {
 	var v Document
 	vs, err := s.GetDocumentSlice([]kv.Entity{e})
 	if len(vs) >= 1 {
@@ -96,10 +78,10 @@ func (s *Txn) GetDocument(e kv.Entity) (Document, error) {
 //
 // If no Document has been explicitly set for an entity, and the result will
 // be a Document that has been decoded from an empty slice of bytes.
-func (s *Txn) GetDocumentSlice(es []kv.Entity) ([]Document, error) {
+func (s Txn) GetDocumentSlice(es []kv.Entity) ([]Document, error) {
 	result := make([]Document, len(es))
 	key := make(kv.Prefix, 8+2+8)
-	s.partition.EncodeAt(key)
+	s.Partition.EncodeAt(key)
 	DocumentPrefix.EncodeAt(key[8:])
 	for i, e := range es {
 		e.EncodeAt(key[10:])
@@ -118,36 +100,16 @@ func (s *Txn) GetDocumentSlice(es []kv.Entity) ([]Document, error) {
 //
 // A value of n less than or equal to zero will be interpretted as the largest
 // possible value.
-func (s *Txn) AllDocumentEntities(start *kv.Entity, n int) (es []kv.Entity, err error) {
-	prefix := make(kv.Prefix, 8+2)
-	s.partition.EncodeAt(prefix)
-	DocumentPrefix.EncodeAt(prefix[8:])
-	iter := s.PrefixIterator(prefix[:10])
-	defer iter.Discard()
-	var actualStart kv.Entity
-	if start == nil || *start == 0 {
-		actualStart = 1
-	} else {
-		actualStart = *start
-	}
-	bstart := actualStart.Encode()
-	for iter.Seek(bstart); iter.Valid() && (n <= 0 || len(es) < n); iter.Next() {
-		var e kv.Entity
-		e.Decode(iter.Key())
-		es = append(es, e)
-	}
-	if start != nil && len(es) > 0 {
-		*start = es[len(es)-1] + 1
-	}
-	return
+func (s Txn) AllDocumentEntities(start *kv.Entity, n int) (es []kv.Entity, err error) {
+	return s.AllComponentEntities(DocumentPrefix, start, n)
 }
 
 // EntitiesMatchingDocumentTitle returns entities with Document values that return a matching kv.String from their IndexTitle method.
 //
 // The returned EntitySlice is already sorted.
-func (s *Txn) EntitiesMatchingDocumentTitle(v kv.String) (kv.EntitySlice, error) {
+func (s Txn) EntitiesMatchingDocumentTitle(v kv.String) (kv.EntitySlice, error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.partition.EncodeAt(key)
+	s.Partition.EncodeAt(key)
 	DocumentPrefix.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	TitlePrefix.EncodeAt(key[18:])
@@ -164,9 +126,9 @@ func (s *Txn) EntitiesMatchingDocumentTitle(v kv.String) (kv.EntitySlice, error)
 // slice is less than n. When reading is not complete, cursor is updated such
 // that using it in a subequent call to ByTitle would return next n
 // entities.
-func (s *Txn) EntitiesByDocumentTitle(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
+func (s Txn) EntitiesByDocumentTitle(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
 	key := make(kv.Prefix, 8+2+8+2)
-	s.partition.EncodeAt(key)
+	s.Partition.EncodeAt(key)
 	DocumentPrefix.EncodeAt(key[8:])
 	kv.Entity(0).EncodeAt(key[10:])
 	TitlePrefix.EncodeAt(key[18:])

@@ -103,7 +103,7 @@ func verifyDocuments(s *Txn, des []kv.Entity, ds []Document) {
 
 func TestCreateRead(t *testing.T) {
 	test := func(s_ kv.Txn) {
-		s := Txn{Txn: s_}
+		s := New(s_)
 		samples := sampleDocuments("Test", 5)
 		des := createDocuments(&s, samples)
 		verifyDocuments(&s, des, samples)
@@ -113,7 +113,7 @@ func TestCreateRead(t *testing.T) {
 
 func TestCreateUpdateRead(t *testing.T) {
 	test := func(s_ kv.Txn) {
-		s := Txn{Txn: s_}
+		s := New(s_)
 		des := createDocuments(&s, sampleDocuments("Initial", 5))
 		revised := sampleDocuments("Revised", 5)
 		for i, de := range des {
@@ -124,33 +124,9 @@ func TestCreateUpdateRead(t *testing.T) {
 	kvtest.Deflake(t, test)
 }
 
-func TestPartition(t *testing.T) {
-	s := Txn{Txn: kvtest.New(t)}
-	if s.Partition() != 0 {
-		t.Fatalf("want 0, got %v", s.Partition())
-	}
-	for p := kv.Entity(0); p < 10; p++ {
-		ps := s.WithPartition(p)
-		if err := ps.SetDocument(p+1, &Document{Title: "partition test"}); err != nil {
-			t.Fatal(err)
-		}
-	}
-	for p := kv.Entity(0); p < 10; p++ {
-		t.Run(fmt.Sprintf("partition %v", p), func(t *testing.T) {
-			es, err := s.WithPartition(p).EntitiesMatchingDocumentTitle("partition test")
-			if err != nil {
-				t.Fatal(err)
-			}
-			if len(es) != 1 || es[0] != p+1 {
-				t.Errorf("want %v, got %#v", p+1, es)
-			}
-		})
-	}
-}
-
 func TestIterator(t *testing.T) {
 	test := func(s_ kv.Txn) {
-		s := Txn{Txn: s_}
+		s := New(s_)
 		createDocuments(&s, sampleDocuments("Foo", 5))
 		createDocuments(&s, sampleDocuments("Foo", 5))
 		createDocuments(&s, sampleDocuments("Bar", 5))
@@ -200,7 +176,7 @@ func TestIterator(t *testing.T) {
 
 func TestAllDocumentEntities(t *testing.T) {
 	test := func(s_ kv.Txn) {
-		s := Txn{Txn: s_}
+		s := New(s_)
 		want := createDocuments(&s, sampleDocuments("All", 5))
 		kv.EntitySlice(want).Sort()
 		for pageSize := 1; pageSize < len(want)+1; pageSize++ {

@@ -26,7 +26,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/google/note-maps/kv"
-	"github.com/google/note-maps/topicmaps/kv.models/internal/pb"
+	"github.com/google/note-maps/store/models/internal/pb"
 )
 
 // To allow complex values may be encoded differently in later versions, a

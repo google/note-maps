@@ -16,8 +16,8 @@ package query
 
 import (
 	"github.com/google/note-maps/kv"
+	"github.com/google/note-maps/store/models"
 	"github.com/google/note-maps/topicmaps"
-	"github.com/google/note-maps/topicmaps/kv.models"
 )
 
 // Txn adds some query logic to models.Txn.

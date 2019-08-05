@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package logic
+package command
 
 import (
 	"io/ioutil"
@@ -21,7 +21,7 @@ import (
 
 	"github.com/google/note-maps/kv"
 	"github.com/google/note-maps/kv/badger"
-	"github.com/google/note-maps/topicmaps/kv.models"
+	"github.com/google/note-maps/store/models"
 )
 
 func TestCreateTopicMap(t *testing.T) {

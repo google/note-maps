@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package logic
+package command
 
 import (
 	"fmt"
 
 	"github.com/google/note-maps/kv"
-	"github.com/google/note-maps/topicmaps/kv.models"
+	"github.com/google/note-maps/store/models"
 )
 
 // Txn adds some command logic to models.Txn.

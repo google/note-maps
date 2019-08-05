@@ -12,28 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+// Package store provides data storage for topic maps in a key-value store.
+package store
 
 import (
-	"log"
-	"net/http"
-	"os"
-
-	"github.com/99designs/gqlgen/handler"
-	"github.com/google/note-maps/topicmaps/gql"
+	"github.com/google/note-maps/kv"
+	"github.com/google/note-maps/store/command"
+	"github.com/google/note-maps/store/models"
+	"github.com/google/note-maps/store/query"
 )
 
-const defaultPort = "8080"
+// Query returns a new query transaction based on t.
+func Query(t kv.Txn) query.Txn {
+	return query.Txn{models.New(t)}
+}
 
-func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
-	}
-
-	http.Handle("/", handler.Playground("GraphQL playground", "/query"))
-	http.Handle("/query", handler.GraphQL(gql.NewExecutableSchema(gql.Config{Resolvers: &gql.Resolver{}})))
-
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+// Command returns a new command transaction based on t.
+func Command(t kv.Txn) command.Txn {
+	return command.Txn{models.New(t)}
 }

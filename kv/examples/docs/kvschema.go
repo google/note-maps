@@ -127,45 +127,5 @@ func (s Txn) EntitiesMatchingDocumentTitle(v kv.String) (kv.EntitySlice, error) 
 // that using it in a subequent call to ByTitle would return next n
 // entities.
 func (s Txn) EntitiesByDocumentTitle(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
-	key := make(kv.Prefix, 8+2+8+2)
-	s.Partition.EncodeAt(key)
-	DocumentPrefix.EncodeAt(key[8:])
-	kv.Entity(0).EncodeAt(key[10:])
-	TitlePrefix.EncodeAt(key[18:])
-	iter := s.PrefixIterator(key)
-	defer iter.Discard()
-	iter.Seek(cursor.Key)
-	if !iter.Valid() {
-		return
-	}
-	var buf kv.EntitySlice
-	if err = iter.Value(buf.Decode); err != nil {
-		return
-	}
-	if cursor.Offset < len(buf) {
-		es = append(es, buf[cursor.Offset:]...)
-		if len(es) >= n {
-			cursor.Offset += n
-			if len(es) > n {
-				es = es[:n]
-			}
-			return
-		}
-	}
-	for iter.Next(); iter.Valid(); iter.Next() {
-		if err = iter.Value(buf.Decode); err != nil {
-			return
-		}
-		es = append(es, buf...)
-		cursor.Key = append(cursor.Key[0:0], iter.Key()...)
-		if len(es) >= n {
-			cursor.Offset = len(buf) - (len(es) - n)
-			if len(es) > n {
-				es = es[:n]
-			}
-			return
-		}
-	}
-	cursor.Offset = len(buf)
-	return
+	return s.EntitiesByComponentIndex(DocumentPrefix, TitlePrefix, cursor, n)
 }

@@ -127,47 +127,7 @@ func (s Txn) EntitiesMatchingIIsLiteral(v kv.String) (kv.EntitySlice, error) {
 // that using it in a subequent call to ByLiteral would return next n
 // entities.
 func (s Txn) EntitiesByIIsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
-	key := make(kv.Prefix, 8+2+8+2)
-	s.Partition.EncodeAt(key)
-	IIsPrefix.EncodeAt(key[8:])
-	kv.Entity(0).EncodeAt(key[10:])
-	LiteralPrefix.EncodeAt(key[18:])
-	iter := s.PrefixIterator(key)
-	defer iter.Discard()
-	iter.Seek(cursor.Key)
-	if !iter.Valid() {
-		return
-	}
-	var buf kv.EntitySlice
-	if err = iter.Value(buf.Decode); err != nil {
-		return
-	}
-	if cursor.Offset < len(buf) {
-		es = append(es, buf[cursor.Offset:]...)
-		if len(es) >= n {
-			cursor.Offset += n
-			if len(es) > n {
-				es = es[:n]
-			}
-			return
-		}
-	}
-	for iter.Next(); iter.Valid(); iter.Next() {
-		if err = iter.Value(buf.Decode); err != nil {
-			return
-		}
-		es = append(es, buf...)
-		cursor.Key = append(cursor.Key[0:0], iter.Key()...)
-		if len(es) >= n {
-			cursor.Offset = len(buf) - (len(es) - n)
-			if len(es) > n {
-				es = es[:n]
-			}
-			return
-		}
-	}
-	cursor.Offset = len(buf)
-	return
+	return s.EntitiesByComponentIndex(IIsPrefix, LiteralPrefix, cursor, n)
 }
 
 // SetName sets the Name associated with e to v.
@@ -286,47 +246,7 @@ func (s Txn) EntitiesMatchingNameValue(v kv.String) (kv.EntitySlice, error) {
 // that using it in a subequent call to ByValue would return next n
 // entities.
 func (s Txn) EntitiesByNameValue(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
-	key := make(kv.Prefix, 8+2+8+2)
-	s.Partition.EncodeAt(key)
-	NamePrefix.EncodeAt(key[8:])
-	kv.Entity(0).EncodeAt(key[10:])
-	ValuePrefix.EncodeAt(key[18:])
-	iter := s.PrefixIterator(key)
-	defer iter.Discard()
-	iter.Seek(cursor.Key)
-	if !iter.Valid() {
-		return
-	}
-	var buf kv.EntitySlice
-	if err = iter.Value(buf.Decode); err != nil {
-		return
-	}
-	if cursor.Offset < len(buf) {
-		es = append(es, buf[cursor.Offset:]...)
-		if len(es) >= n {
-			cursor.Offset += n
-			if len(es) > n {
-				es = es[:n]
-			}
-			return
-		}
-	}
-	for iter.Next(); iter.Valid(); iter.Next() {
-		if err = iter.Value(buf.Decode); err != nil {
-			return
-		}
-		es = append(es, buf...)
-		cursor.Key = append(cursor.Key[0:0], iter.Key()...)
-		if len(es) >= n {
-			cursor.Offset = len(buf) - (len(es) - n)
-			if len(es) > n {
-				es = es[:n]
-			}
-			return
-		}
-	}
-	cursor.Offset = len(buf)
-	return
+	return s.EntitiesByComponentIndex(NamePrefix, ValuePrefix, cursor, n)
 }
 
 // SetOccurrence sets the Occurrence associated with e to v.
@@ -445,47 +365,7 @@ func (s Txn) EntitiesMatchingOccurrenceValue(v kv.String) (kv.EntitySlice, error
 // that using it in a subequent call to ByValue would return next n
 // entities.
 func (s Txn) EntitiesByOccurrenceValue(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
-	key := make(kv.Prefix, 8+2+8+2)
-	s.Partition.EncodeAt(key)
-	OccurrencePrefix.EncodeAt(key[8:])
-	kv.Entity(0).EncodeAt(key[10:])
-	ValuePrefix.EncodeAt(key[18:])
-	iter := s.PrefixIterator(key)
-	defer iter.Discard()
-	iter.Seek(cursor.Key)
-	if !iter.Valid() {
-		return
-	}
-	var buf kv.EntitySlice
-	if err = iter.Value(buf.Decode); err != nil {
-		return
-	}
-	if cursor.Offset < len(buf) {
-		es = append(es, buf[cursor.Offset:]...)
-		if len(es) >= n {
-			cursor.Offset += n
-			if len(es) > n {
-				es = es[:n]
-			}
-			return
-		}
-	}
-	for iter.Next(); iter.Valid(); iter.Next() {
-		if err = iter.Value(buf.Decode); err != nil {
-			return
-		}
-		es = append(es, buf...)
-		cursor.Key = append(cursor.Key[0:0], iter.Key()...)
-		if len(es) >= n {
-			cursor.Offset = len(buf) - (len(es) - n)
-			if len(es) > n {
-				es = es[:n]
-			}
-			return
-		}
-	}
-	cursor.Offset = len(buf)
-	return
+	return s.EntitiesByComponentIndex(OccurrencePrefix, ValuePrefix, cursor, n)
 }
 
 // SetSIs sets the SIs associated with e to v.
@@ -604,47 +484,7 @@ func (s Txn) EntitiesMatchingSIsLiteral(v kv.String) (kv.EntitySlice, error) {
 // that using it in a subequent call to ByLiteral would return next n
 // entities.
 func (s Txn) EntitiesBySIsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
-	key := make(kv.Prefix, 8+2+8+2)
-	s.Partition.EncodeAt(key)
-	SIsPrefix.EncodeAt(key[8:])
-	kv.Entity(0).EncodeAt(key[10:])
-	LiteralPrefix.EncodeAt(key[18:])
-	iter := s.PrefixIterator(key)
-	defer iter.Discard()
-	iter.Seek(cursor.Key)
-	if !iter.Valid() {
-		return
-	}
-	var buf kv.EntitySlice
-	if err = iter.Value(buf.Decode); err != nil {
-		return
-	}
-	if cursor.Offset < len(buf) {
-		es = append(es, buf[cursor.Offset:]...)
-		if len(es) >= n {
-			cursor.Offset += n
-			if len(es) > n {
-				es = es[:n]
-			}
-			return
-		}
-	}
-	for iter.Next(); iter.Valid(); iter.Next() {
-		if err = iter.Value(buf.Decode); err != nil {
-			return
-		}
-		es = append(es, buf...)
-		cursor.Key = append(cursor.Key[0:0], iter.Key()...)
-		if len(es) >= n {
-			cursor.Offset = len(buf) - (len(es) - n)
-			if len(es) > n {
-				es = es[:n]
-			}
-			return
-		}
-	}
-	cursor.Offset = len(buf)
-	return
+	return s.EntitiesByComponentIndex(SIsPrefix, LiteralPrefix, cursor, n)
 }
 
 // SetSLs sets the SLs associated with e to v.
@@ -763,47 +603,7 @@ func (s Txn) EntitiesMatchingSLsLiteral(v kv.String) (kv.EntitySlice, error) {
 // that using it in a subequent call to ByLiteral would return next n
 // entities.
 func (s Txn) EntitiesBySLsLiteral(cursor *kv.IndexCursor, n int) (es []kv.Entity, err error) {
-	key := make(kv.Prefix, 8+2+8+2)
-	s.Partition.EncodeAt(key)
-	SLsPrefix.EncodeAt(key[8:])
-	kv.Entity(0).EncodeAt(key[10:])
-	LiteralPrefix.EncodeAt(key[18:])
-	iter := s.PrefixIterator(key)
-	defer iter.Discard()
-	iter.Seek(cursor.Key)
-	if !iter.Valid() {
-		return
-	}
-	var buf kv.EntitySlice
-	if err = iter.Value(buf.Decode); err != nil {
-		return
-	}
-	if cursor.Offset < len(buf) {
-		es = append(es, buf[cursor.Offset:]...)
-		if len(es) >= n {
-			cursor.Offset += n
-			if len(es) > n {
-				es = es[:n]
-			}
-			return
-		}
-	}
-	for iter.Next(); iter.Valid(); iter.Next() {
-		if err = iter.Value(buf.Decode); err != nil {
-			return
-		}
-		es = append(es, buf...)
-		cursor.Key = append(cursor.Key[0:0], iter.Key()...)
-		if len(es) >= n {
-			cursor.Offset = len(buf) - (len(es) - n)
-			if len(es) > n {
-				es = es[:n]
-			}
-			return
-		}
-	}
-	cursor.Offset = len(buf)
-	return
+	return s.EntitiesByComponentIndex(SLsPrefix, LiteralPrefix, cursor, n)
 }
 
 // SetTopicMapInfo sets the TopicMapInfo associated with e to v.

@@ -154,6 +154,57 @@ func (t Partitioned) AllComponentEntities(c Component, start *Entity, n int) (es
 	return
 }
 
+// EntitiesByComponentIndex returns entities with c values ordered by their ix
+// values.
+//
+// Reading begins at cursor, and ends when the length of the returned Entity
+// slice is less than n. When reading is not complete, cursor is updated such
+// that using it in a subequent call to EntitiesByComponentIndex would return
+// the next n entities.
+func (s Partitioned) EntitiesByComponentIndex(c, ix Component, cursor *IndexCursor, n int) (es []Entity, err error) {
+	key := make(Prefix, 8+2+8+2)
+	s.Partition.EncodeAt(key)
+	c.EncodeAt(key[8:])
+	Entity(0).EncodeAt(key[10:])
+	ix.EncodeAt(key[18:])
+	iter := s.PrefixIterator(key)
+	defer iter.Discard()
+	iter.Seek(cursor.Key)
+	if !iter.Valid() {
+		return
+	}
+	var buf EntitySlice
+	if err = iter.Value(buf.Decode); err != nil {
+		return
+	}
+	if cursor.Offset < len(buf) {
+		es = append(es, buf[cursor.Offset:]...)
+		if len(es) >= n {
+			cursor.Offset += n
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	for iter.Next(); iter.Valid(); iter.Next() {
+		if err = iter.Value(buf.Decode); err != nil {
+			return
+		}
+		es = append(es, buf...)
+		cursor.Key = append(cursor.Key[0:0], iter.Key()...)
+		if len(es) >= n {
+			cursor.Offset = len(buf) - (len(es) - n)
+			if len(es) > n {
+				es = es[:n]
+			}
+			return
+		}
+	}
+	cursor.Offset = len(buf)
+	return
+}
+
 // Encoder is an interface implemented by any type that is to be stored in the
 // key or value of a key-value pair.
 type Encoder interface {

@@ -71,5 +71,6 @@ public class MainActivity extends FlutterActivity {
   @Override
   protected void onPause() {
     mobileapi.Mobileapi.close();
+    super.onPause();
   }
 }

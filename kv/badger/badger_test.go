@@ -4,8 +4,6 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
-
-	"github.com/google/note-maps/kv"
 )
 
 func TestNew(t *testing.T) {
@@ -19,15 +17,14 @@ func TestNew(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	txn := db.NewTransaction(true)
+	txn := db.NewTxn(true)
 	defer txn.Discard()
-	var s kv.Txn = db.NewTxn(txn)
 	want := "value"
-	if err = s.Set([]byte("key"), []byte(want)); err != nil {
+	if err = txn.Set([]byte("key"), []byte(want)); err != nil {
 		t.Fatal(err)
 	}
 	var got string
-	err = s.Get([]byte("key"), func(bs []byte) error {
+	err = txn.Get([]byte("key"), func(bs []byte) error {
 		got = string(bs)
 		return nil
 	})

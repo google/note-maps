@@ -17,7 +17,6 @@ package kvtest
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"runtime/debug"
@@ -33,12 +32,9 @@ import (
 //
 // It's still important to call Close() in order to delete any temporary files
 // created by the kv.Txn.
-func New(t *testing.T) TxnCloser {
+func New(t *testing.T) kv.TxnCommitDiscarder {
 	if testing.Short() {
-		return &tmpTxn{
-			Txn:    memory.New(),
-			closer: func() error { return nil },
-		}
+		return memory.New()
 	}
 	dir, err := ioutil.TempDir("", "kvtest-badger")
 	if err != nil {
@@ -49,31 +45,23 @@ func New(t *testing.T) TxnCloser {
 		os.RemoveAll(dir)
 		t.Fatal(err)
 	}
-	txn := b.NewTransaction(true)
 	return &tmpTxn{
-		Txn: b.NewTxn(txn),
-		closer: func() error {
-			txn.Discard()
+		TxnCommitDiscarder: b.NewTxn(true),
+		discard: func() {
 			b.Close()
 			os.RemoveAll(dir)
-			return nil
 		},
 	}
 }
 
-// TxnCloser combines the kv.Txn and io.Closer interfaces.
-type TxnCloser interface {
-	kv.Txn
-	io.Closer
-}
-
 type tmpTxn struct {
-	kv.Txn
-	closer func() error
+	kv.TxnCommitDiscarder
+	discard func()
 }
 
-func (s *tmpTxn) Close() error {
-	return s.closer()
+func (s *tmpTxn) Discard() {
+	s.TxnCommitDiscarder.Discard()
+	s.discard()
 }
 
 type badgerLogger struct {

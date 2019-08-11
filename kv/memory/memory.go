@@ -25,7 +25,7 @@ import (
 
 // New returns a memory-backed implementation of the kv.Txn interface
 // intended exclusively for use in tests, and not in production.
-func New() kv.Txn {
+func New() kv.TxnCommitDiscarder {
 	return &txn{
 		m: make(map[string][]byte),
 	}
@@ -73,6 +73,9 @@ func (s *txn) PrefixIterator(prefix []byte) kv.Iterator {
 		func(a, b int) bool { return iter.pairs[a].key < iter.pairs[b].key })
 	return &iter
 }
+
+func (s *txn) Discard()      {}
+func (s *txn) Commit() error { return nil }
 
 type pair struct {
 	key   string

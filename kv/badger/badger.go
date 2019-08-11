@@ -62,9 +62,10 @@ func (db *DB) Close() error {
 	return db.DB.Close()
 }
 
-// NewTxn creates a new kv.Txn based on a the given transaction.
-func (db *DB) NewTxn(txn *badger.Txn) kv.Txn {
-	return NewTxn(db.seq, txn)
+// NewTxn creates a new kv.Txn.
+func (db *DB) NewTxn(update bool) kv.TxnCommitDiscarder {
+	btxn := db.DB.NewTransaction(update)
+	return NewTxn(db.seq, btxn)
 }
 
 // NewTxn creates a new kv.Txn that uses seq to allocate new Entity values,
@@ -74,7 +75,9 @@ func (db *DB) NewTxn(txn *badger.Txn) kv.Txn {
 // DB.NewTxn. Applications that manage their own badger.DB, or that want to
 // do additional work on a given badger.Txn before it is committed, can use
 // NewTxn to preserve those abilities.
-func NewTxn(seq *badger.Sequence, tx *badger.Txn) kv.Txn { return txn{seq, tx} }
+func NewTxn(seq *badger.Sequence, tx *badger.Txn) kv.TxnCommitDiscarder {
+	return txn{seq, tx}
+}
 
 type txn struct {
 	seq *badger.Sequence
@@ -112,6 +115,14 @@ func (s txn) PrefixIterator(prefix []byte) kv.Iterator {
 		s.tx.NewIterator(opts),
 		len(prefix),
 	}
+}
+
+func (s txn) Commit() error {
+	return s.tx.Commit()
+}
+
+func (s txn) Discard() {
+	s.tx.Discard()
 }
 
 type iterator struct {

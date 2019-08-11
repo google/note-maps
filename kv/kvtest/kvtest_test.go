@@ -24,7 +24,7 @@ import (
 
 func TestNew(t *testing.T) {
 	s := New(t)
-	defer s.Close()
+	defer s.Discard()
 	if s == nil {
 		t.Fatal("New return nil")
 	}

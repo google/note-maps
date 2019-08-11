@@ -82,6 +82,9 @@ type Txn interface {
 
 // Iterator supports iteration over key-value pairs.
 type Iterator interface {
+	// Iterators must be discarded when no longer in use.
+	Discarder
+
 	// Seek moves the iterator to the key-value pair that matches the given key.
 	//
 	// If there is no such key-value pair, Seek moves to the item with first key
@@ -103,9 +106,31 @@ type Iterator interface {
 	//
 	// May panic if Valid() returns false.
 	Value(f func([]byte) error) error
+}
 
-	// Discard releases this iterator, making it invalid for further use.
+// Discarder provides the Discard method.
+type Discarder interface {
 	Discard()
+}
+
+// TxnDiscarder combines the Txn and Discarder interfaces.
+//
+// A typical use of TxnDiscarder might be for a transaction that does not
+// support mutations.
+type TxnDiscarder interface {
+	Txn
+	Discarder
+}
+
+// TxnCommitDiscarder adds a Commit method to the Txn and Discarder interfaces.
+//
+// A typical use of TxnCommitDiscarder is to track a transaction that supports
+// mutations.
+type TxnCommitDiscarder interface {
+	TxnDiscarder
+
+	// Commit commits the mutations performed through this Txn to the backing store.
+	Commit() error
 }
 
 // IndexCursor describes a location within an index, to track the position of

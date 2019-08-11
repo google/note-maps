@@ -34,9 +34,9 @@ func TestCreateTopicMap(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	txn := db.NewTransaction(true)
+	txn := db.NewTxn(true)
+	s := Txn{models.New(txn)}
 	defer txn.Discard()
-	s := Txn{models.New(db.NewTxn(txn))}
 	stored, err := s.CreateTopicMap()
 	if err != nil {
 		t.Error(err)
@@ -44,9 +44,9 @@ func TestCreateTopicMap(t *testing.T) {
 		t.Error("want not-zero, got zero")
 	}
 	txn.Commit()
-	txn = db.NewTransaction(false)
+	txn = db.NewTxn(false)
 	defer txn.Discard()
-	s = Txn{models.New(db.NewTxn(txn))}
+	s = Txn{models.New(txn)}
 	gots, err := s.GetTopicMapInfoSlice([]kv.Entity{kv.Entity(stored)})
 	if err != nil {
 		t.Error(err)

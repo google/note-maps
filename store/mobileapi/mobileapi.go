@@ -93,6 +93,7 @@ var (
 func getDB() (*badger.DB, error) {
 	m.Lock()
 	defer m.Unlock()
+
 	if db == nil {
 		if path == "" {
 			return nil, fmt.Errorf("incomplete initialization: path is empty")
@@ -101,12 +102,22 @@ func getDB() (*badger.DB, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		options := badger.DefaultOptions(path)
+
+		// Default options leads to a failure on Android, "Map log file.
+		// Path=.../000000.vlog. Error=cannot allocate memory"
+		//
+		// A fix suggested in https://github.com/ipfs/ipfs-cluster/issues/771 is to
+		// decrease the ValueLogFileSize.
+		options = options.WithValueLogFileSize(1 << 24)
+
 		db, err = badger.Open(options)
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	return db, nil
 }
 

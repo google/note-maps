@@ -1,0 +1,4 @@
+# Ignore Android archives (AAR)
+*.aar
+# Ignore Java archives (JAR)
+*.jar

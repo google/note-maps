@@ -27,27 +27,30 @@ JTM ([JTM 1.1][]).
 
 ## Architecture Overview
 
-The mobile app will be a [Flutter][] front end with a UI focused on entering
-and organizing notes, and that uses a [GraphQL][] based protocol to communicate
-with an embedded topic maps storage and query engine implemented in [Go][].
+The mobile app is a [Flutter][] front end with a UI focused on entering and
+organizing notes.  Notes are stored through a [Go][] backend in a [Badger][]
+database on local storage, where they can be included in system backups.
 
-The storage engine will use an LSM based key-value store to keep topic maps in
-local storage, where they may be included in system backups, and will be
-responsible for serialization and deserialization of topic maps to standard
-data formats.
-
+[Badger]: https://github.com/dgraph-io/badger
 [Flutter]: https://flutter.dev
 [Go]: https://golang.org
-[GraphQL]: https://graphql.org
 
-## Status
+## Screenshots
 
 <img alt="screenshot of library page" src="https://github.com/google/note-maps/raw/master/docs/library.png" height="300pt"/>
 
 ## Plan
 
-1.  Develop a basic prototype to validate the entire architecture with a
-    subset of the topic maps data model.
+- [x] Partial Go implementation of deserialization from CTM
+- [x] Partial Go implementation of data storage for topic maps
+- [x] Flutter native channel for communication with data storage
+- [x] Minimal Flutter front-end that uses native channel to communicate with Go
+- [ ] Minimal UX research, recorded in this repository
+- [ ] Wireframe Flutter front-end with navigation
+- [ ] Topic maps can be created
+- [ ] Names can be created and edited
+- [ ] Notes can be created and edited
+- [ ] ...
 
 ## Source Code Headers
 

@@ -15,30 +15,15 @@
 package query
 
 import (
+	"fmt"
+
 	"github.com/google/note-maps/kv"
 	"github.com/google/note-maps/store/models"
-	"github.com/google/note-maps/topicmaps"
+	"github.com/google/note-maps/store/pb"
 )
 
 // Txn adds some query logic to models.Txn.
 type Txn struct{ models.Txn }
-
-// TopicsByName returns a page of topics ordered by name.
-func (s *Txn) TopicsByName(c *kv.IndexCursor, n int) ([]kv.Entity, error) {
-	ns, err := s.EntitiesByNameValue(c, n)
-	if err != nil {
-		return nil, err
-	}
-	names, err := s.GetNameSlice(ns)
-	if err != nil {
-		return nil, err
-	}
-	ts := make([]kv.Entity, len(names))
-	for i := range names {
-		ts[i] = kv.Entity(names[i].Topic)
-	}
-	return ts, nil
-}
 
 // Mask describes which fields should be included in a response.
 type Mask int
@@ -56,9 +41,13 @@ const (
 	Occurrences
 )
 
-// LoadTopic retrieves f fields of te into a topicmaps.Topic.
-func (s *Txn) LoadTopic(te kv.Entity, f Mask) (*topicmaps.Topic, error) {
-	var topic topicmaps.Topic
+func (s *Txn) GetTopicMaps(*pb.GetTopicMapsRequest) (*pb.GetTopicMapsResponse, error) {
+	return nil, fmt.Errorf("not yet implemented")
+}
+
+// LoadTopic retrieves f fields of te into a pb.Topic.
+func (s *Txn) LoadTopic(te kv.Entity, f Mask) (*pb.Topic, error) {
+	var topic pb.Topic
 
 	if (f & Refs) != 0 {
 		panic("loading refs is not yet implemented")
@@ -70,9 +59,9 @@ func (s *Txn) LoadTopic(te kv.Entity, f Mask) (*topicmaps.Topic, error) {
 		} else if ns, err := s.GetNameSlice(nes); err != nil {
 			return nil, err
 		} else if len(ns) > 0 {
-			topic.Names = make([]*topicmaps.Name, 0, len(ns))
+			topic.Names = make([]*pb.Name, 0, len(ns))
 			for _, n := range ns {
-				var loaded topicmaps.Name
+				var loaded pb.Name
 				loaded.Value = n.Value
 				topic.Names = append(topic.Names, &loaded)
 			}
@@ -85,9 +74,9 @@ func (s *Txn) LoadTopic(te kv.Entity, f Mask) (*topicmaps.Topic, error) {
 		} else if os, err := s.GetOccurrenceSlice(oes); err != nil {
 			return nil, err
 		} else if len(os) > 0 {
-			topic.Occurrences = make([]*topicmaps.Occurrence, 0, len(os))
+			topic.Occurrences = make([]*pb.Occurrence, 0, len(os))
 			for _, o := range os {
-				var loaded topicmaps.Occurrence
+				var loaded pb.Occurrence
 				loaded.Value = o.Value
 				topic.Occurrences = append(topic.Occurrences, &loaded)
 			}

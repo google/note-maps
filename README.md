@@ -40,6 +40,10 @@ data formats.
 [Go]: https://golang.org
 [GraphQL]: https://graphql.org
 
+## Status
+
+![library page screenshot](https://github.com/google/note-maps/raw/master/docs/library.png)
+
 ## Plan
 
 1.  Develop a basic prototype to validate the entire architecture with a

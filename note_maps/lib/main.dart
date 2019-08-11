@@ -63,28 +63,34 @@ class _LibraryPageState extends State<LibraryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
+      body: CustomScrollView(
+        slivers: <Widget>[
+          SliverAppBar(
+            pinned: true,
+            snap: false,
+            floating: false,
+            expandedHeight: 160.0,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(widget.title),
+              //background: Image.asset(..., fit: BoxFit.fill)
+            ),
+          ),
+          SliverFillRemaining(
+            child: Center(child: Text('$_response')),
+          ),
+        ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              "Response:",
-            ),
-            Text(
-              '$_response',
-              style: Theme.of(context).textTheme.display1,
-            ),
-          ],
+      bottomNavigationBar: BottomAppBar(
+        child: Container(
+          height: 50.0,
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _getTopicMaps,
-        tooltip: 'Get Topic Maps',
+        tooltip: 'Create a Note Map',
         child: Icon(Icons.add),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }

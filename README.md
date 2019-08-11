@@ -42,7 +42,7 @@ data formats.
 
 ## Status
 
-![library page screenshot](https://github.com/google/note-maps/raw/master/docs/library.png)
+<img alt="screenshot of library page" src="https://github.com/google/note-maps/raw/master/docs/library.png" height="300pt"/>
 
 ## Plan
 

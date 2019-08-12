@@ -30,7 +30,7 @@ class TopicPage extends StatelessWidget {
     );
   }
 
-  Widget roleTile(BuildContext context){
+  Widget roleTile(BuildContext context) {
     return ListTile(
       leading: FlutterLogo(),
       title: Placeholder(
@@ -40,8 +40,7 @@ class TopicPage extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-              builder: (context) => TopicPage(title: "Topic")),
+          MaterialPageRoute(builder: (context) => TopicPage(title: "Topic")),
         );
       },
     );

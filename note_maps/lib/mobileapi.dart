@@ -12,30 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 
-import 'library.dart';
-import 'mobileapi.dart';
+class QueryApi {
+  static const channel =
+      const MethodChannel('github.com/google/note-maps/query');
 
-void main() => runApp(MyApp());
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        Provider<QueryApi>.value(value: QueryApi()),
-        Provider<CommandApi>.value(value: CommandApi()),
-      ],
-      child: MaterialApp(
-        title: 'Note Maps',
-        theme: ThemeData(
-          primarySwatch: Colors.grey,
-        ),
-        home: LibraryPage(title: 'Note Maps Library'),
-      ),
-    );
+  getTopicMaps() {
+    return channel.invokeMethod('GetTopicMaps');
   }
+}
+
+class CommandApi {
+  static const channel =
+      const MethodChannel('github.com/google/note-maps/command');
 }

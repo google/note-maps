@@ -46,7 +46,7 @@ database on local storage, where they can be included in system backups.
 - [x] Flutter native channel for communication with data storage
 - [x] Minimal Flutter front-end that uses native channel to communicate with Go
 - [ ] Minimal UX research, recorded in this repository
-- [ ] Wireframe Flutter front-end with navigation
+- [x] Wireframe Flutter front-end with navigation
 - [ ] Topic maps can be created
 - [ ] Names can be created and edited
 - [ ] Notes can be created and edited

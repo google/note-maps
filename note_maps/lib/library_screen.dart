@@ -71,7 +71,8 @@ class LibraryPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => TopicPage(title: "Topic Map")),
+                        builder: (context) =>
+                            TopicPage(title: "Unnamed Note Map")),
                   );
                 },
                 tooltip: 'Create a Note Map',

@@ -71,24 +71,24 @@ class TopicPage extends StatelessWidget {
                   ),
                 ],
               ),
-              bottomNavigationBar: BottomAppBar(
-                child: Container(
-                  height: 50.0,
-                ),
-              ),
               floatingActionButton: FloatingActionButton(
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => TopicPage(title: "Topic")),
+                        builder: (context) => TopicPage(title: "Unnamed Topic")),
                   );
                 },
-                tooltip: 'Create a Note',
-                child: Icon(Icons.add),
+                tooltip: 'Create a related Topic',
+                child: Icon(Icons.insert_link),
               ),
               floatingActionButtonLocation:
                   FloatingActionButtonLocation.centerDocked,
+              bottomNavigationBar: BottomAppBar(
+                child: Container(
+                  height: 50.0,
+                ),
+              ),
             ));
   }
 
@@ -121,63 +121,30 @@ class TopicPage extends StatelessWidget {
   }
 
   Widget noteTile(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        IconButton(
-            onPressed: () {
-              FocusScope.of(context).requestFocus(new FocusNode());
-            },
-            icon: Icon(Icons.drag_handle)),
-        Flexible(
-          child: TextField(
-            controller: TextEditingController(
-                text: "Lorem ipsum dolor sit amet, consectetur adipiscing " +
-                    "elit. Sed tristique tristique purus, at aliquet eros " +
-                    "gravida malesuada. Ut vehicula convallis eros, in " +
-                    "tristique nunc tincidunt ac."),
-            readOnly: true,
-            enableInteractiveSelection: true,
-            onTap: () => showEditNoteDialog(context),
-            maxLines: null,
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: <Widget>[
+          IconButton(
+              onPressed: () {
+                FocusScope.of(context).requestFocus(new FocusNode());
+              },
+              icon: Icon(Icons.drag_handle)),
+          Flexible(
+            child: TextField(
+              controller: TextEditingController(
+                  text: "Lorem ipsum dolor sit amet, consectetur adipiscing " +
+                      "elit. Sed tristique tristique purus, at aliquet eros " +
+                      "gravida malesuada. Ut vehicula convallis eros, in " +
+                      "tristique nunc tincidunt ac."),
+              maxLines: null,
+              decoration: null,
+            ),
           ),
-        ),
-        noteMenuButton(),
-      ],
+          noteMenuButton(),
+        ],
+      ),
     );
-  }
-
-  showEditNoteDialog(BuildContext context) async {
-    return showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-              title: Text("Edit Note"),
-              content: TextField(
-                autofocus: true,
-                controller: TextEditingController(
-                    text: "Lorem ipsum dolor sit amet, consectetur adipiscing " +
-                        "elit. Sed tristique tristique purus, at aliquet eros " +
-                        "gravida malesuada. Ut vehicula convallis eros, in " +
-                        "tristique nunc tincidunt ac."),
-                maxLines: null,
-                onEditingComplete: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: new Text("Cancel"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-                FlatButton(
-                  child: new Text("OK"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ));
   }
 
   Widget roleTile(BuildContext context) {

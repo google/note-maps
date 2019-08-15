@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -27,40 +29,33 @@ class LibraryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return OrientationBuilder(
         builder: (context, orientation) => Scaffold(
-              body: CustomScrollView(
-                slivers: <Widget>[
-                  SliverAppBar(
-                    pinned: true,
-                    snap: false,
-                    floating: false,
-                    expandedHeight:
-                        orientation == Orientation.portrait ? 160.0 : null,
-                    flexibleSpace: FlexibleSpaceBar(
-                      title: Text(title),
-                      //background: Image.asset(..., fit: BoxFit.fill)
-                    ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.all(8.0),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate(<Widget>[
-                        noteMapTile(context),
-                        noteMapTile(context),
-                        noteMapTile(context),
-                        noteMapTile(context),
-                        noteMapTile(context),
-                        noteMapTile(context),
-                        noteMapTile(context),
-                        noteMapTile(context),
-                        noteMapTile(context),
-                        noteMapTile(context),
-                        noteMapTile(context),
-                        noteMapTile(context),
-                      ]),
-                    ),
-                  ),
-                ],
-              ),
+              body: Consumer<LibraryState>(
+                  builder: (context, libraryState, child) => CustomScrollView(
+                        slivers: <Widget>[
+                          SliverAppBar(
+                            pinned: true,
+                            snap: false,
+                            floating: false,
+                            expandedHeight: orientation == Orientation.portrait
+                                ? 160.0
+                                : null,
+                            flexibleSpace: FlexibleSpaceBar(
+                              title: Text(title),
+                              //background: Image.asset(..., fit: BoxFit.fill)
+                            ),
+                          ),
+                          SliverPadding(
+                            padding: const EdgeInsets.all(8.0),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                  (BuildContext context, int index) =>
+                                      noteMapTile(context,
+                                          libraryState.topicMaps[index]),
+                                  childCount: libraryState.topicMaps.length),
+                            ),
+                          ),
+                        ],
+                      )),
               bottomNavigationBar: BottomAppBar(
                 child: Container(
                   height: 50.0,
@@ -83,10 +78,10 @@ class LibraryPage extends StatelessWidget {
             ));
   }
 
-  Widget noteMapTile(BuildContext context) {
+  Widget noteMapTile(BuildContext context, TopicMap topicMap) {
     return ListTile(
-      title: Placeholder(
-        fallbackHeight: 20,
+      title: Text(
+        topicMap.id.toRadixString(16),
       ),
       trailing: noteMapMenuButton(),
       onTap: () {
@@ -119,4 +114,26 @@ class LibraryPage extends StatelessWidget {
 enum NoteMapOption {
   rename,
   moveToTrash,
+}
+
+class Library {
+  final QueryApi query;
+  final CommandApi command;
+  final StreamController<LibraryState> _state =
+      StreamController<LibraryState>.broadcast();
+
+  Library(this.query, this.command) {}
+
+  Stream<LibraryState> state() => _state.stream;
+
+  void dispose() {
+    _state.close();
+  }
+}
+
+class LibraryState {
+  final List<TopicMap> topicMaps;
+  final bool loaded;
+
+  LibraryState({this.topicMaps = const [], this.loaded = false});
 }

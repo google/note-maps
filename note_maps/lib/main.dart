@@ -24,10 +24,18 @@ void main() => runApp(MyApp());
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    QueryApi query = QueryApi();
+    CommandApi command = CommandApi();
+    Library library = Library(query, command);
     return MultiProvider(
       providers: [
-        Provider<QueryApi>.value(value: QueryApi()),
-        Provider<CommandApi>.value(value: CommandApi()),
+        Provider<QueryApi>.value(value: query),
+        Provider<CommandApi>.value(value: command),
+        Provider<Library>.value(value: Library(query, command)),
+        StreamProvider<LibraryState>.value(
+          value: library.state(),
+          initialData: LibraryState(),
+        ),
       ],
       child: MaterialApp(
         title: 'Note Maps',

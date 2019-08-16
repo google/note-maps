@@ -179,7 +179,7 @@ func TestAllDocumentEntities(t *testing.T) {
 		s := New(s_)
 		want := createDocuments(&s, sampleDocuments("All", 5))
 		kv.EntitySlice(want).Sort()
-		for pageSize := 1; pageSize < len(want)+1; pageSize++ {
+		for pageSize := 0; pageSize < len(want)+1; pageSize++ {
 			var (
 				start kv.Entity
 				got   []kv.Entity
@@ -190,9 +190,9 @@ func TestAllDocumentEntities(t *testing.T) {
 					panic(err)
 				}
 				got = append(got, buf...)
-				if pageSize < len(buf) {
+				if pageSize > 0 && pageSize < len(buf) {
 					t.Fatalf("want <= %d entities, got %d", pageSize, len(buf))
-				} else if len(buf) < pageSize {
+				} else if pageSize == 0 || len(buf) < pageSize {
 					break
 				}
 			}

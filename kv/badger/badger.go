@@ -116,7 +116,7 @@ func (s txn) PrefixIterator(prefix []byte) kv.Iterator {
 	opts.Prefix = prefix
 	return iterator{
 		s.tx.NewIterator(opts),
-		len(prefix),
+		prefix,
 	}
 }
 
@@ -130,10 +130,12 @@ func (s txn) Discard() {
 
 type iterator struct {
 	*badger.Iterator
-	lenPrefix int
+	prefix []byte
 }
 
-func (i iterator) Key() []byte { return i.Item().Key()[i.lenPrefix:] }
+func (i iterator) Seek(key []byte) { i.Iterator.Seek(append(i.prefix, key...)) }
+
+func (i iterator) Key() []byte { return i.Item().Key()[len(i.prefix):] }
 
 func (i iterator) Value(f func([]byte) error) error { return i.Item().Value(f) }
 

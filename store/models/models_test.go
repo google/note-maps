@@ -55,6 +55,14 @@ func TestCreateTopicMap(t *testing.T) {
 		t.Errorf("want distinct values, got %v==%v",
 			stored[0].TopicMap, stored[1].TopicMap)
 	}
+	if gotEs, err := txn.AllTopicMapInfoEntities(nil, 0); err != nil {
+		t.Error(err)
+	} else {
+		kv.EntitySlice(gotEs).Sort()
+		if !kv.EntitySlice(es).Equal(kv.EntitySlice(gotEs)) {
+			t.Errorf("want %v, got %v", es, gotEs)
+		}
+	}
 	sort.Slice(stored,
 		func(a, b int) bool { return stored[a].TopicMap < stored[b].TopicMap })
 	got, err := txn.GetTopicMapInfoSlice(es)

@@ -44,6 +44,16 @@ import (
 	"sort"
 )
 
+// DB represents the functions a database connection should implement to be
+// convenient for code that uses this package.
+type DB interface {
+	// NewTxn returns a new TxnCommitDiscarder that optionally supports updates.
+	NewTxn(update bool) TxnCommitDiscarder
+
+	// Close releases any resources held by this DB and closes the connection.
+	Close() error
+}
+
 // Txn represents the functions a key-value store transaction must implement in
 // order to be used as a backing transaction in this package.
 type Txn interface {

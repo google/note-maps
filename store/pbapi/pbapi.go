@@ -25,18 +25,16 @@ import (
 )
 
 type Gateway struct {
-	R func() kv.TxnDiscarder
-	W func() kv.TxnCommitDiscarder
+	db kv.DB
 }
 
+func NewGateway(db kv.DB) *Gateway { return &Gateway{db} }
+
 func (g Gateway) CreateTopicMap(request *pb.CreateTopicMapRequest) (*pb.CreateTopicMapResponse, error) {
-	txn := g.W()
+	txn := g.db.NewTxn(true)
 	defer txn.Discard()
 	m := models.New(txn)
-
-	if m.Partition != 0 {
-		return nil, fmt.Errorf("topic maps can only be created in partition zero")
-	}
+	m.Partition = 0
 
 	// Allocate an entity to identify the new topic map.
 	tm, err := m.Alloc()
@@ -70,7 +68,7 @@ func (g Gateway) CreateTopicMap(request *pb.CreateTopicMapRequest) (*pb.CreateTo
 }
 
 func (g Gateway) GetTopicMaps(request *pb.GetTopicMapsRequest) (*pb.GetTopicMapsResponse, error) {
-	txn := g.R()
+	txn := g.db.NewTxn(false)
 	defer txn.Discard()
 	m := models.New(txn)
 

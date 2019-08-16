@@ -29,14 +29,6 @@ import (
 	"github.com/google/note-maps/store/models/internal/pb"
 )
 
-// To allow complex values may be encoded differently in later versions, a
-// single byte prefix is included in serialized values to identify the
-// encoding.
-const (
-	// The only format currently supported.
-	GobFormat byte = iota
-)
-
 const (
 	TopicMapInfoPrefix     kv.Component = 0x0001
 	LiteralPrefix          kv.Component = 0x0002

@@ -26,7 +26,6 @@ import (
 	"sync"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/google/note-maps/kv"
 	"github.com/google/note-maps/kv/badger"
 	"github.com/google/note-maps/store/pb"
 	"github.com/google/note-maps/store/pbapi"
@@ -131,12 +130,5 @@ func gateway() (*pbapi.Gateway, error) {
 		}
 	}
 
-	return &pbapi.Gateway{
-		R: func() kv.TxnDiscarder {
-			return db.NewTxn(false)
-		},
-		W: func() kv.TxnCommitDiscarder {
-			return db.NewTxn(true)
-		},
-	}, nil
+	return pbapi.NewGateway(db), nil
 }

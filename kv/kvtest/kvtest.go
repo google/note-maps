@@ -28,6 +28,34 @@ import (
 	"github.com/google/note-maps/kv/memory"
 )
 
+// NewDB returns a new kv.DB suitable for use in a unit test.
+//
+// It's still important to call Close() in order to delete any temporary files
+// created by the kv.Txn.
+func NewDB(t *testing.T) kv.DB {
+	dir, err := ioutil.TempDir("", "kvtest-badger")
+	if err != nil {
+		t.Fatal(err)
+	}
+	db, err := badger.Open(badger.DefaultOptions(dir).WithLogger(badgerLogger{t}))
+	if err != nil {
+		os.RemoveAll(dir)
+		t.Fatal(err)
+	}
+	return &tmpDB{db, dir}
+}
+
+type tmpDB struct {
+	kv.DB
+	dir string
+}
+
+func (db *tmpDB) Close() error {
+	db.DB.Close()
+	os.RemoveAll(db.dir)
+	return nil
+}
+
 // New returns a new kv.Txn suitable for use in a unit test.
 //
 // It's still important to call Close() in order to delete any temporary files

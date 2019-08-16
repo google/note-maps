@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package mobileapi is intended for use with `gomobile`.
+// Package mobileapi is intended for use with gomobile.
+//
+// Since gomobile has limited support for Go types, and since it has excellent
+// support for byte slices, all non-trivial information is passed through
+// mobileapi as encoded protocol buffers.
 package mobileapi
 
 import (
@@ -24,9 +28,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/google/note-maps/kv"
 	"github.com/google/note-maps/kv/badger"
-	"github.com/google/note-maps/store"
 	"github.com/google/note-maps/store/pb"
-	"github.com/google/note-maps/store/query"
+	"github.com/google/note-maps/store/pbapi"
 )
 
 func SetPath(p string) {
@@ -47,77 +50,44 @@ func Close() {
 }
 
 func Query(method string, bs []byte) ([]byte, error) {
-	txn, err := newQueryTxn()
+	g, err := gateway()
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard()
 	switch method {
 	case "GetTopicMaps":
-		var request pb.GetTopicMapsRequest
-		if err := proto.Unmarshal(bs, &request); err != nil {
-			return nil, err
-		}
-
-		q := store.Query(txn)
-		es, err := q.AllTopicMapInfoEntities(nil, 0)
+		var query pb.GetTopicMapsRequest
+		err := proto.Unmarshal(bs, &query)
 		if err != nil {
 			return nil, err
 		}
-		log.Println("found", len(es), "topic maps")
-
-		var response pb.GetTopicMapsResponse
-		for _, e := range es {
-			q.Partition = e
-			topic, err := q.LoadTopic(e, query.Names|query.Occurrences)
-			if err != nil {
-				return nil, err
-			}
-
-			tm := &pb.TopicMap{
-				Id:    uint64(e),
-				Topic: topic,
-			}
-			response.TopicMaps = append(response.TopicMaps, tm)
+		response, err := g.GetTopicMaps(&query)
+		if err != nil {
+			return nil, err
 		}
-
-		return proto.Marshal(&response)
+		return proto.Marshal(response)
 	default:
 		return nil, fmt.Errorf("unrecognized query: %#v", method)
 	}
 }
 
 func Command(method string, bs []byte) ([]byte, error) {
-	txn, err := newCommandTxn()
+	g, err := gateway()
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard()
 	switch method {
 	case "CreateTopicMap":
-		c := store.Command(txn)
-		e, err := c.CreateTopicMap()
+		var cmd pb.CreateTopicMapRequest
+		err := proto.Unmarshal(bs, &cmd)
 		if err != nil {
 			return nil, err
 		}
-
-		q := store.Query(txn)
-		q.Partition = e
-		topic, err := q.LoadTopic(e, query.Names|query.Occurrences)
+		response, err := g.CreateTopicMap(&cmd)
 		if err != nil {
 			return nil, err
 		}
-
-		if err = txn.Commit(); err != nil {
-			return nil, err
-		}
-
-		return proto.Marshal(&pb.CreateTopicMapResponse{
-			TopicMap: &pb.TopicMap{
-				Id:    uint64(e),
-				Topic: topic,
-			},
-		})
+		return proto.Marshal(response)
 	default:
 		return nil, fmt.Errorf("unrecognized command: %#v", method)
 	}
@@ -133,7 +103,7 @@ var (
 	path string
 )
 
-func getDB() (*badger.DB, error) {
+func gateway() (*pbapi.Gateway, error) {
 	m.Lock()
 	defer m.Unlock()
 
@@ -161,21 +131,12 @@ func getDB() (*badger.DB, error) {
 		}
 	}
 
-	return db, nil
-}
-
-func newQueryTxn() (kv.TxnDiscarder, error) {
-	db, err := getDB()
-	if err != nil {
-		return nil, err
-	}
-	return db.NewTxn(false), nil
-}
-
-func newCommandTxn() (kv.TxnCommitDiscarder, error) {
-	db, err := getDB()
-	if err != nil {
-		return nil, err
-	}
-	return db.NewTxn(true), nil
+	return &pbapi.Gateway{
+		R: func() kv.TxnDiscarder {
+			return db.NewTxn(false)
+		},
+		W: func() kv.TxnCommitDiscarder {
+			return db.NewTxn(true)
+		},
+	}, nil
 }

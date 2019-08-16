@@ -41,16 +41,15 @@ const (
 	Occurrences
 )
 
-func (s *Txn) GetTopicMaps(*pb.GetTopicMapsRequest) (*pb.GetTopicMapsResponse, error) {
-	return nil, fmt.Errorf("not yet implemented")
-}
-
 // LoadTopic retrieves f fields of te into a pb.Topic.
 func (s *Txn) LoadTopic(te kv.Entity, f Mask) (*pb.Topic, error) {
-	var topic pb.Topic
+	if s.Partition == 0 {
+		return nil, fmt.Errorf("cannot load topics from partition zero")
+	}
 
-	if (f & Refs) != 0 {
-		panic("loading refs is not yet implemented")
+	topic := pb.Topic{
+		Id:         uint64(te),
+		TopicMapId: uint64(s.Partition),
 	}
 
 	if (f & Names) != 0 {

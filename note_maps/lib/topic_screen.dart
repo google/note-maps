@@ -12,115 +12,126 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+import 'package:bloc/bloc.dart';
 
 import 'mobileapi/mobileapi.dart';
+import 'topic_map_view_models.dart';
+import 'topic_name_edit_dialog.dart';
 
-class TopicPage extends StatelessWidget {
-  TopicPage({Key key, this.title}) : super(key: key);
+class TopicPage extends StatefulWidget {
+  TopicPage({Key key, @required this.topicBloc})
+      : assert(topicBloc != null),
+        super(key: key);
 
-  final String title;
+  final TopicBloc topicBloc;
+
+  @override
+  State<TopicPage> createState() => _TopicPageState();
+}
+
+class _TopicPageState extends State<TopicPage> {
+  TopicBloc get _topicBloc => widget.topicBloc;
+  String _error;
+
+  @override
+  void initState() {
+    _topicBloc.dispatch(TopicLoadEvent());
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return OrientationBuilder(
-        builder: (context, orientation) => Scaffold(
-              resizeToAvoidBottomPadding: true,
-              body: CustomScrollView(
-                slivers: <Widget>[
-                  SliverAppBar(
-                    pinned: true,
-                    snap: false,
-                    floating: false,
-                    expandedHeight:
-                        orientation == Orientation.portrait ? 160.0 : null,
-                    flexibleSpace: FlexibleSpaceBar(
-                      title: Text(title),
-                      //background: Image.asset(..., fit: BoxFit.fill)
-                    ),
-                    actions: <Widget>[
-                      IconButton(
-                        onPressed: () {
-                          showRenameTopicDialog(context);
-                        },
-                        icon: Icon(Icons.edit),
-                      ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: Icon(Icons.delete),
-                      ),
-                    ],
+    return BlocProvider<TopicBloc>(
+      builder: (_) => _topicBloc,
+      child: OrientationBuilder(
+        builder: (context, orientation) => BlocBuilder<TopicBloc, TopicState>(
+          bloc: _topicBloc,
+          builder: (context, topicState) => Scaffold(
+            resizeToAvoidBottomPadding: true,
+            body: CustomScrollView(
+              slivers: <Widget>[
+                SliverAppBar(
+                  pinned: true,
+                  snap: false,
+                  floating: false,
+                  expandedHeight:
+                      orientation == Orientation.portrait ? 160.0 : null,
+                  flexibleSpace: FlexibleSpaceBar(
+                    title: Text(topicState.viewModel.nameNotice +
+                        topicState.viewModel.name),
+                    //background: Image.asset(..., fit: BoxFit.fill)
                   ),
-                  SliverPadding(
-                    padding: const EdgeInsets.all(8.0),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate(<Widget>[
-                        noteTile(context),
-                        noteTile(context),
-                        noteTile(context),
-                        Divider(),
-                        roleTile(context),
-                        roleTile(context),
-                        roleTile(context),
-                        roleTile(context),
-                        roleTile(context),
-                        roleTile(context),
-                      ]),
+                  actions: <Widget>[
+                    IconButton(
+                      onPressed: topicState.viewModel == null
+                          ? null
+                          : () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => TopicNameEditDialog(
+                                  topicViewModel: topicState.viewModel,
+                                ),
+                              ).then((newName) {
+                                _topicBloc
+                                    .dispatch(TopicNameChangedEvent(newName));
+                              });
+                            },
+                      icon: Icon(Icons.edit),
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: Icon(Icons.delete),
+                    ),
+                  ],
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.all(8.0),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, i) => noteTile(context,
+                          topicState.viewModel.occurrenceViewModels[i]),
+                      childCount:
+                          topicState.viewModel?.occurrenceViewModels?.length ??
+                              0,
                     ),
                   ),
-                ],
-              ),
-              floatingActionButton: FloatingActionButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => TopicPage(title: "Unnamed Topic")),
-                  );
-                },
-                tooltip: 'Create a related Topic',
-                child: Icon(Icons.insert_link),
-              ),
-              floatingActionButtonLocation:
-                  FloatingActionButtonLocation.centerDocked,
-              bottomNavigationBar: BottomAppBar(
-                child: Container(
-                  height: 50.0,
-                ),
-              ),
-            ));
-  }
-
-  showRenameTopicDialog(BuildContext context) async {
-    return showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-              title: Text("Rename Topic"),
-              content: TextField(
-                autofocus: true,
-                onEditingComplete: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              actions: <Widget>[
-                FlatButton(
-                  child: new Text("Cancel"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-                FlatButton(
-                  child: new Text("OK"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
                 ),
               ],
-            ));
+            ),
+            floatingActionButton: topicState.viewModel?.exists
+                ? FloatingActionButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TopicPage(
+                              topicBloc: _topicBloc.createOtherTopicBloc()),
+                        ),
+                      );
+                    },
+                    tooltip: 'Create a related Topic',
+                    child: Icon(Icons.insert_link),
+                  )
+                : null,
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerDocked,
+            bottomNavigationBar: BottomAppBar(
+              child: Container(
+                height: 50.0,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
-  Widget noteTile(BuildContext context) {
+  Widget noteTile(
+      BuildContext context, OccurrenceViewModel occurrenceViewModel) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -133,10 +144,8 @@ class TopicPage extends StatelessWidget {
           Flexible(
             child: TextField(
               controller: TextEditingController(
-                  text: "Lorem ipsum dolor sit amet, consectetur adipiscing " +
-                      "elit. Sed tristique tristique purus, at aliquet eros " +
-                      "gravida malesuada. Ut vehicula convallis eros, in " +
-                      "tristique nunc tincidunt ac."),
+                text: occurrenceViewModel.occurrence.value,
+              ),
               maxLines: null,
               decoration: null,
             ),
@@ -155,9 +164,13 @@ class TopicPage extends StatelessWidget {
       ),
       trailing: roleMenuButton(),
       onTap: () {
+        // TODO: identify topic associated with role; should already be part of
+        // view model in this context, and pass it on to the next TopicPage.
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => TopicPage(title: "Topic")),
+          MaterialPageRoute(
+              builder: (context) =>
+                  TopicPage(topicBloc: _topicBloc.createOtherTopicBloc())),
         );
       },
     );
@@ -196,4 +209,101 @@ enum NoteOption { delete }
 enum RoleOption {
   editRole,
   editAssociation,
+}
+
+class TopicBloc extends Bloc<TopicEvent, TopicState> {
+  final QueryApi queryApi;
+  final CommandApi commandApi;
+  TopicViewModel previousViewModel;
+  TopicViewModel viewModel;
+
+  TopicBloc({
+    @required this.queryApi,
+    @required this.commandApi,
+    this.previousViewModel,
+    this.viewModel,
+  });
+
+  @override
+  TopicState get initialState {
+    return TopicState();
+  }
+
+  @override
+  Stream<TopicState> mapEventToState(TopicEvent event) async* {
+    if (event is TopicLoadEvent) {
+      print("processing topic load event");
+      if (viewModel == null || !viewModel.exists) {
+        print("yielding 'loading' state");
+        yield TopicState(loading: true);
+        if (viewModel == null || viewModel.isTopicMap) {
+          // Create a new topic map.
+          print("creating a new topic map");
+          TopicState state;
+          await commandApi
+              .createTopicMap(CreateTopicMapRequest())
+              .then((response) {
+            viewModel = TopicViewModel(response.topicMap.topic);
+            print("${viewModel.topic.id}");
+            state = TopicState(viewModel: viewModel);
+          }).catchError((error) {
+            print(error);
+            state = TopicState(error: error.toString());
+          });
+          print(state);
+          yield state;
+        } else {
+          // Create a new topic.
+          // TODO: create a new topic!
+          print("creating a new topic");
+        }
+      } else {
+        // Just load the topic as it is.
+        print("using existing topic");
+        yield TopicState(viewModel: viewModel);
+      }
+      print("finished processing topic load event");
+    }
+
+    if (event is TopicNameChangedEvent) {
+      // TODO: update topic name to event.name;
+    }
+  }
+
+  TopicBloc createOtherTopicBloc({TopicViewModel otherViewModel}) {
+    if (otherViewModel?.topic == null && viewModel?.topic != null) {
+      Topic topic = Topic();
+      topic.topicMapId = viewModel.topic.topicMapId;
+      otherViewModel = TopicViewModel(topic);
+    }
+    return TopicBloc(
+        queryApi: queryApi,
+        commandApi: commandApi,
+        previousViewModel: viewModel,
+        viewModel: otherViewModel);
+  }
+}
+
+class TopicState {
+  final TopicViewModel viewModel;
+  final bool loading;
+  final String error;
+
+  TopicState({
+    TopicViewModel viewModel,
+    this.loading = false,
+    this.error,
+  }) : viewModel = viewModel ?? TopicViewModel(null);
+}
+
+class TopicEvent {}
+
+class TopicLoadEvent extends TopicEvent {
+  TopicLoadEvent();
+}
+
+class TopicNameChangedEvent extends TopicEvent {
+  final String name;
+
+  TopicNameChangedEvent(this.name);
 }

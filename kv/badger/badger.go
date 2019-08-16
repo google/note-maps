@@ -56,6 +56,9 @@ func Open(opt badger.Options) (*DB, error) {
 
 // Close releases unallocated Entity values and closes the database.
 func (db *DB) Close() error {
+	if db == nil {
+		return nil
+	}
 	if db.seq != nil {
 		db.seq.Release()
 	}

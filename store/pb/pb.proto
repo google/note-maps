@@ -41,3 +41,7 @@ message Occurrence {
 message GetTopicMapsRequest {}
 
 message GetTopicMapsResponse { repeated TopicMap topic_maps = 1; }
+
+message CreateTopicMapRequest {}
+
+message CreateTopicMapResponse { TopicMap topic_map = 1; }

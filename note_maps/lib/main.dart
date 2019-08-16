@@ -13,36 +13,69 @@
 // limitations under the License.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
 import 'library_screen.dart';
 import 'mobileapi/mobileapi.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(App(
+      queryApi: QueryApi(),
+      commandApi: CommandApi(),
+    ));
 
-class MyApp extends StatelessWidget {
+class App extends StatefulWidget {
+  final QueryApi queryApi;
+  final CommandApi commandApi;
+
+  App({
+    Key key,
+    @required this.queryApi,
+    @required this.commandApi,
+  }) : super(key: key);
+
+  @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> {
+  LibraryBloc libraryBloc;
+
+  QueryApi get queryApi => widget.queryApi;
+
+  CommandApi get commandApi => widget.commandApi;
+
+  @override
+  void initState() {
+    libraryBloc = LibraryBloc(queryApi: queryApi, commandApi: commandApi);
+    libraryBloc.dispatch(LibraryAppStartedEvent());
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    libraryBloc.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    QueryApi query = QueryApi();
-    CommandApi command = CommandApi();
-    Library library = Library(query, command);
     return MultiProvider(
       providers: [
-        Provider<QueryApi>.value(value: query),
-        Provider<CommandApi>.value(value: command),
-        Provider<Library>.value(value: Library(query, command)),
-        StreamProvider<LibraryState>.value(
-          value: library.state(),
-          initialData: LibraryState(),
-        ),
+        Provider<QueryApi>.value(value: queryApi),
+        Provider<CommandApi>.value(value: commandApi),
       ],
-      child: MaterialApp(
-        title: 'Note Maps',
-        theme: ThemeData(
-          primarySwatch: Colors.grey,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<LibraryBloc>(builder: (context) => libraryBloc),
+        ],
+        child: MaterialApp(
+          title: 'Note Maps',
+          theme: ThemeData(
+            primarySwatch: Colors.grey,
+          ),
+          home: LibraryPage(title: 'Note Maps Library'),
         ),
-        home: LibraryPage(title: 'Note Maps Library'),
       ),
     );
   }

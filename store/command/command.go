@@ -27,7 +27,7 @@ type Txn struct{ models.Txn }
 // CreateTopicMap creates a new topic map in s and returns the Entity.
 func (s *Txn) CreateTopicMap() (kv.Entity, error) {
 	if s.Partition != 0 {
-		return 0, fmt.Errorf("topic maps can only be created with parent zero")
+		return 0, fmt.Errorf("topic maps can only be created in partition zero")
 	}
 
 	// Allocate an entity to identify the new topic map.
@@ -39,7 +39,11 @@ func (s *Txn) CreateTopicMap() (kv.Entity, error) {
 	// Describe the new topic map by creating metadata for it.
 	var info models.TopicMapInfo
 	info.TopicMap = uint64(tm)
-	return tm, s.SetTopicMapInfo(tm, &info)
+	if err = s.SetTopicMapInfo(tm, &info); err != nil {
+		return 0, err
+	}
+
+	return tm, nil
 }
 
 // CreateTopicWithName creates a new topic including the given name.

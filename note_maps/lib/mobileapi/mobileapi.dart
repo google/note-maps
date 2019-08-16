@@ -26,26 +26,35 @@ export 'store/pb/pb.pb.dart' show Name;
 export 'store/pb/pb.pb.dart' show Occurrence;
 export 'store/pb/pb.pb.dart' show GetTopicMapsRequest;
 export 'store/pb/pb.pb.dart' show GetTopicMapsResponse;
+export 'store/pb/pb.pb.dart' show CreateTopicMapRequest;
+export 'store/pb/pb.pb.dart' show CreateTopicMapResponse;
+
+Future<Uint8List> _getRawResponse(
+    MethodChannel channel, String method, $pb.GeneratedMessage request) async {
+  final Uint8List rawRequest = request.writeToBuffer();
+  final Uint8List rawResponse = await channel.invokeMethod(method, {
+    "request": rawRequest,
+  });
+  return rawResponse ?? Uint8List(0);
+}
 
 class QueryApi {
   static const channel =
       const MethodChannel('github.com/google/note-maps/query');
 
-  Future<Uint8List> getRawResponse(
-      String method, $pb.GeneratedMessage request) async {
-    final Uint8List rawRequest = request.writeToBuffer();
-    return await channel.invokeMethod(method, {
-      request: rawRequest,
-    });
-  }
-
   Future<GetTopicMapsResponse> getTopicMaps(GetTopicMapsRequest request) async {
     return GetTopicMapsResponse.fromBuffer(
-        await getRawResponse('GetTopicMaps', request));
+        await _getRawResponse(channel, 'GetTopicMaps', request));
   }
 }
 
 class CommandApi {
   static const channel =
       const MethodChannel('github.com/google/note-maps/command');
+
+  Future<CreateTopicMapResponse> createTopicMap(
+      CreateTopicMapRequest request) async {
+    return CreateTopicMapResponse.fromBuffer(
+        await _getRawResponse(channel, 'CreateTopicMap', request));
+  }
 }

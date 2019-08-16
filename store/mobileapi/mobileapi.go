@@ -26,6 +26,7 @@ import (
 	"github.com/google/note-maps/kv/badger"
 	"github.com/google/note-maps/store"
 	"github.com/google/note-maps/store/pb"
+	"github.com/google/note-maps/store/query"
 )
 
 func SetPath(p string) {
@@ -57,12 +58,30 @@ func Query(method string, bs []byte) ([]byte, error) {
 		if err := proto.Unmarshal(bs, &request); err != nil {
 			return nil, err
 		}
+
 		q := store.Query(txn)
-		if response, err := q.GetTopicMaps(&request); err != nil {
+		es, err := q.AllTopicMapInfoEntities(nil, 0)
+		if err != nil {
 			return nil, err
-		} else {
-			return proto.Marshal(response)
 		}
+		log.Println("found", len(es), "topic maps")
+
+		var response pb.GetTopicMapsResponse
+		for _, e := range es {
+			q.Partition = e
+			topic, err := q.LoadTopic(e, query.Names|query.Occurrences)
+			if err != nil {
+				return nil, err
+			}
+
+			tm := &pb.TopicMap{
+				Id:    uint64(e),
+				Topic: topic,
+			}
+			response.TopicMaps = append(response.TopicMaps, tm)
+		}
+
+		return proto.Marshal(&response)
 	default:
 		return nil, fmt.Errorf("unrecognized query: %#v", method)
 	}
@@ -75,6 +94,30 @@ func Command(method string, bs []byte) ([]byte, error) {
 	}
 	defer txn.Discard()
 	switch method {
+	case "CreateTopicMap":
+		c := store.Command(txn)
+		e, err := c.CreateTopicMap()
+		if err != nil {
+			return nil, err
+		}
+
+		q := store.Query(txn)
+		q.Partition = e
+		topic, err := q.LoadTopic(e, query.Names|query.Occurrences)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = txn.Commit(); err != nil {
+			return nil, err
+		}
+
+		return proto.Marshal(&pb.CreateTopicMapResponse{
+			TopicMap: &pb.TopicMap{
+				Id:    uint64(e),
+				Topic: topic,
+			},
+		})
 	default:
 		return nil, fmt.Errorf("unrecognized command: %#v", method)
 	}
@@ -134,5 +177,5 @@ func newCommandTxn() (kv.TxnCommitDiscarder, error) {
 	if err != nil {
 		return nil, err
 	}
-	return db.NewTxn(false), nil
+	return db.NewTxn(true), nil
 }

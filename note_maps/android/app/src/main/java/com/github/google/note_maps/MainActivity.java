@@ -35,10 +35,10 @@ public class MainActivity extends FlutterActivity {
     if (dir.exists()) {
       if (!dir.isDirectory()) {
         // if dir.delete() fails, let the app entirely fail to start.
-          dir.delete();
+        dir.delete();
       }
     }
-    if (!dir.exists()){
+    if (!dir.exists()) {
       dir.mkdirs();
     }
     mobileapi.Mobileapi.setPath(dir.getAbsolutePath());
@@ -47,7 +47,11 @@ public class MainActivity extends FlutterActivity {
           @Override
           public void onMethodCall(MethodCall call, MethodChannel.Result result) {
             try {
-              result.success(mobileapi.Mobileapi.query(call.method, call.argument("request")));
+              byte[] bytes = mobileapi.Mobileapi.query(call.method, call.argument("request"));
+              if (bytes == null) {
+                bytes = new byte[]{};
+              }
+              result.success(bytes);
             } catch (Exception e) {
               result.error(e.getMessage(), e.getLocalizedMessage(), null);
             }

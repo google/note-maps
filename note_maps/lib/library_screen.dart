@@ -14,81 +14,139 @@
 
 import 'dart:async';
 
+import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:equatable/equatable.dart';
 
 import 'mobileapi/mobileapi.dart';
 import 'topic_screen.dart';
+import 'topic_map_view_models.dart';
 
-class LibraryPage extends StatelessWidget {
+class LibraryPage extends StatefulWidget {
   LibraryPage({Key key, this.title}) : super(key: key);
 
   final String title;
 
   @override
-  Widget build(BuildContext context) {
-    return OrientationBuilder(
-        builder: (context, orientation) => Scaffold(
-              body: Consumer<LibraryState>(
-                  builder: (context, libraryState, child) => CustomScrollView(
-                        slivers: <Widget>[
-                          SliverAppBar(
-                            pinned: true,
-                            snap: false,
-                            floating: false,
-                            expandedHeight: orientation == Orientation.portrait
-                                ? 160.0
-                                : null,
-                            flexibleSpace: FlexibleSpaceBar(
-                              title: Text(title),
-                              //background: Image.asset(..., fit: BoxFit.fill)
-                            ),
-                          ),
-                          SliverPadding(
-                            padding: const EdgeInsets.all(8.0),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                  (BuildContext context, int index) =>
-                                      noteMapTile(context,
-                                          libraryState.topicMaps[index]),
-                                  childCount: libraryState.topicMaps.length),
-                            ),
-                          ),
-                        ],
-                      )),
-              bottomNavigationBar: BottomAppBar(
-                child: Container(
-                  height: 50.0,
-                ),
-              ),
-              floatingActionButton: FloatingActionButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            TopicPage(title: "Unnamed Note Map")),
-                  );
-                },
-                tooltip: 'Create a Note Map',
-                child: Icon(Icons.add),
-              ),
-              floatingActionButtonLocation:
-                  FloatingActionButtonLocation.centerDocked,
-            ));
+  State<LibraryPage> createState() => _LibraryPageState();
+}
+
+class _LibraryPageState extends State<LibraryPage> {
+  LibraryBloc _libraryBloc;
+  String _error;
+
+  String get title => widget.title;
+
+  @override
+  void initState() {
+    _libraryBloc = BlocProvider.of<LibraryBloc>(context);
+    print("LibraryPage._libraryBloc.hashCode = ${_libraryBloc.hashCode}");
+    super.initState();
   }
 
-  Widget noteMapTile(BuildContext context, TopicMap topicMap) {
+  @override
+  Widget build(BuildContext context) {
+    return OrientationBuilder(
+      builder: (context, orientation) => Scaffold(
+        body: BlocBuilder<LibraryBloc, LibraryState>(
+          bloc: _libraryBloc,
+          builder: (context, libraryState) =>
+              scrollView(context, orientation, libraryState),
+        ),
+        bottomNavigationBar: BottomAppBar(
+          child: Container(
+            height: 50.0,
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TopicPage(
+                  topicBloc: _libraryBloc.createTopicBloc(),
+                ),
+              ),
+            );
+          },
+          tooltip: 'Create a Note Map',
+          child: Icon(Icons.add),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      ),
+    );
+  }
+
+  Widget scrollView(BuildContext context, Orientation orientation,
+      LibraryState libraryState) {
+    print("scrollView(..., ${libraryState})");
+    List<Widget> widgets = List<Widget>();
+    widgets.add(SliverAppBar(
+      pinned: true,
+      snap: false,
+      floating: false,
+      expandedHeight: orientation == Orientation.portrait ? 160.0 : null,
+      flexibleSpace: FlexibleSpaceBar(
+        title: Text(title),
+        //background: Image.asset(..., fit: BoxFit.fill)
+      ),
+    ));
+    if (libraryState.error != null) {
+      widgets.add(SliverFillRemaining(
+        child: Center(
+          child: Icon(Icons.bug_report),
+        ),
+      ));
+      if (_error != libraryState.error) {
+        _error = libraryState.error;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Scaffold.of(context).showSnackBar(SnackBar(
+            content: Text(libraryState.error),
+          ));
+        });
+      }
+    } else if (libraryState.loading) {
+      widgets.add(SliverFillRemaining(
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      ));
+    } else {
+      widgets.add(SliverPadding(
+        padding: const EdgeInsets.all(8.0),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (BuildContext context, int index) =>
+                noteMapTile(context, libraryState.topicMaps[index]),
+            childCount: libraryState.topicMaps.length,
+          ),
+        ),
+      ));
+    }
+    return CustomScrollView(slivers: widgets);
+  }
+
+  Widget noteMapTile(BuildContext context, TopicMapViewModel topicMap) {
     return ListTile(
-      title: Text(
-        topicMap.id.toRadixString(16),
+      title: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(text: topicMap.nameNotice),
+            TextSpan(text: topicMap.name),
+            TextSpan(text: topicMap.topicMap.id.toRadixString(16)),
+          ],
+        ),
       ),
       trailing: noteMapMenuButton(),
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => TopicPage(title: "Topic Map")),
+            builder: (context) => TopicPage(
+                topicBloc: _libraryBloc.createTopicBloc(
+                    viewModel: topicMap.topicViewModel)),
+          ),
         );
       },
     );
@@ -116,24 +174,64 @@ enum NoteMapOption {
   moveToTrash,
 }
 
-class Library {
-  final QueryApi query;
-  final CommandApi command;
-  final StreamController<LibraryState> _state =
-      StreamController<LibraryState>.broadcast();
+class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
+  final QueryApi queryApi;
+  final CommandApi commandApi;
 
-  Library(this.query, this.command) {}
-
-  Stream<LibraryState> state() => _state.stream;
-
-  void dispose() {
-    _state.close();
+  LibraryBloc({
+    @required this.queryApi,
+    @required this.commandApi,
+  }) {
+    print("LibraryBloc created: ${this}");
   }
+
+  @override
+  LibraryState get initialState {
+    print("creating initial state");
+    return LibraryState();
+  }
+
+  @override
+  Stream<LibraryState> mapEventToState(LibraryEvent event) async* {
+    if (event is LibraryAppStartedEvent) {
+      yield LibraryState(loading: true);
+      LibraryState next;
+      await queryApi.getTopicMaps(GetTopicMapsRequest()).then((response) {
+        next = LibraryState(
+          topicMaps: (response.topicMaps ?? const [])
+              .map((tm) => TopicMapViewModel(tm))
+              .toList(growable: false),
+        );
+      }).catchError((error) {
+        next = LibraryState(error: error.toString());
+      });
+      yield next;
+    }
+  }
+
+  TopicBloc createTopicBloc({TopicViewModel viewModel}) => TopicBloc(
+        queryApi: queryApi,
+        commandApi: commandApi,
+        viewModel: viewModel,
+      );
 }
 
 class LibraryState {
-  final List<TopicMap> topicMaps;
-  final bool loaded;
+  final List<TopicMapViewModel> topicMaps;
+  final bool loading;
+  final String error;
 
-  LibraryState({this.topicMaps = const [], this.loaded = false});
+  LibraryState({
+    this.topicMaps = const [],
+    this.loading = false,
+    this.error,
+  }) : assert(topicMaps != null);
+
+  @override
+  String toString() =>
+      "LibraryState(${topicMaps.length}, ${loading}, ${error})";
 }
+
+class LibraryEvent extends Equatable {}
+
+class LibraryAppStartedEvent extends LibraryEvent {}

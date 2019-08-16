@@ -52,3 +52,14 @@ const GetTopicMapsResponse$json = const {
   ],
 };
 
+const CreateTopicMapRequest$json = const {
+  '1': 'CreateTopicMapRequest',
+};
+
+const CreateTopicMapResponse$json = const {
+  '1': 'CreateTopicMapResponse',
+  '2': const [
+    const {'1': 'topic_map', '3': 1, '4': 1, '5': 11, '6': '.TopicMap', '10': 'topicMap'},
+  ],
+};
+

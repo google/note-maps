@@ -15,45 +15,84 @@
 package pbapi
 
 import (
+	"io/ioutil"
+	"os"
 	"testing"
 
-	"github.com/google/note-maps/kv/kvtest"
+	"github.com/google/note-maps/kv/badger"
 	"github.com/google/note-maps/store/pb"
 )
 
 func TestCreateGetTopicMap(t *testing.T) {
-	db := kvtest.NewDB(t)
-	defer db.Close()
-	g := NewGateway(db)
-	createResponse, err := g.CreateTopicMap(&pb.CreateTopicMapRequest{})
+	dir, err := ioutil.TempDir("", "kvtest-badger")
 	if err != nil {
 		t.Fatal(err)
-	} else if createResponse.TopicMap == nil {
-		t.Fatal("want non-nil TopicMap, got nil")
-	} else if createResponse.TopicMap.Id == 0 {
-		t.Error("want non-zero TopicMap.Id, got zero")
 	}
-	if createResponse.TopicMap.Topic == nil {
-		t.Fatal("want non-nil TopicMap.Topic, got nil")
-	} else if createResponse.TopicMap.Topic.Id == 0 {
-		t.Fatal("want non-zero TopicMap.Topic.Id, got nil")
-	} else if createResponse.TopicMap.Topic.Id != createResponse.TopicMap.Id {
-		t.Fatalf("want TopicMap.Id==TopicMap.Topic.Id, got %v!=%v",
-			createResponse.TopicMap.Id,
-			createResponse.TopicMap.Topic.Id)
-	}
-	getResponse, err := g.GetTopicMaps(&pb.GetTopicMapsRequest{})
-	if err != nil {
-		t.Fatal(err)
-	} else if len(getResponse.TopicMaps) != 1 {
-		t.Errorf("want list of one topic map, got %v", getResponse.TopicMaps)
-	}
-	if createResponse.TopicMap.Id != getResponse.TopicMaps[0].Id {
-		t.Errorf("want %v, got %v",
-			createResponse.TopicMap.Id, getResponse.TopicMaps[0].Id)
-	}
-	if createResponse.TopicMap.Topic.Id != getResponse.TopicMaps[0].Topic.Id {
-		t.Errorf("want %v, got %v",
-			createResponse.TopicMap.Topic.Id, getResponse.TopicMaps[0].Topic.Id)
-	}
+	defer os.RemoveAll(dir)
+	var topicMap uint64
+	func() {
+		db, err := badger.Open(badger.DefaultOptions(dir))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer db.Close()
+		g := NewGateway(db)
+		createResponse, err := g.CreateTopicMap(&pb.CreateTopicMapRequest{})
+		if err != nil {
+			t.Fatal(err)
+		} else if createResponse.TopicMap == nil {
+			t.Fatal("want non-nil TopicMap, got nil")
+		} else if createResponse.TopicMap.Id == 0 {
+			t.Error("want non-zero TopicMap.Id, got zero")
+		}
+		topicMap = createResponse.TopicMap.Id
+		if createResponse.TopicMap.Topic == nil {
+			t.Fatal("want non-nil TopicMap.Topic, got nil")
+		} else if createResponse.TopicMap.Topic.Id == 0 {
+			t.Fatal("want non-zero TopicMap.Topic.Id, got nil")
+		} else if createResponse.TopicMap.Topic.Id != createResponse.TopicMap.Id {
+			t.Fatalf("want TopicMap.Id==TopicMap.Topic.Id, got %v!=%v",
+				createResponse.TopicMap.Id,
+				createResponse.TopicMap.Topic.Id)
+		}
+		getResponse, err := g.GetTopicMaps(&pb.GetTopicMapsRequest{})
+		db.Dump(os.Stderr)
+		if err != nil {
+			t.Fatal(err)
+		} else if len(getResponse.TopicMaps) != 1 {
+			t.Errorf("want list of one topic map, got %v", getResponse.TopicMaps)
+		}
+		if topicMap != getResponse.TopicMaps[0].Id {
+			t.Errorf("want %v, got %v",
+				topicMap, getResponse.TopicMaps[0].Id)
+		}
+		if topicMap != getResponse.TopicMaps[0].Topic.Id {
+			t.Errorf("want %v, got %v",
+				topicMap, getResponse.TopicMaps[0].Topic.Id)
+		}
+		db.Sync()
+	}()
+	func() {
+		db, err := badger.Open(badger.DefaultOptions(dir))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer db.Close()
+		g := NewGateway(db)
+		getResponse, err := g.GetTopicMaps(&pb.GetTopicMapsRequest{})
+		db.Dump(os.Stderr)
+		if err != nil {
+			t.Fatal(err)
+		} else if len(getResponse.TopicMaps) != 1 {
+			t.Errorf("want list of one topic map, got %v", getResponse.TopicMaps)
+		}
+		if topicMap != getResponse.TopicMaps[0].Id {
+			t.Errorf("want %v, got %v",
+				topicMap, getResponse.TopicMaps[0].Id)
+		}
+		if topicMap != getResponse.TopicMaps[0].Topic.Id {
+			t.Errorf("want %v, got %v",
+				topicMap, getResponse.TopicMaps[0].Topic.Id)
+		}
+	}()
 }

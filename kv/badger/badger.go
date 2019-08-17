@@ -17,6 +17,7 @@ package badger
 
 import (
 	"fmt"
+	"io"
 	"log"
 
 	"github.com/dgraph-io/badger"
@@ -53,6 +54,27 @@ func Open(opt badger.Options) (*DB, error) {
 	}
 
 	return &DB{bdb, seq}, nil
+}
+
+func (db *DB) Dump(w io.Writer) {
+	txn := db.NewTransaction(false)
+	defer txn.Discard()
+	opts := badger.DefaultIteratorOptions
+	iter := txn.NewIterator(opts)
+	defer iter.Close()
+	count := 0
+	for iter.Seek([]byte{0}); iter.Valid(); iter.Next() {
+		item := iter.Item()
+		key := item.Key()
+		value, err := item.ValueCopy(nil)
+		if err != nil {
+			fmt.Fprintf(w, "%x\t%v", key, err)
+			break
+		}
+		fmt.Fprintf(w, "%x\t%x\n", key, value)
+		count++
+	}
+	fmt.Fprintf(w, "%v keys\n", count)
 }
 
 // Close releases unallocated Entity values and closes the database.

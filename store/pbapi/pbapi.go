@@ -30,7 +30,7 @@ type Gateway struct {
 
 func NewGateway(db kv.DB) *Gateway { return &Gateway{db} }
 
-func (g Gateway) CreateTopicMap(request *pb.CreateTopicMapRequest) (*pb.CreateTopicMapResponse, error) {
+func (g Gateway) CreateTopicMap(_ *pb.CreateTopicMapRequest) (*pb.CreateTopicMapResponse, error) {
 	txn := g.db.NewTxn(true)
 	defer txn.Discard()
 	m := models.New(txn)
@@ -67,10 +67,11 @@ func (g Gateway) CreateTopicMap(request *pb.CreateTopicMapRequest) (*pb.CreateTo
 	}, nil
 }
 
-func (g Gateway) GetTopicMaps(request *pb.GetTopicMapsRequest) (*pb.GetTopicMapsResponse, error) {
+func (g Gateway) GetTopicMaps(_ *pb.GetTopicMapsRequest) (*pb.GetTopicMapsResponse, error) {
 	txn := g.db.NewTxn(false)
 	defer txn.Discard()
 	m := models.New(txn)
+	m.Partition = 0
 
 	// Get a slice of entities representing all known topic maps.
 	es, err := m.AllTopicMapInfoEntities(nil, 0)

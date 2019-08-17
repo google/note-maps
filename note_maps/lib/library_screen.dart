@@ -12,14 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'dart:async';
-
-import 'package:bloc/bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:equatable/equatable.dart';
 
-import 'mobileapi/mobileapi.dart';
+import 'library_bloc.dart';
 import 'topic_screen.dart';
 import 'topic_map_view_models.dart';
 
@@ -173,65 +169,3 @@ enum NoteMapOption {
   rename,
   moveToTrash,
 }
-
-class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
-  final QueryApi queryApi;
-  final CommandApi commandApi;
-
-  LibraryBloc({
-    @required this.queryApi,
-    @required this.commandApi,
-  }) {
-    print("LibraryBloc created: ${this}");
-  }
-
-  @override
-  LibraryState get initialState {
-    print("creating initial state");
-    return LibraryState();
-  }
-
-  @override
-  Stream<LibraryState> mapEventToState(LibraryEvent event) async* {
-    if (event is LibraryAppStartedEvent) {
-      yield LibraryState(loading: true);
-      LibraryState next;
-      await queryApi.getTopicMaps(GetTopicMapsRequest()).then((response) {
-        next = LibraryState(
-          topicMaps: (response.topicMaps ?? const [])
-              .map((tm) => TopicMapViewModel(tm))
-              .toList(growable: false),
-        );
-      }).catchError((error) {
-        next = LibraryState(error: error.toString());
-      });
-      yield next;
-    }
-  }
-
-  TopicBloc createTopicBloc({TopicViewModel viewModel}) => TopicBloc(
-        queryApi: queryApi,
-        commandApi: commandApi,
-        viewModel: viewModel,
-      );
-}
-
-class LibraryState {
-  final List<TopicMapViewModel> topicMaps;
-  final bool loading;
-  final String error;
-
-  LibraryState({
-    this.topicMaps = const [],
-    this.loading = false,
-    this.error,
-  }) : assert(topicMaps != null);
-
-  @override
-  String toString() =>
-      "LibraryState(${topicMaps.length}, ${loading}, ${error})";
-}
-
-class LibraryEvent extends Equatable {}
-
-class LibraryAppStartedEvent extends LibraryEvent {}

@@ -45,7 +45,15 @@ func TestCreateGetTopicMap(t *testing.T) {
 	getResponse, err := g.GetTopicMaps(&pb.GetTopicMapsRequest{})
 	if err != nil {
 		t.Fatal(err)
-	} else if len(getResponse.TopicMaps) == 0 {
-		t.Error("want non-empty list of topic maps, got empty")
+	} else if len(getResponse.TopicMaps) != 1 {
+		t.Errorf("want list of one topic map, got %v", getResponse.TopicMaps)
+	}
+	if createResponse.TopicMap.Id != getResponse.TopicMaps[0].Id {
+		t.Errorf("want %v, got %v",
+			createResponse.TopicMap.Id, getResponse.TopicMaps[0].Id)
+	}
+	if createResponse.TopicMap.Topic.Id != getResponse.TopicMaps[0].Topic.Id {
+		t.Errorf("want %v, got %v",
+			createResponse.TopicMap.Topic.Id, getResponse.TopicMaps[0].Topic.Id)
 	}
 }

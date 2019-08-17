@@ -47,7 +47,7 @@ database on local storage, where they can be included in system backups.
 - [x] Minimal Flutter front-end that uses native channel to communicate with Go
 - [x] Minimal UX research, recorded in this repository at [docs/ux.md](docs/ux.md)
 - [x] Wireframe Flutter front-end with navigation
-- [ ] Topic maps can be created
+- [x] Topic maps can be created
 - [ ] Names can be created and edited
 - [ ] Notes can be created and edited
 - [ ] ...

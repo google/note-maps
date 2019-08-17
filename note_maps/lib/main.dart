@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
+import 'library_bloc.dart';
 import 'library_screen.dart';
 import 'mobileapi/mobileapi.dart';
 

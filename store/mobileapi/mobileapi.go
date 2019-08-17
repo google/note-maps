@@ -64,6 +64,7 @@ func Query(method string, bs []byte) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		log.Printf("%s(%s)=>%s", method, query.String(), response.String())
 		return proto.Marshal(response)
 	default:
 		return nil, fmt.Errorf("unrecognized query: %#v", method)
@@ -86,6 +87,7 @@ func Command(method string, bs []byte) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		log.Printf("%s(%s)=>%s", method, cmd.String(), response.String())
 		return proto.Marshal(response)
 	default:
 		return nil, fmt.Errorf("unrecognized command: %#v", method)

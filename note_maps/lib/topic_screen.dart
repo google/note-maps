@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 import 'package:bloc/bloc.dart';
 
+import 'library_bloc.dart';
 import 'mobileapi/mobileapi.dart';
 import 'topic_map_view_models.dart';
 import 'topic_name_edit_dialog.dart';
@@ -35,7 +34,6 @@ class TopicPage extends StatefulWidget {
 
 class _TopicPageState extends State<TopicPage> {
   TopicBloc get _topicBloc => widget.topicBloc;
-  String _error;
 
   @override
   void initState() {
@@ -214,15 +212,17 @@ enum RoleOption {
 class TopicBloc extends Bloc<TopicEvent, TopicState> {
   final QueryApi queryApi;
   final CommandApi commandApi;
+  final LibraryBloc libraryBloc;
   TopicViewModel previousViewModel;
   TopicViewModel viewModel;
 
   TopicBloc({
     @required this.queryApi,
     @required this.commandApi,
+    @required this.libraryBloc,
     this.previousViewModel,
     this.viewModel,
-  });
+  }) : assert(libraryBloc != null);
 
   @override
   TopicState get initialState {
@@ -246,6 +246,7 @@ class TopicBloc extends Bloc<TopicEvent, TopicState> {
             viewModel = TopicViewModel(response.topicMap.topic);
             print("${viewModel.topic.id}");
             state = TopicState(viewModel: viewModel);
+            libraryBloc.dispatch(LibraryReloadEvent());
           }).catchError((error) {
             print(error);
             state = TopicState(error: error.toString());
@@ -279,6 +280,7 @@ class TopicBloc extends Bloc<TopicEvent, TopicState> {
     return TopicBloc(
         queryApi: queryApi,
         commandApi: commandApi,
+        libraryBloc: libraryBloc,
         previousViewModel: viewModel,
         viewModel: otherViewModel);
   }

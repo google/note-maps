@@ -17,6 +17,7 @@ package badger
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/dgraph-io/badger"
 	"github.com/google/note-maps/kv"
@@ -68,29 +69,18 @@ func (db *DB) Close() error {
 // NewTxn creates a new kv.Txn.
 func (db *DB) NewTxn(update bool) kv.TxnCommitDiscarder {
 	btxn := db.DB.NewTransaction(update)
-	return NewTxn(db.seq, btxn)
-}
-
-// NewTxn creates a new kv.Txn that uses seq to allocate new Entity values,
-// and tx for read and write operations.
-//
-// NewTxn is a lower-level alternative to creating a kv.Txn through
-// DB.NewTxn. Applications that manage their own badger.DB, or that want to
-// do additional work on a given badger.Txn before it is committed, can use
-// NewTxn to preserve those abilities.
-func NewTxn(seq *badger.Sequence, tx *badger.Txn) kv.TxnCommitDiscarder {
-	return txn{seq, tx}
+	return txn{db: db, tx: btxn}
 }
 
 type txn struct {
-	seq *badger.Sequence
-	tx  *badger.Txn
+	db *DB
+	tx *badger.Txn
 }
 
 func (s txn) Alloc() (kv.Entity, error) {
-	u64, err := s.seq.Next()
+	u64, err := s.db.seq.Next()
 	if u64 == 0 {
-		u64, err = s.seq.Next()
+		u64, err = s.db.seq.Next()
 		if u64 == 0 {
 			return 0, fmt.Errorf("Alloc returned zero twice in a row")
 		}
@@ -121,7 +111,15 @@ func (s txn) PrefixIterator(prefix []byte) kv.Iterator {
 }
 
 func (s txn) Commit() error {
-	return s.tx.Commit()
+	if err := s.tx.Commit(); err != nil {
+		return err
+	}
+	if err := s.db.Sync(); err != nil {
+		// An error from Sync is important, but it does not indicate that the
+		// commit failed.
+		log.Println("txn.Commit: db.Sync:", err)
+	}
+	return nil
 }
 
 func (s txn) Discard() {

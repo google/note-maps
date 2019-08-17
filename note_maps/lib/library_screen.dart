@@ -51,8 +51,19 @@ class _LibraryPageState extends State<LibraryPage> {
               scrollView(context, orientation, libraryState),
         ),
         bottomNavigationBar: BottomAppBar(
-          child: Container(
-            height: 50.0,
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              IconButton(
+                icon: Icon(Icons.menu),
+                onPressed: () {},
+              ),
+              IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () {},
+              ),
+            ],
           ),
         ),
         floatingActionButton: FloatingActionButton(

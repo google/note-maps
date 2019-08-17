@@ -12,10 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bloc/bloc.dart';
 
+import 'item_icon.dart';
 import 'library_bloc.dart';
 import 'mobileapi/mobileapi.dart';
 import 'topic_map_view_models.dart';
@@ -61,7 +64,25 @@ class _TopicPageState extends State<TopicPage> {
                   flexibleSpace: FlexibleSpaceBar(
                     title: Text(topicState.viewModel.nameNotice +
                         topicState.viewModel.name),
-                    //background: Image.asset(..., fit: BoxFit.fill)
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ItemIcon(
+                          topicState.viewModel.topic,
+                          fit: BoxFit.fitWidth,
+                          alignment: Alignment.topCenter,
+                        ),
+                        BackdropFilter(
+                          filter:
+                              new ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                          child: new Container(
+                            decoration: new BoxDecoration(
+                              color: Colors.grey.shade200.withOpacity(0.5),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   actions: <Widget>[
                     IconButton(

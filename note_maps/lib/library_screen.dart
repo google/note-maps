@@ -15,6 +15,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 
+import 'item_icon.dart';
 import 'library_bloc.dart';
 import 'topic_screen.dart';
 import 'topic_map_view_models.dart';
@@ -135,12 +136,13 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Widget noteMapTile(BuildContext context, TopicMapViewModel topicMap) {
     return ListTile(
+      leading: ItemIcon(topicMap.topicMap),
       title: Text.rich(
         TextSpan(
           children: [
-            TextSpan(text: topicMap.nameNotice),
+            TextSpan(text: topicMap.nameNotice, style: Theme.of(context).textTheme.body2.apply(color: Theme.of(context).textTheme.body2.color.withAlpha(196))),
             TextSpan(text: topicMap.name),
-            TextSpan(text: topicMap.topicMap.id.toRadixString(16)),
+            TextSpan(text: " ("+topicMap.topicMap.id.toRadixString(16)+")", style:Theme.of(context).textTheme.body1),
           ],
         ),
       ),

@@ -87,7 +87,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Widget scrollView(BuildContext context, Orientation orientation,
       LibraryState libraryState) {
-    print("scrollView(..., ${libraryState})");
     List<Widget> widgets = List<Widget>();
     widgets.add(SliverAppBar(
       pinned: true,

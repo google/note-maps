@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	entitySequenceKey = []byte{0}
+	entitySequenceKey = []byte{1}
 )
 
 // DB holds some kv-specific state in addition to mixing in a badger.DB.

@@ -16,6 +16,7 @@
 package badger
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -125,7 +126,9 @@ func (s txn) Get(key []byte, f func([]byte) error) error {
 
 func (s txn) PrefixIterator(prefix []byte) kv.Iterator {
 	opts := badger.DefaultIteratorOptions
-	opts.Prefix = prefix
+	// Work around https://github.com/dgraph-io/badger/issues/992 by *not*
+	// setting opts.Prefix = prefix. We will do our own prefix logic in this
+	// module.
 	return iterator{
 		s.tx.NewIterator(opts),
 		prefix,
@@ -156,6 +159,8 @@ type iterator struct {
 func (i iterator) Seek(key []byte) { i.Iterator.Seek(append(i.prefix, key...)) }
 
 func (i iterator) Key() []byte { return i.Item().Key()[len(i.prefix):] }
+
+func (i iterator) Valid() bool { return i.Iterator.Valid() && bytes.HasPrefix(i.Item().Key(), i.prefix) }
 
 func (i iterator) Value(f func([]byte) error) error { return i.Item().Value(f) }
 

@@ -19,20 +19,20 @@ import 'library_bloc.dart';
 import 'note_maps_sliver_app_bar.dart';
 import 'topic_map_tile.dart';
 import 'note_maps_app_bar.dart';
-import 'topic_screen.dart';
-import 'topic_map_view_models.dart';
+import 'trash_bloc.dart';
 
-class LibraryPage extends StatefulWidget {
-  LibraryPage({Key key, this.title="Note Maps"}) : super(key: key);
+class TrashPage extends StatefulWidget {
+  TrashPage({Key key, this.title="Trash"}) : super(key: key);
 
   final String title;
 
   @override
-  State<LibraryPage> createState() => _LibraryPageState();
+  State<TrashPage> createState() => _TrashPageState();
 }
 
-class _LibraryPageState extends State<LibraryPage> {
+class _TrashPageState extends State<TrashPage> {
   LibraryBloc _libraryBloc;
+  TrashBloc _trashBloc;
   String _error;
 
   String get title => widget.title;
@@ -40,7 +40,8 @@ class _LibraryPageState extends State<LibraryPage> {
   @override
   void initState() {
     _libraryBloc = BlocProvider.of<LibraryBloc>(context);
-    print("LibraryPage._libraryBloc.hashCode = ${_libraryBloc.hashCode}");
+    _trashBloc = TrashBloc(libraryBloc: _libraryBloc);
+    _trashBloc.dispatch(TrashReloadEvent());
     super.initState();
   }
 
@@ -48,53 +49,38 @@ class _LibraryPageState extends State<LibraryPage> {
   Widget build(BuildContext context) {
     return OrientationBuilder(
       builder: (context, orientation) => Scaffold(
-        body: BlocBuilder<LibraryBloc, LibraryState>(
-          bloc: _libraryBloc,
-          builder: (context, libraryState) =>
-              scrollView(context, orientation, libraryState),
+        body: BlocBuilder<TrashBloc, TrashState>(
+          bloc: _trashBloc,
+          builder: (context, trashState) =>
+              scrollView(context, orientation, trashState),
         ),
         bottomNavigationBar: NoteMapsAppBar(),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => TopicPage(
-                  topicBloc: _libraryBloc.createTopicBloc(),
-                ),
-              ),
-            );
-          },
-          tooltip: 'Create a Note Map',
-          child: Icon(Icons.add),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       ),
     );
   }
 
   Widget scrollView(BuildContext context, Orientation orientation,
-      LibraryState libraryState) {
+      TrashState trashState) {
     List<Widget> widgets = List<Widget>();
     widgets.add(NoteMapsSliverAppBar(
       orientation: orientation,
       title: Text(title),
     ));
-    if (libraryState.error != null) {
+    if (trashState.error != null) {
       widgets.add(SliverFillRemaining(
         child: Center(
           child: Icon(Icons.bug_report),
         ),
       ));
-      if (_error != libraryState.error) {
-        _error = libraryState.error;
+      if (_error != trashState.error) {
+        _error = trashState.error;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           Scaffold.of(context).showSnackBar(SnackBar(
-            content: Text(libraryState.error),
+            content: Text(trashState.error),
           ));
         });
       }
-    } else if (libraryState.loading) {
+    } else if (trashState.loading) {
       widgets.add(SliverFillRemaining(
         child: Center(
           child: CircularProgressIndicator(),
@@ -106,21 +92,10 @@ class _LibraryPageState extends State<LibraryPage> {
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
             (BuildContext context, int index) => TopicMapTile(
-              libraryBloc: _libraryBloc,
-              topicMapViewModel: libraryState.topicMaps[index],
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TopicPage(
-                        topicBloc: _libraryBloc.createTopicBloc(
-                            viewModel:
-                                libraryState.topicMaps[index].topicViewModel)),
-                  ),
-                );
-              },
+              trashBloc: _trashBloc,
+              topicMapViewModel: trashState.topicMaps[index],
             ),
-            childCount: libraryState.topicMaps.length,
+            childCount: trashState.topicMaps.length,
           ),
         ),
       ));

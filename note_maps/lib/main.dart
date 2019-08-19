@@ -19,6 +19,7 @@ import 'package:provider/provider.dart';
 import 'library_bloc.dart';
 import 'library_screen.dart';
 import 'mobileapi/mobileapi.dart';
+import 'trash_screen.dart';
 
 void main() => runApp(App(
       queryApi: QueryApi(),
@@ -76,7 +77,11 @@ class _AppState extends State<App> {
             primarySwatch: Colors.grey,
             accentColor: Colors.brown,
           ),
-          home: LibraryPage(title: 'Note Maps Library'),
+          initialRoute: '/',
+          routes: {
+            '/': (context) => LibraryPage(),
+            '/trash': (context) => TrashPage(),
+          },
         ),
       ),
     );

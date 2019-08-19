@@ -67,7 +67,7 @@ func (g Gateway) CreateTopicMap(_ *pb.CreateTopicMapRequest) (*pb.CreateTopicMap
 	}, nil
 }
 
-func (g Gateway) GetTopicMaps(_ *pb.GetTopicMapsRequest) (*pb.GetTopicMapsResponse, error) {
+func (g Gateway) GetTopicMaps(request *pb.GetTopicMapsRequest) (*pb.GetTopicMapsResponse, error) {
 	txn := g.db.NewTxn(false)
 	defer txn.Discard()
 	m := models.New(txn)
@@ -82,9 +82,10 @@ func (g Gateway) GetTopicMaps(_ *pb.GetTopicMapsRequest) (*pb.GetTopicMapsRespon
 	var response pb.GetTopicMapsResponse
 	for _, e := range es {
 		m.Partition = 0
-		if info, err := m.GetTopicMapInfo(e); err != nil {
+		info, err := m.GetTopicMapInfo(e)
+		if err != nil {
 			return nil, err
-		} else if info.InTrash {
+		} else if info.InTrash != request.InTrash {
 			continue
 		}
 
@@ -97,8 +98,9 @@ func (g Gateway) GetTopicMaps(_ *pb.GetTopicMapsRequest) (*pb.GetTopicMapsRespon
 		}
 
 		tm := &pb.TopicMap{
-			Id:    uint64(e),
-			Topic: topic,
+			Id:      uint64(e),
+			Topic:   topic,
+			InTrash: info.InTrash,
 		}
 		response.TopicMaps = append(response.TopicMaps, tm)
 	}

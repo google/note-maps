@@ -105,9 +105,7 @@ class LibraryReloadEvent extends LibraryEvent {}
 
 class LibraryTopicMapDeletedEvent extends LibraryEvent {
   final Int64 topicMapId;
-  final bool fullyDeleted;
 
-  LibraryTopicMapDeletedEvent(this.topicMapId, {this.fullyDeleted = false})
-      : assert(topicMapId != null && topicMapId != 0),
-        assert(fullyDeleted != null);
+  LibraryTopicMapDeletedEvent(this.topicMapId)
+      : assert(topicMapId != null && topicMapId != 0);
 }

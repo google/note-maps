@@ -21,6 +21,7 @@ import 'package:bloc/bloc.dart';
 import 'item_icon.dart';
 import 'library_bloc.dart';
 import 'mobileapi/mobileapi.dart';
+import 'note_maps_sliver_app_bar.dart';
 import 'topic_map_view_models.dart';
 import 'topic_name_edit_dialog.dart';
 import 'note_maps_app_bar.dart';
@@ -56,35 +57,11 @@ class _TopicPageState extends State<TopicPage> {
             resizeToAvoidBottomPadding: true,
             body: CustomScrollView(
               slivers: <Widget>[
-                SliverAppBar(
-                  pinned: true,
-                  snap: false,
-                  floating: false,
-                  expandedHeight:
-                      orientation == Orientation.portrait ? 160.0 : null,
-                  flexibleSpace: FlexibleSpaceBar(
+                NoteMapsSliverAppBar(
+                      orientation :orientation,
                     title: Text(topicState.viewModel.nameNotice +
                         topicState.viewModel.name),
-                    background: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        ItemIcon(
-                          topicState.viewModel.topic,
-                          fit: BoxFit.fitWidth,
-                          alignment: Alignment.topCenter,
-                        ),
-                        BackdropFilter(
-                          filter:
-                              new ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                          child: new Container(
-                            decoration: new BoxDecoration(
-                              color: Colors.grey.shade200.withOpacity(0.5),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                    item: topicState.viewModel.topic,
                   actions: <Widget>[
                     IconButton(
                       onPressed: topicState.viewModel == null

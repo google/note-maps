@@ -36,13 +36,14 @@ class NoteMapsAppBar extends StatelessWidget {
                           title: Text('Note Maps'),
                           onTap: () {
                             Navigator.pop(context);
+                            Navigator.popAndPushNamed(context, "/");
                           },
                         ),
                         ListTile(
                           leading: Icon(Icons.restore_from_trash),
                           title: Text('Trash'),
                           onTap: () {
-                            Navigator.pop(context);
+                            Navigator.popAndPushNamed(context, "/trash");
                           },
                         ),                        ListTile(
                           leading: Icon(Icons.settings),

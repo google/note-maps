@@ -14,6 +14,7 @@ class TopicMap extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo('TopicMap')
     ..a<Int64>(1, 'id', $pb.PbFieldType.OU6, Int64.ZERO)
     ..a<Topic>(2, 'topic', $pb.PbFieldType.OM, Topic.getDefault, Topic.create)
+    ..aOB(3, 'inTrash')
     ..hasRequiredFields = false
   ;
 
@@ -40,6 +41,11 @@ class TopicMap extends $pb.GeneratedMessage {
   set topic(Topic v) { setField(2, v); }
   $core.bool hasTopic() => $_has(1);
   void clearTopic() => clearField(2);
+
+  $core.bool get inTrash => $_get(2, false);
+  set inTrash($core.bool v) { $_setBool(2, v); }
+  $core.bool hasInTrash() => $_has(2);
+  void clearInTrash() => clearField(3);
 }
 
 class Topic extends $pb.GeneratedMessage {

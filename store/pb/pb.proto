@@ -17,6 +17,7 @@ syntax = "proto3";
 message TopicMap {
   uint64 id = 1;
   Topic topic = 2;
+  bool in_trash = 3;
 }
 
 message Topic {

@@ -10,6 +10,7 @@ const TopicMap$json = const {
   '2': const [
     const {'1': 'id', '3': 1, '4': 1, '5': 4, '10': 'id'},
     const {'1': 'topic', '3': 2, '4': 1, '5': 11, '6': '.Topic', '10': 'topic'},
+    const {'1': 'in_trash', '3': 3, '4': 1, '5': 8, '10': 'inTrash'},
   ],
 };
 

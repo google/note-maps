@@ -74,6 +74,7 @@ class _AppState extends State<App> {
           title: 'Note Maps',
           theme: ThemeData(
             primarySwatch: Colors.grey,
+            accentColor: Colors.brown,
           ),
           home: LibraryPage(title: 'Note Maps Library'),
         ),

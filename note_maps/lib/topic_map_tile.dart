@@ -95,17 +95,25 @@ class TopicMapTile extends StatelessWidget {
         if (libraryBloc != null && !topicMapViewModel.topicMap.inTrash) {
           options.add(const PopupMenuItem<NoteMapOption>(
             value: NoteMapOption.moveToTrash,
-            child: Text('Move to Trash'),
+            child: ListTile(
+              leading: Icon(Icons.delete),
+              title: Text('Move to Trash'),
+            ),
           ));
         }
         if (trashBloc != null && topicMapViewModel.topicMap.inTrash) {
           options.add(const PopupMenuItem<NoteMapOption>(
             value: NoteMapOption.restore,
-            child: Text('Restore'),
+            child: ListTile(
+                leading: Icon(Icons.restore_from_trash),
+                title: Text('Restore')),
           ));
           options.add(const PopupMenuItem<NoteMapOption>(
             value: NoteMapOption.delete,
-            child: Text('Delete'),
+            child: ListTile(
+              leading: Icon(Icons.delete_forever),
+              title: Text('Delete'),
+            ),
           ));
         }
         return options;

@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 
 import 'item_icon.dart';
 import 'library_bloc.dart';
+import 'note_maps_app_bar.dart';
 import 'topic_screen.dart';
 import 'topic_map_view_models.dart';
 
@@ -51,22 +52,7 @@ class _LibraryPageState extends State<LibraryPage> {
           builder: (context, libraryState) =>
               scrollView(context, orientation, libraryState),
         ),
-        bottomNavigationBar: BottomAppBar(
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              IconButton(
-                icon: Icon(Icons.menu),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () {},
-              ),
-            ],
-          ),
-        ),
+        bottomNavigationBar: NoteMapsAppBar(),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             Navigator.push(
@@ -140,9 +126,18 @@ class _LibraryPageState extends State<LibraryPage> {
       title: Text.rich(
         TextSpan(
           children: [
-            TextSpan(text: topicMap.nameNotice, style: Theme.of(context).textTheme.body2.apply(color: Theme.of(context).textTheme.body2.color.withAlpha(196))),
+            TextSpan(
+                text: topicMap.nameNotice,
+                style: Theme.of(context).textTheme.body2.apply(
+                    color: Theme.of(context)
+                        .textTheme
+                        .body2
+                        .color
+                        .withAlpha(196))),
             TextSpan(text: topicMap.name),
-            TextSpan(text: " ("+topicMap.topicMap.id.toRadixString(16)+")", style:Theme.of(context).textTheme.body1),
+            TextSpan(
+                text: " (" + topicMap.topicMap.id.toRadixString(16) + ")",
+                style: Theme.of(context).textTheme.body1),
           ],
         ),
       ),

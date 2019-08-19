@@ -23,6 +23,7 @@ import 'library_bloc.dart';
 import 'mobileapi/mobileapi.dart';
 import 'topic_map_view_models.dart';
 import 'topic_name_edit_dialog.dart';
+import 'note_maps_app_bar.dart';
 
 class TopicPage extends StatefulWidget {
   TopicPage({Key key, @required this.topicBloc})
@@ -138,22 +139,7 @@ class _TopicPageState extends State<TopicPage> {
                 : null,
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.centerDocked,
-            bottomNavigationBar: BottomAppBar(
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  IconButton(
-                    icon: Icon(Icons.menu),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.search),
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-            ),
+            bottomNavigationBar: NoteMapsAppBar(),
           ),
         ),
       ),

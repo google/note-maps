@@ -158,6 +158,7 @@ class Occurrence extends $pb.GeneratedMessage {
 
 class GetTopicMapsRequest extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo('GetTopicMapsRequest')
+    ..aOB(1, 'inTrash')
     ..hasRequiredFields = false
   ;
 
@@ -174,6 +175,11 @@ class GetTopicMapsRequest extends $pb.GeneratedMessage {
   static $pb.PbList<GetTopicMapsRequest> createRepeated() => $pb.PbList<GetTopicMapsRequest>();
   static GetTopicMapsRequest getDefault() => _defaultInstance ??= create()..freeze();
   static GetTopicMapsRequest _defaultInstance;
+
+  $core.bool get inTrash => $_get(0, false);
+  set inTrash($core.bool v) { $_setBool(0, v); }
+  $core.bool hasInTrash() => $_has(0);
+  void clearInTrash() => clearField(1);
 }
 
 class GetTopicMapsResponse extends $pb.GeneratedMessage {
@@ -243,5 +249,103 @@ class CreateTopicMapResponse extends $pb.GeneratedMessage {
   set topicMap(TopicMap v) { setField(1, v); }
   $core.bool hasTopicMap() => $_has(0);
   void clearTopicMap() => clearField(1);
+}
+
+class DeleteTopicMapRequest extends $pb.GeneratedMessage {
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo('DeleteTopicMapRequest')
+    ..a<Int64>(1, 'topicMapId', $pb.PbFieldType.OU6, Int64.ZERO)
+    ..aOB(2, 'fullyDelete')
+    ..hasRequiredFields = false
+  ;
+
+  DeleteTopicMapRequest._() : super();
+  factory DeleteTopicMapRequest() => create();
+  factory DeleteTopicMapRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory DeleteTopicMapRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  DeleteTopicMapRequest clone() => DeleteTopicMapRequest()..mergeFromMessage(this);
+  DeleteTopicMapRequest copyWith(void Function(DeleteTopicMapRequest) updates) => super.copyWith((message) => updates(message as DeleteTopicMapRequest));
+  $pb.BuilderInfo get info_ => _i;
+  @$core.pragma('dart2js:noInline')
+  static DeleteTopicMapRequest create() => DeleteTopicMapRequest._();
+  DeleteTopicMapRequest createEmptyInstance() => create();
+  static $pb.PbList<DeleteTopicMapRequest> createRepeated() => $pb.PbList<DeleteTopicMapRequest>();
+  static DeleteTopicMapRequest getDefault() => _defaultInstance ??= create()..freeze();
+  static DeleteTopicMapRequest _defaultInstance;
+
+  Int64 get topicMapId => $_getI64(0);
+  set topicMapId(Int64 v) { $_setInt64(0, v); }
+  $core.bool hasTopicMapId() => $_has(0);
+  void clearTopicMapId() => clearField(1);
+
+  $core.bool get fullyDelete => $_get(1, false);
+  set fullyDelete($core.bool v) { $_setBool(1, v); }
+  $core.bool hasFullyDelete() => $_has(1);
+  void clearFullyDelete() => clearField(2);
+}
+
+class DeleteTopicMapResponse extends $pb.GeneratedMessage {
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo('DeleteTopicMapResponse')
+    ..hasRequiredFields = false
+  ;
+
+  DeleteTopicMapResponse._() : super();
+  factory DeleteTopicMapResponse() => create();
+  factory DeleteTopicMapResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory DeleteTopicMapResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  DeleteTopicMapResponse clone() => DeleteTopicMapResponse()..mergeFromMessage(this);
+  DeleteTopicMapResponse copyWith(void Function(DeleteTopicMapResponse) updates) => super.copyWith((message) => updates(message as DeleteTopicMapResponse));
+  $pb.BuilderInfo get info_ => _i;
+  @$core.pragma('dart2js:noInline')
+  static DeleteTopicMapResponse create() => DeleteTopicMapResponse._();
+  DeleteTopicMapResponse createEmptyInstance() => create();
+  static $pb.PbList<DeleteTopicMapResponse> createRepeated() => $pb.PbList<DeleteTopicMapResponse>();
+  static DeleteTopicMapResponse getDefault() => _defaultInstance ??= create()..freeze();
+  static DeleteTopicMapResponse _defaultInstance;
+}
+
+class RestoreTopicMapRequest extends $pb.GeneratedMessage {
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo('RestoreTopicMapRequest')
+    ..a<Int64>(1, 'topicMapId', $pb.PbFieldType.OU6, Int64.ZERO)
+    ..hasRequiredFields = false
+  ;
+
+  RestoreTopicMapRequest._() : super();
+  factory RestoreTopicMapRequest() => create();
+  factory RestoreTopicMapRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory RestoreTopicMapRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  RestoreTopicMapRequest clone() => RestoreTopicMapRequest()..mergeFromMessage(this);
+  RestoreTopicMapRequest copyWith(void Function(RestoreTopicMapRequest) updates) => super.copyWith((message) => updates(message as RestoreTopicMapRequest));
+  $pb.BuilderInfo get info_ => _i;
+  @$core.pragma('dart2js:noInline')
+  static RestoreTopicMapRequest create() => RestoreTopicMapRequest._();
+  RestoreTopicMapRequest createEmptyInstance() => create();
+  static $pb.PbList<RestoreTopicMapRequest> createRepeated() => $pb.PbList<RestoreTopicMapRequest>();
+  static RestoreTopicMapRequest getDefault() => _defaultInstance ??= create()..freeze();
+  static RestoreTopicMapRequest _defaultInstance;
+
+  Int64 get topicMapId => $_getI64(0);
+  set topicMapId(Int64 v) { $_setInt64(0, v); }
+  $core.bool hasTopicMapId() => $_has(0);
+  void clearTopicMapId() => clearField(1);
+}
+
+class RestoreTopicMapResponse extends $pb.GeneratedMessage {
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo('RestoreTopicMapResponse')
+    ..hasRequiredFields = false
+  ;
+
+  RestoreTopicMapResponse._() : super();
+  factory RestoreTopicMapResponse() => create();
+  factory RestoreTopicMapResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory RestoreTopicMapResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  RestoreTopicMapResponse clone() => RestoreTopicMapResponse()..mergeFromMessage(this);
+  RestoreTopicMapResponse copyWith(void Function(RestoreTopicMapResponse) updates) => super.copyWith((message) => updates(message as RestoreTopicMapResponse));
+  $pb.BuilderInfo get info_ => _i;
+  @$core.pragma('dart2js:noInline')
+  static RestoreTopicMapResponse create() => RestoreTopicMapResponse._();
+  RestoreTopicMapResponse createEmptyInstance() => create();
+  static $pb.PbList<RestoreTopicMapResponse> createRepeated() => $pb.PbList<RestoreTopicMapResponse>();
+  static RestoreTopicMapResponse getDefault() => _defaultInstance ??= create()..freeze();
+  static RestoreTopicMapResponse _defaultInstance;
 }
 

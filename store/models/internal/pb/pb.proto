@@ -14,7 +14,19 @@
 
 syntax = "proto3";
 
-message TopicMapInfo { uint64 TopicMap = 1; }
+message TopicMapInfo {
+  // topic_map is the kv.Entity that identifies this topic map.
+  uint64 topic_map = 1;
+
+  // modified_unix_seconds is the time this topic map was last modified, in
+  // seconds since the Unix epoch.
+  int64 modified_unix_seconds = 2;
+
+  // in_trash is true if and only if this topic map has been moved to the trash
+  // bin. If true, then modified_unix_seconds is also the time that this topic
+  // map was deleted.
+  bool in_trash = 3;
+}
 
 message TopicRefList {
   repeated string item_identifiers = 1;

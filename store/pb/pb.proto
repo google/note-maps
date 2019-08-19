@@ -38,10 +38,23 @@ message Occurrence {
   string value = 3;
 }
 
-message GetTopicMapsRequest {}
+message GetTopicMapsRequest {
+  bool in_trash = 1;
+}
 
 message GetTopicMapsResponse { repeated TopicMap topic_maps = 1; }
 
 message CreateTopicMapRequest {}
 
 message CreateTopicMapResponse { TopicMap topic_map = 1; }
+
+message DeleteTopicMapRequest {
+  uint64 topic_map_id = 1;
+  bool fully_delete = 2;
+}
+
+message DeleteTopicMapResponse {}
+
+message RestoreTopicMapRequest { uint64 topic_map_id = 1; }
+
+message RestoreTopicMapResponse {}

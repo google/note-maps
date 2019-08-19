@@ -28,6 +28,10 @@ export 'store/pb/pb.pb.dart' show GetTopicMapsRequest;
 export 'store/pb/pb.pb.dart' show GetTopicMapsResponse;
 export 'store/pb/pb.pb.dart' show CreateTopicMapRequest;
 export 'store/pb/pb.pb.dart' show CreateTopicMapResponse;
+export 'store/pb/pb.pb.dart' show DeleteTopicMapRequest;
+export 'store/pb/pb.pb.dart' show DeleteTopicMapResponse;
+export 'store/pb/pb.pb.dart' show RestoreTopicMapRequest;
+export 'store/pb/pb.pb.dart' show RestoreTopicMapResponse;
 
 Future<Uint8List> _getRawResponse(
     MethodChannel channel, String method, $pb.GeneratedMessage request) async {
@@ -56,5 +60,17 @@ class CommandApi {
       CreateTopicMapRequest request) async {
     return CreateTopicMapResponse.fromBuffer(
         await _getRawResponse(channel, 'CreateTopicMap', request));
+  }
+
+  Future<DeleteTopicMapResponse> deleteTopicMap(
+      DeleteTopicMapRequest request) async {
+    return DeleteTopicMapResponse.fromBuffer(
+        await _getRawResponse(channel, 'DeleteTopicMap', request));
+  }
+
+  Future<RestoreTopicMapResponse> restoreTopicMap(
+      RestoreTopicMapRequest request) async {
+    return RestoreTopicMapResponse.fromBuffer(
+        await _getRawResponse(channel, 'RestoreTopicMap', request));
   }
 }

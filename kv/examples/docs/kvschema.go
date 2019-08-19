@@ -61,6 +61,45 @@ func (s Txn) SetDocument(e kv.Entity, v *Document) error {
 	return nil
 }
 
+// DeleteDocument deletes the Document associated with e.
+//
+// Corresponding indexes are updated.
+func (s Txn) DeleteDocument(e kv.Entity) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.Partition.EncodeAt(key)
+	DocumentPrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	var old Document
+	if err := s.Get(key, old.Decode); err != nil {
+		return err
+	}
+	if err := s.Delete(key); err != nil {
+		return err
+	}
+	lek := len(key)
+	kv.Entity(0).EncodeAt(key[10:])
+	key = append(key, kv.Component(0).Encode()...)
+	var (
+		lik = len(key)
+		es  kv.EntitySlice
+	)
+
+	// Update Title index
+	key = key[:lek].AppendComponent(TitlePrefix)
+	for _, iv := range old.IndexTitle() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Remove(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // GetDocument returns the Document associated with e.
 //
 // If no Document has been explicitly set for e, and GetDocument will return

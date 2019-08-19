@@ -113,6 +113,8 @@ func (s txn) Alloc() (kv.Entity, error) {
 
 func (s txn) Set(key, value []byte) error { return s.tx.Set(key, value) }
 
+func (s txn) Delete(key []byte) error { return s.tx.Delete(key) }
+
 func (s txn) Get(key []byte, f func([]byte) error) error {
 	item, err := s.tx.Get(key)
 	if err == badger.ErrKeyNotFound {

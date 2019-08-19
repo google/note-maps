@@ -15,6 +15,7 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:equatable/equatable.dart';
 
@@ -47,6 +48,13 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     }
 
     if (event is LibraryReloadEvent) {
+      yield await _loadTopicMaps();
+    }
+
+    if (event is LibraryTopicMapDeletedEvent) {
+      DeleteTopicMapRequest request = DeleteTopicMapRequest();
+      request.topicMapId = event.topicMapId;
+      await commandApi.deleteTopicMap(request);
       yield await _loadTopicMaps();
     }
   }
@@ -94,3 +102,12 @@ class LibraryEvent extends Equatable {}
 class LibraryAppStartedEvent extends LibraryEvent {}
 
 class LibraryReloadEvent extends LibraryEvent {}
+
+class LibraryTopicMapDeletedEvent extends LibraryEvent {
+  final Int64 topicMapId;
+  final bool fullyDeleted;
+
+  LibraryTopicMapDeletedEvent(this.topicMapId, {this.fullyDeleted = false})
+      : assert(topicMapId != null && topicMapId != 0),
+        assert(fullyDeleted != null);
+}

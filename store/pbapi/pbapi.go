@@ -17,7 +17,7 @@ package pbapi
 
 import (
 	"fmt"
-	"log"
+	"time"
 
 	"github.com/google/note-maps/kv"
 	"github.com/google/note-maps/store/models"
@@ -78,10 +78,16 @@ func (g Gateway) GetTopicMaps(_ *pb.GetTopicMapsRequest) (*pb.GetTopicMapsRespon
 	if err != nil {
 		return nil, err
 	}
-	log.Println("found", len(es), "topic maps")
 
 	var response pb.GetTopicMapsResponse
 	for _, e := range es {
+		m.Partition = 0
+		if info, err := m.GetTopicMapInfo(e); err != nil {
+			return nil, err
+		} else if info.InTrash {
+			continue
+		}
+
 		m.Partition = e
 
 		// For each topic map, load the topic that reifies it.
@@ -97,6 +103,66 @@ func (g Gateway) GetTopicMaps(_ *pb.GetTopicMapsRequest) (*pb.GetTopicMapsRespon
 		response.TopicMaps = append(response.TopicMaps, tm)
 	}
 	return &response, nil
+}
+
+func (g Gateway) DeleteTopicMap(request *pb.DeleteTopicMapRequest) (*pb.DeleteTopicMapResponse, error) {
+	if request.TopicMapId == 0 {
+		return nil, fmt.Errorf("cannot delete topic map zero")
+	}
+	txn := g.db.NewTxn(true)
+	defer txn.Discard()
+	m := models.New(txn)
+	entity := kv.Entity(request.TopicMapId)
+	info, err := m.GetTopicMapInfo(entity)
+	if err != nil {
+		return nil, err
+	}
+	var response pb.DeleteTopicMapResponse
+	if request.FullyDelete {
+		if err = m.DeleteTopicMapInfo(entity); err != nil {
+			return nil, err
+		}
+		m.Partition = entity
+		if err = m.DeletePartition(); err != nil {
+			return nil, err
+		}
+		return &response, txn.Commit()
+	} else {
+		if info.InTrash {
+			return &response, nil
+		}
+		info.InTrash = true
+		info.ModifiedUnixSeconds = time.Now().Unix()
+		if err = m.SetTopicMapInfo(entity, &info); err != nil {
+			return nil, err
+		}
+		return &response, txn.Commit()
+	}
+}
+
+func (g Gateway) RestoreTopicMap(request *pb.RestoreTopicMapRequest) (*pb.RestoreTopicMapResponse, error) {
+	if request.TopicMapId == 0 {
+		return nil, fmt.Errorf("cannot delete topic map zero")
+	}
+	txn := g.db.NewTxn(true)
+	defer txn.Discard()
+	m := models.New(txn)
+	entity := kv.Entity(request.TopicMapId)
+	info, err := m.GetTopicMapInfo(entity)
+	if err != nil {
+		return nil, err
+	} else if info.TopicMap == 0 {
+		return nil, fmt.Errorf("cannot restore topic map that does not exist")
+	}
+	var response pb.RestoreTopicMapResponse
+	if !info.InTrash {
+		return &response, nil
+	}
+	info.InTrash = false
+	if err = m.SetTopicMapInfo(entity, &info); err != nil {
+		return nil, err
+	}
+	return &response, txn.Commit()
 }
 
 // mask describes which fields should be included in a response.

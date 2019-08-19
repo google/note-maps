@@ -57,6 +57,13 @@ func (s *txn) Set(k, v []byte) error {
 	return nil
 }
 
+func (s *txn) Delete(k []byte) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	delete(s.m, string(k))
+	return nil
+}
+
 func (s *txn) PrefixIterator(prefix []byte) kv.Iterator {
 	var iter iterator
 	p := string(prefix)

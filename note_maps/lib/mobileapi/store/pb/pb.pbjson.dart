@@ -43,6 +43,9 @@ const Occurrence$json = const {
 
 const GetTopicMapsRequest$json = const {
   '1': 'GetTopicMapsRequest',
+  '2': const [
+    const {'1': 'in_trash', '3': 1, '4': 1, '5': 8, '10': 'inTrash'},
+  ],
 };
 
 const GetTopicMapsResponse$json = const {
@@ -61,5 +64,28 @@ const CreateTopicMapResponse$json = const {
   '2': const [
     const {'1': 'topic_map', '3': 1, '4': 1, '5': 11, '6': '.TopicMap', '10': 'topicMap'},
   ],
+};
+
+const DeleteTopicMapRequest$json = const {
+  '1': 'DeleteTopicMapRequest',
+  '2': const [
+    const {'1': 'topic_map_id', '3': 1, '4': 1, '5': 4, '10': 'topicMapId'},
+    const {'1': 'fully_delete', '3': 2, '4': 1, '5': 8, '10': 'fullyDelete'},
+  ],
+};
+
+const DeleteTopicMapResponse$json = const {
+  '1': 'DeleteTopicMapResponse',
+};
+
+const RestoreTopicMapRequest$json = const {
+  '1': 'RestoreTopicMapRequest',
+  '2': const [
+    const {'1': 'topic_map_id', '3': 1, '4': 1, '5': 4, '10': 'topicMapId'},
+  ],
+};
+
+const RestoreTopicMapResponse$json = const {
+  '1': 'RestoreTopicMapResponse',
 };
 

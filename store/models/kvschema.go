@@ -61,6 +61,45 @@ func (s Txn) SetIIs(e kv.Entity, v IIs) error {
 	return nil
 }
 
+// DeleteIIs deletes the IIs associated with e.
+//
+// Corresponding indexes are updated.
+func (s Txn) DeleteIIs(e kv.Entity) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.Partition.EncodeAt(key)
+	IIsPrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	var old IIs
+	if err := s.Get(key, old.Decode); err != nil {
+		return err
+	}
+	if err := s.Delete(key); err != nil {
+		return err
+	}
+	lek := len(key)
+	kv.Entity(0).EncodeAt(key[10:])
+	key = append(key, kv.Component(0).Encode()...)
+	var (
+		lik = len(key)
+		es  kv.EntitySlice
+	)
+
+	// Update Literal index
+	key = key[:lek].AppendComponent(LiteralPrefix)
+	for _, iv := range old.IndexLiteral() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Remove(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // GetIIs returns the IIs associated with e.
 //
 // If no IIs has been explicitly set for e, and GetIIs will return
@@ -172,6 +211,45 @@ func (s Txn) SetName(e kv.Entity, v *Name) error {
 			return err
 		}
 		if es.Insert(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// DeleteName deletes the Name associated with e.
+//
+// Corresponding indexes are updated.
+func (s Txn) DeleteName(e kv.Entity) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.Partition.EncodeAt(key)
+	NamePrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	var old Name
+	if err := s.Get(key, old.Decode); err != nil {
+		return err
+	}
+	if err := s.Delete(key); err != nil {
+		return err
+	}
+	lek := len(key)
+	kv.Entity(0).EncodeAt(key[10:])
+	key = append(key, kv.Component(0).Encode()...)
+	var (
+		lik = len(key)
+		es  kv.EntitySlice
+	)
+
+	// Update Value index
+	key = key[:lek].AppendComponent(ValuePrefix)
+	for _, iv := range old.IndexValue() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Remove(e) {
 			if err := s.Set(key, es.Encode()); err != nil {
 				return err
 			}
@@ -299,6 +377,45 @@ func (s Txn) SetOccurrence(e kv.Entity, v *Occurrence) error {
 	return nil
 }
 
+// DeleteOccurrence deletes the Occurrence associated with e.
+//
+// Corresponding indexes are updated.
+func (s Txn) DeleteOccurrence(e kv.Entity) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.Partition.EncodeAt(key)
+	OccurrencePrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	var old Occurrence
+	if err := s.Get(key, old.Decode); err != nil {
+		return err
+	}
+	if err := s.Delete(key); err != nil {
+		return err
+	}
+	lek := len(key)
+	kv.Entity(0).EncodeAt(key[10:])
+	key = append(key, kv.Component(0).Encode()...)
+	var (
+		lik = len(key)
+		es  kv.EntitySlice
+	)
+
+	// Update Value index
+	key = key[:lek].AppendComponent(ValuePrefix)
+	for _, iv := range old.IndexValue() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Remove(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // GetOccurrence returns the Occurrence associated with e.
 //
 // If no Occurrence has been explicitly set for e, and GetOccurrence will return
@@ -410,6 +527,45 @@ func (s Txn) SetSIs(e kv.Entity, v SIs) error {
 			return err
 		}
 		if es.Insert(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// DeleteSIs deletes the SIs associated with e.
+//
+// Corresponding indexes are updated.
+func (s Txn) DeleteSIs(e kv.Entity) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.Partition.EncodeAt(key)
+	SIsPrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	var old SIs
+	if err := s.Get(key, old.Decode); err != nil {
+		return err
+	}
+	if err := s.Delete(key); err != nil {
+		return err
+	}
+	lek := len(key)
+	kv.Entity(0).EncodeAt(key[10:])
+	key = append(key, kv.Component(0).Encode()...)
+	var (
+		lik = len(key)
+		es  kv.EntitySlice
+	)
+
+	// Update Literal index
+	key = key[:lek].AppendComponent(LiteralPrefix)
+	for _, iv := range old.IndexLiteral() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Remove(e) {
 			if err := s.Set(key, es.Encode()); err != nil {
 				return err
 			}
@@ -537,6 +693,45 @@ func (s Txn) SetSLs(e kv.Entity, v SLs) error {
 	return nil
 }
 
+// DeleteSLs deletes the SLs associated with e.
+//
+// Corresponding indexes are updated.
+func (s Txn) DeleteSLs(e kv.Entity) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.Partition.EncodeAt(key)
+	SLsPrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	var old SLs
+	if err := s.Get(key, old.Decode); err != nil {
+		return err
+	}
+	if err := s.Delete(key); err != nil {
+		return err
+	}
+	lek := len(key)
+	kv.Entity(0).EncodeAt(key[10:])
+	key = append(key, kv.Component(0).Encode()...)
+	var (
+		lik = len(key)
+		es  kv.EntitySlice
+	)
+
+	// Update Literal index
+	key = key[:lek].AppendComponent(LiteralPrefix)
+	for _, iv := range old.IndexLiteral() {
+		key = append(key[:lik], iv.Encode()...)
+		if err := s.Get(key, es.Decode); err != nil {
+			return err
+		}
+		if es.Remove(e) {
+			if err := s.Set(key, es.Encode()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // GetSLs returns the SLs associated with e.
 //
 // If no SLs has been explicitly set for e, and GetSLs will return
@@ -617,6 +812,17 @@ func (s Txn) SetTopicMapInfo(e kv.Entity, v *TopicMapInfo) error {
 	return s.Set(key, v.Encode())
 }
 
+// DeleteTopicMapInfo deletes the TopicMapInfo associated with e.
+//
+// Corresponding indexes are updated.
+func (s Txn) DeleteTopicMapInfo(e kv.Entity) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.Partition.EncodeAt(key)
+	TopicMapInfoPrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	return s.Delete(key)
+}
+
 // GetTopicMapInfo returns the TopicMapInfo associated with e.
 //
 // If no TopicMapInfo has been explicitly set for e, and GetTopicMapInfo will return
@@ -671,6 +877,17 @@ func (s Txn) SetTopicNames(e kv.Entity, v TopicNames) error {
 	return s.Set(key, v.Encode())
 }
 
+// DeleteTopicNames deletes the TopicNames associated with e.
+//
+// Corresponding indexes are updated.
+func (s Txn) DeleteTopicNames(e kv.Entity) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.Partition.EncodeAt(key)
+	TopicNamesPrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	return s.Delete(key)
+}
+
 // GetTopicNames returns the TopicNames associated with e.
 //
 // If no TopicNames has been explicitly set for e, and GetTopicNames will return
@@ -723,6 +940,17 @@ func (s Txn) SetTopicOccurrences(e kv.Entity, v TopicOccurrences) error {
 	TopicOccurrencesPrefix.EncodeAt(key[8:])
 	e.EncodeAt(key[10:])
 	return s.Set(key, v.Encode())
+}
+
+// DeleteTopicOccurrences deletes the TopicOccurrences associated with e.
+//
+// Corresponding indexes are updated.
+func (s Txn) DeleteTopicOccurrences(e kv.Entity) error {
+	key := make(kv.Prefix, 8+2+8)
+	s.Partition.EncodeAt(key)
+	TopicOccurrencesPrefix.EncodeAt(key[8:])
+	e.EncodeAt(key[10:])
+	return s.Delete(key)
 }
 
 // GetTopicOccurrences returns the TopicOccurrences associated with e.

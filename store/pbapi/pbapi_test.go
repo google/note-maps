@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/google/note-maps/kv/badger"
+	"github.com/google/note-maps/kv/kvtest"
 	"github.com/google/note-maps/store/pb"
 )
 
@@ -95,4 +96,57 @@ func TestCreateGetTopicMap(t *testing.T) {
 				topicMap, getResponse.TopicMaps[0].Topic.Id)
 		}
 	}()
+}
+
+func TestDeleteRestoreTopicMap(t *testing.T) {
+	db := kvtest.NewDB(t)
+	defer db.Close()
+	g := NewGateway(db)
+	var e uint64
+	if response, err := g.CreateTopicMap(&pb.CreateTopicMapRequest{}); err != nil {
+		t.Fatal(err)
+	} else {
+		e = response.TopicMap.Id
+	}
+	if _, err := g.DeleteTopicMap(&pb.DeleteTopicMapRequest{TopicMapId: e, FullyDelete: false}); err != nil {
+		t.Fatal(err)
+	}
+	if response, err := g.GetTopicMaps(&pb.GetTopicMapsRequest{}); err != nil {
+		t.Fatal(err)
+	} else if len(response.TopicMaps) > 0 {
+		t.Fatalf("want zero visible topic maps, got %v", response.TopicMaps)
+	}
+	if _, err := g.RestoreTopicMap(&pb.RestoreTopicMapRequest{TopicMapId: e}); err != nil {
+		t.Fatal(err)
+	}
+	if response, err := g.GetTopicMaps(&pb.GetTopicMapsRequest{}); err != nil {
+		t.Fatal(err)
+	} else if len(response.TopicMaps) != 1 {
+		t.Fatalf("want one visible topic maps, got %v", response.TopicMaps)
+	} else if response.TopicMaps[0].Id != e {
+		t.Fatalf("want %v, got %v", e, response.TopicMaps)
+	}
+}
+
+func TestFullyDeleteTopicMap(t *testing.T) {
+	db := kvtest.NewDB(t)
+	defer db.Close()
+	g := NewGateway(db)
+	var e uint64
+	if response, err := g.CreateTopicMap(&pb.CreateTopicMapRequest{}); err != nil {
+		t.Fatal(err)
+	} else {
+		e = response.TopicMap.Id
+	}
+	if _, err := g.DeleteTopicMap(&pb.DeleteTopicMapRequest{TopicMapId: e, FullyDelete: true}); err != nil {
+		t.Fatal(err)
+	}
+	if response, err := g.GetTopicMaps(&pb.GetTopicMapsRequest{}); err != nil {
+		t.Fatal(err)
+	} else if len(response.TopicMaps) > 0 {
+		t.Fatalf("want zero visible topic maps, got %v", response.TopicMaps)
+	}
+	if _, err := g.RestoreTopicMap(&pb.RestoreTopicMapRequest{TopicMapId: e}); err == nil {
+		t.Fatalf("want error restoring fully deleted topic map, got nil")
+	}
 }

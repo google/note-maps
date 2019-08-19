@@ -69,6 +69,9 @@ type Txn interface {
 	// Set stores key and value in the underlying key-value store.
 	Set(key, value []byte) error
 
+	// Delete deletes key and its value from the underlying key-value store.
+	Delete(key []byte) error
+
 	// Get finds the value associated with key in the underlying key-value store
 	// and passes it to f.
 	//
@@ -155,6 +158,19 @@ type IndexCursor struct {
 type Partitioned struct {
 	Txn
 	Partition Entity
+}
+
+// DeletePartition deletes all keys in the currently selected partition.
+func (t Partitioned) DeletePartition() error {
+	prefix := t.Partition.Encode()
+	iter := t.PrefixIterator(prefix)
+	defer iter.Discard()
+	for iter.Seek(prefix); iter.Valid(); iter.Next() {
+		if err := t.Delete(append(prefix, iter.Key()...)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // AllComponentEntities returns the first n entities that have values

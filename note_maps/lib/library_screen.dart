@@ -141,7 +141,7 @@ class _LibraryPageState extends State<LibraryPage> {
           ],
         ),
       ),
-      trailing: noteMapMenuButton(),
+      trailing: noteMapMenuButton(topicMap),
       onTap: () {
         Navigator.push(
           context,
@@ -155,9 +155,18 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  Widget noteMapMenuButton() {
+  Widget noteMapMenuButton(TopicMapViewModel viewModel) {
     return PopupMenuButton<NoteMapOption>(
-      onSelected: (NoteMapOption choice) {},
+      onSelected: (NoteMapOption choice) {
+        switch (choice) {
+          case NoteMapOption.moveToTrash:
+            _libraryBloc
+                .dispatch(LibraryTopicMapDeletedEvent(viewModel.topicMap.id));
+            break;
+          case NoteMapOption.rename:
+            break;
+        }
+      },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<NoteMapOption>>[
         const PopupMenuItem<NoteMapOption>(
           value: NoteMapOption.rename,

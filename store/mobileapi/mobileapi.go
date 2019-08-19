@@ -89,6 +89,30 @@ func Command(method string, bs []byte) ([]byte, error) {
 		}
 		log.Printf("%s(%s)=>%s", method, cmd.String(), response.String())
 		return proto.Marshal(response)
+	case "DeleteTopicMap":
+		var cmd pb.DeleteTopicMapRequest
+		err := proto.Unmarshal(bs, &cmd)
+		if err != nil {
+			return nil, err
+		}
+		response, err := g.DeleteTopicMap(&cmd)
+		if err != nil {
+			return nil, err
+		}
+		log.Printf("%s(%s)=>%s", method, cmd.String(), response.String())
+		return proto.Marshal(response)
+	case "RestoreTopicMap":
+		var cmd pb.RestoreTopicMapRequest
+		err := proto.Unmarshal(bs, &cmd)
+		if err != nil {
+			return nil, err
+		}
+		response, err := g.RestoreTopicMap(&cmd)
+		if err != nil {
+			return nil, err
+		}
+		log.Printf("%s(%s)=>%s", method, cmd.String(), response.String())
+		return proto.Marshal(response)
 	default:
 		return nil, fmt.Errorf("unrecognized command: %#v", method)
 	}

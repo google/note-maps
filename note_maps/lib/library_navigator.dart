@@ -14,7 +14,7 @@
 
 import 'package:flutter/material.dart';
 
-import 'library_screen.dart';
+import 'library_page.dart';
 
 class LibraryNavigator extends StatelessWidget {
   final GlobalKey<NavigatorState> navigatorKey;

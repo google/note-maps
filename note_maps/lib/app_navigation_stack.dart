@@ -18,7 +18,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'app_navigation_bloc.dart';
 import 'library_navigator.dart';
 import 'mobileapi/mobileapi.dart';
-import 'trash_screen.dart';
+import 'trash_page.dart';
 
 class AppNavigationStack extends StatefulWidget {
   final QueryApi queryApi;

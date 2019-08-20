@@ -20,9 +20,9 @@ import 'app_navigation_bloc.dart';
 import 'app_navigation_stack.dart';
 import 'library_bloc.dart';
 import 'library_navigator.dart';
-import 'library_screen.dart';
+import 'library_page.dart';
 import 'mobileapi/mobileapi.dart';
-import 'trash_screen.dart';
+import 'trash_page.dart';
 
 void main() => runApp(App(
       queryApi: QueryApi(),

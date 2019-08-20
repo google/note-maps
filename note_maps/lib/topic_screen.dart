@@ -24,7 +24,7 @@ import 'mobileapi/mobileapi.dart';
 import 'note_maps_sliver_app_bar.dart';
 import 'topic_map_view_models.dart';
 import 'topic_name_edit_dialog.dart';
-import 'note_maps_app_bar.dart';
+import 'note_maps_bottom_app_bar.dart';
 
 class TopicPage extends StatefulWidget {
   TopicPage({Key key, @required this.topicBloc})
@@ -116,7 +116,7 @@ class _TopicPageState extends State<TopicPage> {
                 : null,
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.centerDocked,
-            bottomNavigationBar: NoteMapsAppBar(),
+            bottomNavigationBar: NoteMapsBottomAppBar(),
           ),
         ),
       ),

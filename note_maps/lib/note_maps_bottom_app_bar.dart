@@ -13,8 +13,26 @@
 // limitations under the License.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class NoteMapsAppBar extends StatelessWidget {
+import 'app_navigation_bloc.dart';
+
+class NoteMapsBottomAppBar extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() {
+    return _NoteMapsBottomAppBarState();
+  }
+}
+
+class _NoteMapsBottomAppBarState extends State<NoteMapsBottomAppBar> {
+  AppNavigationBloc appNavigationBloc;
+
+  @override
+  void initState() {
+    appNavigationBloc = BlocProvider.of<AppNavigationBloc>(context);
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
@@ -35,16 +53,21 @@ class NoteMapsAppBar extends StatelessWidget {
                           leading: Icon(Icons.home),
                           title: Text('Note Maps'),
                           onTap: () {
-                            Navigator.popAndPushNamed(context, "/");
+                            appNavigationBloc.dispatch(
+                                AppNavigationEvent(AppNavigationPage.library));
+                            Navigator.pop(context);
                           },
                         ),
                         ListTile(
                           leading: Icon(Icons.delete),
                           title: Text('Trash'),
                           onTap: () {
-                            Navigator.popAndPushNamed(context, "/trash");
+                            appNavigationBloc.dispatch(
+                                AppNavigationEvent(AppNavigationPage.trash));
+                            Navigator.pop(context);
                           },
                         ),
+                        Divider(),
                         ListTile(
                           leading: Icon(Icons.settings),
                           title: Text('Settings'),

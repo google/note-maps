@@ -18,7 +18,7 @@ import 'package:flutter/material.dart';
 import 'library_bloc.dart';
 import 'note_maps_sliver_app_bar.dart';
 import 'topic_map_tile.dart';
-import 'note_maps_app_bar.dart';
+import 'note_maps_bottom_app_bar.dart';
 import 'trash_bloc.dart';
 
 class TrashPage extends StatefulWidget {
@@ -54,7 +54,7 @@ class _TrashPageState extends State<TrashPage> {
           builder: (context, trashState) =>
               scrollView(context, orientation, trashState),
         ),
-        bottomNavigationBar: NoteMapsAppBar(),
+        bottomNavigationBar: NoteMapsBottomAppBar(),
       ),
     );
   }

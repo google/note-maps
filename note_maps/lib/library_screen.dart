@@ -18,7 +18,7 @@ import 'package:flutter/material.dart';
 import 'library_bloc.dart';
 import 'note_maps_sliver_app_bar.dart';
 import 'topic_map_tile.dart';
-import 'note_maps_app_bar.dart';
+import 'note_maps_bottom_app_bar.dart';
 import 'topic_screen.dart';
 import 'topic_map_view_models.dart';
 
@@ -53,7 +53,7 @@ class _LibraryPageState extends State<LibraryPage> {
           builder: (context, libraryState) =>
               scrollView(context, orientation, libraryState),
         ),
-        bottomNavigationBar: NoteMapsAppBar(),
+        bottomNavigationBar: NoteMapsBottomAppBar(),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             Navigator.push(

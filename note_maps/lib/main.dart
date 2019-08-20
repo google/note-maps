@@ -15,7 +15,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+import 'package:bloc/bloc.dart';
 
+import 'app_navigation_bloc.dart';
 import 'library_bloc.dart';
 import 'library_screen.dart';
 import 'mobileapi/mobileapi.dart';
@@ -42,21 +44,26 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   LibraryBloc libraryBloc;
+  AppNavigationBloc appNavigationBloc;
 
   QueryApi get queryApi => widget.queryApi;
 
   CommandApi get commandApi => widget.commandApi;
 
+  int stackIndex = 0;
+
   @override
   void initState() {
     libraryBloc = LibraryBloc(queryApi: queryApi, commandApi: commandApi);
     libraryBloc.dispatch(LibraryAppStartedEvent());
+    appNavigationBloc = AppNavigationBloc();
     super.initState();
   }
 
   @override
   void dispose() {
     libraryBloc.dispose();
+    appNavigationBloc.dispose();
     super.dispose();
   }
 
@@ -70,6 +77,8 @@ class _AppState extends State<App> {
       child: MultiBlocProvider(
         providers: [
           BlocProvider<LibraryBloc>(builder: (context) => libraryBloc),
+          BlocProvider<AppNavigationBloc>(
+              builder: (context) => appNavigationBloc),
         ],
         child: MaterialApp(
           title: 'Note Maps',
@@ -77,11 +86,17 @@ class _AppState extends State<App> {
             primarySwatch: Colors.grey,
             accentColor: Colors.brown,
           ),
-          initialRoute: '/',
-          routes: {
-            '/': (context) => LibraryPage(),
-            '/trash': (context) => TrashPage(),
-          },
+          home: BlocBuilder(
+            bloc: appNavigationBloc,
+            builder: (context, state) {
+              switch (state.page) {
+                case AppNavigationPage.library:
+                  return LibraryPage();
+                case AppNavigationPage.trash:
+                  return TrashPage();
+              }
+            },
+          ),
         ),
       ),
     );

@@ -111,8 +111,8 @@ class TopicMapTile extends StatelessWidget {
           options.add(const PopupMenuItem<NoteMapOption>(
             value: NoteMapOption.delete,
             child: ListTile(
-              leading: Icon(Icons.delete_forever),
-              title: Text('Delete'),
+              leading: Icon(Icons.delete_forever, color: Colors.red),
+              title: Text('Delete', style: TextStyle(color: Colors.red)),
             ),
           ));
         }

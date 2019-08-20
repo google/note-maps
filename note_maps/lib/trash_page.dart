@@ -47,25 +47,28 @@ class _TrashPageState extends State<TrashPage> {
   Widget build(BuildContext context) {
     return Navigator(
       key: widget.navigatorKey,
-      onGenerateRoute: (routeSettings){
+      onGenerateRoute: (routeSettings) {
         return MaterialPageRoute(
-          builder:(context)=>OrientationBuilder(
-            builder: (context, orientation) => Scaffold(
-              body: BlocBuilder<TrashBloc, TrashState>(
-                bloc: _trashBloc,
-                builder: (context, trashState) =>
-                    scrollView(context, orientation, trashState),
+          builder: (context) => OrientationBuilder(
+            builder: (context, orientation) => Theme(
+              data: Theme.of(context).copyWith(primaryColor: Colors.black),
+              child: Scaffold(
+                body: BlocBuilder<TrashBloc, TrashState>(
+                  bloc: _trashBloc,
+                  builder: (context, trashState) =>
+                      scrollView(context, orientation, trashState),
+                ),
+                bottomNavigationBar: NoteMapsBottomAppBar(),
               ),
-              bottomNavigationBar: NoteMapsBottomAppBar(),
             ),
           ),
         );
       },
-    ) ;
+    );
   }
 
-  Widget scrollView(BuildContext context, Orientation orientation,
-      TrashState trashState) {
+  Widget scrollView(
+      BuildContext context, Orientation orientation, TrashState trashState) {
     List<Widget> widgets = List<Widget>();
     widgets.add(NoteMapsSliverAppBar(
       orientation: orientation,

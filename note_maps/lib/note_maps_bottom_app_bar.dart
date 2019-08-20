@@ -56,9 +56,9 @@ class _NoteMapsBottomAppBarState extends State<NoteMapsBottomAppBar> {
                             leading: Icon(Icons.home),
                             title: Text('Library'),
                             onTap: () {
+                              Navigator.pop(context);
                               appNavigationBloc.dispatch(AppNavigationEvent(
                                   AppNavigationPage.library));
-                              Navigator.pop(context);
                             },
                           ),
                           ListTile(
@@ -66,9 +66,9 @@ class _NoteMapsBottomAppBarState extends State<NoteMapsBottomAppBar> {
                             leading: Icon(Icons.delete),
                             title: Text('Trash'),
                             onTap: () {
+                              Navigator.pop(context);
                               appNavigationBloc.dispatch(
                                   AppNavigationEvent(AppNavigationPage.trash));
-                              Navigator.pop(context);
                             },
                           ),
                           Divider(),

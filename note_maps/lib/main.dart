@@ -42,9 +42,11 @@ class App extends StatefulWidget {
   State<App> createState() => _AppState();
 }
 
-class _AppState extends State<App> {
+class _AppState extends State<App> with TickerProviderStateMixin<App> {
   LibraryBloc libraryBloc;
   AppNavigationBloc appNavigationBloc;
+  List<Key> keys;
+  List<AnimationController> faders;
 
   QueryApi get queryApi => widget.queryApi;
 
@@ -54,16 +56,26 @@ class _AppState extends State<App> {
 
   @override
   void initState() {
+    super.initState();
     libraryBloc = LibraryBloc(queryApi: queryApi, commandApi: commandApi);
     libraryBloc.dispatch(LibraryAppStartedEvent());
     appNavigationBloc = AppNavigationBloc();
-    super.initState();
+    keys = AppNavigationPage.values.map((_) => GlobalKey()).toList();
+    faders = AppNavigationPage.values.map((_) {
+      return AnimationController(
+        vsync: this,
+        duration: Duration(milliseconds: 200),
+      );
+    }).toList();
   }
 
   @override
   void dispose() {
     libraryBloc.dispose();
     appNavigationBloc.dispose();
+    for (AnimationController controller in faders) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -89,12 +101,31 @@ class _AppState extends State<App> {
           home: BlocBuilder(
             bloc: appNavigationBloc,
             builder: (context, state) {
-              switch (state.page) {
-                case AppNavigationPage.library:
-                  return LibraryNavigator();
-                case AppNavigationPage.trash:
-                  return TrashPage();
-              }
+              return Stack(
+                fit: StackFit.expand,
+                children: AppNavigationPage.values.map((page) {
+                  final Widget view = FadeTransition(
+                    opacity: faders[page.index]
+                        .drive(CurveTween(curve: Curves.fastOutSlowIn)),
+                    child: KeyedSubtree(
+                      key: keys[page.index],
+                      child: page == AppNavigationPage.trash
+                          ? TrashPage()
+                          : LibraryNavigator(),
+                    ),
+                  );
+                  if (page == state.page) {
+                    faders[page.index].forward();
+                    return view;
+                  } else {
+                    faders[page.index].reverse();
+                    if (faders[page.index].isAnimating) {
+                      return IgnorePointer(child: view);
+                    }
+                    return Offstage(child: view);
+                  }
+                }).toList(),
+              );
             },
           ),
         ),

@@ -17,6 +17,8 @@ import 'package:flutter/material.dart';
 import 'library_screen.dart';
 
 class LibraryNavigator extends StatefulWidget {
+  LibraryNavigator({Key key}) : super(key: key);
+
   @override
   State<StatefulWidget> createState() {
     return _LibraryNavigatorState();

@@ -12,13 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bloc/bloc.dart';
 
-import 'item_icon.dart';
 import 'library_bloc.dart';
 import 'mobileapi/mobileapi.dart';
 import 'note_maps_sliver_app_bar.dart';

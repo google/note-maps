@@ -41,7 +41,7 @@ class NoteMapsSliverAppBar extends SliverAppBar {
           snap: false,
           floating: false,
           actions: actions,
-          expandedHeight: orientation == Orientation.portrait ? 160.0 : null,
+          expandedHeight: orientation == Orientation.portrait ? 125.0 : null,
           flexibleSpace: FlexibleSpaceBar(
             title: title,
             background: item == null

@@ -20,10 +20,9 @@ import 'note_maps_sliver_app_bar.dart';
 import 'topic_map_tile.dart';
 import 'note_maps_bottom_app_bar.dart';
 import 'topic_screen.dart';
-import 'topic_map_view_models.dart';
 
 class LibraryPage extends StatefulWidget {
-  LibraryPage({Key key, this.title="Note Maps"}) : super(key: key);
+  LibraryPage({Key key, this.title="Library"}) : super(key: key);
 
   final String title;
 

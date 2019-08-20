@@ -22,9 +22,9 @@ import 'note_maps_bottom_app_bar.dart';
 import 'trash_bloc.dart';
 
 class TrashPage extends StatefulWidget {
-  TrashPage({Key key, this.title="Trash"}) : super(key: key);
+  TrashPage({Key key, this.navigatorKey}) : super(key: key);
 
-  final String title;
+  final GlobalKey<NavigatorState> navigatorKey;
 
   @override
   State<TrashPage> createState() => _TrashPageState();
@@ -34,8 +34,6 @@ class _TrashPageState extends State<TrashPage> {
   LibraryBloc _libraryBloc;
   TrashBloc _trashBloc;
   String _error;
-
-  String get title => widget.title;
 
   @override
   void initState() {
@@ -47,16 +45,23 @@ class _TrashPageState extends State<TrashPage> {
 
   @override
   Widget build(BuildContext context) {
-    return OrientationBuilder(
-      builder: (context, orientation) => Scaffold(
-        body: BlocBuilder<TrashBloc, TrashState>(
-          bloc: _trashBloc,
-          builder: (context, trashState) =>
-              scrollView(context, orientation, trashState),
-        ),
-        bottomNavigationBar: NoteMapsBottomAppBar(),
-      ),
-    );
+    return Navigator(
+      key: widget.navigatorKey,
+      onGenerateRoute: (routeSettings){
+        return MaterialPageRoute(
+          builder:(context)=>OrientationBuilder(
+            builder: (context, orientation) => Scaffold(
+              body: BlocBuilder<TrashBloc, TrashState>(
+                bloc: _trashBloc,
+                builder: (context, trashState) =>
+                    scrollView(context, orientation, trashState),
+              ),
+              bottomNavigationBar: NoteMapsBottomAppBar(),
+            ),
+          ),
+        );
+      },
+    ) ;
   }
 
   Widget scrollView(BuildContext context, Orientation orientation,
@@ -64,7 +69,7 @@ class _TrashPageState extends State<TrashPage> {
     List<Widget> widgets = List<Widget>();
     widgets.add(NoteMapsSliverAppBar(
       orientation: orientation,
-      title: Text(title),
+      title: Text("Trash"),
     ));
     if (trashState.error != null) {
       widgets.add(SliverFillRemaining(

@@ -17,6 +17,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
 import 'app_navigation_bloc.dart';
+import 'app_navigation_stack.dart';
 import 'library_bloc.dart';
 import 'library_navigator.dart';
 import 'library_screen.dart';
@@ -45,14 +46,10 @@ class App extends StatefulWidget {
 class _AppState extends State<App> with TickerProviderStateMixin<App> {
   LibraryBloc libraryBloc;
   AppNavigationBloc appNavigationBloc;
-  List<Key> keys;
-  List<AnimationController> faders;
 
   QueryApi get queryApi => widget.queryApi;
 
   CommandApi get commandApi => widget.commandApi;
-
-  int stackIndex = 0;
 
   @override
   void initState() {
@@ -60,22 +57,12 @@ class _AppState extends State<App> with TickerProviderStateMixin<App> {
     libraryBloc = LibraryBloc(queryApi: queryApi, commandApi: commandApi);
     libraryBloc.dispatch(LibraryAppStartedEvent());
     appNavigationBloc = AppNavigationBloc();
-    keys = AppNavigationPage.values.map((_) => GlobalKey()).toList();
-    faders = AppNavigationPage.values.map((_) {
-      return AnimationController(
-        vsync: this,
-        duration: Duration(milliseconds: 200),
-      );
-    }).toList();
   }
 
   @override
   void dispose() {
     libraryBloc.dispose();
     appNavigationBloc.dispose();
-    for (AnimationController controller in faders) {
-      controller.dispose();
-    }
     super.dispose();
   }
 
@@ -101,31 +88,7 @@ class _AppState extends State<App> with TickerProviderStateMixin<App> {
           home: BlocBuilder(
             bloc: appNavigationBloc,
             builder: (context, state) {
-              return Stack(
-                fit: StackFit.expand,
-                children: AppNavigationPage.values.map((page) {
-                  final Widget view = FadeTransition(
-                    opacity: faders[page.index]
-                        .drive(CurveTween(curve: Curves.fastOutSlowIn)),
-                    child: KeyedSubtree(
-                      key: keys[page.index],
-                      child: page == AppNavigationPage.trash
-                          ? TrashPage()
-                          : LibraryNavigator(),
-                    ),
-                  );
-                  if (page == state.page) {
-                    faders[page.index].forward();
-                    return view;
-                  } else {
-                    faders[page.index].reverse();
-                    if (faders[page.index].isAnimating) {
-                      return IgnorePointer(child: view);
-                    }
-                    return Offstage(child: view);
-                  }
-                }).toList(),
-              );
+              return AppNavigationStack();
             },
           ),
         ),

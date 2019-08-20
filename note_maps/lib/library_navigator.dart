@@ -16,19 +16,18 @@ import 'package:flutter/material.dart';
 
 import 'library_screen.dart';
 
-class LibraryNavigator extends StatefulWidget {
-  LibraryNavigator({Key key}) : super(key: key);
+class LibraryNavigator extends StatelessWidget {
+  final GlobalKey<NavigatorState> navigatorKey;
 
-  @override
-  State<StatefulWidget> createState() {
-    return _LibraryNavigatorState();
-  }
-}
+  LibraryNavigator({
+    Key key,
+    this.navigatorKey,
+  }) : super(key: key);
 
-class _LibraryNavigatorState extends State<LibraryNavigator> {
   @override
   Widget build(BuildContext context) {
     return Navigator(
+      key: navigatorKey,
       onGenerateRoute: (RouteSettings settings) {
         return MaterialPageRoute(
           settings: settings,

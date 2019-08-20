@@ -38,7 +38,7 @@ class TopicViewModel {
             .toList(growable: false);
 
   String get nameNotice =>
-      name != "" ? "" : "unnamed " + (isTopicMap ? "topic map" : "topic");
+      name != "" ? "" : "Unnamed " + (isTopicMap ? "Note Map" : "Topic");
 
   String get name {
     if (topic == null || topic.names == null||topic.names.length==0) {

@@ -46,7 +46,8 @@ class _LibraryPageState extends State<LibraryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return OrientationBuilder(
+    return
+      OrientationBuilder(
       builder: (context, orientation) => Scaffold(
         body: BlocBuilder<LibraryBloc, LibraryState>(
           bloc: _libraryBloc,
@@ -70,7 +71,7 @@ class _LibraryPageState extends State<LibraryPage> {
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       ),
-    );
+      );
   }
 
   Widget scrollView(BuildContext context, Orientation orientation,

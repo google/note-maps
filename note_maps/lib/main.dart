@@ -18,6 +18,7 @@ import 'package:provider/provider.dart';
 
 import 'app_navigation_bloc.dart';
 import 'library_bloc.dart';
+import 'library_navigator.dart';
 import 'library_screen.dart';
 import 'mobileapi/mobileapi.dart';
 import 'trash_screen.dart';
@@ -90,7 +91,7 @@ class _AppState extends State<App> {
             builder: (context, state) {
               switch (state.page) {
                 case AppNavigationPage.library:
-                  return LibraryPage();
+                  return LibraryNavigator();
                 case AppNavigationPage.trash:
                   return TrashPage();
               }

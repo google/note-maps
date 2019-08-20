@@ -46,43 +46,48 @@ class _NoteMapsBottomAppBarState extends State<NoteMapsBottomAppBar> {
               showModalBottomSheet(
                 context: context,
                 builder: (context) {
-                  return Drawer(
-                    child: Column(
-                      children: <Widget>[
-                        ListTile(
-                          leading: Icon(Icons.home),
-                          title: Text('Note Maps'),
-                          onTap: () {
-                            appNavigationBloc.dispatch(
-                                AppNavigationEvent(AppNavigationPage.library));
-                            Navigator.pop(context);
-                          },
-                        ),
-                        ListTile(
-                          leading: Icon(Icons.delete),
-                          title: Text('Trash'),
-                          onTap: () {
-                            appNavigationBloc.dispatch(
-                                AppNavigationEvent(AppNavigationPage.trash));
-                            Navigator.pop(context);
-                          },
-                        ),
-                        Divider(),
-                        ListTile(
-                          leading: Icon(Icons.settings),
-                          title: Text('Settings'),
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                        ),
-                        ListTile(
-                          leading: Icon(Icons.info),
-                          title: Text('About'),
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                        ),
-                      ],
+                  return BlocBuilder(
+                    bloc: appNavigationBloc,
+                    builder: (context, state) => Drawer(
+                      child: Column(
+                        children: <Widget>[
+                          ListTile(
+                            selected: state.page == AppNavigationPage.library,
+                            leading: Icon(Icons.home),
+                            title: Text('Library'),
+                            onTap: () {
+                              appNavigationBloc.dispatch(AppNavigationEvent(
+                                  AppNavigationPage.library));
+                              Navigator.pop(context);
+                            },
+                          ),
+                          ListTile(
+                            selected: state.page == AppNavigationPage.trash,
+                            leading: Icon(Icons.delete),
+                            title: Text('Trash'),
+                            onTap: () {
+                              appNavigationBloc.dispatch(
+                                  AppNavigationEvent(AppNavigationPage.trash));
+                              Navigator.pop(context);
+                            },
+                          ),
+                          Divider(),
+                          ListTile(
+                            leading: Icon(Icons.settings),
+                            title: Text('Settings'),
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                          ListTile(
+                            leading: Icon(Icons.info),
+                            title: Text('About'),
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },

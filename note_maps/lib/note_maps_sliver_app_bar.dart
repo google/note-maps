@@ -32,6 +32,7 @@ class NoteMapsSliverAppBar extends SliverAppBar {
     @required Widget title,
     List<Widget> actions,
     dynamic item,
+    Color color,
   })  : assert(orientation != null),
         assert(title != null),
         super(
@@ -58,7 +59,7 @@ class NoteMapsSliverAppBar extends SliverAppBar {
                             new ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                         child: new Container(
                           decoration: new BoxDecoration(
-                            color: Colors.grey.shade200.withOpacity(0.5),
+                            color: color.withOpacity(0.7),
                           ),
                         ),
                       ),

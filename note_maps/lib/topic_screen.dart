@@ -58,10 +58,11 @@ class _TopicPageState extends State<TopicPage> {
             body: CustomScrollView(
               slivers: <Widget>[
                 NoteMapsSliverAppBar(
-                      orientation :orientation,
-                    title: Text(topicState.viewModel.nameNotice +
-                        topicState.viewModel.name),
-                    item: topicState.viewModel.topic,
+                  orientation: orientation,
+                  title: Text(topicState.viewModel.nameNotice +
+                      topicState.viewModel.name),
+                  item: topicState.viewModel.topic,
+                  color: Theme.of(context).primaryColor,
                   actions: <Widget>[
                     IconButton(
                       onPressed: topicState.viewModel == null

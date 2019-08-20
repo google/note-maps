@@ -15,7 +15,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
-import 'package:bloc/bloc.dart';
 
 import 'app_navigation_bloc.dart';
 import 'library_bloc.dart';
@@ -83,8 +82,8 @@ class _AppState extends State<App> {
         child: MaterialApp(
           title: 'Note Maps',
           theme: ThemeData(
-            primarySwatch: Colors.grey,
-            accentColor: Colors.brown,
+            primarySwatch: Colors.blueGrey,
+            accentColor: Color.fromARGB(0xff, 0x8b, 0x6e, 0x60),
           ),
           home: BlocBuilder(
             bloc: appNavigationBloc,

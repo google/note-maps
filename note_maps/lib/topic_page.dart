@@ -43,8 +43,23 @@ class _TopicPageState extends State<TopicPage> {
     super.initState();
   }
 
+  void _onEditName(TopicViewModel topicViewModel) {
+    if (topicViewModel == null) {
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (context) => TopicNameEditDialog(
+        topicViewModel: topicViewModel,
+      ),
+    ).then((newName) {
+      _topicBloc.dispatch(TopicNameChangedEvent(newName));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool showFab = MediaQuery.of(context).viewInsets.bottom == 0.0;
     return BlocProvider<TopicBloc>(
       builder: (_) => _topicBloc,
       child: OrientationBuilder(
@@ -56,25 +71,16 @@ class _TopicPageState extends State<TopicPage> {
               slivers: <Widget>[
                 NoteMapsSliverAppBar(
                   orientation: orientation,
-                  title: Text(topicState.viewModel.nameNotice +
-                      topicState.viewModel.name),
+                  title: GestureDetector(
+                    onTap: () => _onEditName(topicState.viewModel),
+                    child: Text(topicState.viewModel.nameNotice +
+                        topicState.viewModel.name),
+                  ),
                   item: topicState.viewModel.topic,
                   color: Theme.of(context).primaryColor,
                   actions: <Widget>[
                     IconButton(
-                      onPressed: topicState.viewModel == null
-                          ? null
-                          : () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => TopicNameEditDialog(
-                                  topicViewModel: topicState.viewModel,
-                                ),
-                              ).then((newName) {
-                                _topicBloc
-                                    .dispatch(TopicNameChangedEvent(newName));
-                              });
-                            },
+                      onPressed: () => _onEditName(topicState.viewModel),
                       icon: Icon(Icons.edit),
                     ),
                     IconButton(
@@ -97,7 +103,7 @@ class _TopicPageState extends State<TopicPage> {
                 ),
               ],
             ),
-            floatingActionButton: topicState.viewModel?.exists
+            floatingActionButton: (showFab && topicState.viewModel?.exists)
                 ? FloatingActionButton(
                     onPressed: () {
                       Navigator.push(
@@ -260,7 +266,11 @@ class TopicBloc extends Bloc<TopicEvent, TopicState> {
     }
 
     if (event is TopicNameChangedEvent) {
-      // TODO: update topic name to event.name;
+      if (viewModel.topic.names.length==0){
+        // Create a new name
+      }else{
+        // Edit existing name
+      }
     }
   }
 

@@ -12,13 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
-import 'package:bloc/bloc.dart';
 
-import 'mobileapi/mobileapi.dart';
 import 'topic_map_view_models.dart';
 
 class TopicNameEditDialog extends StatelessWidget {
@@ -34,6 +29,7 @@ class TopicNameEditDialog extends StatelessWidget {
       title: Text(topicViewModel.isTopicMap ? "Note Map Name" : "Topic Name"),
       content: TextField(
         autofocus: true,
+        textCapitalization: TextCapitalization.words,
         onEditingComplete: () {
           Navigator.of(context).pop();
         },

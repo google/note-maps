@@ -102,6 +102,7 @@ class _TopicPageState extends State<TopicPage> {
                   textCapitalization: TextCapitalization.words,
                   autofocus: true,
                   style: Theme.of(context).textTheme.title,
+                  decoration: InputDecoration(border: InputBorder.none),
                 ),
               ),
               noteMenuButton(),
@@ -121,8 +122,8 @@ class _TopicPageState extends State<TopicPage> {
               Expanded(
                 child: TextField(
                   textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(),
                   controller: occurrence.value,
+                  decoration: InputDecoration(border: InputBorder.none),
                 ),
               ),
               noteMenuButton(),
@@ -151,8 +152,7 @@ class _TopicPageState extends State<TopicPage> {
         ),
       );
 
-  Widget noteTile(
-      BuildContext context, OccurrenceViewModel occurrence) {
+  Widget noteTile(BuildContext context, OccurrenceViewModel occurrence) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8.0),
       child: Row(

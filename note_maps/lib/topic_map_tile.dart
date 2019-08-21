@@ -52,11 +52,6 @@ class TopicMapTile extends StatelessWidget {
                         .color
                         .withAlpha(196))),
             TextSpan(text: topicMapViewModel.name),
-            TextSpan(
-                text: " (" +
-                    topicMapViewModel.topicMap.id.toRadixString(16) +
-                    ")",
-                style: Theme.of(context).textTheme.body1),
           ],
         ),
       ),

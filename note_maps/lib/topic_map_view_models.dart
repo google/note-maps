@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:flutter/widgets.dart';
+
 import 'mobileapi/mobileapi.dart';
 
 class TopicMapViewModel {
@@ -30,18 +32,27 @@ class TopicMapViewModel {
 
 class TopicViewModel {
   final Topic topic;
-  final List<OccurrenceViewModel> occurrenceViewModels;
+  final List<NameViewModel> names;
+  final List<OccurrenceViewModel> occurrences;
 
   TopicViewModel(this.topic)
-      : occurrenceViewModels = (topic?.occurrences ?? const [])
-            .map((o) => OccurrenceViewModel(occurrence: o))
-            .toList(growable: false);
+      : names = ((topic?.names != null && topic.names.length > 0)
+                ? topic.names
+                : <Name>[Name()])
+            .map((n) => NameViewModel(name: n))
+            .toList(growable: false),
+        occurrences =
+            ((topic?.occurrences != null && topic.occurrences.length > 0)
+                    ? topic.occurrences
+                    : <Occurrence>[Occurrence()])
+                .map((o) => OccurrenceViewModel(occurrence: o))
+                .toList(growable: false);
 
   String get nameNotice =>
       name != "" ? "" : "Unnamed " + (isTopicMap ? "Note Map" : "Topic");
 
   String get name {
-    if (topic == null || topic.names == null||topic.names.length==0) {
+    if (topic == null || topic.names == null || topic.names.length == 0) {
       return "";
     }
     return topic.names[0].value ?? "";
@@ -52,8 +63,24 @@ class TopicViewModel {
   bool get exists => topic != null && topic.id != 0;
 }
 
-class OccurrenceViewModel {
-  final Occurrence occurrence;
+class NameViewModel {
+  final Name _name;
+  final TextEditingController value;
 
-  OccurrenceViewModel({this.occurrence});
+  bool get tentative => _name == null || _name.id == 0;
+
+  NameViewModel({Name name})
+      : _name = name,
+        value = TextEditingController(text: name?.value);
+}
+
+class OccurrenceViewModel {
+  final Occurrence _occurrence;
+  final TextEditingController value;
+
+  bool get tentative => _occurrence == null || _occurrence.id == 0;
+
+  OccurrenceViewModel({Occurrence occurrence})
+      : _occurrence = occurrence,
+        value = TextEditingController(text: occurrence?.value);
 }

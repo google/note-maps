@@ -16,16 +16,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:jdenticon_dart/jdenticon_dart.dart';
 
+import 'mobileapi/mobileapi.dart';
+
 class ItemIcon extends StatelessWidget {
   final dynamic item;
   final BoxFit fit;
   final Alignment alignment;
+  final double size;
 
   ItemIcon(
     this.item, {
     Key key,
     this.fit = BoxFit.contain,
     this.alignment = Alignment.center,
+        this.size,
   }) : super(key: key);
 
   @override
@@ -37,6 +41,8 @@ class ItemIcon extends StatelessWidget {
       Jdenticon.toSvg((item?.id ?? 0).toRadixString(16)),
       fit: fit,
       alignment: alignment,
+      width: size,
+      height:size,
     );
   }
 }

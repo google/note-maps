@@ -19,9 +19,11 @@ import 'package:bloc/bloc.dart';
 import 'library_bloc.dart';
 import 'mobileapi/mobileapi.dart';
 import 'note_maps_sliver_app_bar.dart';
+import 'topic_bloc.dart';
 import 'topic_map_view_models.dart';
 import 'topic_name_edit_dialog.dart';
 import 'note_maps_bottom_app_bar.dart';
+import 'topic_tab_bar.dart';
 
 class TopicPage extends StatefulWidget {
   TopicPage({Key key, @required this.topicBloc})
@@ -43,20 +45,6 @@ class _TopicPageState extends State<TopicPage> {
     super.initState();
   }
 
-  void _onEditName(TopicViewModel topicViewModel) {
-    if (topicViewModel == null) {
-      return;
-    }
-    showDialog(
-      context: context,
-      builder: (context) => TopicNameEditDialog(
-        topicViewModel: topicViewModel,
-      ),
-    ).then((newName) {
-      _topicBloc.dispatch(TopicNameChangedEvent(newName));
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final bool showFab = MediaQuery.of(context).viewInsets.bottom == 0.0;
@@ -67,42 +55,15 @@ class _TopicPageState extends State<TopicPage> {
           bloc: _topicBloc,
           builder: (context, topicState) => Scaffold(
             resizeToAvoidBottomPadding: true,
-            body: CustomScrollView(
-              slivers: <Widget>[
-                NoteMapsSliverAppBar(
-                  orientation: orientation,
-                  title: GestureDetector(
-                    onTap: () => _onEditName(topicState.viewModel),
-                    child: Text(topicState.viewModel.nameNotice +
-                        topicState.viewModel.name),
-                  ),
-                  item: topicState.viewModel.topic,
-                  color: Theme.of(context).primaryColor,
-                  actions: <Widget>[
-                    IconButton(
-                      onPressed: () => _onEditName(topicState.viewModel),
-                      icon: Icon(Icons.edit),
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: Icon(Icons.delete),
-                    ),
-                  ],
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.all(8.0),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, i) => noteTile(context,
-                          topicState.viewModel.occurrenceViewModels[i]),
-                      childCount:
-                          topicState.viewModel?.occurrenceViewModels?.length ??
-                              0,
-                    ),
-                  ),
-                ),
-              ],
+            appBar: AppBar(
+              title: Text("Library"),
+              bottom: TopicTabBar(
+                textTheme: Theme.of(context).primaryTextTheme,
+              ),
             ),
+            body: topicState.loading
+                ? Center(child: CircularProgressIndicator())
+                : _createContent(context, topicState.viewModel),
             floatingActionButton: (showFab && topicState.viewModel?.exists)
                 ? FloatingActionButton(
                     onPressed: () {
@@ -127,8 +88,71 @@ class _TopicPageState extends State<TopicPage> {
     );
   }
 
+  Widget _createContent(BuildContext context, TopicViewModel topic) {
+    List<Widget> form = List<Widget>();
+    form.add(heading("Names"));
+    form.addAll(
+      topic.names.map(
+        (name) => Card(
+          child: Row(
+            children: <Widget>[
+              Container(width: 48),
+              Expanded(
+                child: TextField(
+                  textCapitalization: TextCapitalization.words,
+                  autofocus: true,
+                  style: Theme.of(context).textTheme.display1,
+                ),
+              ),
+              noteMenuButton(),
+            ],
+          ),
+        ),
+      ),
+    );
+    form.add(Divider());
+    form.add(heading("Notes"));
+    form.addAll(
+      topic.occurrences.map(
+        (occurrence) => Card(
+          child: Row(
+            children: <Widget>[
+              Container(width: 48),
+              Expanded(
+                child: TextField(
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: InputDecoration(),
+                  controller: occurrence.value,
+                ),
+              ),
+              noteMenuButton(),
+            ],
+          ),
+        ),
+      ),
+    );
+    form.add(Divider());
+    form.add(heading("Associations"));
+
+    return ListView(
+      children: form,
+    );
+  }
+
+  Widget heading(String text) => Padding(
+        padding: EdgeInsets.all(8.0),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.overline,
+            textAlign: TextAlign.left,
+          ),
+        ),
+      );
+
   Widget noteTile(
-      BuildContext context, OccurrenceViewModel occurrenceViewModel) {
+      BuildContext context, OccurrenceViewModel occurrence) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -137,12 +161,13 @@ class _TopicPageState extends State<TopicPage> {
               onPressed: () {
                 FocusScope.of(context).requestFocus(new FocusNode());
               },
-              icon: Icon(Icons.drag_handle)),
+              icon: Icon(
+                Icons.drag_handle,
+                color: Theme.of(context).primaryColor,
+              )),
           Flexible(
             child: TextField(
-              controller: TextEditingController(
-                text: occurrenceViewModel.occurrence.value,
-              ),
+              controller: occurrence.value,
               maxLines: null,
               decoration: null,
             ),
@@ -206,109 +231,4 @@ enum NoteOption { delete }
 enum RoleOption {
   editRole,
   editAssociation,
-}
-
-class TopicBloc extends Bloc<TopicEvent, TopicState> {
-  final QueryApi queryApi;
-  final CommandApi commandApi;
-  final LibraryBloc libraryBloc;
-  TopicViewModel previousViewModel;
-  TopicViewModel viewModel;
-
-  TopicBloc({
-    @required this.queryApi,
-    @required this.commandApi,
-    @required this.libraryBloc,
-    this.previousViewModel,
-    this.viewModel,
-  }) : assert(libraryBloc != null);
-
-  @override
-  TopicState get initialState {
-    return TopicState();
-  }
-
-  @override
-  Stream<TopicState> mapEventToState(TopicEvent event) async* {
-    if (event is TopicLoadEvent) {
-      print("processing topic load event");
-      if (viewModel == null || !viewModel.exists) {
-        print("yielding 'loading' state");
-        yield TopicState(loading: true);
-        if (viewModel == null || viewModel.isTopicMap) {
-          // Create a new topic map.
-          print("creating a new topic map");
-          TopicState state;
-          await commandApi
-              .createTopicMap(CreateTopicMapRequest())
-              .then((response) {
-            viewModel = TopicViewModel(response.topicMap.topic);
-            print("${viewModel.topic.id}");
-            state = TopicState(viewModel: viewModel);
-            libraryBloc.dispatch(LibraryReloadEvent());
-          }).catchError((error) {
-            print(error);
-            state = TopicState(error: error.toString());
-          });
-          print(state);
-          yield state;
-        } else {
-          // Create a new topic.
-          // TODO: create a new topic!
-          print("creating a new topic");
-        }
-      } else {
-        // Just load the topic as it is.
-        print("using existing topic");
-        yield TopicState(viewModel: viewModel);
-      }
-      print("finished processing topic load event");
-    }
-
-    if (event is TopicNameChangedEvent) {
-      if (viewModel.topic.names.length==0){
-        // Create a new name
-      }else{
-        // Edit existing name
-      }
-    }
-  }
-
-  TopicBloc createOtherTopicBloc({TopicViewModel otherViewModel}) {
-    if (otherViewModel?.topic == null && viewModel?.topic != null) {
-      Topic topic = Topic();
-      topic.topicMapId = viewModel.topic.topicMapId;
-      otherViewModel = TopicViewModel(topic);
-    }
-    return TopicBloc(
-        queryApi: queryApi,
-        commandApi: commandApi,
-        libraryBloc: libraryBloc,
-        previousViewModel: viewModel,
-        viewModel: otherViewModel);
-  }
-}
-
-class TopicState {
-  final TopicViewModel viewModel;
-  final bool loading;
-  final String error;
-
-  TopicState({
-    TopicViewModel viewModel,
-    this.loading = false,
-    this.error,
-  }) : viewModel = viewModel ?? TopicViewModel(null);
-}
-
-class TopicEvent {}
-
-class TopicLoadEvent extends TopicEvent {
-  TopicLoadEvent();
-}
-
-class TopicNameChangedEvent extends TopicEvent {
-  final String name;
-
-  TopicNameChangedEvent(this.name);
 }

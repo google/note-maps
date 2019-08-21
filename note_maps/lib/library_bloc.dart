@@ -20,7 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:equatable/equatable.dart';
 
 import 'mobileapi/mobileapi.dart';
-import 'topic_page.dart';
+import 'topic_bloc.dart';
 import 'topic_map_view_models.dart';
 
 class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {

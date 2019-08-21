@@ -15,7 +15,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'item_icon.dart';
+import 'topic_identicon.dart';
 import 'topic_bloc.dart';
 
 // TopicTabBar provides something resembling a tab bar with the assumption that
@@ -107,18 +107,10 @@ class _TopicTabBar extends StatelessWidget {
                 padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
                 child: Column(
                   children: <Widget>[
-                    Stack(
-                      children: <Widget>[
-                        Container(
-                          color: Colors.white,
-                          width: _iconSize,
-                          height: _iconSize,
-                        ),
-                        ItemIcon(
-                          state.viewModel.topic,
-                          size: _iconSize,
-                        ),
-                      ],
+                    TopicIdenticon(
+                      state.viewModel.topic,
+                      size: _iconSize,
+                      backgroundColor: Theme.of(context).primaryColorLight,
                     ),
                     Container(width: 0, height: _iconTextPadding),
                     Text(

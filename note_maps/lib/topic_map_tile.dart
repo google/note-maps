@@ -14,7 +14,7 @@
 
 import 'package:flutter/material.dart';
 
-import 'item_icon.dart';
+import 'topic_identicon.dart';
 import 'library_bloc.dart';
 import 'topic_map_view_models.dart';
 import 'trash_bloc.dart';
@@ -39,7 +39,11 @@ class TopicMapTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: ItemIcon(topicMapViewModel.topicMap),
+      leading: TopicIdenticon(
+        topicMapViewModel.topicMap,
+        size: 48,
+        backgroundColor: Theme.of(context).primaryColorLight,
+      ),
       title: Text.rich(
         TextSpan(
           children: [

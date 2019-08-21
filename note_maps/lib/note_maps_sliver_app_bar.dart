@@ -16,7 +16,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import 'item_icon.dart';
+import 'topic_identicon.dart';
 
 // NoteMapsSliverAppBar just reduces boilerplate when re-using SliverAppBar
 // across the NoteMaps app.
@@ -49,7 +49,7 @@ class NoteMapsSliverAppBar extends SliverAppBar {
                 : Stack(
                     fit: StackFit.expand,
                     children: [
-                      ItemIcon(
+                      TopicIdenticon(
                         item,
                         fit: BoxFit.fitWidth,
                         alignment: Alignment.topCenter,

@@ -16,33 +16,48 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:jdenticon_dart/jdenticon_dart.dart';
 
-import 'mobileapi/mobileapi.dart';
-
-class ItemIcon extends StatelessWidget {
+class TopicIdenticon extends StatelessWidget {
   final dynamic item;
   final BoxFit fit;
   final Alignment alignment;
   final double size;
+  final Color backgroundColor;
 
-  ItemIcon(
+  TopicIdenticon(
     this.item, {
     Key key,
     this.fit = BoxFit.contain,
     this.alignment = Alignment.center,
-        this.size,
+    this.backgroundColor = Colors.white,
+    this.size,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    if (item==null||item.id==null){
-      return Container( alignment:alignment);
+    if (item == null || item.id == null) {
+      return Container(alignment: alignment);
     }
-    return SvgPicture.string(
-      Jdenticon.toSvg((item?.id ?? 0).toRadixString(16)),
-      fit: fit,
-      alignment: alignment,
-      width: size,
-      height:size,
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color:Colors.black,width:1.0),
+      ),
+      child: ClipOval(
+        child: Stack(children: <Widget>[
+          Container(
+            color: Colors.white,
+            width: size,
+            height: size,
+          ),
+          SvgPicture.string(
+            Jdenticon.toSvg((item?.id ?? 0).toRadixString(16)),
+            fit: fit,
+            alignment: alignment,
+            width: size,
+            height: size,
+          ),
+        ]),
+      ),
     );
   }
 }

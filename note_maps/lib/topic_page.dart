@@ -14,14 +14,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:bloc/bloc.dart';
 
-import 'library_bloc.dart';
-import 'mobileapi/mobileapi.dart';
-import 'note_maps_sliver_app_bar.dart';
 import 'topic_bloc.dart';
 import 'topic_map_view_models.dart';
-import 'topic_name_edit_dialog.dart';
 import 'note_maps_bottom_app_bar.dart';
 import 'topic_tab_bar.dart';
 

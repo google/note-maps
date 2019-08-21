@@ -101,7 +101,7 @@ class _TopicPageState extends State<TopicPage> {
                 child: TextField(
                   textCapitalization: TextCapitalization.words,
                   autofocus: true,
-                  style: Theme.of(context).textTheme.display1,
+                  style: Theme.of(context).textTheme.title,
                 ),
               ),
               noteMenuButton(),

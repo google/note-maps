@@ -22,7 +22,7 @@ import 'note_maps_bottom_app_bar.dart';
 import 'topic_page.dart';
 
 class LibraryPage extends StatefulWidget {
-  LibraryPage({Key key, this.title="Library"}) : super(key: key);
+  LibraryPage({Key key, this.title = "Library"}) : super(key: key);
 
   final String title;
 
@@ -45,11 +45,9 @@ class _LibraryPageState extends State<LibraryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return
-      OrientationBuilder(
+    return OrientationBuilder(
       builder: (context, orientation) => Scaffold(
         body: BlocBuilder<LibraryBloc, LibraryState>(
-          bloc: _libraryBloc,
           builder: (context, libraryState) =>
               scrollView(context, orientation, libraryState),
         ),
@@ -70,7 +68,7 @@ class _LibraryPageState extends State<LibraryPage> {
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       ),
-      );
+    );
   }
 
   Widget scrollView(BuildContext context, Orientation orientation,

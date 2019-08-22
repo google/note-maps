@@ -45,25 +45,27 @@ class _TrashPageState extends State<TrashPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Navigator(
-      key: widget.navigatorKey,
-      onGenerateRoute: (routeSettings) {
-        return MaterialPageRoute(
-          builder: (context) => OrientationBuilder(
-            builder: (context, orientation) => Theme(
-              data: Theme.of(context).copyWith(primaryColor: Colors.black),
-              child: Scaffold(
-                body: BlocBuilder<TrashBloc, TrashState>(
-                  bloc: _trashBloc,
-                  builder: (context, trashState) =>
-                      scrollView(context, orientation, trashState),
+    return BlocProvider(
+      builder: (context) => _libraryBloc,
+      child: Navigator(
+        key: widget.navigatorKey,
+        onGenerateRoute: (routeSettings) {
+          return MaterialPageRoute(
+            builder: (context) => OrientationBuilder(
+              builder: (context, orientation) => Theme(
+                data: Theme.of(context).copyWith(primaryColor: Colors.black),
+                child: Scaffold(
+                  body: BlocBuilder<TrashBloc, TrashState>(
+                    builder: (context, trashState) =>
+                        scrollView(context, orientation, trashState),
+                  ),
+                  bottomNavigationBar: NoteMapsBottomAppBar(),
                 ),
-                bottomNavigationBar: NoteMapsBottomAppBar(),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 

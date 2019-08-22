@@ -25,11 +25,11 @@ class NoteMapsBottomAppBar extends StatefulWidget {
 }
 
 class _NoteMapsBottomAppBarState extends State<NoteMapsBottomAppBar> {
-  AppNavigationBloc appNavigationBloc;
+  AppNavigationBloc _appNavigationBloc;
 
   @override
   void initState() {
-    appNavigationBloc = BlocProvider.of<AppNavigationBloc>(context);
+    _appNavigationBloc = BlocProvider.of<AppNavigationBloc>(context);
     super.initState();
   }
 
@@ -47,7 +47,6 @@ class _NoteMapsBottomAppBarState extends State<NoteMapsBottomAppBar> {
                 context: context,
                 builder: (context) {
                   return BlocBuilder(
-                    bloc: appNavigationBloc,
                     builder: (context, state) => Drawer(
                       child: Column(
                         children: <Widget>[
@@ -57,7 +56,7 @@ class _NoteMapsBottomAppBarState extends State<NoteMapsBottomAppBar> {
                             title: Text('Library'),
                             onTap: () {
                               Navigator.pop(context);
-                              appNavigationBloc.dispatch(AppNavigationEvent(
+                              _appNavigationBloc.dispatch(AppNavigationEvent(
                                   AppNavigationPage.library));
                             },
                           ),
@@ -67,7 +66,7 @@ class _NoteMapsBottomAppBarState extends State<NoteMapsBottomAppBar> {
                             title: Text('Trash'),
                             onTap: () {
                               Navigator.pop(context);
-                              appNavigationBloc.dispatch(
+                              _appNavigationBloc.dispatch(
                                   AppNavigationEvent(AppNavigationPage.trash));
                             },
                           ),

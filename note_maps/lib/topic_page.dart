@@ -47,7 +47,6 @@ class _TopicPageState extends State<TopicPage> {
       builder: (_) => _topicBloc,
       child: OrientationBuilder(
         builder: (context, orientation) => BlocBuilder<TopicBloc, TopicState>(
-          bloc: _topicBloc,
           builder: (context, topicState) => Scaffold(
             resizeToAvoidBottomPadding: true,
             appBar: AppBar(

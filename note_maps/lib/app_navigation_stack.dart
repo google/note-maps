@@ -67,7 +67,6 @@ class _AppNavigationStackState extends State<AppNavigationStack>
     return BlocProvider<AppNavigationBloc>(
       builder: (context) => appNavigationBloc,
       child: BlocBuilder(
-        bloc: appNavigationBloc,
         builder: (context, state) {
           return WillPopScope(
             onWillPop: () async =>

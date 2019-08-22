@@ -16,8 +16,8 @@ import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:bloc/bloc.dart';
 
-import 'library_bloc.dart';
-import 'mobileapi/mobileapi.dart';
+import 'package:note_maps/library_page/library_bloc.dart';
+import 'package:note_maps/mobileapi/mobileapi.dart';
 
 class TopicBloc extends Bloc<TopicEvent, TopicState> {
   final QueryApi queryApi;

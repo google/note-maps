@@ -19,9 +19,10 @@ import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:equatable/equatable.dart';
 
-import 'mobileapi/mobileapi.dart';
-import 'topic_bloc.dart';
-import 'topic_map_view_models.dart';
+import 'package:note_maps/mobileapi/mobileapi.dart';
+import 'package:note_maps/topic_bloc.dart';
+import 'package:note_maps/view_models.dart';
+import 'package:note_maps/mobileapi/mobileapi.dart';
 
 class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
   final QueryApi queryApi;

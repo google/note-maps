@@ -15,10 +15,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'topic_bloc.dart';
-import 'topic_map_view_models.dart';
-import 'note_maps_bottom_app_bar.dart';
-import 'topic_tab_bar.dart';
+import 'package:note_maps/topic_bloc.dart';
+import 'package:note_maps/view_models.dart';
+import 'package:note_maps/app_bottom_app_bar.dart';
+import 'package:note_maps/topic_tab_bar.dart';
 
 class TopicPage extends StatefulWidget {
   TopicPage({Key key, @required this.topicBloc})
@@ -69,7 +69,7 @@ class _TopicPageState extends State<TopicPage> {
                 : null,
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.centerDocked,
-            bottomNavigationBar: NoteMapsBottomAppBar(),
+            bottomNavigationBar: AppBottomAppBar(),
           ),
         ),
       ),

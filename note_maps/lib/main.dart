@@ -16,10 +16,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
-import 'app_navigation_bloc.dart';
-import 'app_navigation_stack.dart';
-import 'library_bloc.dart';
-import 'mobileapi/mobileapi.dart';
+import 'package:note_maps/app_navigation_bloc.dart';
+import 'package:note_maps/app_navigation_stack.dart';
+import 'package:note_maps/library_page/library_bloc.dart';
+import 'package:note_maps/mobileapi/mobileapi.dart';
 
 void main() => runApp(App(
       queryApi: QueryApi(),

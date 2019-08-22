@@ -15,8 +15,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'topic_identicon.dart';
-import 'topic_bloc.dart';
+import 'package:note_maps/topic_identicon.dart';
+import 'package:note_maps/topic_bloc.dart';
 
 // TopicTabBar provides something resembling a tab bar with the assumption that
 // each tab represents a topic in a topic map, and allowing that the set of

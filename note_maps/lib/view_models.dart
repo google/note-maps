@@ -14,7 +14,7 @@
 
 import 'package:flutter/widgets.dart';
 
-import 'mobileapi/mobileapi.dart';
+import 'package:note_maps/mobileapi/mobileapi.dart';
 
 class TopicMapViewModel {
   final TopicMap topicMap;

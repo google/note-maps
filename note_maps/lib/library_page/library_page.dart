@@ -15,11 +15,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 
-import 'library_bloc.dart';
-import 'mobileapi/mobileapi.dart';
-import 'topic_map_tile.dart';
-import 'note_maps_bottom_app_bar.dart';
-import 'topic_page.dart';
+import 'package:note_maps/library_page/library_bloc.dart';
+import 'package:note_maps/mobileapi/mobileapi.dart';
+import 'package:note_maps/topic_map_tile.dart';
+import 'package:note_maps/app_bottom_app_bar.dart';
+import 'package:note_maps/topic_page.dart';
 
 class LibraryPage extends StatefulWidget {
   LibraryPage({Key key, this.title = "Library"}) : super(key: key);
@@ -63,7 +63,7 @@ class _LibraryPageState extends State<LibraryPage> {
             ],
           ),
         ),
-        bottomNavigationBar: NoteMapsBottomAppBar(),
+        bottomNavigationBar: AppBottomAppBar(),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             Navigator.push(

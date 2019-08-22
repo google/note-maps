@@ -15,9 +15,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'topic_identicon.dart';
-import 'library_bloc.dart';
-import 'topic_map_view_models.dart';
+import 'package:note_maps/topic_identicon.dart';
+import 'package:note_maps/library_page/library_bloc.dart';
+import 'package:note_maps/view_models.dart';
 
 class TopicMapTile extends StatelessWidget {
   TopicMapTile({

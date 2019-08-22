@@ -15,16 +15,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'app_navigation_bloc.dart';
+import 'package:note_maps/app_navigation_bloc.dart';
 
-class NoteMapsBottomAppBar extends StatefulWidget {
+class AppBottomAppBar extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
-    return _NoteMapsBottomAppBarState();
+    return _AppBottomAppBarState();
   }
 }
 
-class _NoteMapsBottomAppBarState extends State<NoteMapsBottomAppBar> {
+class _AppBottomAppBarState extends State<AppBottomAppBar> {
   @override
   Widget build(BuildContext context) {
     AppNavigationBloc appNavigationBloc =

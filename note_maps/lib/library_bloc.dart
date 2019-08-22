@@ -30,15 +30,10 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
   LibraryBloc({
     @required this.queryApi,
     @required this.commandApi,
-  }) {
-    print("LibraryBloc created: ${this}");
-  }
+  });
 
   @override
-  LibraryState get initialState {
-    print("creating initial state");
-    return LibraryState();
-  }
+  LibraryState get initialState => LibraryState(loading: true);
 
   @override
   Stream<LibraryState> mapEventToState(LibraryEvent event) async* {
@@ -51,19 +46,44 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
       yield await _loadTopicMaps();
     }
 
-    if (event is LibraryTopicMapDeletedEvent) {
+    if (event is LibraryTopicMapMovedToTrashEvent) {
       DeleteTopicMapRequest request = DeleteTopicMapRequest();
       request.topicMapId = event.topicMapId;
       await commandApi.deleteTopicMap(request);
+      yield await _loadTopicMaps();
+    }
+
+    if (event is LibraryTopicMapDeletedEvent) {
+      DeleteTopicMapRequest request = DeleteTopicMapRequest();
+      request.topicMapId = event.topicMapId;
+      request.fullyDelete = true;
+      await commandApi.deleteTopicMap(request);
+      yield await _loadTopicMaps();
+    }
+
+    if (event is LibraryTopicMapRestoredEvent) {
+      RestoreTopicMapRequest request = RestoreTopicMapRequest();
+      request.topicMapId = event.topicMapId;
+      await commandApi.restoreTopicMap(request);
       yield await _loadTopicMaps();
     }
   }
 
   Future<LibraryState> _loadTopicMaps() async {
     LibraryState next;
-    await queryApi.getTopicMaps(GetTopicMapsRequest()).then((response) {
+    await Future.wait(
+      LibraryFolder.values.map((folder) async =>
+          await queryApi.getTopicMaps(GetTopicMapsRequest().copyWith((r) {
+            r.inTrash = folder == LibraryFolder.trash;
+          }))),
+    ).then((responses) {
       next = LibraryState(
-        topicMaps: (response.topicMaps ?? const [])
+        topicMaps: responses[LibraryFolder.all.index]
+            .topicMaps
+            .map((tm) => TopicMapViewModel(tm))
+            .toList(growable: false),
+        topicMapsInTrash: responses[LibraryFolder.trash.index]
+            .topicMaps
             .map((tm) => TopicMapViewModel(tm))
             .toList(growable: false),
       );
@@ -73,28 +93,31 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     return next;
   }
 
-  TopicBloc createTopicBloc({TopicViewModel viewModel}) => TopicBloc(
+  TopicBloc createTopicBloc({Topic topic}) => TopicBloc(
         queryApi: queryApi,
         commandApi: commandApi,
         libraryBloc: this,
-        viewModel: viewModel,
+        topic: topic,
       );
 }
 
 class LibraryState {
   final List<TopicMapViewModel> topicMaps;
+  final List<TopicMapViewModel> topicMapsInTrash;
   final bool loading;
   final String error;
 
   LibraryState({
     this.topicMaps = const [],
+    this.topicMapsInTrash = const [],
     this.loading = false,
     this.error,
   }) : assert(topicMaps != null);
+}
 
-  @override
-  String toString() =>
-      "LibraryState(${topicMaps.length}, ${loading}, ${error})";
+enum LibraryFolder {
+  all,
+  trash,
 }
 
 class LibraryEvent extends Equatable {}
@@ -102,6 +125,20 @@ class LibraryEvent extends Equatable {}
 class LibraryAppStartedEvent extends LibraryEvent {}
 
 class LibraryReloadEvent extends LibraryEvent {}
+
+class LibraryTopicMapMovedToTrashEvent extends LibraryEvent {
+  final Int64 topicMapId;
+
+  LibraryTopicMapMovedToTrashEvent(this.topicMapId)
+      : assert(topicMapId != null && topicMapId != 0);
+}
+
+class LibraryTopicMapRestoredEvent extends LibraryEvent {
+  final Int64 topicMapId;
+
+  LibraryTopicMapRestoredEvent(this.topicMapId)
+      : assert(topicMapId != null && topicMapId != 0);
+}
 
 class LibraryTopicMapDeletedEvent extends LibraryEvent {
   final Int64 topicMapId;

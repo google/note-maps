@@ -16,7 +16,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 
 import 'library_bloc.dart';
-import 'note_maps_sliver_app_bar.dart';
+import 'mobileapi/mobileapi.dart';
 import 'topic_map_tile.dart';
 import 'note_maps_bottom_app_bar.dart';
 import 'topic_page.dart';
@@ -45,11 +45,23 @@ class _LibraryPageState extends State<LibraryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return OrientationBuilder(
-      builder: (context, orientation) => Scaffold(
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("Library"),
+          bottom: TabBar(tabs: <Tab>[
+            Tab(text: "All"),
+            Tab(text: "Trash"),
+          ]),
+        ),
         body: BlocBuilder<LibraryBloc, LibraryState>(
-          builder: (context, libraryState) =>
-              scrollView(context, orientation, libraryState),
+          builder: (context, libraryState) => TabBarView(
+            children: <Widget>[
+              listView(context, libraryState, LibraryFolder.all),
+              listView(context, libraryState, LibraryFolder.trash),
+            ],
+          ),
         ),
         bottomNavigationBar: NoteMapsBottomAppBar(),
         floatingActionButton: FloatingActionButton(
@@ -58,7 +70,7 @@ class _LibraryPageState extends State<LibraryPage> {
               context,
               MaterialPageRoute(
                 builder: (context) => TopicPage(
-                  topicBloc: _libraryBloc.createTopicBloc(),
+                  topicBloc: _libraryBloc.createTopicBloc(topic: Topic()),
                 ),
               ),
             );
@@ -71,19 +83,9 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  Widget scrollView(BuildContext context, Orientation orientation,
-      LibraryState libraryState) {
-    List<Widget> widgets = List<Widget>();
-    widgets.add(NoteMapsSliverAppBar(
-      orientation: orientation,
-      title: Text(title),
-    ));
+  Widget listView(
+      BuildContext context, LibraryState libraryState, LibraryFolder folder) {
     if (libraryState.error != null) {
-      widgets.add(SliverFillRemaining(
-        child: Center(
-          child: Icon(Icons.bug_report),
-        ),
-      ));
       if (_error != libraryState.error) {
         _error = libraryState.error;
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -92,37 +94,33 @@ class _LibraryPageState extends State<LibraryPage> {
           ));
         });
       }
-    } else if (libraryState.loading) {
-      widgets.add(SliverFillRemaining(
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
-      ));
-    } else {
-      widgets.add(SliverPadding(
-        padding: const EdgeInsets.all(8.0),
-        sliver: SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (BuildContext context, int index) => TopicMapTile(
-              libraryBloc: _libraryBloc,
-              topicMapViewModel: libraryState.topicMaps[index],
-              onTap: () {
+      return Center(child: Icon(Icons.bug_report, size: 48));
+    }
+
+    var list = (folder == LibraryFolder.trash)
+        ? libraryState.topicMapsInTrash
+        : libraryState.topicMaps;
+    print(list);
+
+    return ListView.builder(
+      itemCount: list.length,
+      itemBuilder: (BuildContext context, int index) => TopicMapTile(
+        topicMap: list[index],
+        onTap: folder == LibraryFolder.trash
+            ? null
+            : () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => TopicPage(
-                        topicBloc: _libraryBloc.createTopicBloc(
-                            viewModel:
-                                libraryState.topicMaps[index].topicViewModel)),
+                      topicBloc: _libraryBloc.createTopicBloc(
+                          topic: libraryState
+                              .topicMaps[index].topicViewModel.topic),
+                    ),
                   ),
                 );
               },
-            ),
-            childCount: libraryState.topicMaps.length,
-          ),
-        ),
-      ));
-    }
-    return CustomScrollView(slivers: widgets);
+      ),
+    );
   }
 }

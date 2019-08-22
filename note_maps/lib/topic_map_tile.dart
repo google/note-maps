@@ -13,26 +13,21 @@
 // limitations under the License.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'topic_identicon.dart';
 import 'library_bloc.dart';
 import 'topic_map_view_models.dart';
-import 'trash_bloc.dart';
 
 class TopicMapTile extends StatelessWidget {
   TopicMapTile({
     Key key,
-    this.libraryBloc,
-    this.trashBloc,
-    @required this.topicMapViewModel,
+    @required this.topicMap,
     this.onTap,
     this.trailing,
-  })  : assert(topicMapViewModel != null),
-        super(key: key);
+  })  : assert(topicMap!=null),super(key: key);
 
-  final LibraryBloc libraryBloc;
-  final TrashBloc trashBloc;
-  final TopicMapViewModel topicMapViewModel;
+  final TopicMapViewModel topicMap;
   final void Function() onTap;
   final Widget trailing;
 
@@ -40,7 +35,7 @@ class TopicMapTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: TopicIdenticon(
-        topicMapViewModel.topicMap,
+        topicMap.topicMap,
         size: 48,
         backgroundColor: Theme.of(context).primaryColorLight,
       ),
@@ -48,50 +43,46 @@ class TopicMapTile extends StatelessWidget {
         TextSpan(
           children: [
             TextSpan(
-                text: topicMapViewModel.nameNotice,
+                text: topicMap.nameNotice,
                 style: Theme.of(context).textTheme.body2.apply(
                     color: Theme.of(context)
                         .textTheme
                         .body2
                         .color
                         .withAlpha(196))),
-            TextSpan(text: topicMapViewModel.name),
+            TextSpan(text: topicMap.name),
           ],
         ),
       ),
-      trailing: _noteMapMenuButton(),
+      trailing: _noteMapMenuButton(context),
       onTap: onTap,
     );
   }
 
-  Widget _noteMapMenuButton() {
+  Widget _noteMapMenuButton(BuildContext context) {
+    LibraryBloc libraryBloc=BlocProvider.of<LibraryBloc>(context);
+    if(libraryBloc==null){return Container(width:0,height:0);}
     return PopupMenuButton<NoteMapOption>(
       onSelected: (NoteMapOption choice) {
         switch (choice) {
           case NoteMapOption.moveToTrash:
-            if (libraryBloc != null) {
               libraryBloc.dispatch(
-                  LibraryTopicMapDeletedEvent(topicMapViewModel.topicMap.id));
-            }
+                  LibraryTopicMapMovedToTrashEvent(topicMap.topicMap.id));
             break;
           case NoteMapOption.delete:
-            if (trashBloc != null) {
-              trashBloc.dispatch(
-                  TrashTopicMapDeletedEvent(topicMapViewModel.topicMap.id));
-            }
+              libraryBloc.dispatch(
+                  LibraryTopicMapDeletedEvent(topicMap.topicMap.id));
             break;
           case NoteMapOption.restore:
-            if (trashBloc != null) {
-              trashBloc.dispatch(
-                  TrashTopicMapRestoredEvent(topicMapViewModel.topicMap.id));
-            }
+              libraryBloc.dispatch(
+                  LibraryTopicMapRestoredEvent(topicMap.topicMap.id));
             break;
         }
       },
       itemBuilder: (BuildContext context) {
         List<PopupMenuEntry<NoteMapOption>> options =
             List<PopupMenuEntry<NoteMapOption>>();
-        if (libraryBloc != null && !topicMapViewModel.topicMap.inTrash) {
+        if (!topicMap.topicMap.inTrash) {
           options.add(const PopupMenuItem<NoteMapOption>(
             value: NoteMapOption.moveToTrash,
             child: ListTile(
@@ -100,7 +91,7 @@ class TopicMapTile extends StatelessWidget {
             ),
           ));
         }
-        if (trashBloc != null && topicMapViewModel.topicMap.inTrash) {
+        if (topicMap.topicMap.inTrash) {
           options.add(const PopupMenuItem<NoteMapOption>(
             value: NoteMapOption.restore,
             child: ListTile(

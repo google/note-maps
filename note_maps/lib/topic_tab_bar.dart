@@ -108,13 +108,13 @@ class _TopicTabBar extends StatelessWidget {
                 child: Column(
                   children: <Widget>[
                     TopicIdenticon(
-                      state.viewModel.topic,
+                      state.topic,
                       size: _iconSize,
                       backgroundColor: Theme.of(context).primaryColorLight,
                     ),
                     Container(width: 0, height: _iconTextPadding),
                     Text(
-                      state.viewModel.nameNotice + state.viewModel.name,
+                      state.nameNotice + state.name,
                       style: textTheme.button,
                     ),
                   ],

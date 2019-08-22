@@ -12,27 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:bloc/bloc.dart';
 
 import 'library_bloc.dart';
 import 'mobileapi/mobileapi.dart';
-import 'topic_map_view_models.dart';
 
 class TopicBloc extends Bloc<TopicEvent, TopicState> {
   final QueryApi queryApi;
   final CommandApi commandApi;
   final LibraryBloc libraryBloc;
-  TopicViewModel previousViewModel;
-  TopicViewModel viewModel;
 
   TopicBloc({
     @required this.queryApi,
     @required this.commandApi,
     @required this.libraryBloc,
-    this.previousViewModel,
-    this.viewModel,
-  }) : assert(libraryBloc != null);
+    Topic topic,
+    Int64 topicId,
+  })  : assert(libraryBloc != null),
+        assert(topic == null || topicId == null),
+        assert(topic != null || topicId != null) {
+    if (topic != null) {
+      dispatch(TopicLoadedEvent(topic: topic));
+    } else {
+      dispatch(TopicLoadEvent(topicId: topicId));
+    }
+  }
 
   @override
   TopicState get initialState {
@@ -42,84 +48,103 @@ class TopicBloc extends Bloc<TopicEvent, TopicState> {
   @override
   Stream<TopicState> mapEventToState(TopicEvent event) async* {
     if (event is TopicLoadEvent) {
-      print("processing topic load event");
-      if (viewModel == null || !viewModel.exists) {
-        print("yielding 'loading' state");
-        yield TopicState(loading: true);
-        if (viewModel == null || viewModel.isTopicMap) {
-          // Create a new topic map.
-          print("creating a new topic map");
-          TopicState state;
-          await commandApi
-              .createTopicMap(CreateTopicMapRequest())
-              .then((response) {
-            viewModel = TopicViewModel(response.topicMap.topic);
-            print("${viewModel.topic.id}");
-            state = TopicState(viewModel: viewModel);
-            libraryBloc.dispatch(LibraryReloadEvent());
-          }).catchError((error) {
-            print(error);
-            state = TopicState(error: error.toString());
-          });
-          print(state);
-          yield state;
-        } else {
-          // Create a new topic.
-          // TODO: create a new topic!
-          print("creating a new topic");
-        }
+      yield TopicState(loading: true);
+      yield TopicState(
+          error: "load existing topic? nope, not implemented yet.");
+    } else if (event is TopicLoadedEvent) {
+      yield TopicState(topic: event.topic);
+      if (event.topic.id == 0 && event.topic.topicMapId != 0) {
+        TopicState state;
+        await commandApi
+            .createTopicMap(CreateTopicMapRequest())
+            .then((response) {
+          state = TopicState(topic: response.topicMap.topic);
+          // Since a new topic map has been created, tell the library bloc.
+          libraryBloc.dispatch(LibraryReloadEvent());
+        }).catchError((error) {
+          print(error);
+          state = TopicState(error: error.toString());
+        });
+        yield state;
       } else {
-        // Just load the topic as it is.
-        print("using existing topic");
-        yield TopicState(viewModel: viewModel);
-      }
-      print("finished processing topic load event");
-    }
-
-    if (event is TopicNameChangedEvent) {
-      if (viewModel.topic.names.length == 0) {
-        // Create a new name
-      } else {
-        // Edit existing name
+        // Create a new topic.
+        // TODO: create a new topic!
+        print("creating a new topic? nope, not implemented yet.");
       }
     }
+    print("finished processing topic load event");
   }
 
-  TopicBloc createOtherTopicBloc({TopicViewModel otherViewModel}) {
-    if (otherViewModel?.topic == null && viewModel?.topic != null) {
-      Topic topic = Topic();
-      topic.topicMapId = viewModel.topic.topicMapId;
-      otherViewModel = TopicViewModel(topic);
+  TopicBloc createOtherTopicBloc({Topic other}) {
+    other = other ?? Topic();
+    if (other.topicMapId == 0) {
+      other.topicMapId = currentState.topic?.topicMapId ?? Int64(0);
     }
     return TopicBloc(
         queryApi: queryApi,
         commandApi: commandApi,
         libraryBloc: libraryBloc,
-        previousViewModel: viewModel,
-        viewModel: otherViewModel);
+        topic: other);
   }
 }
 
 class TopicState {
-  final TopicViewModel viewModel;
   final bool loading;
+  final Topic topic;
   final String error;
+  final List<Name> names;
+  final List<Occurrence> occurrences;
 
   TopicState({
-    TopicViewModel viewModel,
+    Topic topic,
     this.loading = false,
     this.error,
-  }) : viewModel = viewModel ?? TopicViewModel(null);
+  })  : assert(loading != null),
+        topic = topic ?? Topic(),
+        names = topic == null
+            ? const []
+            : topic.names.length == 0
+                ? <Name>[
+                    Name().copyWith((n) {
+                      n.parentId = topic.id;
+                    })
+                  ]
+                : topic.names,
+        occurrences = topic == null
+            ? const []
+            : topic.occurrences.length == 0
+                ? <Occurrence>[
+                    Occurrence().copyWith((o) {
+                      o.parentId = topic.id;
+                    })
+                  ]
+                : topic.occurrences;
+
+  bool get isTopicMap => topic.id != 0 && topic.id == topic.topicMapId;
+
+  bool get exists => topic.id != 0;
+
+  String get nameNotice =>
+      name != "" ? "" : "Unnamed " + (isTopicMap ? "Note Map" : "Topic");
+
+  String get name {
+    if (topic.names == null || topic.names.length == 0) {
+      return "";
+    }
+    return topic.names[0].value ?? "";
+  }
 }
 
 class TopicEvent {}
 
 class TopicLoadEvent extends TopicEvent {
-  TopicLoadEvent();
+  final Int64 topicId;
+
+  TopicLoadEvent({this.topicId});
 }
 
-class TopicNameChangedEvent extends TopicEvent {
-  final String name;
+class TopicLoadedEvent extends TopicEvent {
+  final Topic topic;
 
-  TopicNameChangedEvent(this.name);
+  TopicLoadedEvent({this.topic});
 }

@@ -35,12 +35,6 @@ class _TopicPageState extends State<TopicPage> {
   TopicBloc get _topicBloc => widget.topicBloc;
 
   @override
-  void initState() {
-    _topicBloc.dispatch(TopicLoadEvent());
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final bool showFab = MediaQuery.of(context).viewInsets.bottom == 0.0;
     return BlocProvider<TopicBloc>(
@@ -57,8 +51,8 @@ class _TopicPageState extends State<TopicPage> {
             ),
             body: topicState.loading
                 ? Center(child: CircularProgressIndicator())
-                : _createContent(context, topicState.viewModel),
-            floatingActionButton: (showFab && topicState.viewModel?.exists)
+                : _createContent(context, topicState),
+            floatingActionButton: (showFab && topicState.exists)
                 ? FloatingActionButton(
                     onPressed: () {
                       Navigator.push(
@@ -82,11 +76,11 @@ class _TopicPageState extends State<TopicPage> {
     );
   }
 
-  Widget _createContent(BuildContext context, TopicViewModel topic) {
+  Widget _createContent(BuildContext context, TopicState topicState) {
     List<Widget> form = List<Widget>();
     form.add(heading("Names"));
     form.addAll(
-      topic.names.map(
+      topicState.names.map(
         (name) => Card(
           child: Row(
             children: <Widget>[
@@ -108,7 +102,7 @@ class _TopicPageState extends State<TopicPage> {
     form.add(Divider());
     form.add(heading("Notes"));
     form.addAll(
-      topic.occurrences.map(
+      topicState.occurrences.map(
         (occurrence) => Card(
           child: Row(
             children: <Widget>[
@@ -116,7 +110,6 @@ class _TopicPageState extends State<TopicPage> {
               Expanded(
                 child: TextField(
                   textCapitalization: TextCapitalization.sentences,
-                  controller: occurrence.value,
                   decoration: InputDecoration(border: InputBorder.none),
                 ),
               ),

@@ -18,7 +18,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'app_navigation_bloc.dart';
 import 'library_navigator.dart';
 import 'mobileapi/mobileapi.dart';
-import 'trash_page.dart';
 
 class AppNavigationStack extends StatefulWidget {
   final QueryApi queryApi;
@@ -44,7 +43,9 @@ class _AppNavigationStackState extends State<AppNavigationStack>
   void initState() {
     super.initState();
     appNavigationBloc = BlocProvider.of<AppNavigationBloc>(context);
-    keys = AppNavigationPage.values.map((_) => GlobalKey<NavigatorState>()).toList();
+    keys = AppNavigationPage.values
+        .map((_) => GlobalKey<NavigatorState>())
+        .toList();
     faders = AppNavigationPage.values.map((_) {
       return AnimationController(
         vsync: this,
@@ -66,7 +67,7 @@ class _AppNavigationStackState extends State<AppNavigationStack>
   Widget build(BuildContext context) {
     return BlocProvider<AppNavigationBloc>(
       builder: (context) => appNavigationBloc,
-      child: BlocBuilder(
+      child: BlocBuilder<AppNavigationBloc, AppNavigationState>(
         builder: (context, state) {
           return WillPopScope(
             onWillPop: () async =>
@@ -75,12 +76,12 @@ class _AppNavigationStackState extends State<AppNavigationStack>
               fit: StackFit.expand,
               children: AppNavigationPage.values.map((page) {
                 Widget screen;
-                switch(page){
+                switch (page) {
                   case AppNavigationPage.trash:
-                    screen=TrashPage(navigatorKey:keys[page.index]);
+                    screen = LibraryNavigator(navigatorKey: keys[page.index]);
                     break;
                   default:
-                    screen=LibraryNavigator(navigatorKey:keys[page.index]);
+                    screen = LibraryNavigator(navigatorKey: keys[page.index]);
                     break;
                 }
                 final Widget transition = FadeTransition(

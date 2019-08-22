@@ -19,10 +19,7 @@ import 'package:provider/provider.dart';
 import 'app_navigation_bloc.dart';
 import 'app_navigation_stack.dart';
 import 'library_bloc.dart';
-import 'library_navigator.dart';
-import 'library_page.dart';
 import 'mobileapi/mobileapi.dart';
-import 'trash_page.dart';
 
 void main() => runApp(App(
       queryApi: QueryApi(),
@@ -85,8 +82,7 @@ class _AppState extends State<App> with TickerProviderStateMixin<App> {
             primarySwatch: Colors.blueGrey,
             accentColor: Color.fromARGB(0xff, 0x8b, 0x6e, 0x60),
           ),
-          home: BlocBuilder(
-            bloc: appNavigationBloc,
+          home: BlocBuilder<AppNavigationBloc, AppNavigationState>(
             builder: (context, state) {
               return AppNavigationStack();
             },

@@ -13,80 +13,8 @@
 // limitations under the License.
 
 import 'package:fixnum/fixnum.dart';
-import 'package:flutter/material.dart';
-import 'package:bloc/bloc.dart';
 
-import 'package:note_maps/library_page/library_bloc.dart';
-import 'package:note_maps/mobileapi/mobileapi.dart';
-
-class TopicBloc extends Bloc<TopicEvent, TopicState> {
-  final QueryApi queryApi;
-  final CommandApi commandApi;
-  final LibraryBloc libraryBloc;
-
-  TopicBloc({
-    @required this.queryApi,
-    @required this.commandApi,
-    @required this.libraryBloc,
-    Topic topic,
-    Int64 topicId,
-  })  : assert(libraryBloc != null),
-        assert(topic == null || topicId == null),
-        assert(topic != null || topicId != null) {
-    if (topic != null) {
-      dispatch(TopicLoadedEvent(topic: topic));
-    } else {
-      dispatch(TopicLoadEvent(topicId: topicId));
-    }
-  }
-
-  @override
-  TopicState get initialState {
-    return TopicState();
-  }
-
-  @override
-  Stream<TopicState> mapEventToState(TopicEvent event) async* {
-    if (event is TopicLoadEvent) {
-      yield TopicState(loading: true);
-      yield TopicState(
-          error: "load existing topic? nope, not implemented yet.");
-    } else if (event is TopicLoadedEvent) {
-      yield TopicState(topic: event.topic);
-      if (event.topic.id == 0 && event.topic.topicMapId != 0) {
-        TopicState state;
-        await commandApi
-            .createTopicMap(CreateTopicMapRequest())
-            .then((response) {
-          state = TopicState(topic: response.topicMap.topic);
-          // Since a new topic map has been created, tell the library bloc.
-          libraryBloc.dispatch(LibraryReloadEvent());
-        }).catchError((error) {
-          print(error);
-          state = TopicState(error: error.toString());
-        });
-        yield state;
-      } else {
-        // Create a new topic.
-        // TODO: create a new topic!
-        print("creating a new topic? nope, not implemented yet.");
-      }
-    }
-    print("finished processing topic load event");
-  }
-
-  TopicBloc createOtherTopicBloc({Topic other}) {
-    other = other ?? Topic();
-    if (other.topicMapId == 0) {
-      other.topicMapId = currentState.topic?.topicMapId ?? Int64(0);
-    }
-    return TopicBloc(
-        queryApi: queryApi,
-        commandApi: commandApi,
-        libraryBloc: libraryBloc,
-        topic: other);
-  }
-}
+import 'mobileapi/mobileapi.dart';
 
 class TopicState {
   final bool loading;

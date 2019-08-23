@@ -14,6 +14,8 @@
 
 syntax = "proto3";
 
+message Library { repeated uint64 topic_map_ids = 1; }
+
 message TopicMap {
   uint64 id = 1;
   Topic topic = 2;
@@ -21,41 +23,131 @@ message TopicMap {
 }
 
 message Topic {
-  uint64 id = 1;
-  uint64 topic_map_id = 2;
+  uint64 topic_map_id = 1;
+  uint64 id = 2;
   repeated Name names = 3;
   repeated Occurrence occurrences = 4;
+  repeated uint64 name_ids = 5;
+  repeated uint64 occurrence_ids = 6;
 }
 
 message Name {
-  uint64 id = 1;
+  uint64 topic_map_id = 1;
   uint64 parent_id = 2;
-  string value = 3;
+  uint64 id = 3;
+  string value = 4;
 }
 
 message Occurrence {
-  uint64 id = 1;
-  uint64 parent_id = 2;
-  string value = 3;
-}
-
-message GetTopicMapsRequest {
-  bool in_trash = 1;
-}
-
-message GetTopicMapsResponse { repeated TopicMap topic_maps = 1; }
-
-message CreateTopicMapRequest {}
-
-message CreateTopicMapResponse { TopicMap topic_map = 1; }
-
-message DeleteTopicMapRequest {
   uint64 topic_map_id = 1;
-  bool fully_delete = 2;
+  uint64 parent_id = 2;
+  uint64 id = 3;
+  string value = 4;
 }
 
-message DeleteTopicMapResponse {}
+enum ItemType {
+  UnspecifiedItem = 0;
+  LibraryItem = 1;
+  TopicMapItem = 2;
+  TopicItem = 3;
+  NameItem = 4;
+  // VariantItem = 5;
+  OccurrenceItem = 6;
+  // AssociationItem = 7;
+  // RoleItem = 8;
+}
 
-message RestoreTopicMapRequest { uint64 topic_map_id = 1; }
+message Item {
+  oneof specific {
+    Library library = 1;
+    TopicMap topic_map = 2;
+    Topic topic = 3;
+    Name name = 4;
+    // Variant variant = 5;
+    Occurrence occurrence = 6;
+    // Association association = 7;
+    // Role role = 8;
+  }
+}
 
-message RestoreTopicMapResponse {}
+message LoadRequest {
+  // If necessary, identifies the topic map that contains the item to load.
+  uint64 topic_map_id = 1;
+
+  // Identifies the item to load.
+  uint64 id = 2;
+
+  // Specifies which type of item to load. For items that can be reified by a
+  // topic, there are multiple valid types for the same id.
+  ItemType item_type = 3;
+}
+
+message LoadResponse { Item item = 1; }
+
+message QueryRequest { repeated LoadRequest load_requests = 1; }
+
+message QueryResponse { repeated LoadResponse load_responses = 1; }
+
+message CreationRequest {
+  // May be zero only if type is TopicMap.
+  uint64 topic_map_id = 1;
+
+  // May be zero only if type is TopicMap.
+  uint64 parent = 2;
+
+  // Must not be Library.
+  ItemType item_type = 3;
+}
+
+enum Orderable {
+  OrderableUnspecified = 0;
+  OrderableNames = 1;
+  OrderableOccurrences = 2;
+}
+
+message UpdateOrderRequest {
+  uint64 topic_map_id = 1;
+  uint64 id = 2;
+  Orderable orderable = 4;
+  repeated uint32 src_indices = 5;
+  repeated uint32 dst_indices = 6;
+}
+
+message UpdateValueRequest {
+  uint64 topic_map_id = 1;
+  uint64 id = 2;
+  ItemType item_type = 3;
+  string value = 4;
+}
+
+message UpdateResponse {
+  uint64 topic_map_id = 1;
+  uint64 id = 2;
+  Item item = 3;
+}
+
+message DeletionRequest {
+  uint64 topic_map_id = 1;
+  uint64 id = 2;
+  ItemType item_type = 3;
+}
+
+message DeletionResponse {
+  uint64 topic_map_id = 1;
+  uint64 id = 2;
+  ItemType item_type = 3;
+}
+
+message MutationRequest {
+  repeated CreationRequest creation_requests = 1;
+  repeated UpdateOrderRequest update_order_requests = 2;
+  repeated UpdateValueRequest update_value_requests = 3;
+  repeated DeletionRequest deletion_requests = 4;
+}
+
+message MutationResponse {
+  repeated UpdateResponse creation_responses = 1;
+  repeated UpdateResponse update_order_responses = 2;
+  repeated UpdateResponse update_value_responses = 3;
+  repeated DeletionResponse deletion_responses = 4;
+}

@@ -16,49 +16,44 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
-import 'package:note_maps/app_navigation_bloc.dart';
-import 'package:note_maps/app_navigation_stack.dart';
-import 'package:note_maps/library_page/library_bloc.dart';
-import 'package:note_maps/mobileapi/mobileapi.dart';
+import 'app_navigation_bloc.dart';
+import 'app_navigation_stack.dart';
+import 'mobileapi/controllers.dart';
+import 'mobileapi/mobileapi.dart';
+import 'providers.dart';
 
 void main() => runApp(App(
-      queryApi: QueryApi(),
-      commandApi: CommandApi(),
+      noteMapRepository: NoteMapRepository(),
     ));
 
 class App extends StatefulWidget {
-  final QueryApi queryApi;
-  final CommandApi commandApi;
+  final NoteMapRepository noteMapRepository;
 
   App({
     Key key,
-    @required this.queryApi,
-    @required this.commandApi,
-  }) : super(key: key);
+    @required this.noteMapRepository,
+  })  : assert(noteMapRepository != null),
+        super(key: key);
 
   @override
   State<App> createState() => _AppState();
 }
 
 class _AppState extends State<App> with TickerProviderStateMixin<App> {
-  LibraryBloc libraryBloc;
+  LibraryController libraryListenable;
   AppNavigationBloc appNavigationBloc;
-
-  QueryApi get queryApi => widget.queryApi;
-
-  CommandApi get commandApi => widget.commandApi;
 
   @override
   void initState() {
     super.initState();
-    libraryBloc = LibraryBloc(queryApi: queryApi, commandApi: commandApi);
-    libraryBloc.dispatch(LibraryAppStartedEvent());
+    libraryListenable = LibraryController(widget.noteMapRepository);
+    libraryListenable.reload(); // double-check whether this is necessary.
     appNavigationBloc = AppNavigationBloc();
   }
 
   @override
   void dispose() {
-    libraryBloc.dispose();
+    libraryListenable.close();
     appNavigationBloc.dispose();
     super.dispose();
   }
@@ -67,12 +62,11 @@ class _AppState extends State<App> with TickerProviderStateMixin<App> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<QueryApi>.value(value: queryApi),
-        Provider<CommandApi>.value(value: commandApi),
+        Provider<NoteMapRepository>.value(value: widget.noteMapRepository),
+        LibraryProvider(),
       ],
       child: MultiBlocProvider(
         providers: [
-          BlocProvider<LibraryBloc>(builder: (context) => libraryBloc),
           BlocProvider<AppNavigationBloc>(
               builder: (context) => appNavigationBloc),
         ],

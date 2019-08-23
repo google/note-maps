@@ -12,114 +12,57 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import 'package:note_maps/library_page/library_bloc.dart';
-import 'package:note_maps/mobileapi/mobileapi.dart';
-import 'package:note_maps/topic_map_tile.dart';
-import 'package:note_maps/app_bottom_app_bar.dart';
-import 'package:note_maps/topic_page.dart';
+import '../mobileapi/mobileapi.dart';
+import '../providers.dart';
+import '../topic_map_tile.dart';
+import '../app_bottom_app_bar.dart';
+import '../topic_page.dart';
+import '../mobileapi/controllers.dart';
 
-class LibraryPage extends StatefulWidget {
-  LibraryPage({Key key, this.title = "Library"}) : super(key: key);
-
-  final String title;
-
-  @override
-  State<LibraryPage> createState() => _LibraryPageState();
-}
-
-class _LibraryPageState extends State<LibraryPage> {
-  LibraryBloc _libraryBloc;
-  String _error;
-
-  String get title => widget.title;
-
-  @override
-  void initState() {
-    _libraryBloc = BlocProvider.of<LibraryBloc>(context);
-    print("LibraryPage._libraryBloc.hashCode = ${_libraryBloc.hashCode}");
-    super.initState();
-  }
+class LibraryPage extends StatelessWidget {
+  LibraryPage({Key key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text("Library"),
-          bottom: TabBar(tabs: <Tab>[
-            Tab(text: "All"),
-            Tab(text: "Trash"),
-          ]),
-        ),
-        body: BlocBuilder<LibraryBloc, LibraryState>(
-          builder: (context, libraryState) => TabBarView(
-            children: <Widget>[
-              listView(context, libraryState, LibraryFolder.all),
-              listView(context, libraryState, LibraryFolder.trash),
-            ],
-          ),
-        ),
-        bottomNavigationBar: AppBottomAppBar(),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => TopicPage(
-                  topicBloc: _libraryBloc.createTopicBloc(topic: Topic()),
-                ),
-              ),
-            );
-          },
-          tooltip: 'Create a Note Map',
-          child: Icon(Icons.add),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Library"),
       ),
+      body: ValueListenableBuilder<LibraryState>(
+        valueListenable: Provider.of<LibraryController>(context),
+        builder: (context, libraryState, _) => ListView.builder(
+            itemCount: libraryState.data.topicMapIds.length,
+            itemBuilder: (BuildContext context, int index) {
+              var topicMapId = libraryState.data.topicMapIds[index];
+              return TopicMapProvider(
+                topicMapId: topicMapId,
+                child: TopicMapTile(
+                  onTap: () => _gotoTopicMap(context, topicMapId),
+                ),
+              );
+            }),
+      ),
+      bottomNavigationBar: AppBottomAppBar(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _gotoTopicMap(context, Int64(0)),
+        tooltip: 'Create a Note Map',
+        child: Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
-  Widget listView(
-      BuildContext context, LibraryState libraryState, LibraryFolder folder) {
-    if (libraryState.error != null) {
-      if (_error != libraryState.error) {
-        _error = libraryState.error;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Scaffold.of(context).showSnackBar(SnackBar(
-            content: Text(libraryState.error),
-          ));
-        });
-      }
-      return Center(child: Icon(Icons.bug_report, size: 48));
-    }
-
-    var list = (folder == LibraryFolder.trash)
-        ? libraryState.topicMapsInTrash
-        : libraryState.topicMaps;
-    print(list);
-
-    return ListView.builder(
-      itemCount: list.length,
-      itemBuilder: (BuildContext context, int index) => TopicMapTile(
-        topicMap: list[index],
-        onTap: folder == LibraryFolder.trash
-            ? null
-            : () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TopicPage(
-                      topicBloc: _libraryBloc.createTopicBloc(
-                          topic: libraryState
-                              .topicMaps[index].topicViewModel.topic),
-                    ),
-                  ),
-                );
-              },
+  void _gotoTopicMap(BuildContext context, Int64 topicMapId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TopicMapProvider(
+          topicMapId: Int64(0),
+          child: TopicPage(),
+        ),
       ),
     );
   }

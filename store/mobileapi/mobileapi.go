@@ -54,13 +54,13 @@ func Query(method string, bs []byte) ([]byte, error) {
 		return nil, err
 	}
 	switch method {
-	case "GetTopicMaps":
-		var query pb.GetTopicMapsRequest
+	case "Query":
+		var query pb.QueryRequest
 		err := proto.Unmarshal(bs, &query)
 		if err != nil {
 			return nil, err
 		}
-		response, err := g.GetTopicMaps(&query)
+		response, err := g.Query(&query)
 		if err != nil {
 			return nil, err
 		}
@@ -77,37 +77,13 @@ func Command(method string, bs []byte) ([]byte, error) {
 		return nil, err
 	}
 	switch method {
-	case "CreateTopicMap":
-		var cmd pb.CreateTopicMapRequest
+	case "Mutate":
+		var cmd pb.MutationRequest
 		err := proto.Unmarshal(bs, &cmd)
 		if err != nil {
 			return nil, err
 		}
-		response, err := g.CreateTopicMap(&cmd)
-		if err != nil {
-			return nil, err
-		}
-		log.Printf("%s(%s)=>%s", method, cmd.String(), response.String())
-		return proto.Marshal(response)
-	case "DeleteTopicMap":
-		var cmd pb.DeleteTopicMapRequest
-		err := proto.Unmarshal(bs, &cmd)
-		if err != nil {
-			return nil, err
-		}
-		response, err := g.DeleteTopicMap(&cmd)
-		if err != nil {
-			return nil, err
-		}
-		log.Printf("%s(%s)=>%s", method, cmd.String(), response.String())
-		return proto.Marshal(response)
-	case "RestoreTopicMap":
-		var cmd pb.RestoreTopicMapRequest
-		err := proto.Unmarshal(bs, &cmd)
-		if err != nil {
-			return nil, err
-		}
-		response, err := g.RestoreTopicMap(&cmd)
+		response, err := g.Mutate(&cmd)
 		if err != nil {
 			return nil, err
 		}

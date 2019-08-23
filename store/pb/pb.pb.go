@@ -18,6 +18,106 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
+type ItemType int32
+
+const (
+	ItemType_UnspecifiedItem ItemType = 0
+	ItemType_LibraryItem     ItemType = 1
+	ItemType_TopicMapItem    ItemType = 2
+	ItemType_TopicItem       ItemType = 3
+	ItemType_NameItem        ItemType = 4
+	// VariantItem = 5;
+	ItemType_OccurrenceItem ItemType = 6
+)
+
+var ItemType_name = map[int32]string{
+	0: "UnspecifiedItem",
+	1: "LibraryItem",
+	2: "TopicMapItem",
+	3: "TopicItem",
+	4: "NameItem",
+	6: "OccurrenceItem",
+}
+var ItemType_value = map[string]int32{
+	"UnspecifiedItem": 0,
+	"LibraryItem":     1,
+	"TopicMapItem":    2,
+	"TopicItem":       3,
+	"NameItem":        4,
+	"OccurrenceItem":  6,
+}
+
+func (x ItemType) String() string {
+	return proto.EnumName(ItemType_name, int32(x))
+}
+func (ItemType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{0}
+}
+
+type Orderable int32
+
+const (
+	Orderable_OrderableUnspecified Orderable = 0
+	Orderable_OrderableNames       Orderable = 1
+	Orderable_OrderableOccurrences Orderable = 2
+)
+
+var Orderable_name = map[int32]string{
+	0: "OrderableUnspecified",
+	1: "OrderableNames",
+	2: "OrderableOccurrences",
+}
+var Orderable_value = map[string]int32{
+	"OrderableUnspecified": 0,
+	"OrderableNames":       1,
+	"OrderableOccurrences": 2,
+}
+
+func (x Orderable) String() string {
+	return proto.EnumName(Orderable_name, int32(x))
+}
+func (Orderable) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{1}
+}
+
+type Library struct {
+	TopicMapIds          []uint64 `protobuf:"varint,1,rep,packed,name=topic_map_ids,json=topicMapIds,proto3" json:"topic_map_ids,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Library) Reset()         { *m = Library{} }
+func (m *Library) String() string { return proto.CompactTextString(m) }
+func (*Library) ProtoMessage()    {}
+func (*Library) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{0}
+}
+func (m *Library) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Library.Unmarshal(m, b)
+}
+func (m *Library) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Library.Marshal(b, m, deterministic)
+}
+func (dst *Library) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Library.Merge(dst, src)
+}
+func (m *Library) XXX_Size() int {
+	return xxx_messageInfo_Library.Size(m)
+}
+func (m *Library) XXX_DiscardUnknown() {
+	xxx_messageInfo_Library.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Library proto.InternalMessageInfo
+
+func (m *Library) GetTopicMapIds() []uint64 {
+	if m != nil {
+		return m.TopicMapIds
+	}
+	return nil
+}
+
 type TopicMap struct {
 	Id                   uint64   `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Topic                *Topic   `protobuf:"bytes,2,opt,name=topic,proto3" json:"topic,omitempty"`
@@ -31,7 +131,7 @@ func (m *TopicMap) Reset()         { *m = TopicMap{} }
 func (m *TopicMap) String() string { return proto.CompactTextString(m) }
 func (*TopicMap) ProtoMessage()    {}
 func (*TopicMap) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pb_63e7cae43b3b5f0b, []int{0}
+	return fileDescriptor_pb_fff30577c164ce4d, []int{1}
 }
 func (m *TopicMap) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TopicMap.Unmarshal(m, b)
@@ -73,10 +173,12 @@ func (m *TopicMap) GetInTrash() bool {
 }
 
 type Topic struct {
-	Id                   uint64        `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	TopicMapId           uint64        `protobuf:"varint,2,opt,name=topic_map_id,json=topicMapId,proto3" json:"topic_map_id,omitempty"`
+	TopicMapId           uint64        `protobuf:"varint,1,opt,name=topic_map_id,json=topicMapId,proto3" json:"topic_map_id,omitempty"`
+	Id                   uint64        `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
 	Names                []*Name       `protobuf:"bytes,3,rep,name=names,proto3" json:"names,omitempty"`
 	Occurrences          []*Occurrence `protobuf:"bytes,4,rep,name=occurrences,proto3" json:"occurrences,omitempty"`
+	NameIds              []uint64      `protobuf:"varint,5,rep,packed,name=name_ids,json=nameIds,proto3" json:"name_ids,omitempty"`
+	OccurrenceIds        []uint64      `protobuf:"varint,6,rep,packed,name=occurrence_ids,json=occurrenceIds,proto3" json:"occurrence_ids,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
 	XXX_unrecognized     []byte        `json:"-"`
 	XXX_sizecache        int32         `json:"-"`
@@ -86,7 +188,7 @@ func (m *Topic) Reset()         { *m = Topic{} }
 func (m *Topic) String() string { return proto.CompactTextString(m) }
 func (*Topic) ProtoMessage()    {}
 func (*Topic) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pb_63e7cae43b3b5f0b, []int{1}
+	return fileDescriptor_pb_fff30577c164ce4d, []int{2}
 }
 func (m *Topic) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Topic.Unmarshal(m, b)
@@ -106,16 +208,16 @@ func (m *Topic) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Topic proto.InternalMessageInfo
 
-func (m *Topic) GetId() uint64 {
+func (m *Topic) GetTopicMapId() uint64 {
 	if m != nil {
-		return m.Id
+		return m.TopicMapId
 	}
 	return 0
 }
 
-func (m *Topic) GetTopicMapId() uint64 {
+func (m *Topic) GetId() uint64 {
 	if m != nil {
-		return m.TopicMapId
+		return m.Id
 	}
 	return 0
 }
@@ -134,10 +236,25 @@ func (m *Topic) GetOccurrences() []*Occurrence {
 	return nil
 }
 
+func (m *Topic) GetNameIds() []uint64 {
+	if m != nil {
+		return m.NameIds
+	}
+	return nil
+}
+
+func (m *Topic) GetOccurrenceIds() []uint64 {
+	if m != nil {
+		return m.OccurrenceIds
+	}
+	return nil
+}
+
 type Name struct {
-	Id                   uint64   `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	TopicMapId           uint64   `protobuf:"varint,1,opt,name=topic_map_id,json=topicMapId,proto3" json:"topic_map_id,omitempty"`
 	ParentId             uint64   `protobuf:"varint,2,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
-	Value                string   `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+	Id                   uint64   `protobuf:"varint,3,opt,name=id,proto3" json:"id,omitempty"`
+	Value                string   `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -147,7 +264,7 @@ func (m *Name) Reset()         { *m = Name{} }
 func (m *Name) String() string { return proto.CompactTextString(m) }
 func (*Name) ProtoMessage()    {}
 func (*Name) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pb_63e7cae43b3b5f0b, []int{2}
+	return fileDescriptor_pb_fff30577c164ce4d, []int{3}
 }
 func (m *Name) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Name.Unmarshal(m, b)
@@ -167,9 +284,9 @@ func (m *Name) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Name proto.InternalMessageInfo
 
-func (m *Name) GetId() uint64 {
+func (m *Name) GetTopicMapId() uint64 {
 	if m != nil {
-		return m.Id
+		return m.TopicMapId
 	}
 	return 0
 }
@@ -177,6 +294,13 @@ func (m *Name) GetId() uint64 {
 func (m *Name) GetParentId() uint64 {
 	if m != nil {
 		return m.ParentId
+	}
+	return 0
+}
+
+func (m *Name) GetId() uint64 {
+	if m != nil {
+		return m.Id
 	}
 	return 0
 }
@@ -189,9 +313,10 @@ func (m *Name) GetValue() string {
 }
 
 type Occurrence struct {
-	Id                   uint64   `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	TopicMapId           uint64   `protobuf:"varint,1,opt,name=topic_map_id,json=topicMapId,proto3" json:"topic_map_id,omitempty"`
 	ParentId             uint64   `protobuf:"varint,2,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
-	Value                string   `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+	Id                   uint64   `protobuf:"varint,3,opt,name=id,proto3" json:"id,omitempty"`
+	Value                string   `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -201,7 +326,7 @@ func (m *Occurrence) Reset()         { *m = Occurrence{} }
 func (m *Occurrence) String() string { return proto.CompactTextString(m) }
 func (*Occurrence) ProtoMessage()    {}
 func (*Occurrence) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pb_63e7cae43b3b5f0b, []int{3}
+	return fileDescriptor_pb_fff30577c164ce4d, []int{4}
 }
 func (m *Occurrence) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Occurrence.Unmarshal(m, b)
@@ -221,9 +346,9 @@ func (m *Occurrence) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Occurrence proto.InternalMessageInfo
 
-func (m *Occurrence) GetId() uint64 {
+func (m *Occurrence) GetTopicMapId() uint64 {
 	if m != nil {
-		return m.Id
+		return m.TopicMapId
 	}
 	return 0
 }
@@ -235,6 +360,13 @@ func (m *Occurrence) GetParentId() uint64 {
 	return 0
 }
 
+func (m *Occurrence) GetId() uint64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
 func (m *Occurrence) GetValue() string {
 	if m != nil {
 		return m.Value
@@ -242,335 +374,978 @@ func (m *Occurrence) GetValue() string {
 	return ""
 }
 
-type GetTopicMapsRequest struct {
-	InTrash              bool     `protobuf:"varint,1,opt,name=in_trash,json=inTrash,proto3" json:"in_trash,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+type Item struct {
+	// Types that are valid to be assigned to Specific:
+	//	*Item_Library
+	//	*Item_TopicMap
+	//	*Item_Topic
+	//	*Item_Name
+	//	*Item_Occurrence
+	Specific             isItem_Specific `protobuf_oneof:"specific"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
 }
 
-func (m *GetTopicMapsRequest) Reset()         { *m = GetTopicMapsRequest{} }
-func (m *GetTopicMapsRequest) String() string { return proto.CompactTextString(m) }
-func (*GetTopicMapsRequest) ProtoMessage()    {}
-func (*GetTopicMapsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pb_63e7cae43b3b5f0b, []int{4}
+func (m *Item) Reset()         { *m = Item{} }
+func (m *Item) String() string { return proto.CompactTextString(m) }
+func (*Item) ProtoMessage()    {}
+func (*Item) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{5}
 }
-func (m *GetTopicMapsRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetTopicMapsRequest.Unmarshal(m, b)
+func (m *Item) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Item.Unmarshal(m, b)
 }
-func (m *GetTopicMapsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetTopicMapsRequest.Marshal(b, m, deterministic)
+func (m *Item) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Item.Marshal(b, m, deterministic)
 }
-func (dst *GetTopicMapsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetTopicMapsRequest.Merge(dst, src)
+func (dst *Item) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Item.Merge(dst, src)
 }
-func (m *GetTopicMapsRequest) XXX_Size() int {
-	return xxx_messageInfo_GetTopicMapsRequest.Size(m)
+func (m *Item) XXX_Size() int {
+	return xxx_messageInfo_Item.Size(m)
 }
-func (m *GetTopicMapsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetTopicMapsRequest.DiscardUnknown(m)
+func (m *Item) XXX_DiscardUnknown() {
+	xxx_messageInfo_Item.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_GetTopicMapsRequest proto.InternalMessageInfo
+var xxx_messageInfo_Item proto.InternalMessageInfo
 
-func (m *GetTopicMapsRequest) GetInTrash() bool {
+type isItem_Specific interface {
+	isItem_Specific()
+}
+
+type Item_Library struct {
+	Library *Library `protobuf:"bytes,1,opt,name=library,proto3,oneof"`
+}
+
+type Item_TopicMap struct {
+	TopicMap *TopicMap `protobuf:"bytes,2,opt,name=topic_map,json=topicMap,proto3,oneof"`
+}
+
+type Item_Topic struct {
+	Topic *Topic `protobuf:"bytes,3,opt,name=topic,proto3,oneof"`
+}
+
+type Item_Name struct {
+	Name *Name `protobuf:"bytes,4,opt,name=name,proto3,oneof"`
+}
+
+type Item_Occurrence struct {
+	Occurrence *Occurrence `protobuf:"bytes,6,opt,name=occurrence,proto3,oneof"`
+}
+
+func (*Item_Library) isItem_Specific() {}
+
+func (*Item_TopicMap) isItem_Specific() {}
+
+func (*Item_Topic) isItem_Specific() {}
+
+func (*Item_Name) isItem_Specific() {}
+
+func (*Item_Occurrence) isItem_Specific() {}
+
+func (m *Item) GetSpecific() isItem_Specific {
 	if m != nil {
-		return m.InTrash
-	}
-	return false
-}
-
-type GetTopicMapsResponse struct {
-	TopicMaps            []*TopicMap `protobuf:"bytes,1,rep,name=topic_maps,json=topicMaps,proto3" json:"topic_maps,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
-}
-
-func (m *GetTopicMapsResponse) Reset()         { *m = GetTopicMapsResponse{} }
-func (m *GetTopicMapsResponse) String() string { return proto.CompactTextString(m) }
-func (*GetTopicMapsResponse) ProtoMessage()    {}
-func (*GetTopicMapsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pb_63e7cae43b3b5f0b, []int{5}
-}
-func (m *GetTopicMapsResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetTopicMapsResponse.Unmarshal(m, b)
-}
-func (m *GetTopicMapsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetTopicMapsResponse.Marshal(b, m, deterministic)
-}
-func (dst *GetTopicMapsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetTopicMapsResponse.Merge(dst, src)
-}
-func (m *GetTopicMapsResponse) XXX_Size() int {
-	return xxx_messageInfo_GetTopicMapsResponse.Size(m)
-}
-func (m *GetTopicMapsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetTopicMapsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_GetTopicMapsResponse proto.InternalMessageInfo
-
-func (m *GetTopicMapsResponse) GetTopicMaps() []*TopicMap {
-	if m != nil {
-		return m.TopicMaps
+		return m.Specific
 	}
 	return nil
 }
 
-type CreateTopicMapRequest struct {
+func (m *Item) GetLibrary() *Library {
+	if x, ok := m.GetSpecific().(*Item_Library); ok {
+		return x.Library
+	}
+	return nil
+}
+
+func (m *Item) GetTopicMap() *TopicMap {
+	if x, ok := m.GetSpecific().(*Item_TopicMap); ok {
+		return x.TopicMap
+	}
+	return nil
+}
+
+func (m *Item) GetTopic() *Topic {
+	if x, ok := m.GetSpecific().(*Item_Topic); ok {
+		return x.Topic
+	}
+	return nil
+}
+
+func (m *Item) GetName() *Name {
+	if x, ok := m.GetSpecific().(*Item_Name); ok {
+		return x.Name
+	}
+	return nil
+}
+
+func (m *Item) GetOccurrence() *Occurrence {
+	if x, ok := m.GetSpecific().(*Item_Occurrence); ok {
+		return x.Occurrence
+	}
+	return nil
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*Item) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _Item_OneofMarshaler, _Item_OneofUnmarshaler, _Item_OneofSizer, []interface{}{
+		(*Item_Library)(nil),
+		(*Item_TopicMap)(nil),
+		(*Item_Topic)(nil),
+		(*Item_Name)(nil),
+		(*Item_Occurrence)(nil),
+	}
+}
+
+func _Item_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*Item)
+	// specific
+	switch x := m.Specific.(type) {
+	case *Item_Library:
+		b.EncodeVarint(1<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Library); err != nil {
+			return err
+		}
+	case *Item_TopicMap:
+		b.EncodeVarint(2<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.TopicMap); err != nil {
+			return err
+		}
+	case *Item_Topic:
+		b.EncodeVarint(3<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Topic); err != nil {
+			return err
+		}
+	case *Item_Name:
+		b.EncodeVarint(4<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Name); err != nil {
+			return err
+		}
+	case *Item_Occurrence:
+		b.EncodeVarint(6<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Occurrence); err != nil {
+			return err
+		}
+	case nil:
+	default:
+		return fmt.Errorf("Item.Specific has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _Item_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*Item)
+	switch tag {
+	case 1: // specific.library
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(Library)
+		err := b.DecodeMessage(msg)
+		m.Specific = &Item_Library{msg}
+		return true, err
+	case 2: // specific.topic_map
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(TopicMap)
+		err := b.DecodeMessage(msg)
+		m.Specific = &Item_TopicMap{msg}
+		return true, err
+	case 3: // specific.topic
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(Topic)
+		err := b.DecodeMessage(msg)
+		m.Specific = &Item_Topic{msg}
+		return true, err
+	case 4: // specific.name
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(Name)
+		err := b.DecodeMessage(msg)
+		m.Specific = &Item_Name{msg}
+		return true, err
+	case 6: // specific.occurrence
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(Occurrence)
+		err := b.DecodeMessage(msg)
+		m.Specific = &Item_Occurrence{msg}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _Item_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*Item)
+	// specific
+	switch x := m.Specific.(type) {
+	case *Item_Library:
+		s := proto.Size(x.Library)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Item_TopicMap:
+		s := proto.Size(x.TopicMap)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Item_Topic:
+		s := proto.Size(x.Topic)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Item_Name:
+		s := proto.Size(x.Name)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Item_Occurrence:
+		s := proto.Size(x.Occurrence)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
+}
+
+type LoadRequest struct {
+	// If necessary, identifies the topic map that contains the item to load.
+	TopicMapId uint64 `protobuf:"varint,1,opt,name=topic_map_id,json=topicMapId,proto3" json:"topic_map_id,omitempty"`
+	// Identifies the item to load.
+	Id uint64 `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
+	// Specifies which type of item to load. For items that can be reified by a
+	// topic, there are multiple valid types for the same id.
+	ItemType             ItemType `protobuf:"varint,3,opt,name=item_type,json=itemType,proto3,enum=ItemType" json:"item_type,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *CreateTopicMapRequest) Reset()         { *m = CreateTopicMapRequest{} }
-func (m *CreateTopicMapRequest) String() string { return proto.CompactTextString(m) }
-func (*CreateTopicMapRequest) ProtoMessage()    {}
-func (*CreateTopicMapRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pb_63e7cae43b3b5f0b, []int{6}
+func (m *LoadRequest) Reset()         { *m = LoadRequest{} }
+func (m *LoadRequest) String() string { return proto.CompactTextString(m) }
+func (*LoadRequest) ProtoMessage()    {}
+func (*LoadRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{6}
 }
-func (m *CreateTopicMapRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CreateTopicMapRequest.Unmarshal(m, b)
+func (m *LoadRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_LoadRequest.Unmarshal(m, b)
 }
-func (m *CreateTopicMapRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CreateTopicMapRequest.Marshal(b, m, deterministic)
+func (m *LoadRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_LoadRequest.Marshal(b, m, deterministic)
 }
-func (dst *CreateTopicMapRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateTopicMapRequest.Merge(dst, src)
+func (dst *LoadRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LoadRequest.Merge(dst, src)
 }
-func (m *CreateTopicMapRequest) XXX_Size() int {
-	return xxx_messageInfo_CreateTopicMapRequest.Size(m)
+func (m *LoadRequest) XXX_Size() int {
+	return xxx_messageInfo_LoadRequest.Size(m)
 }
-func (m *CreateTopicMapRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_CreateTopicMapRequest.DiscardUnknown(m)
+func (m *LoadRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_LoadRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_CreateTopicMapRequest proto.InternalMessageInfo
+var xxx_messageInfo_LoadRequest proto.InternalMessageInfo
 
-type CreateTopicMapResponse struct {
-	TopicMap             *TopicMap `protobuf:"bytes,1,opt,name=topic_map,json=topicMap,proto3" json:"topic_map,omitempty"`
+func (m *LoadRequest) GetTopicMapId() uint64 {
+	if m != nil {
+		return m.TopicMapId
+	}
+	return 0
+}
+
+func (m *LoadRequest) GetId() uint64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+func (m *LoadRequest) GetItemType() ItemType {
+	if m != nil {
+		return m.ItemType
+	}
+	return ItemType_UnspecifiedItem
+}
+
+type LoadResponse struct {
+	Item                 *Item    `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *LoadResponse) Reset()         { *m = LoadResponse{} }
+func (m *LoadResponse) String() string { return proto.CompactTextString(m) }
+func (*LoadResponse) ProtoMessage()    {}
+func (*LoadResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{7}
+}
+func (m *LoadResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_LoadResponse.Unmarshal(m, b)
+}
+func (m *LoadResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_LoadResponse.Marshal(b, m, deterministic)
+}
+func (dst *LoadResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LoadResponse.Merge(dst, src)
+}
+func (m *LoadResponse) XXX_Size() int {
+	return xxx_messageInfo_LoadResponse.Size(m)
+}
+func (m *LoadResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_LoadResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LoadResponse proto.InternalMessageInfo
+
+func (m *LoadResponse) GetItem() *Item {
+	if m != nil {
+		return m.Item
+	}
+	return nil
+}
+
+type QueryRequest struct {
+	LoadRequests         []*LoadRequest `protobuf:"bytes,1,rep,name=load_requests,json=loadRequests,proto3" json:"load_requests,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
+}
+
+func (m *QueryRequest) Reset()         { *m = QueryRequest{} }
+func (m *QueryRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryRequest) ProtoMessage()    {}
+func (*QueryRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{8}
+}
+func (m *QueryRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_QueryRequest.Unmarshal(m, b)
+}
+func (m *QueryRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_QueryRequest.Marshal(b, m, deterministic)
+}
+func (dst *QueryRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryRequest.Merge(dst, src)
+}
+func (m *QueryRequest) XXX_Size() int {
+	return xxx_messageInfo_QueryRequest.Size(m)
+}
+func (m *QueryRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryRequest proto.InternalMessageInfo
+
+func (m *QueryRequest) GetLoadRequests() []*LoadRequest {
+	if m != nil {
+		return m.LoadRequests
+	}
+	return nil
+}
+
+type QueryResponse struct {
+	LoadResponses        []*LoadResponse `protobuf:"bytes,1,rep,name=load_responses,json=loadResponses,proto3" json:"load_responses,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
+}
+
+func (m *QueryResponse) Reset()         { *m = QueryResponse{} }
+func (m *QueryResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryResponse) ProtoMessage()    {}
+func (*QueryResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{9}
+}
+func (m *QueryResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_QueryResponse.Unmarshal(m, b)
+}
+func (m *QueryResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_QueryResponse.Marshal(b, m, deterministic)
+}
+func (dst *QueryResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryResponse.Merge(dst, src)
+}
+func (m *QueryResponse) XXX_Size() int {
+	return xxx_messageInfo_QueryResponse.Size(m)
+}
+func (m *QueryResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryResponse proto.InternalMessageInfo
+
+func (m *QueryResponse) GetLoadResponses() []*LoadResponse {
+	if m != nil {
+		return m.LoadResponses
+	}
+	return nil
+}
+
+type CreationRequest struct {
+	// May be zero only if type is TopicMap.
+	TopicMapId uint64 `protobuf:"varint,1,opt,name=topic_map_id,json=topicMapId,proto3" json:"topic_map_id,omitempty"`
+	// May be zero only if type is TopicMap.
+	Parent uint64 `protobuf:"varint,2,opt,name=parent,proto3" json:"parent,omitempty"`
+	// Must not be Library.
+	ItemType             ItemType `protobuf:"varint,3,opt,name=item_type,json=itemType,proto3,enum=ItemType" json:"item_type,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *CreationRequest) Reset()         { *m = CreationRequest{} }
+func (m *CreationRequest) String() string { return proto.CompactTextString(m) }
+func (*CreationRequest) ProtoMessage()    {}
+func (*CreationRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{10}
+}
+func (m *CreationRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CreationRequest.Unmarshal(m, b)
+}
+func (m *CreationRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CreationRequest.Marshal(b, m, deterministic)
+}
+func (dst *CreationRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CreationRequest.Merge(dst, src)
+}
+func (m *CreationRequest) XXX_Size() int {
+	return xxx_messageInfo_CreationRequest.Size(m)
+}
+func (m *CreationRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_CreationRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CreationRequest proto.InternalMessageInfo
+
+func (m *CreationRequest) GetTopicMapId() uint64 {
+	if m != nil {
+		return m.TopicMapId
+	}
+	return 0
+}
+
+func (m *CreationRequest) GetParent() uint64 {
+	if m != nil {
+		return m.Parent
+	}
+	return 0
+}
+
+func (m *CreationRequest) GetItemType() ItemType {
+	if m != nil {
+		return m.ItemType
+	}
+	return ItemType_UnspecifiedItem
+}
+
+type UpdateOrderRequest struct {
+	TopicMapId           uint64    `protobuf:"varint,1,opt,name=topic_map_id,json=topicMapId,proto3" json:"topic_map_id,omitempty"`
+	Id                   uint64    `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
+	Orderable            Orderable `protobuf:"varint,4,opt,name=orderable,proto3,enum=Orderable" json:"orderable,omitempty"`
+	SrcIndices           []uint32  `protobuf:"varint,5,rep,packed,name=src_indices,json=srcIndices,proto3" json:"src_indices,omitempty"`
+	DstIndices           []uint32  `protobuf:"varint,6,rep,packed,name=dst_indices,json=dstIndices,proto3" json:"dst_indices,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
 	XXX_unrecognized     []byte    `json:"-"`
 	XXX_sizecache        int32     `json:"-"`
 }
 
-func (m *CreateTopicMapResponse) Reset()         { *m = CreateTopicMapResponse{} }
-func (m *CreateTopicMapResponse) String() string { return proto.CompactTextString(m) }
-func (*CreateTopicMapResponse) ProtoMessage()    {}
-func (*CreateTopicMapResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pb_63e7cae43b3b5f0b, []int{7}
+func (m *UpdateOrderRequest) Reset()         { *m = UpdateOrderRequest{} }
+func (m *UpdateOrderRequest) String() string { return proto.CompactTextString(m) }
+func (*UpdateOrderRequest) ProtoMessage()    {}
+func (*UpdateOrderRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{11}
 }
-func (m *CreateTopicMapResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CreateTopicMapResponse.Unmarshal(m, b)
+func (m *UpdateOrderRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UpdateOrderRequest.Unmarshal(m, b)
 }
-func (m *CreateTopicMapResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CreateTopicMapResponse.Marshal(b, m, deterministic)
+func (m *UpdateOrderRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UpdateOrderRequest.Marshal(b, m, deterministic)
 }
-func (dst *CreateTopicMapResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateTopicMapResponse.Merge(dst, src)
+func (dst *UpdateOrderRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UpdateOrderRequest.Merge(dst, src)
 }
-func (m *CreateTopicMapResponse) XXX_Size() int {
-	return xxx_messageInfo_CreateTopicMapResponse.Size(m)
+func (m *UpdateOrderRequest) XXX_Size() int {
+	return xxx_messageInfo_UpdateOrderRequest.Size(m)
 }
-func (m *CreateTopicMapResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_CreateTopicMapResponse.DiscardUnknown(m)
+func (m *UpdateOrderRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_UpdateOrderRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_CreateTopicMapResponse proto.InternalMessageInfo
+var xxx_messageInfo_UpdateOrderRequest proto.InternalMessageInfo
 
-func (m *CreateTopicMapResponse) GetTopicMap() *TopicMap {
+func (m *UpdateOrderRequest) GetTopicMapId() uint64 {
 	if m != nil {
-		return m.TopicMap
+		return m.TopicMapId
+	}
+	return 0
+}
+
+func (m *UpdateOrderRequest) GetId() uint64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+func (m *UpdateOrderRequest) GetOrderable() Orderable {
+	if m != nil {
+		return m.Orderable
+	}
+	return Orderable_OrderableUnspecified
+}
+
+func (m *UpdateOrderRequest) GetSrcIndices() []uint32 {
+	if m != nil {
+		return m.SrcIndices
 	}
 	return nil
 }
 
-type DeleteTopicMapRequest struct {
+func (m *UpdateOrderRequest) GetDstIndices() []uint32 {
+	if m != nil {
+		return m.DstIndices
+	}
+	return nil
+}
+
+type UpdateValueRequest struct {
 	TopicMapId           uint64   `protobuf:"varint,1,opt,name=topic_map_id,json=topicMapId,proto3" json:"topic_map_id,omitempty"`
-	FullyDelete          bool     `protobuf:"varint,2,opt,name=fully_delete,json=fullyDelete,proto3" json:"fully_delete,omitempty"`
+	Id                   uint64   `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
+	ItemType             ItemType `protobuf:"varint,3,opt,name=item_type,json=itemType,proto3,enum=ItemType" json:"item_type,omitempty"`
+	Value                string   `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *DeleteTopicMapRequest) Reset()         { *m = DeleteTopicMapRequest{} }
-func (m *DeleteTopicMapRequest) String() string { return proto.CompactTextString(m) }
-func (*DeleteTopicMapRequest) ProtoMessage()    {}
-func (*DeleteTopicMapRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pb_63e7cae43b3b5f0b, []int{8}
+func (m *UpdateValueRequest) Reset()         { *m = UpdateValueRequest{} }
+func (m *UpdateValueRequest) String() string { return proto.CompactTextString(m) }
+func (*UpdateValueRequest) ProtoMessage()    {}
+func (*UpdateValueRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{12}
 }
-func (m *DeleteTopicMapRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_DeleteTopicMapRequest.Unmarshal(m, b)
+func (m *UpdateValueRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UpdateValueRequest.Unmarshal(m, b)
 }
-func (m *DeleteTopicMapRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_DeleteTopicMapRequest.Marshal(b, m, deterministic)
+func (m *UpdateValueRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UpdateValueRequest.Marshal(b, m, deterministic)
 }
-func (dst *DeleteTopicMapRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DeleteTopicMapRequest.Merge(dst, src)
+func (dst *UpdateValueRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UpdateValueRequest.Merge(dst, src)
 }
-func (m *DeleteTopicMapRequest) XXX_Size() int {
-	return xxx_messageInfo_DeleteTopicMapRequest.Size(m)
+func (m *UpdateValueRequest) XXX_Size() int {
+	return xxx_messageInfo_UpdateValueRequest.Size(m)
 }
-func (m *DeleteTopicMapRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_DeleteTopicMapRequest.DiscardUnknown(m)
+func (m *UpdateValueRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_UpdateValueRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_DeleteTopicMapRequest proto.InternalMessageInfo
+var xxx_messageInfo_UpdateValueRequest proto.InternalMessageInfo
 
-func (m *DeleteTopicMapRequest) GetTopicMapId() uint64 {
+func (m *UpdateValueRequest) GetTopicMapId() uint64 {
 	if m != nil {
 		return m.TopicMapId
 	}
 	return 0
 }
 
-func (m *DeleteTopicMapRequest) GetFullyDelete() bool {
+func (m *UpdateValueRequest) GetId() uint64 {
 	if m != nil {
-		return m.FullyDelete
+		return m.Id
 	}
-	return false
+	return 0
 }
 
-type DeleteTopicMapResponse struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+func (m *UpdateValueRequest) GetItemType() ItemType {
+	if m != nil {
+		return m.ItemType
+	}
+	return ItemType_UnspecifiedItem
 }
 
-func (m *DeleteTopicMapResponse) Reset()         { *m = DeleteTopicMapResponse{} }
-func (m *DeleteTopicMapResponse) String() string { return proto.CompactTextString(m) }
-func (*DeleteTopicMapResponse) ProtoMessage()    {}
-func (*DeleteTopicMapResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pb_63e7cae43b3b5f0b, []int{9}
-}
-func (m *DeleteTopicMapResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_DeleteTopicMapResponse.Unmarshal(m, b)
-}
-func (m *DeleteTopicMapResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_DeleteTopicMapResponse.Marshal(b, m, deterministic)
-}
-func (dst *DeleteTopicMapResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DeleteTopicMapResponse.Merge(dst, src)
-}
-func (m *DeleteTopicMapResponse) XXX_Size() int {
-	return xxx_messageInfo_DeleteTopicMapResponse.Size(m)
-}
-func (m *DeleteTopicMapResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_DeleteTopicMapResponse.DiscardUnknown(m)
+func (m *UpdateValueRequest) GetValue() string {
+	if m != nil {
+		return m.Value
+	}
+	return ""
 }
 
-var xxx_messageInfo_DeleteTopicMapResponse proto.InternalMessageInfo
-
-type RestoreTopicMapRequest struct {
+type UpdateResponse struct {
 	TopicMapId           uint64   `protobuf:"varint,1,opt,name=topic_map_id,json=topicMapId,proto3" json:"topic_map_id,omitempty"`
+	Id                   uint64   `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
+	Item                 *Item    `protobuf:"bytes,3,opt,name=item,proto3" json:"item,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *RestoreTopicMapRequest) Reset()         { *m = RestoreTopicMapRequest{} }
-func (m *RestoreTopicMapRequest) String() string { return proto.CompactTextString(m) }
-func (*RestoreTopicMapRequest) ProtoMessage()    {}
-func (*RestoreTopicMapRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pb_63e7cae43b3b5f0b, []int{10}
+func (m *UpdateResponse) Reset()         { *m = UpdateResponse{} }
+func (m *UpdateResponse) String() string { return proto.CompactTextString(m) }
+func (*UpdateResponse) ProtoMessage()    {}
+func (*UpdateResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{13}
 }
-func (m *RestoreTopicMapRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RestoreTopicMapRequest.Unmarshal(m, b)
+func (m *UpdateResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UpdateResponse.Unmarshal(m, b)
 }
-func (m *RestoreTopicMapRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RestoreTopicMapRequest.Marshal(b, m, deterministic)
+func (m *UpdateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UpdateResponse.Marshal(b, m, deterministic)
 }
-func (dst *RestoreTopicMapRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RestoreTopicMapRequest.Merge(dst, src)
+func (dst *UpdateResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UpdateResponse.Merge(dst, src)
 }
-func (m *RestoreTopicMapRequest) XXX_Size() int {
-	return xxx_messageInfo_RestoreTopicMapRequest.Size(m)
+func (m *UpdateResponse) XXX_Size() int {
+	return xxx_messageInfo_UpdateResponse.Size(m)
 }
-func (m *RestoreTopicMapRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_RestoreTopicMapRequest.DiscardUnknown(m)
+func (m *UpdateResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_UpdateResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_RestoreTopicMapRequest proto.InternalMessageInfo
+var xxx_messageInfo_UpdateResponse proto.InternalMessageInfo
 
-func (m *RestoreTopicMapRequest) GetTopicMapId() uint64 {
+func (m *UpdateResponse) GetTopicMapId() uint64 {
 	if m != nil {
 		return m.TopicMapId
 	}
 	return 0
 }
 
-type RestoreTopicMapResponse struct {
+func (m *UpdateResponse) GetId() uint64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+func (m *UpdateResponse) GetItem() *Item {
+	if m != nil {
+		return m.Item
+	}
+	return nil
+}
+
+type DeletionRequest struct {
+	TopicMapId           uint64   `protobuf:"varint,1,opt,name=topic_map_id,json=topicMapId,proto3" json:"topic_map_id,omitempty"`
+	Id                   uint64   `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
+	ItemType             ItemType `protobuf:"varint,3,opt,name=item_type,json=itemType,proto3,enum=ItemType" json:"item_type,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *RestoreTopicMapResponse) Reset()         { *m = RestoreTopicMapResponse{} }
-func (m *RestoreTopicMapResponse) String() string { return proto.CompactTextString(m) }
-func (*RestoreTopicMapResponse) ProtoMessage()    {}
-func (*RestoreTopicMapResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pb_63e7cae43b3b5f0b, []int{11}
+func (m *DeletionRequest) Reset()         { *m = DeletionRequest{} }
+func (m *DeletionRequest) String() string { return proto.CompactTextString(m) }
+func (*DeletionRequest) ProtoMessage()    {}
+func (*DeletionRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{14}
 }
-func (m *RestoreTopicMapResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RestoreTopicMapResponse.Unmarshal(m, b)
+func (m *DeletionRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DeletionRequest.Unmarshal(m, b)
 }
-func (m *RestoreTopicMapResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RestoreTopicMapResponse.Marshal(b, m, deterministic)
+func (m *DeletionRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DeletionRequest.Marshal(b, m, deterministic)
 }
-func (dst *RestoreTopicMapResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RestoreTopicMapResponse.Merge(dst, src)
+func (dst *DeletionRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeletionRequest.Merge(dst, src)
 }
-func (m *RestoreTopicMapResponse) XXX_Size() int {
-	return xxx_messageInfo_RestoreTopicMapResponse.Size(m)
+func (m *DeletionRequest) XXX_Size() int {
+	return xxx_messageInfo_DeletionRequest.Size(m)
 }
-func (m *RestoreTopicMapResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_RestoreTopicMapResponse.DiscardUnknown(m)
+func (m *DeletionRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeletionRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_RestoreTopicMapResponse proto.InternalMessageInfo
+var xxx_messageInfo_DeletionRequest proto.InternalMessageInfo
+
+func (m *DeletionRequest) GetTopicMapId() uint64 {
+	if m != nil {
+		return m.TopicMapId
+	}
+	return 0
+}
+
+func (m *DeletionRequest) GetId() uint64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+func (m *DeletionRequest) GetItemType() ItemType {
+	if m != nil {
+		return m.ItemType
+	}
+	return ItemType_UnspecifiedItem
+}
+
+type DeletionResponse struct {
+	TopicMapId           uint64   `protobuf:"varint,1,opt,name=topic_map_id,json=topicMapId,proto3" json:"topic_map_id,omitempty"`
+	Id                   uint64   `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
+	ItemType             ItemType `protobuf:"varint,3,opt,name=item_type,json=itemType,proto3,enum=ItemType" json:"item_type,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DeletionResponse) Reset()         { *m = DeletionResponse{} }
+func (m *DeletionResponse) String() string { return proto.CompactTextString(m) }
+func (*DeletionResponse) ProtoMessage()    {}
+func (*DeletionResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{15}
+}
+func (m *DeletionResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DeletionResponse.Unmarshal(m, b)
+}
+func (m *DeletionResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DeletionResponse.Marshal(b, m, deterministic)
+}
+func (dst *DeletionResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeletionResponse.Merge(dst, src)
+}
+func (m *DeletionResponse) XXX_Size() int {
+	return xxx_messageInfo_DeletionResponse.Size(m)
+}
+func (m *DeletionResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeletionResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeletionResponse proto.InternalMessageInfo
+
+func (m *DeletionResponse) GetTopicMapId() uint64 {
+	if m != nil {
+		return m.TopicMapId
+	}
+	return 0
+}
+
+func (m *DeletionResponse) GetId() uint64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+func (m *DeletionResponse) GetItemType() ItemType {
+	if m != nil {
+		return m.ItemType
+	}
+	return ItemType_UnspecifiedItem
+}
+
+type MutationRequest struct {
+	CreationRequests     []*CreationRequest    `protobuf:"bytes,1,rep,name=creation_requests,json=creationRequests,proto3" json:"creation_requests,omitempty"`
+	UpdateOrderRequests  []*UpdateOrderRequest `protobuf:"bytes,2,rep,name=update_order_requests,json=updateOrderRequests,proto3" json:"update_order_requests,omitempty"`
+	UpdateValueRequests  []*UpdateValueRequest `protobuf:"bytes,3,rep,name=update_value_requests,json=updateValueRequests,proto3" json:"update_value_requests,omitempty"`
+	DeletionRequests     []*DeletionRequest    `protobuf:"bytes,4,rep,name=deletion_requests,json=deletionRequests,proto3" json:"deletion_requests,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
+	XXX_unrecognized     []byte                `json:"-"`
+	XXX_sizecache        int32                 `json:"-"`
+}
+
+func (m *MutationRequest) Reset()         { *m = MutationRequest{} }
+func (m *MutationRequest) String() string { return proto.CompactTextString(m) }
+func (*MutationRequest) ProtoMessage()    {}
+func (*MutationRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{16}
+}
+func (m *MutationRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MutationRequest.Unmarshal(m, b)
+}
+func (m *MutationRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MutationRequest.Marshal(b, m, deterministic)
+}
+func (dst *MutationRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MutationRequest.Merge(dst, src)
+}
+func (m *MutationRequest) XXX_Size() int {
+	return xxx_messageInfo_MutationRequest.Size(m)
+}
+func (m *MutationRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_MutationRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MutationRequest proto.InternalMessageInfo
+
+func (m *MutationRequest) GetCreationRequests() []*CreationRequest {
+	if m != nil {
+		return m.CreationRequests
+	}
+	return nil
+}
+
+func (m *MutationRequest) GetUpdateOrderRequests() []*UpdateOrderRequest {
+	if m != nil {
+		return m.UpdateOrderRequests
+	}
+	return nil
+}
+
+func (m *MutationRequest) GetUpdateValueRequests() []*UpdateValueRequest {
+	if m != nil {
+		return m.UpdateValueRequests
+	}
+	return nil
+}
+
+func (m *MutationRequest) GetDeletionRequests() []*DeletionRequest {
+	if m != nil {
+		return m.DeletionRequests
+	}
+	return nil
+}
+
+type MutationResponse struct {
+	CreationResponses    []*UpdateResponse   `protobuf:"bytes,1,rep,name=creation_responses,json=creationResponses,proto3" json:"creation_responses,omitempty"`
+	UpdateOrderResponses []*UpdateResponse   `protobuf:"bytes,2,rep,name=update_order_responses,json=updateOrderResponses,proto3" json:"update_order_responses,omitempty"`
+	UpdateValueResponses []*UpdateResponse   `protobuf:"bytes,3,rep,name=update_value_responses,json=updateValueResponses,proto3" json:"update_value_responses,omitempty"`
+	DeletionResponses    []*DeletionResponse `protobuf:"bytes,4,rep,name=deletion_responses,json=deletionResponses,proto3" json:"deletion_responses,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
+	XXX_unrecognized     []byte              `json:"-"`
+	XXX_sizecache        int32               `json:"-"`
+}
+
+func (m *MutationResponse) Reset()         { *m = MutationResponse{} }
+func (m *MutationResponse) String() string { return proto.CompactTextString(m) }
+func (*MutationResponse) ProtoMessage()    {}
+func (*MutationResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_pb_fff30577c164ce4d, []int{17}
+}
+func (m *MutationResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MutationResponse.Unmarshal(m, b)
+}
+func (m *MutationResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MutationResponse.Marshal(b, m, deterministic)
+}
+func (dst *MutationResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MutationResponse.Merge(dst, src)
+}
+func (m *MutationResponse) XXX_Size() int {
+	return xxx_messageInfo_MutationResponse.Size(m)
+}
+func (m *MutationResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MutationResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MutationResponse proto.InternalMessageInfo
+
+func (m *MutationResponse) GetCreationResponses() []*UpdateResponse {
+	if m != nil {
+		return m.CreationResponses
+	}
+	return nil
+}
+
+func (m *MutationResponse) GetUpdateOrderResponses() []*UpdateResponse {
+	if m != nil {
+		return m.UpdateOrderResponses
+	}
+	return nil
+}
+
+func (m *MutationResponse) GetUpdateValueResponses() []*UpdateResponse {
+	if m != nil {
+		return m.UpdateValueResponses
+	}
+	return nil
+}
+
+func (m *MutationResponse) GetDeletionResponses() []*DeletionResponse {
+	if m != nil {
+		return m.DeletionResponses
+	}
+	return nil
+}
 
 func init() {
+	proto.RegisterType((*Library)(nil), "Library")
 	proto.RegisterType((*TopicMap)(nil), "TopicMap")
 	proto.RegisterType((*Topic)(nil), "Topic")
 	proto.RegisterType((*Name)(nil), "Name")
 	proto.RegisterType((*Occurrence)(nil), "Occurrence")
-	proto.RegisterType((*GetTopicMapsRequest)(nil), "GetTopicMapsRequest")
-	proto.RegisterType((*GetTopicMapsResponse)(nil), "GetTopicMapsResponse")
-	proto.RegisterType((*CreateTopicMapRequest)(nil), "CreateTopicMapRequest")
-	proto.RegisterType((*CreateTopicMapResponse)(nil), "CreateTopicMapResponse")
-	proto.RegisterType((*DeleteTopicMapRequest)(nil), "DeleteTopicMapRequest")
-	proto.RegisterType((*DeleteTopicMapResponse)(nil), "DeleteTopicMapResponse")
-	proto.RegisterType((*RestoreTopicMapRequest)(nil), "RestoreTopicMapRequest")
-	proto.RegisterType((*RestoreTopicMapResponse)(nil), "RestoreTopicMapResponse")
+	proto.RegisterType((*Item)(nil), "Item")
+	proto.RegisterType((*LoadRequest)(nil), "LoadRequest")
+	proto.RegisterType((*LoadResponse)(nil), "LoadResponse")
+	proto.RegisterType((*QueryRequest)(nil), "QueryRequest")
+	proto.RegisterType((*QueryResponse)(nil), "QueryResponse")
+	proto.RegisterType((*CreationRequest)(nil), "CreationRequest")
+	proto.RegisterType((*UpdateOrderRequest)(nil), "UpdateOrderRequest")
+	proto.RegisterType((*UpdateValueRequest)(nil), "UpdateValueRequest")
+	proto.RegisterType((*UpdateResponse)(nil), "UpdateResponse")
+	proto.RegisterType((*DeletionRequest)(nil), "DeletionRequest")
+	proto.RegisterType((*DeletionResponse)(nil), "DeletionResponse")
+	proto.RegisterType((*MutationRequest)(nil), "MutationRequest")
+	proto.RegisterType((*MutationResponse)(nil), "MutationResponse")
+	proto.RegisterEnum("ItemType", ItemType_name, ItemType_value)
+	proto.RegisterEnum("Orderable", Orderable_name, Orderable_value)
 }
 
-func init() { proto.RegisterFile("pb.proto", fileDescriptor_pb_63e7cae43b3b5f0b) }
+func init() { proto.RegisterFile("pb.proto", fileDescriptor_pb_fff30577c164ce4d) }
 
-var fileDescriptor_pb_63e7cae43b3b5f0b = []byte{
-	// 375 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x93, 0xcf, 0x6b, 0xa3, 0x40,
-	0x14, 0xc7, 0x99, 0x44, 0xb3, 0xfa, 0x0c, 0x7b, 0x70, 0xf3, 0xc3, 0x90, 0x3d, 0xb8, 0x73, 0x58,
-	0xbc, 0xac, 0x2c, 0xd9, 0xdb, 0x9e, 0x02, 0x2d, 0x94, 0x1c, 0xda, 0xc0, 0x34, 0xc7, 0x82, 0x4c,
-	0xf4, 0x95, 0x0a, 0x46, 0xad, 0x33, 0x16, 0xfa, 0x07, 0xf4, 0xff, 0x2e, 0x99, 0x89, 0xa6, 0xc6,
-	0x53, 0xa1, 0xc7, 0xf9, 0xbe, 0xf7, 0x3e, 0xef, 0xeb, 0xf7, 0x21, 0x58, 0xe5, 0x3e, 0x2c, 0xab,
-	0x42, 0x16, 0xf4, 0x1e, 0xac, 0x5d, 0x51, 0xa6, 0xf1, 0x2d, 0x2f, 0xdd, 0xef, 0x30, 0x48, 0x13,
-	0x8f, 0xf8, 0x24, 0x30, 0xd8, 0x20, 0x4d, 0xdc, 0x9f, 0x60, 0xca, 0x63, 0xcd, 0x1b, 0xf8, 0x24,
-	0x70, 0x56, 0xa3, 0x50, 0x75, 0x32, 0x2d, 0xba, 0x0b, 0xb0, 0xd2, 0x3c, 0x92, 0x15, 0x17, 0x4f,
-	0xde, 0xd0, 0x27, 0x81, 0xc5, 0xbe, 0xa5, 0xf9, 0xee, 0xf8, 0xa4, 0x6f, 0x04, 0x4c, 0xd5, 0xdb,
-	0x43, 0xfa, 0x30, 0x56, 0xd3, 0xd1, 0x81, 0x97, 0x51, 0x9a, 0x28, 0xb2, 0xc1, 0x40, 0x9e, 0x2c,
-	0x6c, 0x12, 0x77, 0x09, 0x66, 0xce, 0x0f, 0x28, 0xbc, 0xa1, 0x3f, 0x0c, 0x9c, 0x95, 0x19, 0xde,
-	0xf1, 0x03, 0x32, 0xad, 0xb9, 0x7f, 0xc0, 0x29, 0xe2, 0xb8, 0xae, 0x2a, 0xcc, 0x63, 0x14, 0x9e,
-	0xa1, 0x5a, 0x9c, 0x70, 0xdb, 0x6a, 0xec, 0x63, 0x9d, 0x6e, 0xc0, 0x38, 0x4e, 0xf7, 0x5c, 0x2c,
-	0xc1, 0x2e, 0x79, 0x85, 0xb9, 0x3c, 0x5b, 0xb0, 0xb4, 0xb0, 0x49, 0xdc, 0x09, 0x98, 0x2f, 0x3c,
-	0xab, 0x51, 0x7d, 0x94, 0xcd, 0xf4, 0x83, 0x6e, 0x01, 0xce, 0x5b, 0xbe, 0x02, 0xf8, 0x17, 0x7e,
-	0xdc, 0xa0, 0x6c, 0xb2, 0x17, 0x0c, 0x9f, 0x6b, 0x14, 0xb2, 0x93, 0x2a, 0xe9, 0xa6, 0xba, 0x86,
-	0x49, 0x77, 0x42, 0x94, 0x45, 0x2e, 0xd0, 0x0d, 0x00, 0xda, 0x4c, 0x85, 0x47, 0x54, 0x26, 0x76,
-	0xd8, 0xf4, 0x31, 0xbb, 0x09, 0x57, 0xd0, 0x39, 0x4c, 0xaf, 0x2a, 0xe4, 0x12, 0xdb, 0xa2, 0xde,
-	0x4a, 0xd7, 0x30, 0xbb, 0x2c, 0x9c, 0xe0, 0xbf, 0xc1, 0x6e, 0xe1, 0xca, 0x50, 0x87, 0x6d, 0x35,
-	0x6c, 0xfa, 0x00, 0xd3, 0x6b, 0xcc, 0xb0, 0x87, 0xee, 0x5d, 0x9c, 0xf4, 0x2e, 0xfe, 0x0b, 0xc6,
-	0x8f, 0x75, 0x96, 0xbd, 0x46, 0x89, 0x02, 0xa8, 0xfc, 0x2c, 0xe6, 0x28, 0x4d, 0x33, 0xa9, 0x07,
-	0xb3, 0x4b, 0xba, 0xf6, 0x47, 0xff, 0xc3, 0x8c, 0xa1, 0x90, 0x45, 0xf5, 0xf9, 0xc5, 0x74, 0x01,
-	0xf3, 0xde, 0xac, 0xc6, 0xee, 0x47, 0xea, 0xef, 0xf8, 0xf7, 0x1e, 0x00, 0x00, 0xff, 0xff, 0xbb,
-	0x6f, 0x30, 0x93, 0x29, 0x03, 0x00, 0x00,
+var fileDescriptor_pb_fff30577c164ce4d = []byte{
+	// 882 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x56, 0xdd, 0x6e, 0xe3, 0x44,
+	0x14, 0x8e, 0x7f, 0x92, 0xda, 0xc7, 0x71, 0xe2, 0x4e, 0xcb, 0xca, 0xab, 0x22, 0x88, 0x2c, 0x40,
+	0x66, 0xa5, 0x5a, 0x22, 0x70, 0x0b, 0xe2, 0x6f, 0x45, 0x2a, 0xed, 0x52, 0x31, 0xdb, 0xe5, 0x0e,
+	0x59, 0xae, 0x67, 0x00, 0x6b, 0x1d, 0xdb, 0xeb, 0x71, 0x90, 0x7a, 0xcf, 0x8b, 0xc0, 0x23, 0xf0,
+	0x12, 0xdc, 0xf1, 0x4c, 0x68, 0xc6, 0x33, 0xfe, 0x49, 0x01, 0xa5, 0x91, 0xd8, 0xbb, 0x9e, 0x6f,
+	0x4e, 0xbe, 0x73, 0xce, 0x77, 0xbe, 0xf1, 0x14, 0xac, 0xea, 0x36, 0xaa, 0xea, 0xb2, 0x29, 0x83,
+	0x4b, 0x38, 0x79, 0x96, 0xdd, 0xd6, 0x49, 0x7d, 0x87, 0x02, 0x70, 0x9b, 0xb2, 0xca, 0xd2, 0x78,
+	0x9b, 0x54, 0x71, 0x46, 0x98, 0xaf, 0xad, 0x8c, 0xd0, 0xc4, 0x8e, 0x00, 0x9f, 0x27, 0xd5, 0x15,
+	0x61, 0xc1, 0x0b, 0xb0, 0x6e, 0x64, 0x88, 0x16, 0xa0, 0x67, 0xc4, 0xd7, 0x56, 0x5a, 0x68, 0x62,
+	0x3d, 0x23, 0xe8, 0x6d, 0x98, 0x8a, 0x54, 0x5f, 0x5f, 0x69, 0xa1, 0xb3, 0x9e, 0x45, 0x22, 0x13,
+	0xb7, 0x20, 0x7a, 0x0c, 0x56, 0x56, 0xc4, 0x4d, 0x9d, 0xb0, 0x9f, 0x7d, 0x63, 0xa5, 0x85, 0x16,
+	0x3e, 0xc9, 0x8a, 0x1b, 0x1e, 0x06, 0x7f, 0x6a, 0x30, 0x15, 0xb9, 0x68, 0x05, 0xf3, 0x61, 0x0b,
+	0x92, 0x1c, 0xfa, 0x0e, 0x64, 0x51, 0xbd, 0x2b, 0x7a, 0x01, 0xd3, 0x22, 0xd9, 0x52, 0xe6, 0x1b,
+	0x2b, 0x23, 0x74, 0xd6, 0xd3, 0xe8, 0xdb, 0x64, 0x4b, 0x71, 0x8b, 0xa1, 0x4b, 0x70, 0xca, 0x34,
+	0xdd, 0xd5, 0x35, 0x2d, 0x52, 0xca, 0x7c, 0x53, 0xa4, 0x38, 0xd1, 0x75, 0x87, 0xe1, 0xe1, 0x39,
+	0x6f, 0x91, 0xff, 0x4e, 0xcc, 0x3e, 0x15, 0xb3, 0x9f, 0xf0, 0xf8, 0x8a, 0x30, 0xf4, 0x3e, 0x2c,
+	0xfa, 0x4c, 0x91, 0x30, 0x13, 0x09, 0x6e, 0x8f, 0x72, 0x79, 0x5e, 0x81, 0xc9, 0xeb, 0x1f, 0x30,
+	0xc7, 0x05, 0xd8, 0x55, 0x52, 0xd3, 0xa2, 0x89, 0xbb, 0x71, 0xac, 0x16, 0xe8, 0x86, 0x34, 0xba,
+	0x21, 0xcf, 0x61, 0xfa, 0x4b, 0x92, 0xef, 0xa8, 0x6f, 0xae, 0xb4, 0xd0, 0xc6, 0x6d, 0x10, 0xbc,
+	0x06, 0xe8, 0x27, 0x79, 0x33, 0x25, 0xff, 0xd2, 0xc0, 0xbc, 0x6a, 0xe8, 0x16, 0xbd, 0x07, 0x27,
+	0x79, 0x6b, 0x1b, 0x51, 0xc8, 0x59, 0x5b, 0x91, 0xb4, 0xd1, 0x66, 0x82, 0xd5, 0x11, 0x0a, 0xc1,
+	0xee, 0x7a, 0x92, 0xae, 0xb0, 0x23, 0xe5, 0x9f, 0xcd, 0x04, 0x5b, 0xaa, 0x3b, 0xf4, 0x8e, 0xf2,
+	0x8e, 0x31, 0xf4, 0xce, 0x66, 0xa2, 0xdc, 0x73, 0x01, 0x26, 0x5f, 0x85, 0xe8, 0x46, 0x6d, 0x79,
+	0x33, 0xc1, 0x02, 0x44, 0x97, 0x00, 0xfd, 0x1a, 0xfc, 0x99, 0x48, 0x19, 0x6e, 0x79, 0x33, 0xc1,
+	0x83, 0x84, 0x2f, 0x01, 0x2c, 0x56, 0xd1, 0x34, 0xfb, 0x31, 0x4b, 0x83, 0x9f, 0xc0, 0x79, 0x56,
+	0x26, 0x04, 0xd3, 0xd7, 0x3b, 0xca, 0x9a, 0x23, 0xfc, 0xf7, 0x01, 0xd8, 0x59, 0x43, 0xb7, 0x71,
+	0x73, 0x57, 0x51, 0xd1, 0xfc, 0x62, 0x6d, 0x47, 0x5c, 0xa2, 0x9b, 0xbb, 0x8a, 0x62, 0x2b, 0x93,
+	0x7f, 0x05, 0x1f, 0xc2, 0xbc, 0x2d, 0xc4, 0xaa, 0xb2, 0x60, 0x14, 0x3d, 0x06, 0x93, 0x9f, 0x49,
+	0xf5, 0xa6, 0xe2, 0x27, 0x58, 0x40, 0xc1, 0x17, 0x30, 0xff, 0x6e, 0x47, 0xeb, 0x3b, 0xd5, 0xd4,
+	0x47, 0xe0, 0xe6, 0x65, 0x42, 0xe2, 0xba, 0x8d, 0xdb, 0x7b, 0xe9, 0xac, 0xe7, 0xd1, 0xa0, 0x73,
+	0x3c, 0xcf, 0xfb, 0x80, 0x05, 0x4f, 0xc1, 0x95, 0x14, 0xb2, 0xdc, 0x27, 0xb0, 0x90, 0x1c, 0x2d,
+	0xa0, 0x48, 0xdc, 0x68, 0xd8, 0x15, 0x76, 0xf3, 0x41, 0xc4, 0x02, 0x06, 0xcb, 0xaf, 0x6a, 0x9a,
+	0x34, 0x59, 0x59, 0x1c, 0xae, 0xd0, 0x23, 0x98, 0xb5, 0xae, 0x92, 0x2a, 0xc9, 0xe8, 0x60, 0xa5,
+	0xfe, 0xd0, 0x00, 0xbd, 0xac, 0x48, 0xd2, 0xd0, 0xeb, 0x9a, 0xd0, 0xfa, 0xf8, 0xd5, 0x84, 0x60,
+	0x97, 0x9c, 0x21, 0xb9, 0xcd, 0x5b, 0xe3, 0x2c, 0xd6, 0x10, 0x5d, 0x2b, 0x04, 0xf7, 0x87, 0xe8,
+	0x5d, 0x70, 0x58, 0x9d, 0xc6, 0x59, 0x41, 0x32, 0xfe, 0x9d, 0xe0, 0x77, 0xdf, 0xc5, 0xc0, 0xea,
+	0xf4, 0xaa, 0x45, 0x78, 0x02, 0x61, 0x4d, 0x97, 0x30, 0x6b, 0x13, 0x08, 0x6b, 0x64, 0x42, 0xf0,
+	0x6b, 0xd7, 0xf4, 0xf7, 0xfc, 0xa2, 0xfc, 0xef, 0x7e, 0xfa, 0x97, 0xfb, 0xf9, 0x03, 0x2c, 0xda,
+	0x2e, 0xba, 0xc5, 0x3f, 0xbc, 0x03, 0xe5, 0x4c, 0xe3, 0xbe, 0x33, 0x5f, 0xc1, 0xf2, 0x6b, 0x9a,
+	0xd3, 0x87, 0xf9, 0xe1, 0xd8, 0x1b, 0x93, 0x83, 0xd7, 0x17, 0x3b, 0x7a, 0x9a, 0x43, 0xab, 0xfd,
+	0xa6, 0xc3, 0xf2, 0xf9, 0xae, 0x19, 0x79, 0xfd, 0x53, 0x38, 0x4d, 0xa5, 0xfd, 0xf7, 0x2f, 0x9f,
+	0x17, 0xed, 0x5d, 0x0c, 0xec, 0xa5, 0x63, 0x80, 0xa1, 0x6f, 0xe0, 0xad, 0x9d, 0x58, 0x46, 0x2c,
+	0x9c, 0xd6, 0x53, 0xe8, 0x82, 0xe2, 0x2c, 0xba, 0xef, 0x72, 0x7c, 0xb6, 0xbb, 0x87, 0x0d, 0x89,
+	0xc4, 0x96, 0x7b, 0x22, 0x63, 0x44, 0x34, 0x74, 0x9e, 0x22, 0x1a, 0x62, 0x8c, 0x0f, 0x44, 0xa4,
+	0xa4, 0x3d, 0x89, 0x29, 0x07, 0xda, 0xdb, 0x2c, 0xf6, 0xc8, 0x18, 0x60, 0xc1, 0xef, 0x3a, 0x78,
+	0xbd, 0x46, 0x72, 0x25, 0x9f, 0x01, 0x1a, 0x88, 0x34, 0xfe, 0xba, 0x2c, 0xa3, 0xb1, 0x1b, 0xf1,
+	0x69, 0x2f, 0x92, 0xcc, 0x44, 0x4f, 0xe1, 0xd1, 0x9e, 0x4a, 0x8a, 0x43, 0xff, 0x67, 0x8e, 0xf3,
+	0x91, 0x44, 0xf7, 0x69, 0x94, 0x46, 0x8a, 0xc6, 0xf8, 0x4f, 0x1a, 0x29, 0x90, 0xa2, 0xf9, 0x1c,
+	0xd0, 0x40, 0x21, 0x45, 0xd1, 0x4a, 0x74, 0x1a, 0xed, 0xfb, 0x11, 0x9f, 0x92, 0x3d, 0x84, 0x3d,
+	0x61, 0x60, 0x29, 0x7b, 0xa1, 0x33, 0x58, 0xbe, 0x2c, 0xe4, 0x5b, 0x43, 0x09, 0x87, 0xbd, 0x09,
+	0x5a, 0x82, 0x23, 0x9f, 0x4a, 0x01, 0x68, 0xc8, 0x83, 0xb9, 0x7a, 0x13, 0x05, 0xa2, 0x23, 0x17,
+	0x6c, 0x81, 0x88, 0xd0, 0x40, 0x73, 0xb0, 0xf8, 0x7b, 0x27, 0x22, 0x13, 0x21, 0x58, 0xf4, 0x4f,
+	0x9b, 0xc0, 0x66, 0x4f, 0x5e, 0x80, 0xdd, 0x7d, 0xd8, 0x90, 0x0f, 0xe7, 0x5d, 0x30, 0x28, 0xef,
+	0x4d, 0xc4, 0x4f, 0xd5, 0x09, 0x67, 0x64, 0x9e, 0x36, 0xca, 0xee, 0x79, 0x99, 0xa7, 0xdf, 0xce,
+	0xc4, 0x7f, 0x88, 0x1f, 0xff, 0x1d, 0x00, 0x00, 0xff, 0xff, 0x2b, 0xba, 0xfe, 0x55, 0x2d, 0x0a,
+	0x00, 0x00,
 }

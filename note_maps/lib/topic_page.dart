@@ -13,53 +13,45 @@
 // limitations under the License.
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 
-import 'package:note_maps/topic_bloc.dart';
-import 'package:note_maps/view_models.dart';
-import 'package:note_maps/app_bottom_app_bar.dart';
-import 'package:note_maps/topic_tab_bar.dart';
+import 'app_bottom_app_bar.dart';
+import 'cards.dart';
+import 'mobileapi/controllers.dart';
+import 'mobileapi/mobileapi.dart';
+import 'providers.dart';
 
-class TopicPage extends StatefulWidget {
-  TopicPage({Key key, @required this.topicBloc})
-      : assert(topicBloc != null),
-        super(key: key);
-
-  final TopicBloc topicBloc;
-
-  @override
-  State<TopicPage> createState() => _TopicPageState();
-}
-
-class _TopicPageState extends State<TopicPage> {
-  TopicBloc get _topicBloc => widget.topicBloc;
+class TopicPage extends StatelessWidget {
+  TopicPage({Key key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    var topicListenable = Provider.of<TopicController>(context);
+    if (topicListenable == null) {
+      return Container(child: CircularProgressIndicator());
+    }
     final bool showFab = MediaQuery.of(context).viewInsets.bottom == 0.0;
-    return BlocProvider<TopicBloc>(
-      builder: (_) => _topicBloc,
-      child: OrientationBuilder(
-        builder: (context, orientation) => BlocBuilder<TopicBloc, TopicState>(
-          builder: (context, topicState) => Scaffold(
-            resizeToAvoidBottomPadding: true,
-            appBar: AppBar(
-              title: Text("Library"),
-              bottom: TopicTabBar(
-                textTheme: Theme.of(context).primaryTextTheme,
-              ),
-            ),
-            body: topicState.loading
-                ? Center(child: CircularProgressIndicator())
-                : _createContent(context, topicState),
-            floatingActionButton: (showFab && topicState.exists)
+    return ValueListenableBuilder<TopicState>(
+      valueListenable: topicListenable,
+      builder: (context, TopicState topicState, _) => Scaffold(
+        resizeToAvoidBottomPadding: true,
+        appBar: AppBar(
+          title: Text(topicState.tentativeName),
+        ),
+        body: topicState.existence == NoteMapExistence.notExists
+            ? Center(child: CircularProgressIndicator())
+            : _createForm(context, topicState),
+        floatingActionButton:
+            (showFab && topicState.existence == NoteMapExistence.exists)
                 ? FloatingActionButton(
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => TopicPage(
-                              topicBloc: _topicBloc.createOtherTopicBloc()),
+                          builder: (context) => TopicProvider(
+                            topicMapId: topicState.data.topicMapId,
+                            child: TopicPage(),
+                          ),
                         ),
                       );
                     },
@@ -67,67 +59,46 @@ class _TopicPageState extends State<TopicPage> {
                     child: Icon(Icons.insert_link),
                   )
                 : null,
-            floatingActionButtonLocation:
-                FloatingActionButtonLocation.centerDocked,
-            bottomNavigationBar: AppBottomAppBar(),
-          ),
-        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        bottomNavigationBar: AppBottomAppBar(),
       ),
     );
   }
 
-  Widget _createContent(BuildContext context, TopicState topicState) {
+  Widget _createForm(BuildContext context, TopicState topicState) {
+    var nameIds = topicState.data.nameIds;
+    if (nameIds.length == 0) {
+      nameIds = [Int64(0)];
+    }
     List<Widget> form = List<Widget>();
-    form.add(heading("Names"));
+    form.add(heading(context, "Names"));
     form.addAll(
-      topicState.names.map(
-        (name) => Card(
-          child: Row(
-            children: <Widget>[
-              Container(width: 48),
-              Expanded(
-                child: TextField(
-                  textCapitalization: TextCapitalization.words,
-                  autofocus: true,
-                  style: Theme.of(context).textTheme.title,
-                  decoration: InputDecoration(border: InputBorder.none),
-                ),
-              ),
-              noteMenuButton(),
-            ],
-          ),
-        ),
-      ),
+      nameIds.map((nameId) => NameProvider(
+            topicMapId: topicState.noteMapKey.topicMapId,
+            parentId: topicState.noteMapKey.id,
+            nameId: nameId,
+            child: NameCard(),
+          )),
     );
     form.add(Divider());
-    form.add(heading("Notes"));
+    form.add(heading(context, "Notes"));
     form.addAll(
-      topicState.occurrences.map(
-        (occurrence) => Card(
-          child: Row(
-            children: <Widget>[
-              Container(width: 48),
-              Expanded(
-                child: TextField(
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(border: InputBorder.none),
-                ),
-              ),
-              noteMenuButton(),
-            ],
-          ),
-        ),
-      ),
+      topicState.data.occurrenceIds.map((occurrenceId) => OccurrenceProvider(
+            topicMapId: topicState.noteMapKey.topicMapId,
+            parentId: topicState.noteMapKey.id,
+            nameId: occurrenceId,
+            child: OccurrenceCard(),
+          )),
     );
     form.add(Divider());
-    form.add(heading("Associations"));
+    form.add(heading(context, "Associations"));
 
     return ListView(
       children: form,
     );
   }
 
-  Widget heading(String text) => Padding(
+  Widget heading(BuildContext context, String text) => Padding(
         padding: EdgeInsets.all(8.0),
         child: Align(
           alignment: Alignment.centerLeft,
@@ -138,84 +109,4 @@ class _TopicPageState extends State<TopicPage> {
           ),
         ),
       );
-
-  Widget noteTile(BuildContext context, OccurrenceViewModel occurrence) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: <Widget>[
-          IconButton(
-              onPressed: () {
-                FocusScope.of(context).requestFocus(new FocusNode());
-              },
-              icon: Icon(
-                Icons.drag_handle,
-                color: Theme.of(context).primaryColor,
-              )),
-          Flexible(
-            child: TextField(
-              controller: occurrence.value,
-              maxLines: null,
-              decoration: null,
-            ),
-          ),
-          noteMenuButton(),
-        ],
-      ),
-    );
-  }
-
-  Widget roleTile(BuildContext context) {
-    return ListTile(
-      leading: FlutterLogo(),
-      title: Placeholder(
-        fallbackHeight: 20,
-      ),
-      trailing: roleMenuButton(),
-      onTap: () {
-        // TODO: identify topic associated with role; should already be part of
-        // view model in this context, and pass it on to the next TopicPage.
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) =>
-                  TopicPage(topicBloc: _topicBloc.createOtherTopicBloc())),
-        );
-      },
-    );
-  }
-
-  Widget noteMenuButton() {
-    return PopupMenuButton<NoteOption>(
-      onSelected: (NoteOption choice) {},
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<NoteOption>>[
-        const PopupMenuItem<NoteOption>(
-          value: NoteOption.delete,
-          child: Text('Delete note'),
-        ),
-      ],
-    );
-  }
-
-  Widget roleMenuButton() {
-    return PopupMenuButton<RoleOption>(
-      onSelected: (RoleOption choice) {},
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<RoleOption>>[
-        const PopupMenuItem<RoleOption>(
-          value: RoleOption.editRole,
-          child: Text('Edit role'),
-        ),
-        const PopupMenuItem<RoleOption>(
-          value: RoleOption.editAssociation,
-          child: Text('Edit association'),
-        ),
-      ],
-    );
-  }
-}
-
-enum NoteOption { delete }
-enum RoleOption {
-  editRole,
-  editAssociation,
 }

@@ -15,138 +15,80 @@
 package pbapi
 
 import (
-	"io/ioutil"
-	"os"
 	"testing"
 
-	"github.com/google/note-maps/kv/badger"
 	"github.com/google/note-maps/kv/kvtest"
 	"github.com/google/note-maps/store/pb"
 )
 
-func TestCreateGetTopicMap(t *testing.T) {
-	dir, err := ioutil.TempDir("", "kvtest-badger")
+func TestTopicMap(t *testing.T) {
+	db := kvtest.NewDB(t)
+	defer db.Close()
+	g := NewGateway(db)
+	response, err := g.Mutate(&pb.MutationRequest{
+		CreationRequests: []*pb.CreationRequest{
+			{ItemType: pb.ItemType_TopicMapItem},
+			{ItemType: pb.ItemType_TopicMapItem},
+			{ItemType: pb.ItemType_TopicMapItem},
+		},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(dir)
-	var topicMap uint64
-	func() {
-		db, err := badger.Open(badger.DefaultOptions(dir))
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer db.Close()
-		g := NewGateway(db)
-		createResponse, err := g.CreateTopicMap(&pb.CreateTopicMapRequest{})
-		if err != nil {
-			t.Fatal(err)
-		} else if createResponse.TopicMap == nil {
-			t.Fatal("want non-nil TopicMap, got nil")
-		} else if createResponse.TopicMap.Id == 0 {
-			t.Error("want non-zero TopicMap.Id, got zero")
-		}
-		topicMap = createResponse.TopicMap.Id
-		if createResponse.TopicMap.Topic == nil {
-			t.Fatal("want non-nil TopicMap.Topic, got nil")
-		} else if createResponse.TopicMap.Topic.Id == 0 {
-			t.Fatal("want non-zero TopicMap.Topic.Id, got nil")
-		} else if createResponse.TopicMap.Topic.Id != createResponse.TopicMap.Id {
-			t.Fatalf("want TopicMap.Id==TopicMap.Topic.Id, got %v!=%v",
-				createResponse.TopicMap.Id,
-				createResponse.TopicMap.Topic.Id)
-		}
-		getResponse, err := g.GetTopicMaps(&pb.GetTopicMapsRequest{})
-		db.Dump(os.Stderr)
-		if err != nil {
-			t.Fatal(err)
-		} else if len(getResponse.TopicMaps) != 1 {
-			t.Errorf("want list of one topic map, got %v", getResponse.TopicMaps)
-		}
-		if topicMap != getResponse.TopicMaps[0].Id {
-			t.Errorf("want %v, got %v",
-				topicMap, getResponse.TopicMaps[0].Id)
-		}
-		if topicMap != getResponse.TopicMaps[0].Topic.Id {
-			t.Errorf("want %v, got %v",
-				topicMap, getResponse.TopicMaps[0].Topic.Id)
-		}
-		db.Sync()
-	}()
-	func() {
-		db, err := badger.Open(badger.DefaultOptions(dir))
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer db.Close()
-		g := NewGateway(db)
-		getResponse, err := g.GetTopicMaps(&pb.GetTopicMapsRequest{})
-		db.Dump(os.Stderr)
-		if err != nil {
-			t.Fatal(err)
-		} else if len(getResponse.TopicMaps) != 1 {
-			t.Errorf("want list of one topic map, got %v", getResponse.TopicMaps)
-		}
-		if topicMap != getResponse.TopicMaps[0].Id {
-			t.Errorf("want %v, got %v",
-				topicMap, getResponse.TopicMaps[0].Id)
-		}
-		if topicMap != getResponse.TopicMaps[0].Topic.Id {
-			t.Errorf("want %v, got %v",
-				topicMap, getResponse.TopicMaps[0].Topic.Id)
-		}
-	}()
-}
-
-func TestDeleteRestoreTopicMap(t *testing.T) {
-	db := kvtest.NewDB(t)
-	defer db.Close()
-	g := NewGateway(db)
-	var e uint64
-	if response, err := g.CreateTopicMap(&pb.CreateTopicMapRequest{}); err != nil {
-		t.Fatal(err)
-	} else {
-		e = response.TopicMap.Id
+	creations := response.CreationResponses
+	if len(creations) != 3 {
+		t.Errorf("want 3, got %v", len(creations))
 	}
-	if _, err := g.DeleteTopicMap(&pb.DeleteTopicMapRequest{TopicMapId: e, FullyDelete: false}); err != nil {
-		t.Fatal(err)
-	}
-	if response, err := g.GetTopicMaps(&pb.GetTopicMapsRequest{}); err != nil {
-		t.Fatal(err)
-	} else if len(response.TopicMaps) > 0 {
-		t.Fatalf("want zero visible topic maps, got %v", response.TopicMaps)
-	}
-	if _, err := g.RestoreTopicMap(&pb.RestoreTopicMapRequest{TopicMapId: e}); err != nil {
-		t.Fatal(err)
-	}
-	if response, err := g.GetTopicMaps(&pb.GetTopicMapsRequest{}); err != nil {
-		t.Fatal(err)
-	} else if len(response.TopicMaps) != 1 {
-		t.Fatalf("want one visible topic maps, got %v", response.TopicMaps)
-	} else if response.TopicMaps[0].Id != e {
-		t.Fatalf("want %v, got %v", e, response.TopicMaps)
+	for _, c := range creations {
+		switch item := c.Item.Specific.(type) {
+		case *pb.Item_TopicMap:
+			t.Log(item)
+		default:
+			t.Fatalf("want topic map, got %T", c.Item)
+		}
 	}
 }
 
-func TestFullyDeleteTopicMap(t *testing.T) {
+func TestName(t *testing.T) {
 	db := kvtest.NewDB(t)
 	defer db.Close()
 	g := NewGateway(db)
-	var e uint64
-	if response, err := g.CreateTopicMap(&pb.CreateTopicMapRequest{}); err != nil {
+	response, err := g.Mutate(&pb.MutationRequest{
+		CreationRequests: []*pb.CreationRequest{
+			{ItemType: pb.ItemType_TopicMapItem},
+		},
+	})
+	if err != nil {
 		t.Fatal(err)
-	} else {
-		e = response.TopicMap.Id
 	}
-	if _, err := g.DeleteTopicMap(&pb.DeleteTopicMapRequest{TopicMapId: e, FullyDelete: true}); err != nil {
+	if len(response.CreationResponses) != 1 {
+		t.Fatal("")
+	}
+	topicId := response.CreationResponses[0].Item.Specific.(*pb.Item_TopicMap).TopicMap.Topic.Id
+	response, err = g.Mutate(&pb.MutationRequest{
+		CreationRequests: []*pb.CreationRequest{
+			{TopicMapId: topicId, Parent: topicId, ItemType: pb.ItemType_NameItem},
+		},
+	})
+	if err != nil {
 		t.Fatal(err)
 	}
-	if response, err := g.GetTopicMaps(&pb.GetTopicMapsRequest{}); err != nil {
+	t.Log(response)
+	nameId := response.CreationResponses[0].Id
+	mutation := &pb.MutationRequest{
+		UpdateValueRequests: []*pb.UpdateValueRequest{
+			{
+				TopicMapId: topicId,
+				Id:         nameId,
+				ItemType:   pb.ItemType_NameItem,
+				Value:      "Test",
+			},
+		},
+	}
+	t.Log(mutation)
+	mutated, err := g.Mutate(mutation)
+	if err != nil {
 		t.Fatal(err)
-	} else if len(response.TopicMaps) > 0 {
-		t.Fatalf("want zero visible topic maps, got %v", response.TopicMaps)
 	}
-	if _, err := g.RestoreTopicMap(&pb.RestoreTopicMapRequest{TopicMapId: e}); err == nil {
-		t.Fatalf("want error restoring fully deleted topic map, got nil")
-	}
+	t.Log(mutated)
 }

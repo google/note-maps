@@ -15,6 +15,7 @@
 package pbapi
 
 import (
+	"os"
 	"testing"
 
 	"github.com/google/note-maps/kv/kvtest"
@@ -61,6 +62,7 @@ func TestName(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	kvtest.DumpDB(os.Stderr, db)
 	if len(response.CreationResponses) != 1 {
 		t.Fatal("")
 	}
@@ -70,6 +72,7 @@ func TestName(t *testing.T) {
 			{TopicMapId: topicId, Parent: topicId, ItemType: pb.ItemType_NameItem},
 		},
 	})
+	kvtest.DumpDB(os.Stderr, db)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,10 +88,25 @@ func TestName(t *testing.T) {
 			},
 		},
 	}
+	kvtest.DumpDB(os.Stderr, db)
 	t.Log(mutation)
 	mutated, err := g.Mutate(mutation)
+	kvtest.DumpDB(os.Stderr, db)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(mutated)
+	// Alright, the name was created and updated, but can we retrieve everything
+	// correctly?
+	queryResults, err := g.Query(&pb.QueryRequest{
+		LoadRequests: []*pb.LoadRequest{
+			{TopicMapId: topicId, Id: topicId, ItemType: pb.ItemType_TopicMapItem},
+			{TopicMapId: topicId, Id: topicId, ItemType: pb.ItemType_TopicItem},
+			{TopicMapId: topicId, Id: nameId, ItemType: pb.ItemType_NameItem},
+		},
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(queryResults)
 }

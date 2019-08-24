@@ -26,34 +26,31 @@ func (s Txn) SetIIs(e kv.Entity, v IIs) error {
 	if err := s.Set(key, v.Encode()); err != nil {
 		return err
 	}
-	lek := len(key)
-	kv.Entity(0).EncodeAt(key[10:])
-	key = append(key, kv.Component(0).Encode()...)
-	var (
-		lik = len(key)
-		es  kv.EntitySlice
-	)
+	// A prefix buffer for all index keys.
+	prefix := kv.ConcatByteSlices(key, kv.Component(0).Encode())
+	kv.Entity(0).EncodeAt(prefix[10:])
+	var es kv.EntitySlice
 
 	// Update Literal index
-	key = key[:lek].AppendComponent(LiteralPrefix)
+	LiteralPrefix.EncodeAt(prefix[18:])
 	for _, iv := range old.IndexLiteral() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Remove(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
 	}
 	for _, iv := range v.IndexLiteral() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Insert(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
@@ -76,23 +73,19 @@ func (s Txn) DeleteIIs(e kv.Entity) error {
 	if err := s.Delete(key); err != nil {
 		return err
 	}
-	lek := len(key)
-	kv.Entity(0).EncodeAt(key[10:])
-	key = append(key, kv.Component(0).Encode()...)
-	var (
-		lik = len(key)
-		es  kv.EntitySlice
-	)
+	prefix := kv.ConcatByteSlices(key, kv.Component(0).Encode())
+	kv.Entity(0).EncodeAt(prefix[10:])
+	var es kv.EntitySlice
 
 	// Update Literal index
-	key = key[:lek].AppendComponent(LiteralPrefix)
+	LiteralPrefix.EncodeAt(prefix[18:])
 	for _, iv := range old.IndexLiteral() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Remove(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
@@ -184,34 +177,31 @@ func (s Txn) SetName(e kv.Entity, v *Name) error {
 	if err := s.Set(key, v.Encode()); err != nil {
 		return err
 	}
-	lek := len(key)
-	kv.Entity(0).EncodeAt(key[10:])
-	key = append(key, kv.Component(0).Encode()...)
-	var (
-		lik = len(key)
-		es  kv.EntitySlice
-	)
+	// A prefix buffer for all index keys.
+	prefix := kv.ConcatByteSlices(key, kv.Component(0).Encode())
+	kv.Entity(0).EncodeAt(prefix[10:])
+	var es kv.EntitySlice
 
 	// Update Value index
-	key = key[:lek].AppendComponent(ValuePrefix)
+	ValuePrefix.EncodeAt(prefix[18:])
 	for _, iv := range old.IndexValue() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Remove(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
 	}
 	for _, iv := range v.IndexValue() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Insert(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
@@ -234,23 +224,19 @@ func (s Txn) DeleteName(e kv.Entity) error {
 	if err := s.Delete(key); err != nil {
 		return err
 	}
-	lek := len(key)
-	kv.Entity(0).EncodeAt(key[10:])
-	key = append(key, kv.Component(0).Encode()...)
-	var (
-		lik = len(key)
-		es  kv.EntitySlice
-	)
+	prefix := kv.ConcatByteSlices(key, kv.Component(0).Encode())
+	kv.Entity(0).EncodeAt(prefix[10:])
+	var es kv.EntitySlice
 
 	// Update Value index
-	key = key[:lek].AppendComponent(ValuePrefix)
+	ValuePrefix.EncodeAt(prefix[18:])
 	for _, iv := range old.IndexValue() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Remove(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
@@ -342,34 +328,31 @@ func (s Txn) SetOccurrence(e kv.Entity, v *Occurrence) error {
 	if err := s.Set(key, v.Encode()); err != nil {
 		return err
 	}
-	lek := len(key)
-	kv.Entity(0).EncodeAt(key[10:])
-	key = append(key, kv.Component(0).Encode()...)
-	var (
-		lik = len(key)
-		es  kv.EntitySlice
-	)
+	// A prefix buffer for all index keys.
+	prefix := kv.ConcatByteSlices(key, kv.Component(0).Encode())
+	kv.Entity(0).EncodeAt(prefix[10:])
+	var es kv.EntitySlice
 
 	// Update Value index
-	key = key[:lek].AppendComponent(ValuePrefix)
+	ValuePrefix.EncodeAt(prefix[18:])
 	for _, iv := range old.IndexValue() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Remove(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
 	}
 	for _, iv := range v.IndexValue() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Insert(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
@@ -392,23 +375,19 @@ func (s Txn) DeleteOccurrence(e kv.Entity) error {
 	if err := s.Delete(key); err != nil {
 		return err
 	}
-	lek := len(key)
-	kv.Entity(0).EncodeAt(key[10:])
-	key = append(key, kv.Component(0).Encode()...)
-	var (
-		lik = len(key)
-		es  kv.EntitySlice
-	)
+	prefix := kv.ConcatByteSlices(key, kv.Component(0).Encode())
+	kv.Entity(0).EncodeAt(prefix[10:])
+	var es kv.EntitySlice
 
 	// Update Value index
-	key = key[:lek].AppendComponent(ValuePrefix)
+	ValuePrefix.EncodeAt(prefix[18:])
 	for _, iv := range old.IndexValue() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Remove(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
@@ -500,34 +479,31 @@ func (s Txn) SetSIs(e kv.Entity, v SIs) error {
 	if err := s.Set(key, v.Encode()); err != nil {
 		return err
 	}
-	lek := len(key)
-	kv.Entity(0).EncodeAt(key[10:])
-	key = append(key, kv.Component(0).Encode()...)
-	var (
-		lik = len(key)
-		es  kv.EntitySlice
-	)
+	// A prefix buffer for all index keys.
+	prefix := kv.ConcatByteSlices(key, kv.Component(0).Encode())
+	kv.Entity(0).EncodeAt(prefix[10:])
+	var es kv.EntitySlice
 
 	// Update Literal index
-	key = key[:lek].AppendComponent(LiteralPrefix)
+	LiteralPrefix.EncodeAt(prefix[18:])
 	for _, iv := range old.IndexLiteral() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Remove(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
 	}
 	for _, iv := range v.IndexLiteral() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Insert(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
@@ -550,23 +526,19 @@ func (s Txn) DeleteSIs(e kv.Entity) error {
 	if err := s.Delete(key); err != nil {
 		return err
 	}
-	lek := len(key)
-	kv.Entity(0).EncodeAt(key[10:])
-	key = append(key, kv.Component(0).Encode()...)
-	var (
-		lik = len(key)
-		es  kv.EntitySlice
-	)
+	prefix := kv.ConcatByteSlices(key, kv.Component(0).Encode())
+	kv.Entity(0).EncodeAt(prefix[10:])
+	var es kv.EntitySlice
 
 	// Update Literal index
-	key = key[:lek].AppendComponent(LiteralPrefix)
+	LiteralPrefix.EncodeAt(prefix[18:])
 	for _, iv := range old.IndexLiteral() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Remove(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
@@ -658,34 +630,31 @@ func (s Txn) SetSLs(e kv.Entity, v SLs) error {
 	if err := s.Set(key, v.Encode()); err != nil {
 		return err
 	}
-	lek := len(key)
-	kv.Entity(0).EncodeAt(key[10:])
-	key = append(key, kv.Component(0).Encode()...)
-	var (
-		lik = len(key)
-		es  kv.EntitySlice
-	)
+	// A prefix buffer for all index keys.
+	prefix := kv.ConcatByteSlices(key, kv.Component(0).Encode())
+	kv.Entity(0).EncodeAt(prefix[10:])
+	var es kv.EntitySlice
 
 	// Update Literal index
-	key = key[:lek].AppendComponent(LiteralPrefix)
+	LiteralPrefix.EncodeAt(prefix[18:])
 	for _, iv := range old.IndexLiteral() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Remove(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
 	}
 	for _, iv := range v.IndexLiteral() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Insert(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
@@ -708,23 +677,19 @@ func (s Txn) DeleteSLs(e kv.Entity) error {
 	if err := s.Delete(key); err != nil {
 		return err
 	}
-	lek := len(key)
-	kv.Entity(0).EncodeAt(key[10:])
-	key = append(key, kv.Component(0).Encode()...)
-	var (
-		lik = len(key)
-		es  kv.EntitySlice
-	)
+	prefix := kv.ConcatByteSlices(key, kv.Component(0).Encode())
+	kv.Entity(0).EncodeAt(prefix[10:])
+	var es kv.EntitySlice
 
 	// Update Literal index
-	key = key[:lek].AppendComponent(LiteralPrefix)
+	LiteralPrefix.EncodeAt(prefix[18:])
 	for _, iv := range old.IndexLiteral() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Remove(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}

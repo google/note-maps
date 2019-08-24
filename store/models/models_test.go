@@ -15,10 +15,12 @@
 package models
 
 import (
+	"os"
 	"sort"
 	"testing"
 
 	"github.com/google/note-maps/kv"
+	"github.com/google/note-maps/kv/kvtest"
 	"github.com/google/note-maps/kv/memory"
 )
 
@@ -78,4 +80,45 @@ func TestCreateTopicMap(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestSetGetTopicNames(t *testing.T) {
+	var (
+		err error
+		db  = kvtest.NewDB(t)
+	)
+	defer db.Close()
+	var (
+		entity = kv.Entity(2)
+		want   = []kv.Entity{42}
+	)
+	kvtest.DumpDB(os.Stderr, db)
+	func() {
+		txn := db.NewTxn(true)
+		defer txn.Discard()
+		ms := New(txn)
+		if err = ms.SetTopicNames(entity, want); err != nil {
+			t.Fatal(err)
+		}
+		if got, err := ms.GetTopicNames(entity); err != nil {
+			t.Fatal(err)
+		} else if !kv.EntitySlice(want).Equal(kv.EntitySlice(got)) {
+			t.Errorf("want %v, got %v", want, got)
+		}
+		txn.Commit()
+	}()
+	kvtest.DumpDB(os.Stderr, db)
+	func() {
+		txn := db.NewTxn(false)
+		defer txn.Discard()
+		ms := New(txn)
+		got, err := ms.GetTopicNames(entity)
+		if err != nil {
+			t.Fatal(err)
+		} else if !kv.EntitySlice(want).Equal(kv.EntitySlice(got)) {
+			t.Errorf("want %v, got %v", want, got)
+		}
+		t.Logf("loaded name ids %v for topic %v", got, entity)
+	}()
+	kvtest.DumpDB(os.Stderr, db)
 }

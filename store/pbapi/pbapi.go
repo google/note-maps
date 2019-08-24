@@ -84,11 +84,11 @@ func (g Gateway) Query(q *pb.QueryRequest) (*pb.QueryResponse, error) {
 			}
 			n := pb.Name{TopicMapId: load.TopicMapId, Id: load.Id}
 			ms.Partition = kv.Entity(load.TopicMapId)
-			if name, err := ms.GetName(kv.Entity(load.Id)); err != nil {
+			if info, err := ms.GetName(kv.Entity(load.Id)); err != nil {
 				return nil, err
 			} else {
-				n.ParentId = name.Topic
-				n.Value = name.Value
+				n.ParentId = info.Topic
+				n.Value = info.Value
 			}
 			loaded.Item = &pb.Item{Specific: &pb.Item_Name{&n}}
 		case pb.ItemType_OccurrenceItem:
@@ -97,11 +97,11 @@ func (g Gateway) Query(q *pb.QueryRequest) (*pb.QueryResponse, error) {
 			}
 			o := pb.Occurrence{TopicMapId: load.TopicMapId, Id: load.Id}
 			ms.Partition = kv.Entity(load.TopicMapId)
-			if occurrence, err := ms.GetOccurrence(kv.Entity(load.Id)); err != nil {
+			if info, err := ms.GetOccurrence(kv.Entity(load.Id)); err != nil {
 				return nil, err
 			} else {
-				o.ParentId = occurrence.Topic
-				o.Value = occurrence.Value
+				o.ParentId = info.Topic
+				o.Value = info.Value
 			}
 			loaded.Item = &pb.Item{Specific: &pb.Item_Occurrence{&o}}
 		default:
@@ -124,6 +124,7 @@ func (g Gateway) Mutate(m *pb.MutationRequest) (*pb.MutationResponse, error) {
 	ms := models.New(txn)
 	var response pb.MutationResponse
 	for _, deletion := range m.DeletionRequests {
+		ms.Partition = kv.Entity(deletion.TopicMapId)
 		var deleted pb.DeletionResponse
 		deleted.Id = deletion.Id
 		deleted.TopicMapId = deletion.TopicMapId
@@ -150,6 +151,7 @@ func (g Gateway) Mutate(m *pb.MutationRequest) (*pb.MutationResponse, error) {
 		if err != nil {
 			return nil, err
 		}
+		ms.Partition = kv.Entity(creation.TopicMapId)
 		created := pb.UpdateResponse{
 			TopicMapId: creation.TopicMapId,
 			Id:         uint64(e),
@@ -197,8 +199,11 @@ func (g Gateway) Mutate(m *pb.MutationRequest) (*pb.MutationResponse, error) {
 			pe := kv.Entity(creation.Parent)
 			if pns, err := ms.GetTopicNames(pe); err != nil {
 				return nil, err
-			} else if err = ms.SetTopicNames(pe, append(pns, e)); err != nil {
-				return nil, err
+			} else {
+				pns = append(pns, e)
+				if err = ms.SetTopicNames(pe, pns); err != nil {
+					return nil, err
+				}
 			}
 			info := &models.Name{}
 			info.Topic = creation.Parent
@@ -236,6 +241,7 @@ func (g Gateway) Mutate(m *pb.MutationRequest) (*pb.MutationResponse, error) {
 		if orderUpdate.TopicMapId == 0 || orderUpdate.Id == 0 {
 			return nil, fmt.Errorf("too many zeros in request")
 		}
+		ms.Partition = kv.Entity(orderUpdate.TopicMapId)
 		var updated pb.UpdateResponse
 		switch orderUpdate.Orderable {
 		default:
@@ -248,6 +254,7 @@ func (g Gateway) Mutate(m *pb.MutationRequest) (*pb.MutationResponse, error) {
 		if valueUpdate.TopicMapId == 0 || valueUpdate.Id == 0 {
 			return nil, fmt.Errorf("too many zeros in request")
 		}
+		ms.Partition = kv.Entity(valueUpdate.TopicMapId)
 		updated := pb.UpdateResponse{
 			TopicMapId: valueUpdate.TopicMapId,
 			Id:         valueUpdate.Id,
@@ -259,7 +266,6 @@ func (g Gateway) Mutate(m *pb.MutationRequest) (*pb.MutationResponse, error) {
 				Id:         valueUpdate.Id,
 				Value:      valueUpdate.Value,
 			}
-			ms.Partition = kv.Entity(valueUpdate.TopicMapId)
 			if info, err := ms.GetName(kv.Entity(valueUpdate.Id)); err != nil {
 				return nil, err
 			} else {
@@ -275,7 +281,6 @@ func (g Gateway) Mutate(m *pb.MutationRequest) (*pb.MutationResponse, error) {
 				TopicMapId: updated.TopicMapId,
 				Id:         updated.Id,
 			}
-			ms.Partition = kv.Entity(valueUpdate.TopicMapId)
 			if info, err := ms.GetOccurrence(kv.Entity(valueUpdate.Id)); err != nil {
 				return nil, err
 			} else {
@@ -427,6 +432,9 @@ func isWellFormedQueryResponse(p *pb.QueryResponse) error {
 		case *pb.Item_Occurrence:
 			if item.Occurrence.Id == 0 {
 				return fmt.Errorf("LoadResponses[%v]: loaded occurrence, but Id is zero", i)
+			}
+			if item.Occurrence.ParentId == 0 {
+				return fmt.Errorf("LoadResponses[%v]: loaded occurrence, but ParentId is zero", i)
 			}
 		}
 	}

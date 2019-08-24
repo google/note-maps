@@ -26,34 +26,31 @@ func (s Txn) SetDocument(e kv.Entity, v *Document) error {
 	if err := s.Set(key, v.Encode()); err != nil {
 		return err
 	}
-	lek := len(key)
-	kv.Entity(0).EncodeAt(key[10:])
-	key = append(key, kv.Component(0).Encode()...)
-	var (
-		lik = len(key)
-		es  kv.EntitySlice
-	)
+	// A prefix buffer for all index keys.
+	prefix := kv.ConcatByteSlices(key, kv.Component(0).Encode())
+	kv.Entity(0).EncodeAt(prefix[10:])
+	var es kv.EntitySlice
 
 	// Update Title index
-	key = key[:lek].AppendComponent(TitlePrefix)
+	TitlePrefix.EncodeAt(prefix[18:])
 	for _, iv := range old.IndexTitle() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Remove(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
 	}
 	for _, iv := range v.IndexTitle() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Insert(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}
@@ -76,23 +73,19 @@ func (s Txn) DeleteDocument(e kv.Entity) error {
 	if err := s.Delete(key); err != nil {
 		return err
 	}
-	lek := len(key)
-	kv.Entity(0).EncodeAt(key[10:])
-	key = append(key, kv.Component(0).Encode()...)
-	var (
-		lik = len(key)
-		es  kv.EntitySlice
-	)
+	prefix := kv.ConcatByteSlices(key, kv.Component(0).Encode())
+	kv.Entity(0).EncodeAt(prefix[10:])
+	var es kv.EntitySlice
 
 	// Update Title index
-	key = key[:lek].AppendComponent(TitlePrefix)
+	TitlePrefix.EncodeAt(prefix[18:])
 	for _, iv := range old.IndexTitle() {
-		key = append(key[:lik], iv.Encode()...)
-		if err := s.Get(key, es.Decode); err != nil {
+		k := kv.ConcatByteSlices(prefix, iv.Encode())
+		if err := s.Get(k, es.Decode); err != nil {
 			return err
 		}
 		if es.Remove(e) {
-			if err := s.Set(key, es.Encode()); err != nil {
+			if err := s.Set(k, es.Encode()); err != nil {
 				return err
 			}
 		}

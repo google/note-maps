@@ -256,6 +256,25 @@ func (s Partitioned) EntitiesByComponentIndex(c, ix Component, cursor *IndexCurs
 	return
 }
 
+// ConcatByteSlices returns a concatentation of the given byte slices.
+//
+// ConcatByteSlices is intended for constructing keys from an optional prefix
+// and a seqeunce of Encoder.Encode() values, especially when some of the given
+// byte slices have already been shared with other modules and should not be
+// mutated. It is also a convenient function for simply copying a single byte
+// slice.
+func ConcatByteSlices(bss ...[]byte) []byte {
+	ln := 0
+	for _, bs := range bss {
+		ln += len(bs)
+	}
+	key := make([]byte, 0, ln)
+	for _, bs := range bss {
+		key = append(key, bs...)
+	}
+	return key
+}
+
 // Encoder is an interface implemented by any type that is to be stored in the
 // key or value of a key-value pair.
 type Encoder interface {

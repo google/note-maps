@@ -17,6 +17,7 @@ package kvtest
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"runtime/debug"
@@ -210,4 +211,30 @@ func Deflake(t *testing.T, test func(kv.Txn)) {
 			test(flaky)
 		})
 	}
+}
+
+// DumpDB writes a mostly human-readable representation of the entire contents
+// of db to w.
+func DumpDB(w io.Writer, db kv.DB) {
+	txn := db.NewTxn(false)
+	defer txn.Discard()
+	iter := txn.PrefixIterator(nil)
+	defer iter.Discard()
+	count := 0
+	for iter.Seek([]byte{0}); iter.Valid(); iter.Next() {
+		key := iter.Key()
+		var value []byte
+		err := iter.Value(func(bs []byte) error {
+			value = make([]byte, len(bs))
+			copy(value, bs)
+			return nil
+		})
+		if err != nil {
+			fmt.Fprintf(w, "%x\tE: %v", key, err)
+			break
+		}
+		fmt.Fprintf(w, "%x\t%x\n", key, value)
+		count++
+	}
+	fmt.Fprintf(w, "%v keys\n", count)
 }

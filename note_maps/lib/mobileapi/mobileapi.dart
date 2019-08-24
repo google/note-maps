@@ -77,6 +77,27 @@ class NoteMapRepository {
     });
   }
 
+  void _reloadParent(
+      {Int64 topicMapId, Int64 parentId, ItemType childItemType}) {
+    switch (childItemType) {
+      case ItemType.NameItem:
+      case ItemType.OccurrenceItem:
+        if (parentId != null && parentId != Int64(0)) {
+          reload(NoteMapKey(
+            topicMapId: topicMapId,
+            id: parentId,
+            itemType: ItemType.TopicItem,
+          ));
+        }
+        break;
+      case ItemType.TopicMapItem:
+        reload(NoteMapKey(itemType: ItemType.LibraryItem));
+        break;
+      default:
+        break;
+    }
+  }
+
   NoteMapItem fromCache(NoteMapKey key) {
     return _cache.get(key);
   }
@@ -95,28 +116,11 @@ class NoteMapRepository {
       var m = MutationRequest();
       m.creationRequests.add(creation);
       var response = await _mutate(m);
-      if (response == null) {
-        print("got no response");
-        return null;
-      }
-      if (parentId != null && parentId != 0) {
-        switch (itemType) {
-          case ItemType.NameItem:
-          case ItemType.OccurrenceItem:
-            print("reloading parent topic since it has new child");
-            reload(NoteMapKey(
-              topicMapId: topicMapId,
-              id: parentId,
-              itemType: ItemType.TopicItem,
-            ));
-            break;
-          case ItemType.TopicMapItem:
-            reload(NoteMapKey(itemType: ItemType.LibraryItem));
-            break;
-          default:
-            break;
-        }
-      }
+      _reloadParent(
+        topicMapId: topicMapId,
+        parentId: parentId,
+        childItemType: itemType,
+      );
       return NoteMapItem.fromItem(response.creationResponses[0].item);
     }).catchError((error) {
       print("error while creating $itemType: $error");
@@ -142,7 +146,7 @@ class NoteMapRepository {
     });
   }
 
-  Future<NoteMapItem> delete(NoteMapKey key) async {
+  Future<NoteMapItem> delete(NoteMapKey key, {Int64 parentId}) async {
     var deletion = DeletionRequest();
     deletion.topicMapId = key.topicMapId;
     deletion.id = key.id;
@@ -150,6 +154,11 @@ class NoteMapRepository {
     var m = MutationRequest();
     m.deletionRequests.add(deletion);
     var response = await _mutate(m);
+    _reloadParent(
+      topicMapId: key.topicMapId,
+      parentId: parentId,
+      childItemType: key.itemType,
+    );
     var deleted = response.deletionResponses[0];
     return NoteMapItem.deleted(NoteMapKey(
       topicMapId: deleted.topicMapId,

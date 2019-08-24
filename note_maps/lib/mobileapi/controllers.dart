@@ -14,7 +14,6 @@
 
 import 'dart:async';
 
-import 'package:bloc/bloc.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';

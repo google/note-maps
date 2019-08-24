@@ -71,6 +71,13 @@ class _NoteMapItemProviderState<S extends NoteMapItemState,
         child: result,
       );
     }
+    if (listenable is TopicController) {
+      TopicController topicController = listenable as TopicController;
+      result = ValueListenableProvider<NameController>(
+        builder: (_) => topicController.firstNameController,
+        child: result,
+      );
+    }
 
     return InheritedProvider<L>(
       value: listenable,

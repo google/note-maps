@@ -15,8 +15,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'common_widgets.dart';
 import 'mobileapi/controllers.dart';
 import 'topic_identicon.dart';
+import 'topic_map_title.dart';
 
 class TopicMapTile extends StatelessWidget {
   TopicMapTile({
@@ -39,13 +41,7 @@ class TopicMapTile extends StatelessWidget {
           size: 48,
           backgroundColor: Theme.of(context).primaryColorLight,
         ),
-        title: Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(text: topicMapState.displayName),
-            ],
-          ),
-        ),
+        title: TopicMapTitle(),
         trailing: PopupMenuButton<NoteMapOption>(
           onSelected: (NoteMapOption choice) {
             switch (choice) {

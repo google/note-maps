@@ -109,12 +109,6 @@ class OccurrenceState extends NoteMapItemState<Occurrence> {
   Occurrence get data => item.proto.occurrence;
 }
 
-abstract class NoteMapItemBloc<E, S> extends Bloc<E, S> {
-  final NoteMapRepository repository;
-
-  NoteMapItemBloc(this.repository) : assert(repository != null);
-}
-
 abstract class LibraryEvent {}
 
 class LibraryReloadEvent extends LibraryEvent {}
@@ -245,17 +239,40 @@ class TopicMapController extends NoteMapItemController<TopicMapState> {
 }
 
 class TopicController extends NoteMapItemController<TopicState> {
+  final ValueNotifier<NameController> _firstNameController =
+      ValueNotifier<NameController>(null);
+
   TopicController(NoteMapRepository repository, Int64 topicMapId, Int64 id)
       : super(
             repository,
             NoteMapKey(
-                topicMapId: topicMapId, id: id, itemType: ItemType.TopicItem));
+                topicMapId: topicMapId, id: id, itemType: ItemType.TopicItem)) {
+    addListener(_updateFirstNameController);
+  }
+
+  void _updateFirstNameController() {
+    if (value.data.nameIds.length == 0) {
+      _firstNameController.value = null;
+    } else {
+      _firstNameController.value = NameController(
+          repository, value.noteMapKey.topicMapId, value.data.nameIds[0]);
+    }
+  }
+
+  ValueListenable<NameController> get firstNameController =>
+      _firstNameController;
 
   @override
   TopicState mapItemToState(NoteMapItem item) => TopicState(item);
 
   @override
   ItemType get itemType => ItemType.TopicItem;
+
+  @override
+  void close() {
+    removeListener(_updateFirstNameController);
+    super.close();
+  }
 }
 
 class NameController extends NoteMapItemController<NameState> {

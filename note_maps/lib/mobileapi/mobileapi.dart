@@ -110,6 +110,9 @@ class NoteMapRepository {
               itemType: ItemType.TopicItem,
             ));
             break;
+          case ItemType.TopicMapItem:
+            reload(NoteMapKey(itemType: ItemType.LibraryItem));
+            break;
           default:
             break;
         }
@@ -130,7 +133,7 @@ class NoteMapRepository {
       valueUpdate.value = value;
       var m = MutationRequest();
       m.updateValueRequests.add(valueUpdate);
-      var response = await _mutate(m);
+      await _mutate(m);
       return true;
     }).catchError((e) {
       // TODO: handle error!

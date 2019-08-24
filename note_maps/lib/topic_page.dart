@@ -20,6 +20,7 @@ import 'cards.dart';
 import 'mobileapi/controllers.dart';
 import 'mobileapi/mobileapi.dart';
 import 'providers.dart';
+import 'topic_map_title.dart';
 
 class TopicPage extends StatelessWidget {
   TopicPage({Key key}) : super(key: key);
@@ -36,7 +37,9 @@ class TopicPage extends StatelessWidget {
       builder: (context, TopicState topicState, _) => Scaffold(
         resizeToAvoidBottomPadding: true,
         appBar: AppBar(
-          title: Text(topicState.tentativeName),
+          title: Text(topicState.data.topicMapId == topicState.data.id
+              ? "Topic Map"
+              : "Topic"),
         ),
         body: topicState.existence == NoteMapExistence.notExists
             ? Center(child: CircularProgressIndicator())

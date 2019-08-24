@@ -47,7 +47,6 @@ class _AppState extends State<App> with TickerProviderStateMixin<App> {
   void initState() {
     super.initState();
     libraryListenable = LibraryController(widget.noteMapRepository);
-    libraryListenable.reload(); // double-check whether this is necessary.
     appNavigationBloc = AppNavigationBloc();
   }
 

@@ -15,6 +15,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'common_widgets.dart';
 import 'mobileapi/controllers.dart';
 
 class NameCard extends StatelessWidget {
@@ -28,11 +29,26 @@ class NameCard extends StatelessWidget {
           children: <Widget>[
             Container(width: 48),
             Expanded(
-              child: TextField(
-                textCapitalization: TextCapitalization.words,
-                autofocus: true,
-                style: Theme.of(context).textTheme.title,
-                decoration: InputDecoration(border: InputBorder.none),
+              child: FutureBuilder<TextEditingController>(
+                future: controller.valueTextController,
+                initialData: null,
+                builder: (_, snapshot) {
+                  switch (snapshot.connectionState) {
+                    case ConnectionState.done:
+                      if (snapshot.hasError) {
+                        return ErrorIndicator();
+                      }
+                      return TextField(
+                        controller: snapshot.data,
+                        textCapitalization: TextCapitalization.words,
+                        autofocus: true,
+                        style: Theme.of(context).textTheme.title,
+                        decoration: InputDecoration(border: InputBorder.none),
+                      );
+                    default:
+                      return CircularProgressIndicator();
+                  }
+                },
               ),
             ),
             _noteMenuButton(),

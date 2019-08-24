@@ -86,17 +86,57 @@ class NoteMapRepository {
     Int64 parentId,
     ItemType itemType,
   ) async {
-    var creation = CreationRequest();
-    creation.topicMapId = topicMapId;
-    creation.parent = parentId;
-    creation.itemType = itemType;
-    var m = MutationRequest();
-    m.creationRequests.add(creation);
-    var response = await _mutate(m);
-    if (response == null) {
-      return null;
-    }
-    return NoteMapItem.fromItem(response.creationResponses[0].item);
+    return Future.sync(() async {
+      print("creating $topicMapId, $parentId, $itemType");
+      var creation = CreationRequest();
+      creation.topicMapId = topicMapId;
+      creation.parent = parentId;
+      creation.itemType = itemType;
+      var m = MutationRequest();
+      m.creationRequests.add(creation);
+      var response = await _mutate(m);
+      if (response == null) {
+        print("got no response");
+        return null;
+      }
+      if (parentId != null && parentId != 0) {
+        switch (itemType) {
+          case ItemType.NameItem:
+          case ItemType.OccurrenceItem:
+            print("reloading parent topic since it has new child");
+            reload(NoteMapKey(
+              topicMapId: topicMapId,
+              id: parentId,
+              itemType: ItemType.TopicItem,
+            ));
+            break;
+          default:
+            break;
+        }
+      }
+      return NoteMapItem.fromItem(response.creationResponses[0].item);
+    }).catchError((error) {
+      print("error while creating $itemType: $error");
+      throw error;
+    });
+  }
+
+  Future<bool> updateValue(NoteMapKey noteMapKey, String value) async {
+    return Future.sync(() async {
+      var valueUpdate = UpdateValueRequest();
+      valueUpdate.topicMapId = noteMapKey.topicMapId;
+      valueUpdate.id = noteMapKey.id;
+      valueUpdate.itemType = noteMapKey.itemType;
+      valueUpdate.value = value;
+      var m = MutationRequest();
+      m.updateValueRequests.add(valueUpdate);
+      var response = await _mutate(m);
+      return true;
+    }).catchError((e) {
+      // TODO: handle error!
+      print("ignoring error: $e");
+      return false;
+    });
   }
 
   Future<NoteMapItem> delete(NoteMapKey key) async {
@@ -106,7 +146,6 @@ class NoteMapRepository {
     deletion.itemType = key.itemType;
     var m = MutationRequest();
     m.deletionRequests.add(deletion);
-    NoteMapKey deletedKey;
     var response = await _mutate(m);
     var deleted = response.deletionResponses[0];
     return NoteMapItem.deleted(NoteMapKey(
@@ -157,7 +196,19 @@ class NoteMapKey {
     ItemType itemType,
   })  : topicMapId = topicMapId ?? Int64(0),
         id = id ?? Int64(0),
-        itemType = itemType ?? ItemType.UnspecifiedItem;
+        itemType = itemType ?? ItemType.UnspecifiedItem {
+    switch (itemType) {
+      case ItemType.LibraryItem:
+        assert(this.topicMapId == 0 && this.id == 0);
+        break;
+      case ItemType.TopicMapItem:
+        assert(this.topicMapId == this.id);
+        break;
+      default:
+        assert(complete || couldCreate(Int64(1)));
+        break;
+    }
+  }
 
   @override
   bool operator ==(other) {

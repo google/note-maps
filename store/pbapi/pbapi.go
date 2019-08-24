@@ -87,6 +87,7 @@ func (g Gateway) Query(q *pb.QueryRequest) (*pb.QueryResponse, error) {
 			if name, err := ms.GetName(kv.Entity(load.Id)); err != nil {
 				return nil, err
 			} else {
+				n.ParentId = name.Topic
 				n.Value = name.Value
 			}
 			loaded.Item = &pb.Item{Specific: &pb.Item_Name{&n}}
@@ -99,6 +100,7 @@ func (g Gateway) Query(q *pb.QueryRequest) (*pb.QueryResponse, error) {
 			if occurrence, err := ms.GetOccurrence(kv.Entity(load.Id)); err != nil {
 				return nil, err
 			} else {
+				o.ParentId = occurrence.Topic
 				o.Value = occurrence.Value
 			}
 			loaded.Item = &pb.Item{Specific: &pb.Item_Occurrence{&o}}
@@ -173,7 +175,10 @@ func (g Gateway) Mutate(m *pb.MutationRequest) (*pb.MutationResponse, error) {
 			if creation.TopicMapId == 0 {
 				return nil, fmt.Errorf("too many zeros in request")
 			}
-			t := pb.Topic{Id: uint64(e)}
+			t := pb.Topic{
+				TopicMapId: created.TopicMapId,
+				Id:         created.Id,
+			}
 			if err := ms.SetTopicNames(e, nil); err != nil {
 				return nil, err
 			} else if err := ms.SetTopicOccurrences(e, nil); err != nil {
@@ -185,8 +190,9 @@ func (g Gateway) Mutate(m *pb.MutationRequest) (*pb.MutationResponse, error) {
 				return nil, fmt.Errorf("too many zeros in request")
 			}
 			n := pb.Name{
-				Id:       uint64(e),
-				ParentId: uint64(creation.Parent),
+				TopicMapId: created.TopicMapId,
+				Id:         created.Id,
+				ParentId:   uint64(creation.Parent),
 			}
 			pe := kv.Entity(creation.Parent)
 			if pns, err := ms.GetTopicNames(pe); err != nil {
@@ -205,7 +211,11 @@ func (g Gateway) Mutate(m *pb.MutationRequest) (*pb.MutationResponse, error) {
 				return nil, fmt.Errorf("too many zeros in request")
 			}
 			pe := kv.Entity(creation.Parent)
-			o := pb.Occurrence{}
+			o := pb.Occurrence{
+				TopicMapId: created.TopicMapId,
+				Id:         created.Id,
+				ParentId:   uint64(creation.Parent),
+			}
 			if pos, err := ms.GetTopicOccurrences(pe); err != nil {
 				return nil, err
 			} else if err = ms.SetTopicOccurrences(pe, append(pos, e)); err != nil {
@@ -245,19 +255,25 @@ func (g Gateway) Mutate(m *pb.MutationRequest) (*pb.MutationResponse, error) {
 		switch valueUpdate.ItemType {
 		case pb.ItemType_NameItem:
 			n := pb.Name{
-				Id: valueUpdate.Id,
+				TopicMapId: valueUpdate.TopicMapId,
+				Id:         valueUpdate.Id,
+				Value:      valueUpdate.Value,
 			}
 			ms.Partition = kv.Entity(valueUpdate.TopicMapId)
 			if info, err := ms.GetName(kv.Entity(valueUpdate.Id)); err != nil {
 				return nil, err
 			} else {
-				n.Value = info.Value
 				n.ParentId = info.Topic
+				info.Value = valueUpdate.Value
+				if err := ms.SetName(kv.Entity(valueUpdate.Id), &info); err != nil {
+					return nil, err
+				}
 			}
 			updated.Item = &pb.Item{Specific: &pb.Item_Name{&n}}
 		case pb.ItemType_OccurrenceItem:
 			o := pb.Occurrence{
-				Id: valueUpdate.Id,
+				TopicMapId: updated.TopicMapId,
+				Id:         updated.Id,
 			}
 			ms.Partition = kv.Entity(valueUpdate.TopicMapId)
 			if info, err := ms.GetOccurrence(kv.Entity(valueUpdate.Id)); err != nil {

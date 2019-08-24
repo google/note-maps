@@ -61,7 +61,6 @@ class _NoteMapItemProviderState<S extends NoteMapItemState,
     }
     if (listenable == null) {
       listenable = widget.builder(repository, widget.initialNoteMapKey);
-      listenable.reload();
     }
 
     Widget result = widget.child;
@@ -117,7 +116,7 @@ class TopicMapProvider
           initialNoteMapKey: NoteMapKey(
             topicMapId: topicMapId,
             id: topicMapId,
-            itemType: ItemType.TopicItem,
+            itemType: ItemType.TopicMapItem,
           ),
           builder: (repository, key) =>
               TopicMapController(repository, key.topicMapId),
@@ -210,7 +209,7 @@ class OccurrenceProvider
           initialNoteMapKey: NoteMapKey(
             topicMapId: topicMapId,
             id: nameId,
-            itemType: ItemType.NameItem,
+            itemType: ItemType.OccurrenceItem,
           ),
           builder: (repository, key) => OccurrenceController(
             repository,

@@ -119,23 +119,6 @@ abstract class LibraryEvent {}
 
 class LibraryReloadEvent extends LibraryEvent {}
 
-class NoteMapItemWatcher {
-  final void Function(NoteMapItem) onUpdate;
-  final NoteMapRepository _repository;
-  StreamSubscription<NoteMapItem> _subscription;
-  NoteMapKey noteMapKey;
-
-  NoteMapItemWatcher(NoteMapRepository repository, this.onUpdate)
-      : assert(repository != null && onUpdate != null),
-        _repository = repository {
-    _subscription = _repository.items.listen((item) {
-      if (item.noteMapKey == noteMapKey) {
-        onUpdate(item);
-      }
-    });
-  }
-}
-
 abstract class NoteMapItemController<S extends NoteMapItemState>
     extends ValueListenable<S> {
   final NoteMapRepository repository;
@@ -276,6 +259,8 @@ class TopicController extends NoteMapItemController<TopicState> {
 }
 
 class NameController extends NoteMapItemController<NameState> {
+  Future<TextEditingController> _valueTextController;
+
   NameController(
     NoteMapRepository repository,
     Int64 topicMapId,
@@ -286,13 +271,26 @@ class NameController extends NoteMapItemController<NameState> {
           NoteMapKey(
               topicMapId: topicMapId, id: id, itemType: ItemType.NameItem),
           parentId: parentId,
-        );
+        ) {
+    _valueTextController = completeNoteMapKey.then((noteMapKey) {
+      var textController =
+          TextEditingController(text: value.item.proto.name.value);
+      textController.addListener(() {
+        if (value.noteMapKey.complete) {
+          repository.updateValue(value.noteMapKey, textController.text);
+        }
+      });
+      return textController;
+    }).catchError((_) => null);
+  }
 
   @override
   NameState mapItemToState(NoteMapItem item) => NameState(item);
 
   @override
   ItemType get itemType => ItemType.NameItem;
+
+  Future<TextEditingController> get valueTextController => _valueTextController;
 }
 
 class OccurrenceController extends NoteMapItemController<OccurrenceState> {

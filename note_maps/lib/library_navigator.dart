@@ -14,7 +14,7 @@
 
 import 'package:flutter/material.dart';
 
-import 'package:note_maps/library_page/library_page.dart';
+import 'library_page.dart';
 
 class LibraryNavigator extends StatelessWidget {
   final GlobalKey<NavigatorState> navigatorKey;

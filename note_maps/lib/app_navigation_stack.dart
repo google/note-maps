@@ -16,7 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:note_maps/app_navigation_bloc.dart';
-import 'package:note_maps/library_page/library_navigator.dart';
+import 'package:note_maps/library_navigator.dart';
 import 'package:note_maps/mobileapi/mobileapi.dart';
 
 class AppNavigationStack extends StatefulWidget {

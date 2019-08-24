@@ -15,12 +15,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../mobileapi/mobileapi.dart';
-import '../providers.dart';
-import '../topic_map_tile.dart';
-import '../app_bottom_app_bar.dart';
-import '../topic_page.dart';
-import '../mobileapi/controllers.dart';
+import 'mobileapi/mobileapi.dart';
+import 'providers.dart';
+import 'topic_map_tile.dart';
+import 'app_bottom_app_bar.dart';
+import 'topic_page.dart';
+import 'mobileapi/controllers.dart';
 
 class LibraryPage extends StatelessWidget {
   LibraryPage({Key key}) : super(key: key);
@@ -60,7 +60,7 @@ class LibraryPage extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) => TopicMapProvider(
-          topicMapId: Int64(0),
+          topicMapId: topicMapId,
           child: TopicPage(),
         ),
       ),

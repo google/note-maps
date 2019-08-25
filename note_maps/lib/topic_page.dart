@@ -14,13 +14,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
-import 'app_bottom_app_bar.dart';
 import 'cards.dart';
 import 'mobileapi/controllers.dart';
 import 'mobileapi/mobileapi.dart';
 import 'providers.dart';
-import 'topic_map_title.dart';
 
 class TopicPage extends StatelessWidget {
   TopicPage({Key key}) : super(key: key);
@@ -44,7 +43,34 @@ class TopicPage extends StatelessWidget {
         body: topicState.existence == NoteMapExistence.notExists
             ? Center(child: CircularProgressIndicator())
             : _createForm(context, topicState),
-        floatingActionButton:
+        floatingActionButton: SpeedDial(
+          child: Icon(Icons.add),
+          tooltip: 'Add item',
+          children: [
+            SpeedDialChild(
+              child: Icon(Icons.link),
+              label: 'Link',
+            ),
+            SpeedDialChild(
+              child: Icon(Icons.add_circle_outline),
+              label: 'Note',
+              onTap: () {
+                // TODO: focus text field of added note.
+                topicListenable.createOccurrence().catchError((error) =>
+                    Scaffold.of(context).showSnackBar(
+                        SnackBar(content: Text(error.toString()))));
+              },
+            ),
+            SpeedDialChild(
+              child: Icon(Icons.add_circle),
+              label: 'Name',
+              onTap:(){topicListenable.createName().catchError((error) =>
+                  Scaffold.of(context).showSnackBar(
+                      SnackBar(content: Text(error.toString()))));},
+            ),
+          ],
+        ),
+        /*
             (showFab && topicState.existence == NoteMapExistence.exists)
                 ? FloatingActionButton(
                     onPressed: () {
@@ -61,9 +87,7 @@ class TopicPage extends StatelessWidget {
                     tooltip: 'Create a related Topic',
                     child: Icon(Icons.insert_link),
                   )
-                : null,
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        bottomNavigationBar: AppBottomAppBar(),
+                : null,*/
       ),
     );
   }
@@ -106,8 +130,8 @@ class TopicPage extends StatelessWidget {
         child: Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            text,
-            style: Theme.of(context).textTheme.overline,
+            text.toUpperCase(),
+            style: Theme.of(context).textTheme.overline.copyWith(),
             textAlign: TextAlign.left,
           ),
         ),

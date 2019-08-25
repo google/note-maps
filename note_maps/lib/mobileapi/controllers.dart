@@ -261,6 +261,26 @@ class TopicController extends NoteMapItemController<TopicState> {
   ValueListenable<NameController> get firstNameController =>
       _firstNameController;
 
+  Future<Int64> createName() async {
+    return await repository
+        .create(
+            value.noteMapKey.topicMapId, value.noteMapKey.id, ItemType.NameItem)
+        .then((response) => response.noteMapKey.id)
+        .catchError((error) {
+      throw error;
+    });
+  }
+
+  Future<Int64> createOccurrence() async {
+    return await repository
+        .create(value.noteMapKey.topicMapId, value.noteMapKey.id,
+            ItemType.OccurrenceItem)
+        .then((response) => response.noteMapKey.id)
+        .catchError((error) {
+      throw error;
+    });
+  }
+
   @override
   TopicState mapItemToState(NoteMapItem item) => TopicState(item);
 
@@ -274,8 +294,37 @@ class TopicController extends NoteMapItemController<TopicState> {
   }
 }
 
+class _NoteMapItemValueController {
+  final NoteMapItemController itemController;
+  Future<TextEditingController> _futureTextController;
+  TextEditingController _textController;
+
+  _NoteMapItemValueController(this.itemController) {
+    _futureTextController = itemController.completeNoteMapKey
+        .then((noteMapKey) => _textController = TextEditingController(
+            text: itemController.value.item.proto.name.value)
+          ..addListener(_textControllerChanged))
+        .catchError((_) => null);
+  }
+
+  void close() {
+    Future.sync(() => _futureTextController)
+        .then((controller) => controller.removeListener(_textControllerChanged))
+        .catchError((error) {});
+  }
+
+  void _textControllerChanged() {
+    if (itemController.value.noteMapKey.complete) {
+      itemController.repository
+          .updateValue(itemController.value.noteMapKey, _textController.text);
+    }
+  }
+
+  Future<TextEditingController> get textController => _futureTextController;
+}
+
 class NameController extends NoteMapItemController<NameState> {
-  Future<TextEditingController> _valueTextController;
+  _NoteMapItemValueController _valueController;
 
   NameController(
     NoteMapRepository repository,
@@ -288,28 +337,27 @@ class NameController extends NoteMapItemController<NameState> {
               topicMapId: topicMapId, id: id, itemType: ItemType.NameItem),
           parentId: parentId,
         ) {
-    _valueTextController = completeNoteMapKey.then((noteMapKey) {
-      var textController =
-          TextEditingController(text: value.item.proto.name.value);
-      textController.addListener(() {
-        if (value.noteMapKey.complete) {
-          repository.updateValue(value.noteMapKey, textController.text);
-        }
-      });
-      return textController;
-    }).catchError((_) => null);
+    _valueController = _NoteMapItemValueController(this);
   }
+
+  @override
+  close() {
+    _valueController.close();
+  }
+
+  Future<TextEditingController> get valueTextController =>
+      _valueController.textController;
 
   @override
   NameState mapItemToState(NoteMapItem item) => NameState(item);
 
   @override
   ItemType get itemType => ItemType.NameItem;
-
-  Future<TextEditingController> get valueTextController => _valueTextController;
 }
 
 class OccurrenceController extends NoteMapItemController<OccurrenceState> {
+  _NoteMapItemValueController _valueController;
+
   OccurrenceController(
     NoteMapRepository repository,
     Int64 topicMapId,
@@ -322,7 +370,17 @@ class OccurrenceController extends NoteMapItemController<OccurrenceState> {
               id: id,
               itemType: ItemType.OccurrenceItem),
           parentId: parentId,
-        );
+        ) {
+    _valueController = _NoteMapItemValueController(this);
+  }
+
+  @override
+  close() {
+    _valueController.close();
+  }
+
+  Future<TextEditingController> get valueTextController =>
+      _valueController.textController;
 
   @override
   OccurrenceState mapItemToState(NoteMapItem item) => OccurrenceState(item);

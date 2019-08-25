@@ -287,12 +287,16 @@ func (g Gateway) Mutate(m *pb.MutationRequest) (*pb.MutationResponse, error) {
 			o := pb.Occurrence{
 				TopicMapId: updated.TopicMapId,
 				Id:         updated.Id,
+				Value:      valueUpdate.Value,
 			}
 			if info, err := ms.GetOccurrence(kv.Entity(valueUpdate.Id)); err != nil {
 				return nil, err
 			} else {
-				o.Value = info.Value
 				o.ParentId = info.Topic
+				info.Value = valueUpdate.Value
+				if err := ms.SetOccurrence(kv.Entity(valueUpdate.Id), &info); err != nil {
+					return nil, err
+				}
 			}
 			updated.Item = &pb.Item{Specific: &pb.Item_Occurrence{&o}}
 		default:

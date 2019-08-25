@@ -183,9 +183,9 @@ abstract class NoteMapItemController<S extends NoteMapItemState>
     repository.reload(_state.value.noteMapKey);
   }
 
-  void delete() {
+  Future delete() async {
     if (value.existence == NoteMapExistence.exists) {
-      repository.delete(value.noteMapKey);
+      return repository.delete(value.noteMapKey);
     }
   }
 

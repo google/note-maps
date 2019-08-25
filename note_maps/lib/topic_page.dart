@@ -38,7 +38,7 @@ class TopicPage extends StatelessWidget {
         resizeToAvoidBottomPadding: true,
         appBar: AppBar(
           title: Text(topicState.data.topicMapId == topicState.data.id
-              ? "Topic Map"
+              ? "Note Map"
               : "Topic"),
         ),
         body: topicState.existence == NoteMapExistence.notExists

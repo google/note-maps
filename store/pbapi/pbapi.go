@@ -17,6 +17,7 @@ package pbapi
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/note-maps/kv"
@@ -134,13 +135,19 @@ func (g Gateway) Mutate(m *pb.MutationRequest) (*pb.MutationResponse, error) {
 			if deletion.TopicMapId != deletion.Id {
 				return nil, fmt.Errorf("mismatch topic map id and id: %v != %v", deletion.TopicMapId, deletion.Id)
 			}
-			deleteTopicMap(ms, deletion.Id)
+			if err := deleteTopicMap(ms, deletion.Id); err != nil {
+				return nil, err
+			}
+			log.Println("deleted topic map", deletion.Id)
 		case pb.ItemType_TopicItem:
 			// TODO: actually delete
+			return nil, fmt.Errorf("not yet implemented: cannot delete topic")
 		case pb.ItemType_NameItem:
 			// TODO: actually delete
+			return nil, fmt.Errorf("not yet implemented: cannot delete name")
 		case pb.ItemType_OccurrenceItem:
 			// TODO: actually delete
+			return nil, fmt.Errorf("not yet implemented: cannot delete occurrence")
 		default:
 			return nil, fmt.Errorf("unsupported deletion item type: %v", deletion.ItemType)
 		}
@@ -304,6 +311,7 @@ func deleteTopicMap(ms models.Txn, topicMapId uint64) error {
 		return fmt.Errorf("cannot delete topic map zero")
 	}
 	entity := kv.Entity(topicMapId)
+	ms.Partition = 0
 	_, err := ms.GetTopicMapInfo(entity)
 	if err != nil {
 		return err

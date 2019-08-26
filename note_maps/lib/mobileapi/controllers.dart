@@ -203,6 +203,17 @@ abstract class NoteMapItemController<S extends NoteMapItemState>
   S get value => _state.value;
 
   Future<NoteMapKey> get completeNoteMapKey => _completeKey.future;
+
+  List<ItemType> get canCreateChildTypes => const [];
+
+  Future<NoteMapKey> createChild(ItemType childType) async {
+    return await repository
+        .create(value.noteMapKey.topicMapId, value.noteMapKey.id, childType)
+        .then((response) => response.noteMapKey)
+        .catchError((error) {
+      throw error;
+    });
+  }
 }
 
 class LibraryController extends NoteMapItemController<LibraryState> {
@@ -214,6 +225,10 @@ class LibraryController extends NoteMapItemController<LibraryState> {
 
   @override
   ItemType get itemType => ItemType.LibraryItem;
+
+  @override
+  List<ItemType> get canCreateChildTypes =>
+      const [ItemType.TopicMapItem];
 }
 
 class TopicMapController extends NoteMapItemController<TopicMapState> {
@@ -235,6 +250,10 @@ class TopicMapController extends NoteMapItemController<TopicMapState> {
   ItemType get itemType => ItemType.TopicMapItem;
 
   Future<TopicController> get topicController => _topicController;
+
+  @override
+  List<ItemType> get canCreateChildTypes =>
+      const [ItemType.TopicItem];
 }
 
 class TopicController extends NoteMapItemController<TopicState> {
@@ -261,24 +280,16 @@ class TopicController extends NoteMapItemController<TopicState> {
   ValueListenable<NameController> get firstNameController =>
       _firstNameController;
 
+  @override
+  List<ItemType> get canCreateChildTypes =>
+      const [ItemType.OccurrenceItem, ItemType.NameItem];
+
   Future<Int64> createName() async {
-    return await repository
-        .create(
-            value.noteMapKey.topicMapId, value.noteMapKey.id, ItemType.NameItem)
-        .then((response) => response.noteMapKey.id)
-        .catchError((error) {
-      throw error;
-    });
+    return await createChild(ItemType.NameItem).then((key) => key.id);
   }
 
   Future<Int64> createOccurrence() async {
-    return await repository
-        .create(value.noteMapKey.topicMapId, value.noteMapKey.id,
-            ItemType.OccurrenceItem)
-        .then((response) => response.noteMapKey.id)
-        .catchError((error) {
-      throw error;
-    });
+    return await createChild(ItemType.OccurrenceItem).then((key) => key.id);
   }
 
   @override

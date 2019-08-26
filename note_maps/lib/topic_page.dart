@@ -15,8 +15,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
+import 'auto_fab.dart';
 import 'cards.dart';
 import 'mobileapi/controllers.dart';
 import 'mobileapi/mobileapi.dart';
@@ -83,39 +83,14 @@ class _TopicPageState extends State<TopicPage> {
           body: topicState.existence == NoteMapExistence.notExists
               ? Center(child: CircularProgressIndicator())
               : _buildForm(context, topicState),
-          floatingActionButton: SpeedDial(
-            child: Icon(Icons.add),
-            tooltip: 'Add item',
+          floatingActionButton: AutoFab(
             visible: fabVisibleIfNotEditing,
-            marginRight: MediaQuery.of(context).size.width / 2 - 28,
-            children: [
-              SpeedDialChild(
-                child: Icon(Icons.add_circle_outline),
-                label: 'Note',
-                onTap: () {
-                  topicController.createOccurrence().catchError((error) =>
-                      Scaffold.of(context).showSnackBar(
-                          SnackBar(content: Text(error.toString()))));
-                  setState(() {
-                    // TODO: focus text field of added note.
-                    editing = true;
-                  });
-                },
-              ),
-              SpeedDialChild(
-                child: Icon(Icons.add_circle),
-                label: 'Name',
-                onTap: () {
-                  topicController.createName().catchError((error) =>
-                      Scaffold.of(context).showSnackBar(
-                          SnackBar(content: Text(error.toString()))));
-                  setState(() {
-                    // TODO: focus text field of added name.
-                    editing = true;
-                  });
-                },
-              ),
-            ],
+            onCreated: (newKey) {
+              setState(() {
+                // TODO: focus text field of added item.
+                editing = true;
+              });
+            },
           ),
         ),
       ),

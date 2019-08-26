@@ -15,6 +15,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'auto_fab.dart';
 import 'mobileapi/mobileapi.dart';
 import 'providers.dart';
 import 'topic_map_tile.dart';
@@ -50,23 +51,27 @@ class LibraryPage extends StatelessWidget {
               );
             }),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _gotoTopicMap(context, Int64(0)),
-        tooltip: 'Create a Note Map',
-        child: Icon(Icons.add),
+      floatingActionButton: AutoFab(
+        onCreated: (noteMapKey) {
+          switch (noteMapKey.itemType) {
+            case ItemType.TopicMapItem:
+              _gotoTopicMap(context, noteMapKey.id, initiallyEditing: true);
+          }
+        },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
-  void _gotoTopicMap(BuildContext context, Int64 topicMapId) {
+  void _gotoTopicMap(BuildContext context, Int64 topicMapId,
+      {bool initiallyEditing = false}) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => TopicMapProvider(
           topicMapId: topicMapId,
           child: TopicPage(
-            initiallyEditing: topicMapId == Int64(0),
+            initiallyEditing: initiallyEditing,
           ),
         ),
       ),

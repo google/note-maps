@@ -19,16 +19,12 @@ import 'package:provider/provider.dart';
 import 'common_widgets.dart';
 import 'mobileapi/controllers.dart';
 
-class _FutureTextField extends StatelessWidget {
+class FutureText extends StatelessWidget {
   final Future<TextEditingController> futureTextController;
-  final bool autofocus;
-  final TextCapitalization textCapitalization;
   final TextStyle style;
 
-  _FutureTextField(
+  FutureText(
     this.futureTextController, {
-    this.autofocus = false,
-    this.textCapitalization,
     this.style,
   });
 
@@ -43,17 +39,115 @@ class _FutureTextField extends StatelessWidget {
             if (snapshot.hasError) {
               return ErrorIndicator();
             }
-            return TextField(
-              controller: snapshot.data,
-              textCapitalization: textCapitalization,
-              autofocus: autofocus,
-              style: style,
-              decoration: InputDecoration(border: InputBorder.none),
+            return ValueListenableBuilder<TextEditingValue>(
+              valueListenable: snapshot.data,
+              builder: (context, textEditingValue, _) => Text(
+                textEditingValue.text,
+                style: style,
+                maxLines: null,
+              ),
             );
           default:
             return CircularProgressIndicator();
         }
       },
+    );
+  }
+}
+
+class FutureTextField extends StatelessWidget {
+  final Future<TextEditingController> futureTextController;
+  final bool autofocus;
+  final TextCapitalization textCapitalization;
+  final TextStyle style;
+  FocusNode _focusNode;
+
+  FutureTextField(
+    this.futureTextController, {
+    this.autofocus = false,
+    this.textCapitalization,
+    this.style,
+    FocusNode focusNode,
+  }) {
+    _focusNode = focusNode ?? FocusNode();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<TextEditingController>(
+      future: futureTextController,
+      initialData: null,
+      builder: (_, snapshot) {
+        switch (snapshot.connectionState) {
+          case ConnectionState.done:
+            if (snapshot.hasError) {
+              return ErrorIndicator();
+            }
+            return TextField(
+              controller: snapshot.data,
+              autofocus: autofocus,
+              //focusNode: FocusNode(),
+              style: style,
+              textCapitalization: textCapitalization,
+              //decoration: InputDecoration(border: InputBorder.none),
+              maxLines: null,
+              textInputAction: TextInputAction.next,
+              onSubmitted: (_) {
+                //print("attempting to switch focus");
+                //print(DefaultFocusTraversal.of(context).next(_focusNode));
+                bool traversed = FocusScope.of(context).nextFocus();
+                print("traversed focus: ${traversed}");
+              },
+            );
+          default:
+            return CircularProgressIndicator();
+        }
+      },
+    );
+  }
+}
+
+class NameField extends StatelessWidget {
+  final bool autofocus;
+
+  NameField({this.autofocus = false});
+
+  @override
+  Widget build(BuildContext context) {
+    var controller = Provider.of<NameController>(context);
+
+    return ValueListenableBuilder<NameState>(
+      valueListenable: controller,
+      builder: (context, nameState, _) => ListTile(
+        title: FutureTextField(
+          controller.valueTextController,
+          textCapitalization: TextCapitalization.words,
+          style: Theme.of(context).textTheme.headline,
+          autofocus: autofocus,
+        ),
+      ),
+    );
+  }
+}
+
+class OccurrenceField extends StatelessWidget {
+  final bool autofocus;
+
+  OccurrenceField({this.autofocus = false});
+
+  @override
+  Widget build(BuildContext context) {
+    var controller = Provider.of<OccurrenceController>(context);
+    return ValueListenableBuilder(
+      valueListenable: controller,
+      builder: (context, occurrenceState, _) => ListTile(
+        title: FutureTextField(
+          controller.valueTextController,
+          textCapitalization: TextCapitalization.sentences,
+          style: Theme.of(context).textTheme.body2,
+          autofocus: autofocus,
+        ),
+      ),
     );
   }
 }
@@ -65,19 +159,12 @@ class NameCard extends StatelessWidget {
     return ValueListenableBuilder<NameState>(
       valueListenable: controller,
       builder: (context, nameState, _) => Card(
-        child: Row(
-          children: <Widget>[
-            Container(width: 48),
-            Expanded(
-              child: _FutureTextField(
-                controller.valueTextController,
-                textCapitalization: TextCapitalization.words,
-                autofocus: true,
-                style: Theme.of(context).textTheme.headline,
-              ),
-            ),
-            _noteMenuButton(context, controller),
-          ],
+        child: ListTile(
+          title: FutureText(
+            controller.valueTextController,
+            style: Theme.of(context).textTheme.headline,
+          ),
+          trailing: _noteMenuButton(context, controller),
         ),
       ),
     );
@@ -91,18 +178,12 @@ class OccurrenceCard extends StatelessWidget {
     return ValueListenableBuilder(
       valueListenable: controller,
       builder: (context, occurrenceState, _) => Card(
-        child: Row(
-          children: <Widget>[
-            Container(width: 48),
-            Expanded(
-              child: _FutureTextField(
-                controller.valueTextController,
-                textCapitalization: TextCapitalization.sentences,
-                style: Theme.of(context).textTheme.body2,
-              ),
-            ),
-            _noteMenuButton(context, controller),
-          ],
+        child: ListTile(
+          title: FutureText(
+            controller.valueTextController,
+            style: Theme.of(context).textTheme.body2,
+          ),
+          trailing: _noteMenuButton(context, controller),
         ),
       ),
     );
@@ -114,7 +195,7 @@ Widget _noteMenuButton(BuildContext context, NoteMapItemController controller) {
     onSelected: (NoteOption choice) {
       switch (choice) {
         case NoteOption.delete:
-          controller.delete().catchError(( error) {
+          controller.delete().catchError((error) {
             Scaffold.of(context)
                 .showSnackBar(SnackBar(content: Text(error.toString())));
             return null;

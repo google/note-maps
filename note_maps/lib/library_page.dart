@@ -45,13 +45,12 @@ class LibraryPage extends StatelessWidget {
               );
             }),
       ),
-      bottomNavigationBar: AppBottomAppBar(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _gotoTopicMap(context, Int64(0)),
         tooltip: 'Create a Note Map',
         child: Icon(Icons.add),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 

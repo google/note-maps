@@ -86,7 +86,7 @@ class _TopicPageState extends State<TopicPage> {
           floatingActionButton: SpeedDial(
             child: Icon(Icons.add),
             tooltip: 'Add item',
-            visible: fabVisibleIfNotEditing && !editing,
+            visible: fabVisibleIfNotEditing,
             marginRight: MediaQuery.of(context).size.width / 2 - 28,
             children: [
               SpeedDialChild(

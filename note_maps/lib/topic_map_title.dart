@@ -19,6 +19,17 @@ import 'common_widgets.dart';
 import 'mobileapi/controllers.dart';
 
 class TopicMapTitle extends StatelessWidget {
+  final Widget Function(BuildContext, String) builder;
+
+  TopicMapTitle({this.builder});
+
+  Widget _build(BuildContext context, String title) {
+    if (builder != null) {
+      return builder(context, title);
+    }
+    return Text(title);
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<TopicController>(
@@ -34,11 +45,12 @@ class TopicMapTitle extends StatelessWidget {
               valueListenable: snapshot.data.firstNameController,
               builder: (context, nameController, _) {
                 if (nameController == null) {
-                  return Text("Unnamed Note Map");
+                  return _build(context, "Unnamed Note Map");
                 } else {
                   return ValueListenableBuilder<NameState>(
                     valueListenable: nameController,
-                    builder: (context, nameState, _) => Text(
+                    builder: (context, nameState, _) => _build(
+                        context,
                         nameState.data.value == ""
                             ? "Unnamed Note Map"
                             : nameState.data.value),

@@ -18,7 +18,6 @@ import 'package:provider/provider.dart';
 import 'mobileapi/mobileapi.dart';
 import 'providers.dart';
 import 'topic_map_tile.dart';
-import 'app_bottom_app_bar.dart';
 import 'topic_page.dart';
 import 'mobileapi/controllers.dart';
 
@@ -29,6 +28,12 @@ class LibraryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Image(
+            image: AssetImage('assets/images/launcher.png'),
+          ),
+        ),
         title: Text("Library"),
       ),
       body: ValueListenableBuilder<LibraryState>(
@@ -60,7 +65,9 @@ class LibraryPage extends StatelessWidget {
       MaterialPageRoute(
         builder: (context) => TopicMapProvider(
           topicMapId: topicMapId,
-          child: TopicPage(),
+          child: TopicPage(
+            initiallyEditing: topicMapId == Int64(0),
+          ),
         ),
       ),
     );

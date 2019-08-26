@@ -35,35 +35,71 @@ class TopicMapTile extends StatelessWidget {
     var controller = Provider.of<TopicMapController>(context);
     return ValueListenableBuilder<TopicMapState>(
       valueListenable: controller,
-      builder: (context, topicMapState, _) => ListTile(
-        leading: TopicIdenticon(
-          topicMapState.data.topic,
-          size: 48,
-          backgroundColor: Theme.of(context).primaryColorLight,
-        ),
-        title: TopicMapTitle(),
-        trailing: PopupMenuButton<NoteMapOption>(
-          onSelected: (NoteMapOption choice) {
-            switch (choice) {
-              case NoteMapOption.delete:
-                controller.delete();
-                break;
-            }
-          },
-          itemBuilder: (BuildContext context) {
-            List<PopupMenuEntry<NoteMapOption>> options =
-                List<PopupMenuEntry<NoteMapOption>>();
-            options.add(const PopupMenuItem<NoteMapOption>(
-              value: NoteMapOption.delete,
-              child: ListTile(
-                leading: Icon(Icons.delete_forever, color: Colors.red),
-                title: Text('Delete', style: TextStyle(color: Colors.red)),
+      builder: (context, topicMapState, _) => Center(
+        child: Card(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              InkWell(
+                onTap: onTap,
+                child: ListTile(
+                  leading: TopicIdenticon(
+                    topicMapState.data.topic,
+                    size: 48,
+                    backgroundColor: Theme.of(context).primaryColorLight,
+                    fit: BoxFit.contain,
+                  ),
+                  title: TopicMapTitle(),
+                  subtitle: Text(
+                      "Last modified sometime after this app was installed"),
+                  trailing: PopupMenuButton<NoteMapOption>(
+                    onSelected: (NoteMapOption choice) {
+                      switch (choice) {
+                        case NoteMapOption.delete:
+                          controller.delete();
+                          break;
+                      }
+                    },
+                    itemBuilder: (BuildContext context) {
+                      List<PopupMenuEntry<NoteMapOption>> options =
+                          List<PopupMenuEntry<NoteMapOption>>();
+                      options.add(const PopupMenuItem<NoteMapOption>(
+                        value: NoteMapOption.delete,
+                        child: ListTile(
+                          leading:
+                              Icon(Icons.delete_forever, color: Colors.red),
+                          title: Text('Delete',
+                              style: TextStyle(color: Colors.red)),
+                        ),
+                      ));
+                      return options;
+                    },
+                  ),
+                ),
               ),
-            ));
-            return options;
-          },
+              ButtonTheme.bar(
+                child: ButtonBar(
+                  children: <Widget>[
+                    FlatButton(
+                      child: const Text('NEW TOPIC'),
+                      onPressed: () {
+                        Scaffold.of(context).showSnackBar(SnackBar(
+                            content: Text("Not implemented yet, sorry!")));
+                      },
+                    ),
+                    FlatButton(
+                      child: const Text('BROWSE'),
+                      onPressed: () {
+                        Scaffold.of(context).showSnackBar(SnackBar(
+                            content: Text("Not implemented yet, sorry!")));
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        onTap: onTap,
       ),
     );
   }

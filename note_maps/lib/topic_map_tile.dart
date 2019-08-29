@@ -17,8 +17,12 @@ import 'package:provider/provider.dart';
 
 import 'common_widgets.dart';
 import 'mobileapi/controllers.dart';
+import 'mobileapi/mobileapi.dart';
+import 'providers.dart';
 import 'topic_identicon.dart';
+import 'topic_map_page.dart';
 import 'topic_map_title.dart';
+import 'topic_page.dart';
 
 class TopicMapTile extends StatelessWidget {
   TopicMapTile({
@@ -44,7 +48,7 @@ class TopicMapTile extends StatelessWidget {
                 onTap: onTap,
                 child: ListTile(
                   leading: TopicIdenticon(
-                    topicMapState.data.topic,
+                    topicMapState.data.topic.id,
                     size: 48,
                     backgroundColor: Theme.of(context).primaryColorLight,
                     fit: BoxFit.contain,
@@ -83,15 +87,38 @@ class TopicMapTile extends StatelessWidget {
                     FlatButton(
                       child: const Text('NEW TOPIC'),
                       onPressed: () {
-                        Scaffold.of(context).showSnackBar(SnackBar(
-                            content: Text("Not implemented yet, sorry!")));
+                        controller.createChild(ItemType.TopicItem).then((key) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TopicMapProvider(
+                                topicMapId: key.topicMapId,
+                                child: TopicProvider(
+                                  topicMapId: key.topicMapId,
+                                  topicId: key.id,
+                                  child: TopicPage(
+                                    initiallyEditing: true,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        });
                       },
                     ),
                     FlatButton(
                       child: const Text('BROWSE'),
                       onPressed: () {
-                        Scaffold.of(context).showSnackBar(SnackBar(
-                            content: Text("Not implemented yet, sorry!")));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TopicMapProvider(
+                              topicMapId:
+                                  controller.value.noteMapKey.topicMapId,
+                              child: TopicMapPage(),
+                            ),
+                          ),
+                        );
                       },
                     ),
                   ],

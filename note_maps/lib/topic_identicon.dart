@@ -16,8 +16,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:jdenticon_dart/jdenticon_dart.dart';
 
+import 'mobileapi/mobileapi.dart';
+
 class TopicIdenticon extends StatelessWidget {
-  final dynamic item;
+  final Int64 item;
   final BoxFit fit;
   final Alignment alignment;
   final double size;
@@ -34,7 +36,7 @@ class TopicIdenticon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (item == null || item.id == null) {
+    if (item == null) {
       return Container(alignment: alignment);
     }
     return Container(
@@ -50,7 +52,7 @@ class TopicIdenticon extends StatelessWidget {
             height: size,
           ),
           SvgPicture.string(
-            Jdenticon.toSvg((item?.id ?? 0).toRadixString(16)),
+            Jdenticon.toSvg(item.toRadixString(16)),
             fit: fit,
             alignment: alignment,
             width: size,

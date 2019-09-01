@@ -15,15 +15,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'common_widgets.dart';
 import 'controllers.dart';
-import 'mobileapi/repository.dart';
-import 'style.dart';
-import 'providers.dart';
+import 'mobileapi/mobileapi.dart';
 import 'topic_identicon.dart';
-import 'browse_page.dart';
-import 'topic_map_title.dart';
-import 'topic_page.dart';
 
 class TopicTile extends StatelessWidget {
   TopicTile({

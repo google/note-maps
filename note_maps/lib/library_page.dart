@@ -16,7 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'auto_fab.dart';
-import 'mobileapi/repository.dart';
+import 'mobileapi/mobileapi.dart';
 import 'mobileapi/store/pb/pb.pb.dart';
 import 'providers.dart';
 import 'topic_map_tile.dart';

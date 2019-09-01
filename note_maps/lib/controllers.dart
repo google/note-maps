@@ -18,7 +18,7 @@ import 'package:fixnum/fixnum.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 
-import 'mobileapi/repository.dart';
+import 'mobileapi/mobileapi.dart';
 import 'mobileapi/store/pb/pb.pb.dart';
 
 abstract class NoteMapItemState<T> {

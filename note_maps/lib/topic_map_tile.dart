@@ -15,9 +15,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'common_widgets.dart';
 import 'controllers.dart';
-import 'mobileapi/repository.dart';
+import 'mobileapi/mobileapi.dart';
 import 'style.dart';
 import 'providers.dart';
 import 'topic_identicon.dart';

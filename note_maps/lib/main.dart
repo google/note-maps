@@ -15,9 +15,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'browse_page/browse_page.dart';
 import 'controllers/controllers.dart';
 import 'library_page/library_page.dart';
 import 'mobileapi/mobileapi.dart';
+import 'navigation.dart';
+import 'topic_page/topic_page.dart';
 import 'widgets/widgets.dart';
 
 void main() => runApp(App(
@@ -65,8 +68,35 @@ class _AppState extends State<App> with TickerProviderStateMixin<App> {
           primarySwatch: Colors.blueGrey,
           accentColor: Color.fromARGB(0xff, 0x8b, 0x6e, 0x60),
         ),
-        home: LibraryPage(),
+        initialRoute: '/',
+        routes: {
+          '/': (context) => LibraryPage(),
+          BrowsePageArguments.routeName: _browse,
+          TopicPageArguments.routeName: _topic,
+        },
       ),
+    );
+  }
+
+  Widget _browse(BuildContext context) {
+    final BrowsePageArguments args = ModalRoute.of(context).settings.arguments;
+    return MultiProvider(
+      providers: [
+        TopicMapProvider(topicMapId: args.topicMapId),
+        SearchProvider(topicMapId: args.topicMapId),
+      ],
+      child: BrowsePage(),
+    );
+  }
+
+  Widget _topic(BuildContext context) {
+    final TopicPageArguments args = ModalRoute.of(context).settings.arguments;
+    return MultiProvider(
+      providers: [
+        TopicMapProvider(topicMapId: args.topicMapId),
+        TopicProvider(topicMapId: args.topicMapId, topicId: args.topicId),
+      ],
+      child: TopicPage(),
     );
   }
 }

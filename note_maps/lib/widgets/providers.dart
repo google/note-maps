@@ -233,3 +233,72 @@ class OccurrenceProvider
         child: child,
       );
 }
+
+class SearchProvider extends StatefulWidget
+    implements SingleChildCloneableWidget {
+  final Widget child;
+  final Int64 topicMapId;
+
+  SearchProvider({
+    Key key,
+    this.child,
+    this.topicMapId,
+  }) : assert(topicMapId != null && topicMapId != Int64(0));
+
+  @override
+  State<StatefulWidget> createState() {
+    return _SearchProviderState();
+  }
+
+  @override
+  SingleChildCloneableWidget cloneWithChild(Widget child) => SearchProvider(
+        topicMapId: topicMapId,
+        child: child,
+      );
+}
+
+class _SearchProviderState extends State<SearchProvider> {
+  SearchController controller;
+
+  @override
+  void dispose() {
+    if (controller != null) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (controller == null) {
+      controller = SearchController(
+        repository: Provider.of<NoteMapRepository>(context),
+        topicMapId: widget.topicMapId,
+      )..load();
+    }
+    Widget result = widget.child;
+    if (controller is TopicMapController) {
+      TopicMapController topicMapController = controller as TopicMapController;
+      result = FutureProvider<TopicController>(
+        builder: (_) => topicMapController.topicController,
+        child: result,
+      );
+    }
+    if (controller is TopicController) {
+      TopicController topicController = controller as TopicController;
+      result = ValueListenableProvider<NameController>(
+        builder: (_) => topicController.firstNameController,
+        child: result,
+      );
+    }
+
+    return InheritedProvider<SearchController>(
+      value: controller,
+      child: ValueListenableProvider<SearchState>.value(
+        value: controller,
+        child: result,
+      ),
+      updateShouldNotify: (prev, next) => false,
+    );
+  }
+}

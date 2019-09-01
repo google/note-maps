@@ -18,7 +18,7 @@ import 'package:provider/provider.dart';
 import '../controllers/controllers.dart';
 import '../mobileapi/mobileapi.dart';
 import '../mobileapi/store/pb/pb.pb.dart';
-import '../topic_page/topic_page.dart';
+import '../navigation.dart';
 import '../widgets/widgets.dart';
 import 'topic_map_tile.dart';
 
@@ -66,16 +66,11 @@ class LibraryPage extends StatelessWidget {
 
   void _gotoTopicMap(BuildContext context, Int64 topicMapId,
       {bool initiallyEditing = false}) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => TopicMapProvider(
+    Navigator.pushNamed(context, TopicPageArguments.routeName,
+        arguments: TopicPageArguments(
           topicMapId: topicMapId,
-          child: TopicPage(
-            initiallyEditing: initiallyEditing,
-          ),
-        ),
-      ),
-    );
+          topicId: topicMapId,
+          initiallyEditing: initiallyEditing,
+        ));
   }
 }

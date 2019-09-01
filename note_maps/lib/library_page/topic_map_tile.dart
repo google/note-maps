@@ -15,11 +15,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../browse_page/browse_page.dart';
 import '../controllers/controllers.dart';
 import '../mobileapi/mobileapi.dart';
+import '../navigation.dart';
 import '../style.dart';
-import '../topic_page/topic_page.dart';
 import '../widgets/widgets.dart';
 import 'topic_map_title.dart';
 
@@ -97,47 +96,27 @@ class TopicMapTile extends StatelessWidget {
   }
 
   void _gotoTopicMap(BuildContext context, TopicMapState state) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => TopicMapProvider(
+    Navigator.pushNamed(context, TopicPageArguments.routeName,
+        arguments: TopicPageArguments(
           topicMapId: state.noteMapKey.topicMapId,
-          child: TopicPage(),
-        ),
-      ),
-    );
+          topicId: state.noteMapKey.topicMapId,
+        ));
   }
 
   void _newTopic(BuildContext context, TopicMapController controller) {
     controller.createChild(ItemType.TopicItem).then((key) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => TopicMapProvider(
+      Navigator.pushNamed(context, TopicPageArguments.routeName,
+          arguments: TopicPageArguments(
             topicMapId: key.topicMapId,
-            child: TopicProvider(
-              topicMapId: key.topicMapId,
-              topicId: key.id,
-              child: TopicPage(
-                initiallyEditing: true,
-              ),
-            ),
-          ),
-        ),
-      );
+            topicId: key.id,
+            initiallyEditing: true,
+          ));
     });
   }
 
   void _browse(BuildContext context, TopicMapState state) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => TopicMapProvider(
-          topicMapId: state.noteMapKey.topicMapId,
-          child: BrowsePage(),
-        ),
-      ),
-    );
+    Navigator.pushNamed(context, BrowsePageArguments.routeName,
+        arguments: BrowsePageArguments(state.noteMapKey.topicMapId));
   }
 }
 

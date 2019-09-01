@@ -47,6 +47,8 @@ class TopicController extends NoteMapItemController<TopicState> {
   final ValueNotifier<NameController> _firstNameController =
       ValueNotifier<NameController>(null);
 
+  final ValueNotifier<bool> editing = ValueNotifier<bool>(false);
+
   TopicController(NoteMapRepository repository, Int64 topicMapId, Int64 id)
       : super(
             repository,
@@ -66,6 +68,10 @@ class TopicController extends NoteMapItemController<TopicState> {
 
   ValueListenable<NameController> get firstNameController =>
       _firstNameController;
+
+  void beginEditing() => editing.value = true;
+
+  void finishEditing() => editing.value = false;
 
   @override
   List<ItemType> get canCreateChildTypes =>

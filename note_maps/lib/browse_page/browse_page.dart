@@ -14,13 +14,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:provider/provider.dart';
 
 import '../controllers/controllers.dart';
 import '../mobileapi/mobileapi.dart';
-import '../topic_page/topic_page.dart';
 import '../widgets/widgets.dart';
-import 'topic_tile.dart';
+import 'browse_search_results.dart';
 
 class BrowsePage extends StatefulWidget {
   BrowsePage({Key key}) : super(key: key);
@@ -30,6 +28,7 @@ class BrowsePage extends StatefulWidget {
 }
 
 class _BrowsePageState extends State<BrowsePage> {
+  TopicMapController topicMapController;
   SearchController controller;
   ScrollController scrollController;
   bool fabVisibleIfNotEditing = true;
@@ -50,75 +49,28 @@ class _BrowsePageState extends State<BrowsePage> {
 
   @override
   Widget build(BuildContext context) {
-    if (controller == null) {
-      var topicMapController = Provider.of<TopicMapController>(context);
-      if (topicMapController == null) {
-        return ErrorIndicator();
-      }
-      controller = SearchController(
-          repository: Provider.of<NoteMapRepository>(context),
-          topicMapId: topicMapController.value.noteMapKey.topicMapId);
-      controller.load();
-    }
-    return ValueListenableBuilder<SearchState>(
-      valueListenable: controller,
-      builder: (context, SearchState searchState, _) => Scaffold(
-        resizeToAvoidBottomPadding: true,
-        appBar: AppBar(
-          title: Text("Note Map"),
-        ),
-        body: searchState.error != null
-            ? Container()
-            : ListView.builder(
-                itemCount: searchState.estimatedCount,
-                itemBuilder: (context, index) =>
-                    index < searchState.known.length
-                        ? TopicProvider(
-                            topicMapId: searchState.known[index].topicMapId,
-                            topicId: searchState.known[index].id,
-                            child: TopicTile(
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => MultiProvider(
-                                    providers: [
-                                      TopicMapProvider(
-                                          topicMapId: searchState
-                                              .known[index].topicMapId),
-                                      TopicProvider(
-                                        topicMapId:
-                                            searchState.known[index].topicMapId,
-                                        topicId: searchState.known[index].id,
-                                      ),
-                                    ],
-                                    child: TopicPage(initiallyEditing: false),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          )
-                        : Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Center(child: CircularProgressIndicator()),
-                          ),
-              ),
-        floatingActionButton: AutoFab(
-          visible: fabVisibleIfNotEditing,
-          onCreated: (newKey) {
-            switch (newKey.itemType) {
-              case ItemType.TopicMapItem:
-                break;
-              case ItemType.TopicItem:
-                break;
-              case ItemType.NameItem:
-                break;
-              case ItemType.OccurrenceItem:
-                break;
-              default:
-                throw ("unexpected item type ${newKey.itemType}");
-            }
-          },
-        ),
+    return Scaffold(
+      resizeToAvoidBottomPadding: true,
+      appBar: AppBar(
+        title: Text("Note Map"),
+      ),
+      body: BrowseSearchResults(),
+      floatingActionButton: AutoFab(
+        visible: fabVisibleIfNotEditing,
+        onCreated: (newKey) {
+          switch (newKey.itemType) {
+            case ItemType.TopicMapItem:
+              break;
+            case ItemType.TopicItem:
+              break;
+            case ItemType.NameItem:
+              break;
+            case ItemType.OccurrenceItem:
+              break;
+            default:
+              throw ("unexpected item type ${newKey.itemType}");
+          }
+        },
       ),
     );
   }

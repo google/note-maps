@@ -64,6 +64,8 @@ class SearchController extends ValueListenable<SearchState> {
     });
   }
 
+  void dispose() {}
+
   @override
   void addListener(listener) => _valueNotifier.addListener(listener);
 

@@ -15,12 +15,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'browse_page.dart';
 import 'controllers/controllers.dart';
 import 'mobileapi/mobileapi.dart';
-import 'style.dart';
 import 'providers.dart';
+import 'style.dart';
 import 'topic_identicon.dart';
-import 'browse_page.dart';
 import 'topic_map_title.dart';
 import 'topic_page.dart';
 

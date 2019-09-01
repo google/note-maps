@@ -16,12 +16,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'auto_fab.dart';
+import 'controllers/controllers.dart';
 import 'mobileapi/mobileapi.dart';
 import 'mobileapi/store/pb/pb.pb.dart';
 import 'providers.dart';
 import 'topic_map_tile.dart';
 import 'topic_page.dart';
-import 'controllers/controllers.dart';
 
 class LibraryPage extends StatelessWidget {
   LibraryPage({Key key}) : super(key: key);
@@ -57,7 +57,7 @@ class LibraryPage extends StatelessWidget {
               _gotoTopicMap(context, noteMapKey.id, initiallyEditing: true);
               return;
             default:
-              throw("no handler for created ${noteMapKey.itemType}");
+              throw ("no handler for created ${noteMapKey.itemType}");
           }
         },
       ),

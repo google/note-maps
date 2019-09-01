@@ -14,6 +14,7 @@
 
 import 'dart:async';
 import 'dart:typed_data' show Uint8List;
+
 import 'package:dcache/dcache.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/services.dart';
@@ -23,7 +24,6 @@ import 'note_map_item.dart';
 import 'note_map_key.dart';
 import 'store/pb/pb.pb.dart';
 import 'store/pb/pb.pbenum.dart';
-import 'store/pb/pb.pbjson.dart';
 
 class NoteMapRepository {
   final _QueryApi _queryApi = _QueryApi();

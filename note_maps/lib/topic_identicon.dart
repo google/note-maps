@@ -42,7 +42,7 @@ class TopicIdenticon extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color:Colors.black,width:1.0),
+        border: Border.all(color: Colors.black, width: 1.0),
       ),
       child: ClipOval(
         child: Stack(children: <Widget>[

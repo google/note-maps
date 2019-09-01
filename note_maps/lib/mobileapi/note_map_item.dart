@@ -12,19 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'dart:async';
-import 'dart:typed_data' show Uint8List;
-import 'package:dcache/dcache.dart';
 import 'package:fixnum/fixnum.dart';
-import 'package:flutter/services.dart';
-import 'package:protobuf/protobuf.dart' as $pb;
 
 import 'note_map_key.dart';
 import 'store/pb/pb.pb.dart';
 import 'store/pb/pb.pbenum.dart';
-import 'store/pb/pb.pbjson.dart';
 
 export 'package:fixnum/fixnum.dart' show Int64;
+
 export 'store/pb/pb.pb.dart' show Library;
 export 'store/pb/pb.pb.dart' show TopicMap;
 export 'store/pb/pb.pb.dart' show Topic;
@@ -39,8 +34,8 @@ class NoteMapItem {
 
   NoteMapItem.fromKey(this.noteMapKey, {Int64 parentId})
       : existence = noteMapKey.id == 0
-      ? NoteMapExistence.notExists
-      : NoteMapExistence.exists,
+            ? NoteMapExistence.notExists
+            : NoteMapExistence.exists,
         proto = _mapKeyToTentativeItem(noteMapKey, parentId);
 
   NoteMapItem.fromItem(this.proto, {this.existence = NoteMapExistence.exists})

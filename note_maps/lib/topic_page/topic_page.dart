@@ -16,11 +16,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 
-import 'auto_fab.dart';
-import 'cards.dart';
-import 'controllers/controllers.dart';
-import 'mobileapi/mobileapi.dart';
-import 'providers.dart';
+import '../controllers/controllers.dart';
+import '../mobileapi/mobileapi.dart';
+import '../widgets/widgets.dart';
 
 class TopicPage extends StatefulWidget {
   final bool initiallyEditing;

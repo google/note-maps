@@ -16,9 +16,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'controllers/controllers.dart';
-import 'library_page.dart';
+import 'library_page/library_page.dart';
 import 'mobileapi/mobileapi.dart';
-import 'providers.dart';
+import 'widgets/widgets.dart';
 
 void main() => runApp(App(
       noteMapRepository: NoteMapRepository(),

@@ -15,8 +15,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'common_widgets.dart';
-import 'controllers/controllers.dart';
+import '../controllers/controllers.dart';
+import '../widgets/widgets.dart';
 
 class TopicMapTitle extends StatelessWidget {
   final Widget Function(BuildContext, String) builder;

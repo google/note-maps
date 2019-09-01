@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
@@ -24,16 +23,15 @@ import 'topic_page.dart';
 import 'topic_tile.dart';
 import 'mobileapi/controllers.dart';
 import 'mobileapi/mobileapi.dart';
-import 'topic_identicon.dart';
 
-class TopicMapPage extends StatefulWidget {
-  TopicMapPage({Key key}) : super(key: key);
+class BrowsePage extends StatefulWidget {
+  BrowsePage({Key key}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => _TopicMapPageState();
+  State<StatefulWidget> createState() => _BrowsePageState();
 }
 
-class _TopicMapPageState extends State<TopicMapPage> {
+class _BrowsePageState extends State<BrowsePage> {
   SearchController controller;
   ScrollController scrollController;
   bool fabVisibleIfNotEditing = true;

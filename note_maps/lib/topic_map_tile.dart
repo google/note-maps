@@ -21,7 +21,7 @@ import 'mobileapi/mobileapi.dart';
 import 'style.dart';
 import 'providers.dart';
 import 'topic_identicon.dart';
-import 'topic_map_page.dart';
+import 'browse_page.dart';
 import 'topic_map_title.dart';
 import 'topic_page.dart';
 
@@ -136,7 +136,7 @@ class TopicMapTile extends StatelessWidget {
       MaterialPageRoute(
         builder: (context) => TopicMapProvider(
           topicMapId: state.noteMapKey.topicMapId,
-          child: TopicMapPage(),
+          child: BrowsePage(),
         ),
       ),
     );

@@ -12,15 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export 'package:fixnum/fixnum.dart' show Int64;
-
+export 'library.dart';
+export 'name.dart';
 export 'note_map_item.dart';
-export 'note_map_key.dart';
-export 'repository.dart';
-export 'store/pb/pb.pb.dart' show Library;
-export 'store/pb/pb.pb.dart' show TopicMap;
-export 'store/pb/pb.pb.dart' show Topic;
-export 'store/pb/pb.pb.dart' show Name;
-export 'store/pb/pb.pb.dart' show Occurrence;
-export 'store/pb/pb.pb.dart' show ItemType;
-export 'store/pb/pb.pb.dart' show Item;
+export 'occurrence.dart';
+export 'search.dart';
+export 'topic.dart';
+export 'topic_map.dart';

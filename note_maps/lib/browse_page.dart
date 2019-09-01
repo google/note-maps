@@ -22,7 +22,7 @@ import 'mobileapi/mobileapi.dart';
 import 'providers.dart';
 import 'topic_page.dart';
 import 'topic_tile.dart';
-import 'controllers.dart';
+import 'controllers/controllers.dart';
 
 class BrowsePage extends StatefulWidget {
   BrowsePage({Key key}) : super(key: key);

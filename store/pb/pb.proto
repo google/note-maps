@@ -84,9 +84,26 @@ message LoadRequest {
 
 message LoadResponse { Item item = 1; }
 
-message QueryRequest { repeated LoadRequest load_requests = 1; }
+message SearchRequest {
+  repeated uint64 topic_map_ids = 1;
+  string tmql = 2;
+}
 
-message QueryResponse { repeated LoadResponse load_responses = 1; }
+message SearchResponse {
+  repeated Item items = 1;
+  uint64 count = 2;
+  uint64 offset = 3;
+}
+
+message QueryRequest {
+  repeated LoadRequest load_requests = 1;
+  repeated SearchRequest search_requests = 2;
+}
+
+message QueryResponse {
+  repeated LoadResponse load_responses = 1;
+  repeated SearchResponse search_responses = 2;
+}
 
 message CreationRequest {
   // May be zero only if type is TopicMap.

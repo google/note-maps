@@ -342,9 +342,74 @@ class LoadResponse extends $pb.GeneratedMessage {
   void clearItem() => clearField(1);
 }
 
+class SearchRequest extends $pb.GeneratedMessage {
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo('SearchRequest')
+    ..p<Int64>(1, 'topicMapIds', $pb.PbFieldType.PU6)
+    ..aOS(2, 'tmql')
+    ..hasRequiredFields = false
+  ;
+
+  SearchRequest._() : super();
+  factory SearchRequest() => create();
+  factory SearchRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory SearchRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  SearchRequest clone() => SearchRequest()..mergeFromMessage(this);
+  SearchRequest copyWith(void Function(SearchRequest) updates) => super.copyWith((message) => updates(message as SearchRequest));
+  $pb.BuilderInfo get info_ => _i;
+  @$core.pragma('dart2js:noInline')
+  static SearchRequest create() => SearchRequest._();
+  SearchRequest createEmptyInstance() => create();
+  static $pb.PbList<SearchRequest> createRepeated() => $pb.PbList<SearchRequest>();
+  static SearchRequest getDefault() => _defaultInstance ??= create()..freeze();
+  static SearchRequest _defaultInstance;
+
+  $core.List<Int64> get topicMapIds => $_getList(0);
+
+  $core.String get tmql => $_getS(1, '');
+  set tmql($core.String v) { $_setString(1, v); }
+  $core.bool hasTmql() => $_has(1);
+  void clearTmql() => clearField(2);
+}
+
+class SearchResponse extends $pb.GeneratedMessage {
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo('SearchResponse')
+    ..pc<Item>(1, 'items', $pb.PbFieldType.PM,Item.create)
+    ..a<Int64>(2, 'count', $pb.PbFieldType.OU6, Int64.ZERO)
+    ..a<Int64>(3, 'offset', $pb.PbFieldType.OU6, Int64.ZERO)
+    ..hasRequiredFields = false
+  ;
+
+  SearchResponse._() : super();
+  factory SearchResponse() => create();
+  factory SearchResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory SearchResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+  SearchResponse clone() => SearchResponse()..mergeFromMessage(this);
+  SearchResponse copyWith(void Function(SearchResponse) updates) => super.copyWith((message) => updates(message as SearchResponse));
+  $pb.BuilderInfo get info_ => _i;
+  @$core.pragma('dart2js:noInline')
+  static SearchResponse create() => SearchResponse._();
+  SearchResponse createEmptyInstance() => create();
+  static $pb.PbList<SearchResponse> createRepeated() => $pb.PbList<SearchResponse>();
+  static SearchResponse getDefault() => _defaultInstance ??= create()..freeze();
+  static SearchResponse _defaultInstance;
+
+  $core.List<Item> get items => $_getList(0);
+
+  Int64 get count => $_getI64(1);
+  set count(Int64 v) { $_setInt64(1, v); }
+  $core.bool hasCount() => $_has(1);
+  void clearCount() => clearField(2);
+
+  Int64 get offset => $_getI64(2);
+  set offset(Int64 v) { $_setInt64(2, v); }
+  $core.bool hasOffset() => $_has(2);
+  void clearOffset() => clearField(3);
+}
+
 class QueryRequest extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo('QueryRequest')
     ..pc<LoadRequest>(1, 'loadRequests', $pb.PbFieldType.PM,LoadRequest.create)
+    ..pc<SearchRequest>(2, 'searchRequests', $pb.PbFieldType.PM,SearchRequest.create)
     ..hasRequiredFields = false
   ;
 
@@ -363,11 +428,14 @@ class QueryRequest extends $pb.GeneratedMessage {
   static QueryRequest _defaultInstance;
 
   $core.List<LoadRequest> get loadRequests => $_getList(0);
+
+  $core.List<SearchRequest> get searchRequests => $_getList(1);
 }
 
 class QueryResponse extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo('QueryResponse')
     ..pc<LoadResponse>(1, 'loadResponses', $pb.PbFieldType.PM,LoadResponse.create)
+    ..pc<SearchResponse>(2, 'searchResponses', $pb.PbFieldType.PM,SearchResponse.create)
     ..hasRequiredFields = false
   ;
 
@@ -386,6 +454,8 @@ class QueryResponse extends $pb.GeneratedMessage {
   static QueryResponse _defaultInstance;
 
   $core.List<LoadResponse> get loadResponses => $_getList(0);
+
+  $core.List<SearchResponse> get searchResponses => $_getList(1);
 }
 
 class CreationRequest extends $pb.GeneratedMessage {

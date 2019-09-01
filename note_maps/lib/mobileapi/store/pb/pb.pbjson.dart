@@ -104,10 +104,28 @@ const LoadResponse$json = const {
   ],
 };
 
+const SearchRequest$json = const {
+  '1': 'SearchRequest',
+  '2': const [
+    const {'1': 'topic_map_ids', '3': 1, '4': 3, '5': 4, '10': 'topicMapIds'},
+    const {'1': 'tmql', '3': 2, '4': 1, '5': 9, '10': 'tmql'},
+  ],
+};
+
+const SearchResponse$json = const {
+  '1': 'SearchResponse',
+  '2': const [
+    const {'1': 'items', '3': 1, '4': 3, '5': 11, '6': '.Item', '10': 'items'},
+    const {'1': 'count', '3': 2, '4': 1, '5': 4, '10': 'count'},
+    const {'1': 'offset', '3': 3, '4': 1, '5': 4, '10': 'offset'},
+  ],
+};
+
 const QueryRequest$json = const {
   '1': 'QueryRequest',
   '2': const [
     const {'1': 'load_requests', '3': 1, '4': 3, '5': 11, '6': '.LoadRequest', '10': 'loadRequests'},
+    const {'1': 'search_requests', '3': 2, '4': 3, '5': 11, '6': '.SearchRequest', '10': 'searchRequests'},
   ],
 };
 
@@ -115,6 +133,7 @@ const QueryResponse$json = const {
   '1': 'QueryResponse',
   '2': const [
     const {'1': 'load_responses', '3': 1, '4': 3, '5': 11, '6': '.LoadResponse', '10': 'loadResponses'},
+    const {'1': 'search_responses', '3': 2, '4': 3, '5': 11, '6': '.SearchResponse', '10': 'searchResponses'},
   ],
 };
 

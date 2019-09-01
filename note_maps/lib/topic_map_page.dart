@@ -18,6 +18,10 @@ import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 
 import 'auto_fab.dart';
+import 'common_widgets.dart';
+import 'providers.dart';
+import 'topic_page.dart';
+import 'topic_tile.dart';
 import 'mobileapi/controllers.dart';
 import 'mobileapi/mobileapi.dart';
 import 'topic_identicon.dart';
@@ -30,6 +34,7 @@ class TopicMapPage extends StatefulWidget {
 }
 
 class _TopicMapPageState extends State<TopicMapPage> {
+  SearchController controller;
   ScrollController scrollController;
   bool fabVisibleIfNotEditing = true;
 
@@ -49,29 +54,58 @@ class _TopicMapPageState extends State<TopicMapPage> {
 
   @override
   Widget build(BuildContext context) {
-    var controller = Provider.of<TopicMapController>(context);
     if (controller == null) {
-      return Container(child: CircularProgressIndicator());
+      var topicMapController = Provider.of<TopicMapController>(context);
+      if (topicMapController == null) {
+        return ErrorIndicator();
+      }
+      controller = SearchController(
+          repository: Provider.of<NoteMapRepository>(context),
+          topicMapId: topicMapController.value.noteMapKey.topicMapId);
+      controller.load();
     }
-    return ValueListenableBuilder<TopicMapState>(
+    return ValueListenableBuilder<SearchState>(
       valueListenable: controller,
-      builder: (context, TopicMapState topicMapState, _) => Scaffold(
+      builder: (context, SearchState searchState, _) => Scaffold(
         resizeToAvoidBottomPadding: true,
         appBar: AppBar(
           title: Text("Note Map"),
         ),
-        body: topicMapState.existence == NoteMapExistence.notExists
-            ? Center(child: CircularProgressIndicator())
+        body: searchState.error != null
+            ? Container()
             : ListView.builder(
-                itemCount: 15,
-                itemBuilder: (context, index) => ListTile(
-                      leading: TopicIdenticon(
-                        Int64(0),
-                        size: 48,
-                      ),
-                      title: Text("Topic"),
-                      trailing: IconButton(icon:Icon(Icons.folder)),
-                    )),
+                itemCount: searchState.estimatedCount,
+                itemBuilder: (context, index) =>
+                    index < searchState.known.length
+                        ? TopicProvider(
+                            topicMapId: searchState.known[index].topicMapId,
+                            topicId: searchState.known[index].id,
+                            child: TopicTile(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MultiProvider(
+                                    providers: [
+                                      TopicMapProvider(
+                                          topicMapId: searchState
+                                              .known[index].topicMapId),
+                                      TopicProvider(
+                                        topicMapId:
+                                            searchState.known[index].topicMapId,
+                                        topicId: searchState.known[index].id,
+                                      ),
+                                    ],
+                                    child: TopicPage(initiallyEditing: false),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        : Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+              ),
         floatingActionButton: AutoFab(
           visible: fabVisibleIfNotEditing,
           onCreated: (newKey) {

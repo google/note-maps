@@ -44,10 +44,8 @@ class AutoFab extends StatelessWidget {
         context.inheritFromWidgetOfExactType(_type<InheritedProvider<T>>())
             as InheritedProvider<T>;
     if (provider == null) {
-      print("AppFab: found no ${T}");
       return null;
     }
-    print("AppFab: supporting creating children for ${T}");
     return Provider.of<T>(context);
   }
 
@@ -70,7 +68,6 @@ class AutoFab extends StatelessWidget {
                         SnackBar(content: Text(error.toString()))));
               },
             ))));
-    print(children);
     switch (children.length) {
       case 0:
         return Container();

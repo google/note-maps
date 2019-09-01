@@ -227,8 +227,7 @@ class LibraryController extends NoteMapItemController<LibraryState> {
   ItemType get itemType => ItemType.LibraryItem;
 
   @override
-  List<ItemType> get canCreateChildTypes =>
-      const [ItemType.TopicMapItem];
+  List<ItemType> get canCreateChildTypes => const [ItemType.TopicMapItem];
 }
 
 class TopicMapController extends NoteMapItemController<TopicMapState> {
@@ -252,8 +251,7 @@ class TopicMapController extends NoteMapItemController<TopicMapState> {
   Future<TopicController> get topicController => _topicController;
 
   @override
-  List<ItemType> get canCreateChildTypes =>
-      const [ItemType.TopicItem];
+  List<ItemType> get canCreateChildTypes => const [ItemType.TopicItem];
 }
 
 class TopicController extends NoteMapItemController<TopicState> {
@@ -398,4 +396,60 @@ class OccurrenceController extends NoteMapItemController<OccurrenceState> {
 
   @override
   ItemType get itemType => ItemType.OccurrenceItem;
+}
+
+class SearchState {
+  final int estimatedCount;
+  final List<NoteMapKey> known;
+  final Error error;
+
+  const SearchState.prime()
+      : estimatedCount = 1,
+        known = const [],
+        error = null;
+
+  SearchState.partial(List<NoteMapKey> known)
+      : estimatedCount = known.length + 1,
+        known = known.toList(growable: false),
+        error = null;
+
+  SearchState.complete(List<NoteMapKey> known)
+      : estimatedCount = known.length,
+        known = known.toList(growable: false),
+        error = null;
+
+  SearchState.error(Error error)
+      : estimatedCount = 0,
+        known = const [],
+        error = error;
+}
+
+class SearchController extends ValueListenable<SearchState> {
+  final NoteMapRepository repository;
+  final Int64 topicMapId;
+  final ValueNotifier<SearchState> _valueNotifier;
+
+  SearchController({this.repository, this.topicMapId})
+      : assert(repository != null),
+        assert(topicMapId != null && topicMapId != Int64(0)),
+        _valueNotifier = ValueNotifier(SearchState.prime());
+
+  Future<void> load() async {
+    await repository.search(topicMapId).then((noteMapKeys) {
+      print("search result: ${noteMapKeys.length}");
+      _valueNotifier.value = SearchState.complete(noteMapKeys);
+    }).catchError((error) {
+      print("search error: ${error}");
+      return _valueNotifier.value = SearchState.error(error);
+    });
+  }
+
+  @override
+  void addListener(listener) => _valueNotifier.addListener(listener);
+
+  @override
+  void removeListener(listener) => _valueNotifier.removeListener(listener);
+
+  @override
+  SearchState get value => _valueNotifier.value;
 }

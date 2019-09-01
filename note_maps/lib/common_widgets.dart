@@ -23,8 +23,11 @@ class ErrorIndicator extends StatelessWidget {
         Column(
           children: <Widget>[
             Icon(Icons.error, color: Colors.red),
-            Text("Congratulations, you discovered a bug!" +
-                " Share your accomplishment by filing a bug report ♥")
+            Text(
+              "Congratulations, you discovered a bug!" +
+                  " Share your accomplishment by filing a bug report ♥",
+              maxLines: 5,
+            ),
           ],
         )
       ],

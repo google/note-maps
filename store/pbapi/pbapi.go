@@ -110,6 +110,24 @@ func (g Gateway) Query(q *pb.QueryRequest) (*pb.QueryResponse, error) {
 		}
 		response.LoadResponses = append(response.LoadResponses, &loaded)
 	}
+	for _, search := range q.SearchRequests {
+		var found pb.SearchResponse
+		for _, topicMapId := range search.TopicMapIds {
+			ms.Partition = kv.Entity(topicMapId)
+			es, err := ms.AllTopicNamesEntities(nil, 0)
+			if err != nil {
+				return nil, err
+			}
+			for _, e := range es {
+				if topic, err := loadTopic(ms, e, maskNames|maskOccurrences); err != nil {
+					return nil, err
+				} else {
+					found.Items = append(found.Items, &pb.Item{Specific: &pb.Item_Topic{topic}})
+				}
+			}
+		}
+		response.SearchResponses = append(response.SearchResponses, &found)
+	}
 	if err := isWellFormedQueryResponse(&response); err != nil {
 		return nil, err
 	}

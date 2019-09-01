@@ -16,12 +16,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'auto_fab.dart';
-import 'mobileapi/mobileapi.dart';
+import 'mobileapi/repository.dart';
 import 'mobileapi/store/pb/pb.pb.dart';
 import 'providers.dart';
 import 'topic_map_tile.dart';
 import 'topic_page.dart';
-import 'mobileapi/controllers.dart';
+import 'controllers.dart';
 
 class LibraryPage extends StatelessWidget {
   LibraryPage({Key key}) : super(key: key);

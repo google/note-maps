@@ -16,7 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:jdenticon_dart/jdenticon_dart.dart';
 
-import 'mobileapi/mobileapi.dart';
+import 'mobileapi/repository.dart';
 
 class TopicIdenticon extends StatelessWidget {
   final Int64 item;

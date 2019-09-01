@@ -21,8 +21,8 @@ import 'common_widgets.dart';
 import 'providers.dart';
 import 'topic_page.dart';
 import 'topic_tile.dart';
-import 'mobileapi/controllers.dart';
-import 'mobileapi/mobileapi.dart';
+import 'controllers.dart';
+import 'mobileapi/repository.dart';
 
 class BrowsePage extends StatefulWidget {
   BrowsePage({Key key}) : super(key: key);

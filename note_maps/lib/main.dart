@@ -16,8 +16,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'library_page.dart';
-import 'mobileapi/controllers.dart';
-import 'mobileapi/mobileapi.dart';
+import 'controllers.dart';
+import 'mobileapi/repository.dart';
 import 'providers.dart';
 
 void main() => runApp(App(

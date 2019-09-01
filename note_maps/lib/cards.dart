@@ -17,7 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'common_widgets.dart';
-import 'mobileapi/controllers.dart';
+import 'controllers.dart';
 
 class FutureText extends StatelessWidget {
   final Future<TextEditingController> futureTextController;

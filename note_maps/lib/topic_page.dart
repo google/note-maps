@@ -18,8 +18,8 @@ import 'package:provider/provider.dart';
 
 import 'auto_fab.dart';
 import 'cards.dart';
-import 'mobileapi/controllers.dart';
-import 'mobileapi/mobileapi.dart';
+import 'controllers.dart';
+import 'mobileapi/repository.dart';
 import 'providers.dart';
 
 class TopicPage extends StatefulWidget {

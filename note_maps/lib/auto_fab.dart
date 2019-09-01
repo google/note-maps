@@ -16,8 +16,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
 
-import 'mobileapi/controllers.dart';
-import 'mobileapi/mobileapi.dart';
+import 'controllers.dart';
+import 'mobileapi/repository.dart';
 import 'style.dart';
 
 // AutoFab is a magical floating action button that looks for known types of

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data' show Uint8List;
 import 'package:dcache/dcache.dart';
 import 'package:fixnum/fixnum.dart';

@@ -17,8 +17,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'mobileapi/controllers.dart';
-import 'mobileapi/mobileapi.dart';
+import 'controllers.dart';
+import 'mobileapi/repository.dart';
 
 abstract class NoteMapItemProvider<S extends NoteMapItemState,
     L extends NoteMapItemController<S>> extends StatefulWidget {

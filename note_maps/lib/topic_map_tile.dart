@@ -28,11 +28,9 @@ import 'topic_page.dart';
 class TopicMapTile extends StatelessWidget {
   TopicMapTile({
     Key key,
-    this.onTap,
     this.trailing,
   }) : super(key: key);
 
-  final void Function() onTap;
   final Widget trailing;
 
   @override
@@ -46,7 +44,7 @@ class TopicMapTile extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               InkWell(
-                onTap: onTap,
+                onTap: () => _browse(context, topicMapState),
                 child: ListTile(
                   leading: TopicIdenticon(
                     topicMapState.data.topic.id,
@@ -88,47 +86,57 @@ class TopicMapTile extends StatelessWidget {
                     FlatButton.icon(
                       icon: Icon(NoteMapIcons.add_topic),
                       label: const Text('NEW TOPIC'),
-                      onPressed: () {
-                        controller.createChild(ItemType.TopicItem).then((key) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => TopicMapProvider(
-                                topicMapId: key.topicMapId,
-                                child: TopicProvider(
-                                  topicMapId: key.topicMapId,
-                                  topicId: key.id,
-                                  child: TopicPage(
-                                    initiallyEditing: true,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        });
-                      },
-                    ),
-                    FlatButton.icon(
-                      icon: Icon(NoteMapIcons.browse),
-                      label: const Text('BROWSE'),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => TopicMapProvider(
-                              topicMapId:
-                                  controller.value.noteMapKey.topicMapId,
-                              child: TopicMapPage(),
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: () => _newTopic(context, controller),
                     ),
                   ],
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _gotoTopicMap(BuildContext context, TopicMapState state) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TopicMapProvider(
+          topicMapId: state.noteMapKey.topicMapId,
+          child: TopicPage(),
+        ),
+      ),
+    );
+  }
+
+  void _newTopic(BuildContext context, TopicMapController controller) {
+    controller.createChild(ItemType.TopicItem).then((key) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TopicMapProvider(
+            topicMapId: key.topicMapId,
+            child: TopicProvider(
+              topicMapId: key.topicMapId,
+              topicId: key.id,
+              child: TopicPage(
+                initiallyEditing: true,
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  void _browse(BuildContext context, TopicMapState state) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TopicMapProvider(
+          topicMapId: state.noteMapKey.topicMapId,
+          child: TopicMapPage(),
         ),
       ),
     );

@@ -46,9 +46,7 @@ class LibraryPage extends StatelessWidget {
               var topicMapId = libraryState.data.topicMapIds[index];
               return TopicMapProvider(
                 topicMapId: topicMapId,
-                child: TopicMapTile(
-                  onTap: () => _gotoTopicMap(context, topicMapId),
-                ),
+                child: TopicMapTile(),
               );
             }),
       ),

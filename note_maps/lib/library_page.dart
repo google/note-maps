@@ -55,6 +55,9 @@ class LibraryPage extends StatelessWidget {
           switch (noteMapKey.itemType) {
             case ItemType.TopicMapItem:
               _gotoTopicMap(context, noteMapKey.id, initiallyEditing: true);
+              return;
+            default:
+              throw("no handler for created ${noteMapKey.itemType}");
           }
         },
       ),

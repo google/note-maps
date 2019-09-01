@@ -13,11 +13,9 @@
 // limitations under the License.
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
-import 'app_navigation_bloc.dart';
-import 'app_navigation_stack.dart';
+import 'library_page.dart';
 import 'mobileapi/controllers.dart';
 import 'mobileapi/mobileapi.dart';
 import 'providers.dart';
@@ -41,19 +39,16 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> with TickerProviderStateMixin<App> {
   LibraryController libraryListenable;
-  AppNavigationBloc appNavigationBloc;
 
   @override
   void initState() {
     super.initState();
     libraryListenable = LibraryController(widget.noteMapRepository);
-    appNavigationBloc = AppNavigationBloc();
   }
 
   @override
   void dispose() {
     libraryListenable.close();
-    appNavigationBloc.dispose();
     super.dispose();
   }
 
@@ -64,23 +59,13 @@ class _AppState extends State<App> with TickerProviderStateMixin<App> {
         Provider<NoteMapRepository>.value(value: widget.noteMapRepository),
         LibraryProvider(),
       ],
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider<AppNavigationBloc>(
-              builder: (context) => appNavigationBloc),
-        ],
-        child: MaterialApp(
-          title: 'Note Maps',
-          theme: ThemeData(
-            primarySwatch: Colors.blueGrey,
-            accentColor: Color.fromARGB(0xff, 0x8b, 0x6e, 0x60),
-          ),
-          home: BlocBuilder<AppNavigationBloc, AppNavigationState>(
-            builder: (context, state) {
-              return AppNavigationStack();
-            },
-          ),
+      child: MaterialApp(
+        title: 'Note Maps',
+        theme: ThemeData(
+          primarySwatch: Colors.blueGrey,
+          accentColor: Color.fromARGB(0xff, 0x8b, 0x6e, 0x60),
         ),
+        home: LibraryPage(),
       ),
     );
   }

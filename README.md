@@ -37,7 +37,7 @@ database on local storage, where they can be included in system backups.
 
 ## Screenshots
 
-![screenshot of library page](https://github.com/google/note-maps/raw/master/docs/library.png) ![screenshot of topic page](https://github.com/google/note-maps/raw/master/docs/topic.png) ![screenshot of topic rename dialog](https://github.com/google/note-maps/raw/master/docs/topic-rename.png) ![screenshot of topic edit note dialog](https://github.com/google/note-maps/raw/master/docs/topic-edit-note.png) ![screenshot of topic role menu](https://github.com/google/note-maps/raw/master/docs/topic-role-menu.png)
+![screenshot of library page](https://github.com/google/note-maps/raw/master/docs/library.png) ![screenshot of topic page with speed-dial actinos](https://github.com/google/note-maps/raw/master/docs/fab.png) ![screenshot of topic editing page](https://github.com/google/note-maps/raw/master/docs/topic-edit.png) ![screenshot of browsing page](https://github.com/google/note-maps/raw/master/docs/browse.png)
 
 ## Plan
 

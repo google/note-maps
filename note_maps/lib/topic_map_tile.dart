@@ -18,6 +18,7 @@ import 'package:provider/provider.dart';
 import 'common_widgets.dart';
 import 'mobileapi/controllers.dart';
 import 'mobileapi/mobileapi.dart';
+import 'style.dart';
 import 'providers.dart';
 import 'topic_identicon.dart';
 import 'topic_map_page.dart';
@@ -84,8 +85,9 @@ class TopicMapTile extends StatelessWidget {
               ButtonTheme.bar(
                 child: ButtonBar(
                   children: <Widget>[
-                    FlatButton(
-                      child: const Text('NEW TOPIC'),
+                    FlatButton.icon(
+                      icon: Icon(NoteMapIcons.add_topic),
+                      label: const Text('NEW TOPIC'),
                       onPressed: () {
                         controller.createChild(ItemType.TopicItem).then((key) {
                           Navigator.push(
@@ -106,8 +108,9 @@ class TopicMapTile extends StatelessWidget {
                         });
                       },
                     ),
-                    FlatButton(
-                      child: const Text('BROWSE'),
+                    FlatButton.icon(
+                      icon: Icon(NoteMapIcons.browse),
+                      label: const Text('BROWSE'),
                       onPressed: () {
                         Navigator.push(
                           context,

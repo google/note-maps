@@ -18,6 +18,7 @@ import 'package:provider/provider.dart';
 
 import 'mobileapi/controllers.dart';
 import 'mobileapi/mobileapi.dart';
+import 'style.dart';
 
 // AutoFab is a magical floating action button that looks for known types of
 // controllers and presents options for creating any kind of child item those
@@ -134,13 +135,13 @@ class _ChildCreator {
       case ItemType.LibraryItem:
         throw ("cannot create new library");
       case ItemType.TopicMapItem:
-        return Icon(Icons.book);
+        return Icon(NoteMapIcons.add_topic_map);
       case ItemType.TopicItem:
-        return Icon(Icons.folder);
+        return Icon(NoteMapIcons.add_topic);
       case ItemType.NameItem:
-        return Icon(Icons.subtitles);
+        return Icon(NoteMapIcons.add_name);
       case ItemType.OccurrenceItem:
-        return Icon(Icons.note);
+        return Icon(NoteMapIcons.add_occurrence);
       default:
         throw ("unrecognized item type");
     }

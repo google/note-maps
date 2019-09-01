@@ -41,6 +41,8 @@ database on local storage, where they can be included in system backups.
 
 ## Plan
 
+### Roadmap to v0.1
+
 - [x] Partial Go implementation of deserialization from CTM
 - [x] Partial Go implementation of data storage for topic maps
 - [x] Flutter native channel for communication with data storage
@@ -48,9 +50,23 @@ database on local storage, where they can be included in system backups.
 - [x] Minimal UX research, recorded in this repository at [docs/ux.md](docs/ux.md)
 - [x] Wireframe Flutter front-end with navigation
 - [x] Topic maps can be created
-- [ ] Names can be created and edited
-- [ ] Notes can be created and edited
-- [ ] ...
+- [x] Names can be created and edited
+- [x] Notes can be created and edited
+- [x] Topics added to a topic map can be reviewed
+- [ ] Deletion of topic maps works correctly in the UI
+- [ ] Adding, editing, and deleting names and notes works consistently
+- [ ] UI includes warnings about data storage, especially deletion
+
+### Roadmap to v0.2
+
+- [ ] Associations and roles can be entered
+- [ ] Associations involving a topic can be found from the topic page
+- [ ] Browsing a topic map supports viewing all data entered in that topic map
+
+### Roadmap beyond
+
+- [ ] Topic maps can be exported and imported
+- [ ] Data entry is reasonably easy
 
 ## Source Code Headers
 

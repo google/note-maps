@@ -16,7 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'browse_page/browse_page.dart';
-import 'controllers/controllers.dart';
 import 'library_page/library_page.dart';
 import 'mobileapi/mobileapi.dart';
 import 'navigation.dart';
@@ -27,7 +26,7 @@ void main() => runApp(App(
       noteMapRepository: NoteMapRepository(),
     ));
 
-class App extends StatefulWidget {
+class App extends StatelessWidget {
   final NoteMapRepository noteMapRepository;
 
   App({
@@ -37,31 +36,9 @@ class App extends StatefulWidget {
         super(key: key);
 
   @override
-  State<App> createState() => _AppState();
-}
-
-class _AppState extends State<App> with TickerProviderStateMixin<App> {
-  LibraryController libraryListenable;
-
-  @override
-  void initState() {
-    super.initState();
-    libraryListenable = LibraryController(widget.noteMapRepository);
-  }
-
-  @override
-  void dispose() {
-    libraryListenable.close();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        Provider<NoteMapRepository>.value(value: widget.noteMapRepository),
-        LibraryProvider(),
-      ],
+    return Provider<NoteMapRepository>.value(
+      value: noteMapRepository,
       child: MaterialApp(
         title: 'Note Maps',
         theme: ThemeData(
@@ -70,12 +47,16 @@ class _AppState extends State<App> with TickerProviderStateMixin<App> {
         ),
         initialRoute: '/',
         routes: {
-          '/': (context) => LibraryPage(),
+          '/': _library,
           BrowsePageArguments.routeName: _browse,
           TopicPageArguments.routeName: _topic,
         },
       ),
     );
+  }
+
+  Widget _library(BuildContext context) {
+    return LibraryProvider(child: LibraryPage());
   }
 
   Widget _browse(BuildContext context) {

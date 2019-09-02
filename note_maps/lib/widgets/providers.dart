@@ -64,20 +64,6 @@ class _NoteMapItemProviderState<S extends NoteMapItemState,
     }
 
     Widget result = widget.child;
-    if (listenable is TopicMapController) {
-      TopicMapController topicMapController = listenable as TopicMapController;
-      result = FutureProvider<TopicController>(
-        builder: (_) => topicMapController.topicController,
-        child: result,
-      );
-    }
-    if (listenable is TopicController) {
-      TopicController topicController = listenable as TopicController;
-      result = ValueListenableProvider<NameController>(
-        builder: (_) => topicController.firstNameController,
-        child: result,
-      );
-    }
 
     return InheritedProvider<L>(
       value: listenable,

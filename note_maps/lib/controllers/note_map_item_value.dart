@@ -16,6 +16,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
+import '../mobileapi/mobileapi.dart';
 import 'note_map_item.dart';
 
 class NoteMapItemValueController {
@@ -25,10 +26,22 @@ class NoteMapItemValueController {
 
   NoteMapItemValueController(this.itemController) {
     _futureTextController = itemController.completeNoteMapKey
-        .then((noteMapKey) => _textController = TextEditingController(
-            text: itemController.value.item.proto.name.value)
-          ..addListener(_textControllerChanged))
+        .then((noteMapKey) =>
+            _textController = TextEditingController(text: _currentValue())
+              ..addListener(_textControllerChanged))
         .catchError((_) => null);
+  }
+
+  String _currentValue() {
+    var item = itemController.value?.item;
+    switch (item?.noteMapKey?.itemType) {
+      case ItemType.NameItem:
+        return item.proto.name.value;
+      case ItemType.OccurrenceItem:
+        return item.proto.occurrence.value;
+      default:
+        return "";
+    }
   }
 
   void close() {

@@ -27,17 +27,11 @@ class NameField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var controller = Provider.of<NameController>(context);
-
-    return ValueListenableBuilder<NameState>(
-      valueListenable: controller,
-      builder: (context, nameState, _) => ListTile(
-        title: FutureTextField(
-          controller.valueTextController,
-          textCapitalization: TextCapitalization.words,
-          style: Theme.of(context).textTheme.headline,
-          autofocus: autofocus,
-        ),
-      ),
+    return FutureTextField(
+      controller.valueTextController,
+      textCapitalization: TextCapitalization.words,
+      style: Theme.of(context).textTheme.headline,
+      autofocus: autofocus,
     );
   }
 }

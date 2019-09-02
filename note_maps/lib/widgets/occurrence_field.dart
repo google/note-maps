@@ -27,16 +27,11 @@ class OccurrenceField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var controller = Provider.of<OccurrenceController>(context);
-    return ValueListenableBuilder(
-      valueListenable: controller,
-      builder: (context, occurrenceState, _) => ListTile(
-        title: FutureTextField(
-          controller.valueTextController,
-          textCapitalization: TextCapitalization.sentences,
-          style: Theme.of(context).textTheme.subhead,
-          autofocus: autofocus,
-        ),
-      ),
+    return FutureTextField(
+      controller.valueTextController,
+      textCapitalization: TextCapitalization.sentences,
+      style: Theme.of(context).textTheme.subhead,
+      autofocus: autofocus,
     );
   }
 }

@@ -19,9 +19,6 @@ import 'package:provider/provider.dart';
 import '../controllers/controllers.dart';
 import 'future_text_field.dart';
 
-export 'future_text.dart';
-export 'future_text_field.dart';
-
 class NameField extends StatelessWidget {
   final bool autofocus;
 

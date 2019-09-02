@@ -58,6 +58,7 @@ abstract class NoteMapItemController<S extends NoteMapItemState>
       // item.
       if (cached == null) {
         repository.reload(noteMapKey);
+        print("reloading ${noteMapKey}");
       }
       _completeKey.complete(noteMapKey);
     } else {

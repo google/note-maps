@@ -53,8 +53,8 @@ class NoteMapRepository {
     ));
   }
 
-  void reload(NoteMapKey item) {
-    _queryApi
+  Future<void> reload(NoteMapKey item) async {
+    return _queryApi
         .query(QueryRequest().copyWith((q) {
       var request = LoadRequest();
       request.topicMapId = item.topicMapId;

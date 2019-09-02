@@ -19,9 +19,6 @@ import 'package:provider/provider.dart';
 import '../controllers/controllers.dart';
 import 'future_text_field.dart';
 
-export 'future_text.dart';
-export 'future_text_field.dart';
-
 class OccurrenceField extends StatelessWidget {
   final bool autofocus;
 
@@ -36,7 +33,7 @@ class OccurrenceField extends StatelessWidget {
         title: FutureTextField(
           controller.valueTextController,
           textCapitalization: TextCapitalization.sentences,
-          style: Theme.of(context).textTheme.body2,
+          style: Theme.of(context).textTheme.subhead,
           autofocus: autofocus,
         ),
       ),

@@ -14,7 +14,6 @@
 
 export 'auto_fab.dart';
 export 'error_indicator.dart';
-export 'future_text.dart';
 export 'future_text_field.dart';
 export 'name_card.dart';
 export 'name_field.dart';

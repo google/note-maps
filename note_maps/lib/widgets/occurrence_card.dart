@@ -16,22 +16,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/controllers.dart';
-import 'future_text.dart';
-
-export 'future_text.dart';
-export 'future_text_field.dart';
 
 class OccurrenceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var controller = Provider.of<OccurrenceController>(context);
-    return ValueListenableBuilder(
+    return ValueListenableBuilder<OccurrenceState>(
       valueListenable: controller,
       builder: (context, occurrenceState, _) => Card(
         child: ListTile(
-          title: FutureText(
-            controller.valueTextController,
-            style: Theme.of(context).textTheme.body2,
+          title: Text(
+            occurrenceState.data?.value ?? "",
+            style: Theme.of(context).textTheme.subhead,
           ),
           trailing: _occurrenceMenuButton(context, controller),
         ),

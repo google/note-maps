@@ -126,4 +126,9 @@ class NoteMapKey {
         return false;
     }
   }
+
+  @override
+  String toString() {
+    return "NoteMapKey(${topicMapId},${id},${itemType})";
+  }
 }

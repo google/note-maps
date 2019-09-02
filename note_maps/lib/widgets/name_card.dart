@@ -16,10 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/controllers.dart';
-import 'future_text.dart';
-
-export 'future_text.dart';
-export 'future_text_field.dart';
 
 class NameCard extends StatelessWidget {
   @override
@@ -29,8 +25,8 @@ class NameCard extends StatelessWidget {
       valueListenable: controller,
       builder: (context, nameState, _) => Card(
         child: ListTile(
-          title: FutureText(
-            controller.valueTextController,
+          title: Text(
+            nameState.data?.value ?? "",
             style: Theme.of(context).textTheme.headline,
           ),
           trailing: _nameMenuButton(context, controller),

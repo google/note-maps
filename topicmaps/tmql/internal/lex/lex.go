@@ -246,7 +246,7 @@ func (lx *Lexer) scanComment() lexState {
 func (lx *Lexer) scanDelim() lexState {
 	next := lx.scanAny
 	r := lx.Rune()
-	if strings.IndexRune("/><", r) >= 0 {
+	if strings.IndexRune("/><+-=", r) >= 0 {
 		if lx.Peek() == r {
 			lx.Rune()
 		}

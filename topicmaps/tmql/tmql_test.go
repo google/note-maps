@@ -29,7 +29,70 @@ func TestParser(t *testing.T) {
 		{In: "", Want: Query{}},
 		// Not much is supported yet, just verify that parsing a non-empty query
 		// produces an error:
-		{In: "//", Err: true},
+		{In: ". >> types", Want: Query{
+			Path: &PathExpression{
+				Postfix: []*Postfix{
+					{
+						Filter: &BooleanPrimitive{
+							Min: 1,
+							Max: ^uint(0),
+							Bindings: BindingSet{"$_": &ContentInfix{
+								L: &PathExpression{
+									Simple: &SimpleContent{
+										Anchor: &Anchor{
+											Variable: "$0",
+										},
+										Navigation: []*Step{
+											{Axis: AxisTypes},
+										},
+									},
+								},
+								Op: InfixIntersection,
+								R: &PathExpression{
+									Simple: &SimpleContent{
+										Anchor: &Anchor{
+											Variable: "$topic",
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		}},
+		{In: ". == $topic", Want: Query{
+			Path: &PathExpression{
+				Postfix: []*Postfix{
+					{
+						Filter: &BooleanPrimitive{
+							Min: 1,
+							Max: ^uint(0),
+							Bindings: BindingSet{"$_": &ContentInfix{
+								L: &PathExpression{
+									Simple: &SimpleContent{
+										Anchor: &Anchor{
+											Variable: "$0",
+										},
+										Navigation: []*Step{
+											{Axis: AxisTypes},
+										},
+									},
+								},
+								Op: InfixIntersection,
+								R: &PathExpression{
+									Simple: &SimpleContent{
+										Anchor: &Anchor{
+											Variable: "$topic",
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		}},
 	} {
 		t.Logf("%d %q", itest, test.In)
 		var got Query

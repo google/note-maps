@@ -16,6 +16,16 @@ syntax = "proto3";
 
 message Library { repeated uint64 topic_map_ids = 1; }
 
+enum Mask {
+  IdsMask = 0;
+  RefsMask = 1;
+  TopicsMask = 2;
+  NamesMask = 3;
+  OccurrencesMask = 4;
+  ValueMask = 5;
+  ParentMask = 6;
+}
+
 message TopicMap {
   uint64 id = 1;
   Topic topic = 2;
@@ -43,6 +53,22 @@ message Occurrence {
   uint64 parent_id = 2;
   uint64 id = 3;
   string value = 4;
+}
+
+message TupleSequence { repeated Tuple tuples = 1; }
+
+message Tuple { repeated AnyItem items = 1; }
+
+message AnyItem {
+  uint64 topic_map_id = 1;
+  uint64 item_id = 2;
+  ItemType item_type = 3;
+  repeated string item_identifiers = 4;
+  repeated string subject_identifiers = 5;
+  repeated string subject_locators = 6;
+  repeated uint64 name_ids = 7;
+  repeated uint64 occurrence_ids = 8;
+  string value = 9;
 }
 
 enum ItemType {

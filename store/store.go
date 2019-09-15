@@ -17,8 +17,8 @@ package store
 import (
 	"fmt"
 
-	"github.com/google/note-maps/kv"
 	"github.com/google/note-maps/store/models"
+	"github.com/google/note-maps/store/pb"
 	"github.com/google/note-maps/topicmaps"
 	"github.com/google/note-maps/topicmaps/tmql"
 )
@@ -42,28 +42,16 @@ func (tx Txn) MergeAssociation(a *topicmaps.Association) error {
 
 // Query returns a TupleSequence representing the results of evaluating
 // `query`.
-func (tx Txn) Query(query *tmql.QueryExpression) (*TupleSequence, error) {
+func (tx Txn) Query(query *tmql.QueryExpression) (*pb.TupleSequence, error) {
 	return nil, fmt.Errorf("not yet implemented")
 }
 
 // Query returns a TupleSequence representing the results of evaluating the
 // TMQL query expressed in `query`.
-func (tx Txn) QueryString(query string) (*TupleSequence, error) {
+func (tx Txn) QueryString(query string) (*pb.TupleSequence, error) {
 	var parsed tmql.QueryExpression
 	if err := tmql.ParseString(query, &parsed); err != nil {
 		return nil, err
 	}
 	return tx.Query(&parsed)
-}
-
-// TupleSequence is the generic result type for all TMQL queries.
-type TupleSequence struct {
-	Columns []*TupleSequenceColumn
-}
-
-// TupleSequenceColumn is a typed column in a TupleSequnece.
-//
-// For now, only columns of entities are supported; this may change.
-type TupleSequenceColumn struct {
-	Entities []kv.Entity
 }

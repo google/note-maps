@@ -27,8 +27,8 @@ import (
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#constant
 type Constant struct {
-	Atom          *Atom          `( @@`
-	ItemReference *ItemReference `| @@ )`
+	Atom          *Atom          `  @@`
+	ItemReference *ItemReference `| @@`
 }
 
 // TMQL [2] atom
@@ -67,16 +67,16 @@ type QName struct {
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#item-reference
 type ItemReference struct {
-	Identifier string `( @Identifier`
-	QIRI       string `| @QIRI )`
+	Identifier string `  @Identifier`
+	QIRI       string `| @QIRI`
 }
 
 // TMQL [20] anchor
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#anchor
 type Anchor struct {
-	Constant *Constant `( @@`
-	Variable string    `| @Variable | @"." )`
+	Constant *Constant `  @@`
+	Variable string    `| @Variable | @"."`
 }
 
 // TMQL [21] simple-content
@@ -91,8 +91,8 @@ type SimpleContent struct {
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#content
 type Content struct {
-	QueryExpression *QueryExpression `( "{" @@ "}"`
-	PathExpression  *PathExpression  `| @@ )`
+	QueryExpression *QueryExpression `  "{" @@ "}"`
+	PathExpression  *PathExpression  `| @@`
 }
 type OpContent struct {
 	ContentInfixOperator string   `( @"++" | @"--" | @"==" )`
@@ -101,6 +101,13 @@ type OpContent struct {
 type CompositeContent struct {
 	Content   *Content   `@@`
 	OpContent *OpContent `@@*`
+}
+
+// TMQL [24] tuple-expression
+//
+// http://www.isotopicmaps.org/tmql/tmql.html#tuple-expression
+type TupleExpression struct {
+	Null bool `@Null`
 }
 
 // TMQL [38] boolean-expression
@@ -114,9 +121,9 @@ type BooleanExpression struct {
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#boolean-primitive
 type BooleanPrimitive struct {
-	Negated      *BooleanPrimitive `( "not" @@`
+	Negated      *BooleanPrimitive `  "not" @@`
 	ForallClause *ForallClause     `| @@`
-	ExistsClause *ExistsClause     `| @@ )`
+	ExistsClause *ExistsClause     `| @@`
 }
 
 // TMQL [40] exists-clause
@@ -133,9 +140,9 @@ type ExistsClause struct {
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#exists-quantifier
 type ExistsQuantifier struct {
-	Some  bool `( @"some"`
+	Some  bool `  @"some"`
 	Least int  `| "at" ( "least" @Int`
-	Most  int  `       | "most" @Int ))`
+	Most  int  `       | "most" @Int )`
 }
 
 // TMQL [42] forall-clause
@@ -180,8 +187,9 @@ type PathExpression struct {
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#postfixed-expression
 type PostfixedExpression struct {
-	SimpleContent *SimpleContent `@@`
-	Postfix       []*Postfix     `@@*`
+	TupleExpression *TupleExpression `( @@`
+	SimpleContent   *SimpleContent   `| @@ )`
+	Postfix         []*Postfix       `@@*`
 }
 
 // TMQL [55] postfix
@@ -202,6 +210,7 @@ var (
 		Variable = ( "$" | "@" | "%" ) ( alpha | digit | "#" | "_" )
 		           { alpha | digit | "#" } { "'" } .
 		Prefix = word { word } ":" .
+		Null = "null" .
     Identifier = word { word } .
 		QIRI = "<" iri { iri } ">" .
 

@@ -52,7 +52,7 @@ func TestParseString(t *testing.T) {
 				},
 			}},
 		}, {
-			In: `. [ some $_ in $0 satisfies not $2 ]`,
+			In: `. [ some $_ in $0 satisfies not null ]`,
 			Want: &QueryExpression{PathExpression: &PathExpression{
 				PostfixedExpression: &PostfixedExpression{
 					SimpleContent: &SimpleContent{Anchor: &Anchor{
@@ -85,8 +85,8 @@ func TestParseString(t *testing.T) {
 													Content: &Content{
 														PathExpression: &PathExpression{
 															PostfixedExpression: &PostfixedExpression{
-																SimpleContent: &SimpleContent{
-																	Anchor: &Anchor{Variable: "$2"},
+																TupleExpression: &TupleExpression{
+																	Null: true,
 																},
 															},
 														},

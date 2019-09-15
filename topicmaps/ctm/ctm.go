@@ -59,6 +59,10 @@ func Parse(r io.Reader, m topicmaps.Merger) error {
 	return parser.err
 }
 
+func ParseString(s string, m topicmaps.Merger) error {
+	return Parse(bytes.NewReader([]byte(s)), m)
+}
+
 func (p *parser) nextLexeme() bool {
 	if p.l != nil && p.l.Type.Terminal() {
 		return false

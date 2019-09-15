@@ -16,117 +16,46 @@
 // that related packages can use to share topic maps and topic map items.
 package topicmaps
 
-// Reifiable is a mixin for any item that can be reified by a topic.
-type Reifiable struct {
-	II []string
-}
-
-// Typed is a mixin for any item has a singular type.
-type Typed struct {
-	Type TopicRef
-}
-
-// Valued is a mixin for any item that has a value.
-type Valued struct {
-	Value string
-}
-
-// TypedValued is a mixin for any item that has a value with a datatype.
-type TypedValued struct {
-	Valued
-	Datatype TopicRef
-}
-
-// Name is a a TMDM TopicName.
-type Name struct {
-	Reifiable
-	Typed
-	Valued
-}
-
-// Occurrence is a a TMDM Occurrence.
-type Occurrence struct {
-	Reifiable
-	Typed
-	Valued
-}
-
-// Topic is a TMDM Topic.
-type Topic struct {
-	SelfRefs    []TopicRef
-	Names       []*Name
-	Occurrences []*Occurrence
-}
-
-// TopicRef is a reference to a topic.
-type TopicRef struct {
-	Type TopicRefType
-	IRI  string
-}
-
-// TopicRefType is a type of TopicRef: II, SI, or SL.
-type TopicRefType int
-
-const (
-	// II is a TMDM item identifier.
-	II TopicRefType = iota
-
-	// SI is a TMDM subject indicator.
-	SI
-
-	// SL is a TMDM subject locator.
-	SL
+import (
+	"github.com/google/note-maps/store/pb"
 )
-
-// String returns a simple string representation of a TopicRefType.
-func (trt TopicRefType) String() string {
-	switch trt {
-	case II:
-		return "II"
-	case SI:
-		return "SI"
-	case SL:
-		return "SL"
-	default:
-		return "(unknown topic ref type)"
-	}
-}
-
-// Association is a TMDM Association.
-type Association struct {
-	Reifiable
-	Typed
-	Roles []*Role
-}
-
-// Role is a TMDM AssociationRole.
-type Role struct {
-	Typed
-	Player TopicRef
-}
 
 // Merger is a sink for TMDM items.
 type Merger interface {
-	MergeTopic(t *Topic) error
-	MergeAssociation(a *Association) error
+	Merge(t *pb.AnyItem) error
 }
 
 // TopicMap is a TMDM TopicMap.
 type TopicMap struct {
-	II           []string
-	Topics       []*Topic
-	Associations []*Association
+	II       []string
+	Children []*pb.AnyItem
 }
 
-// MergeTopic merges a topic into a TopicMap.
-func (tm *TopicMap) MergeTopic(t *Topic) error {
-	tm.Topics = append(tm.Topics, t)
+// MergeTopic merges any item into a TopicMap.
+func (tm *TopicMap) Merge(t *pb.AnyItem) error {
+	// This is a simplified and incorrect implementation of Merge. A correct
+	// implementation would look for existing items to merge with and check for
+	// coherence.
+	tm.Children = append(tm.Children, t)
 	return nil
 }
 
-// MergeAssociation merges an association into a TopicMap, updating the
-// TopicMap.
-func (tm *TopicMap) MergeAssociation(a *Association) error {
-	tm.Associations = append(tm.Associations, a)
-	return nil
+func IsTopic(item *pb.AnyItem) bool {
+	if len(item.Names) > 0 || len(item.NameIds) > 0 ||
+		len(item.Occurrences) > 0 || len(item.OccurrenceIds) > 0 {
+		return true
+	}
+	for _, ref := range item.Refs {
+		if ref.Type == pb.RefType_SubjectIdentifier || ref.Type == pb.RefType_SubjectLocator {
+			return true
+		}
+	}
+	return false
+}
+
+func IsAssociation(item *pb.AnyItem) bool {
+	if len(item.Roles) > 0 || len(item.RoleIds) > 0 {
+		return true
+	}
+	return false
 }

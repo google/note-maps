@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/google/note-maps/store/pb"
 	"github.com/google/note-maps/topicmaps"
 	"github.com/google/note-maps/topicmaps/ctm/internal/lex"
 )
@@ -33,10 +34,9 @@ type parser struct {
 	state       parserState
 	err         error
 	m           topicmaps.Merger
-	topic       *topicmaps.Topic
-	association *topicmaps.Association
+	topic       *pb.AnyItem
+	association *pb.AnyItem
 	prefixes    map[string]string
-	//association *topicmaps.Association
 }
 
 // Parse reads CTM from r passing topics and associations into m until EOF.
@@ -192,16 +192,16 @@ func (p *parser) parseBody() parserState {
 
 func (p *parser) parseTopicOrAssociation() parserState {
 	ref := p.readRef()
-	if ref.IRI == "" {
+	if ref.Iri == "" {
 		return p.parseErrorf("expected ref")
 	}
 	if !p.skipMultiline() {
 		return p.parseErrorf("%s, expected topic or association", p.l)
 	} else if p.l.Match(lex.Delimiter, "(") {
-		p.association = &topicmaps.Association{Typed: topicmaps.Typed{ref}}
+		p.association = &pb.AnyItem{TypeRef: &ref}
 		return p.parseAssociation
 	} else {
-		p.topic = &topicmaps.Topic{SelfRefs: []topicmaps.TopicRef{ref}}
+		p.topic = &pb.AnyItem{Refs: []*pb.Ref{&ref}}
 		p.rewind()
 		return p.parseTopic
 	}
@@ -213,7 +213,9 @@ func (p *parser) parseTopic() parserState {
 	} else if p.l.Match(lex.Delimiter, "-") {
 		return p.parseName
 	} else if p.l.Match(lex.Delimiter, ".") {
-		p.m.MergeTopic(p.topic)
+		if err := p.m.Merge(p.topic); err != nil {
+			return p.parseErrorf("%s: %v: merge error: %s", p.l, p.topic, err)
+		}
 		p.topic = nil
 		return p.parseBody
 	} else {
@@ -227,8 +229,8 @@ func (p *parser) parseName() parserState {
 	} else if p.l.Type != lex.String {
 		return p.parseErrorf("expected string as name")
 	} else {
-		p.topic.Names = append(p.topic.Names, &topicmaps.Name{
-			Valued: topicmaps.Valued{unquote(p.l.Value)},
+		p.topic.Names = append(p.topic.Names, &pb.AnyItem{
+			Value: unquote(p.l.Value),
 		})
 		return p.parseTopic
 	}
@@ -237,25 +239,25 @@ func (p *parser) parseName() parserState {
 func (p *parser) parseAssociation() parserState {
 	p.skipMultiline()
 	roleType := p.readRef()
-	if roleType.IRI == "" {
+	if roleType.Iri == "" {
 		return p.parseErrorf("expected role type ref, got %s", p.l)
 	} else if !(p.skipMultiline() && p.l.Match(lex.Delimiter, ":")) {
 		return p.parseErrorf("expected colon ':' after role type ref, got %s", p.l)
 	}
 	p.skipMultiline()
 	player := p.readRef()
-	if player.IRI == "" {
+	if player.Iri == "" {
 		return p.parseErrorf("expected player ref")
 	}
-	p.association.Roles = append(p.association.Roles, &topicmaps.Role{
-		Typed:  topicmaps.Typed{Type: roleType},
-		Player: player,
+	p.association.Roles = append(p.association.Roles, &pb.AnyItem{
+		TypeRef:   &roleType,
+		PlayerRef: &player,
 	})
 	p.skipMultiline()
 	if p.l.Match(lex.Delimiter, ",") {
 		return p.parseAssociation
 	} else if p.l.Match(lex.Delimiter, ")") {
-		p.m.MergeAssociation(p.association)
+		p.m.Merge(p.association)
 		p.association = nil
 		return p.parseBody
 	} else {
@@ -263,31 +265,31 @@ func (p *parser) parseAssociation() parserState {
 	}
 }
 
-func (p *parser) readRef() (ref topicmaps.TopicRef) {
+func (p *parser) readRef() (ref pb.Ref) {
 	switch p.l.Type {
 	case lex.IRI:
-		ref.Type = topicmaps.SI
-		ref.IRI = p.l.Value
+		ref.Type = pb.RefType_SubjectIdentifier
+		ref.Iri = p.l.Value
 	case lex.Name:
 		base, qname := p.prefixes[p.l.Value]
 		if qname {
 			if p.nextLexeme() && p.l.Match(lex.Delimiter, ":") {
 				if !(p.nextLexeme() && p.l.Type == lex.Name) {
 					p.parseErrorf("expected qualified name")
-					ref.IRI = ""
+					ref.Iri = ""
 				} else {
-					ref.Type = topicmaps.SI
-					ref.IRI = base + p.l.Value
+					ref.Type = pb.RefType_SubjectIdentifier
+					ref.Iri = base + p.l.Value
 				}
 			} else {
 				// Ignore that lexeme as it's not part of the IRI after all.
 				p.rewind()
-				ref.Type = topicmaps.II
-				ref.IRI = p.l.Value
+				ref.Type = pb.RefType_ItemIdentifier
+				ref.Iri = p.l.Value
 			}
 		} else {
-			ref.Type = topicmaps.II
-			ref.IRI = p.l.Value
+			ref.Type = pb.RefType_ItemIdentifier
+			ref.Iri = p.l.Value
 		}
 	default:
 		p.parseErrorf("%s, want ref", p.l)

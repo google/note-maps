@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/google/note-maps/store/pb"
 	tm "github.com/google/note-maps/topicmaps"
 )
 
@@ -46,19 +47,10 @@ func TestParser(t *testing.T) {
 					test_id - "Test Name".
 					`,
 			Want: tm.TopicMap{
-				Topics: []*tm.Topic{
+				Children: []*pb.AnyItem{
 					{
-						SelfRefs: []tm.TopicRef{
-							{
-								Type: tm.II,
-								IRI:  "test_id",
-							},
-						},
-						Names: []*tm.Name{
-							{
-								Valued: tm.Valued{"Test Name"},
-							},
-						},
+						Refs:  []*pb.Ref{{Type: pb.RefType_ItemIdentifier, Iri: "test_id"}},
+						Names: []*pb.AnyItem{{Value: "Test Name"}},
 					},
 				},
 			},
@@ -69,36 +61,30 @@ func TestParser(t *testing.T) {
 					- "John Lennon".
 					`,
 			Want: tm.TopicMap{
-				Topics: []*tm.Topic{
+				Children: []*pb.AnyItem{
 					{
-						SelfRefs: []tm.TopicRef{
-							{
-								Type: tm.SI,
-								IRI:  "http://en.wikipedia.org/wiki/John_Lennon",
-							},
-						},
-						Names: []*tm.Name{
-							{
-								Valued: tm.Valued{"John Lennon"},
-							},
-						},
+						Refs: []*pb.Ref{{
+							Type: pb.RefType_SubjectIdentifier,
+							Iri:  "http://en.wikipedia.org/wiki/John_Lennon",
+						}},
+						Names: []*pb.AnyItem{{Value: "John Lennon"}},
 					},
 				},
 			},
 		}, {
 			In: "member_of(group: The_Beatles, member: John_Lennon)",
 			Want: tm.TopicMap{
-				Associations: []*tm.Association{
+				Children: []*pb.AnyItem{
 					{
-						Typed: tm.Typed{tm.TopicRef{tm.II, "member_of"}},
-						Roles: []*tm.Role{
+						TypeRef: &pb.Ref{Type: pb.RefType_ItemIdentifier, Iri: "member_of"},
+						Roles: []*pb.AnyItem{
 							{
-								Typed:  tm.Typed{tm.TopicRef{tm.II, "group"}},
-								Player: tm.TopicRef{tm.II, "The_Beatles"},
+								TypeRef:   &pb.Ref{Type: pb.RefType_ItemIdentifier, Iri: "group"},
+								PlayerRef: &pb.Ref{Type: pb.RefType_ItemIdentifier, Iri: "The_Beatles"},
 							},
 							{
-								Typed:  tm.Typed{tm.TopicRef{tm.II, "member"}},
-								Player: tm.TopicRef{tm.II, "John_Lennon"},
+								TypeRef:   &pb.Ref{Type: pb.RefType_ItemIdentifier, Iri: "member"},
+								PlayerRef: &pb.Ref{Type: pb.RefType_ItemIdentifier, Iri: "John_Lennon"},
 							},
 						},
 					},

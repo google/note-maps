@@ -17,13 +17,14 @@ syntax = "proto3";
 message Library { repeated uint64 topic_map_ids = 1; }
 
 enum Mask {
-  IdsMask = 0;
-  RefsMask = 1;
-  TopicsMask = 2;
-  NamesMask = 3;
-  OccurrencesMask = 4;
-  ValueMask = 5;
-  ParentMask = 6;
+	UnspecifiedMask = 0;
+  IdsMask = 1;
+  RefsMask = 2;
+  TopicsMask = 3;
+  NamesMask = 4;
+  OccurrencesMask = 5;
+  ValueMask = 6;
+  ParentMask = 7;
 }
 
 message TopicMap {
@@ -63,12 +64,28 @@ message AnyItem {
   uint64 topic_map_id = 1;
   uint64 item_id = 2;
   ItemType item_type = 3;
-  repeated string item_identifiers = 4;
-  repeated string subject_identifiers = 5;
-  repeated string subject_locators = 6;
-  repeated uint64 name_ids = 7;
-  repeated uint64 occurrence_ids = 8;
+  repeated Ref refs = 4;
+  repeated uint64 name_ids = 5;
+	repeated AnyItem names = 6;
+  repeated uint64 occurrence_ids = 7;
+	repeated AnyItem occurrences = 8;
   string value = 9;
+	Ref type_ref = 10;
+  repeated uint64 role_ids = 12;
+	repeated AnyItem roles = 13;
+	Ref player_ref = 11;
+}
+
+message Ref {
+  RefType type = 1;
+	string iri = 2;
+}
+
+enum RefType {
+	UnspecifiedRefType = 0;
+  ItemIdentifier = 1;
+	SubjectIdentifier = 2;
+	SubjectLocator = 3;
 }
 
 enum ItemType {

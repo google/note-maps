@@ -15,6 +15,7 @@
 package store
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
@@ -26,12 +27,14 @@ import (
 
 func TestStore(t *testing.T) {
 	for itest, test := range []struct {
+		Name  string
 		CTM   string
 		Query string
 		Want  string
 		Mask  pb.Mask
 	}{
 		{
+			Name: "basic test",
 			CTM: `
 				%prefix wiki http://en.wikipedia.org/wiki/
 				wiki:Canada - "Canada".
@@ -41,22 +44,40 @@ func TestStore(t *testing.T) {
 			Want:  `tuples: { items: { value: "Canada" } }`,
 		},
 	} {
-		db := kvtest.NewDB(t)
-		defer db.Close()
-		txn := db.NewTxn(true)
-		defer txn.Discard()
-		s := NewTxn(models.New(txn))
-		if err := ctm.ParseString(test.CTM, s); err != nil {
-			t.Logf("%v: error: %v", itest, err) // TODO: Error
-		}
-		var want pb.TupleSequence
-		if err := proto.UnmarshalText(test.Want, &want); err != nil {
-			t.Fatalf("%v: can't unmarshal wanted response: %s", itest, err)
-		}
-		if got, err := s.QueryString(test.Query); err != nil {
-			t.Logf("%v: error: %v", itest, err) // TODO: Error
-		} else if !proto.Equal(got, &want) {
-			t.Logf("%v: got %s, want %s", itest, got.String(), want.String()) // TODO: Error
-		}
+		t.Run(fmt.Sprintf("%v %s", itest, test.Name), func(t *testing.T) {
+			var (
+				err error
+				db  = kvtest.NewDB(t)
+			)
+			defer db.Close()
+			{
+				txn := db.NewTxn(true)
+				defer txn.Discard()
+				s := NewTxn(models.New(txn))
+				if s.Partition, err = s.Alloc(); err != nil {
+					t.Fatal(err)
+				}
+				if err = ctm.ParseString(test.CTM, s); err != nil {
+					t.Errorf("error: %v", err)
+				}
+				if err = txn.Commit(); err != nil {
+					t.Fatal(err)
+				}
+			}
+			var want pb.TupleSequence
+			if err := proto.UnmarshalText(test.Want, &want); err != nil {
+				t.Fatalf("can't unmarshal wanted response: %s", err)
+			}
+			{
+				txn := db.NewTxn(false)
+				defer txn.Discard()
+				s := NewTxn(models.New(txn))
+				if got, err := s.QueryString(test.Query); err != nil {
+					t.Logf("error: %v", err) // TODO: Error
+				} else if !proto.Equal(got, &want) {
+					t.Errorf("got %s, want %s", got.String(), want.String())
+				}
+			}
+		})
 	}
 }

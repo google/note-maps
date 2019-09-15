@@ -27,10 +27,15 @@ func TestParseString(t *testing.T) {
 		Err  bool
 	}{
 		{
-			In: `.`,
+			In: `. << types`,
 			Want: &QueryExpression{PathExpression: &PathExpression{
 				PostfixedExpression: &PostfixedExpression{
-					SimpleContent: &SimpleContent{Anchor: &Anchor{Variable: "."}},
+					SimpleContent: &SimpleContent{
+						Anchor: &Anchor{Variable: "."},
+						Navigation: []*Step{
+							{Direction: StepBackward, Axis: TypesAxis},
+						},
+					},
 				},
 			}},
 		}, {

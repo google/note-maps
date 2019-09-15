@@ -71,6 +71,71 @@ type ItemReference struct {
 	QIRI       string `| @QIRI`
 }
 
+// TMQL [18] step
+//
+// http://www.isotopicmaps.org/tmql/tmql.html#step
+type Step struct {
+	Direction StepDirection `( @">>" | @"<<" )`
+	Axis      Axis          `( @"types" | @"supertypes" | @"players" | @"roles" |
+	                           @"traverse" | @"characteristics" | @"scope" |
+	                           @"locators" | @"indicators" | @"item" |
+	                           @"reifier" | @"atomify" )`
+	Anchor *Anchor `@@?`
+}
+type StepDirection int
+
+const (
+	StepForward StepDirection = iota
+	StepBackward
+)
+
+func (sd *StepDirection) Capture(s []string) error {
+	*sd = map[string]StepDirection{
+		">>": StepForward,
+		"<<": StepBackward,
+	}[s[0]]
+	return nil
+}
+
+// TMQL [18] axis
+//
+// http://www.isotopicmaps.org/tmql/tmql.html#axis
+type Axis int
+
+const (
+	UnspecifiedAxis Axis = iota
+	TypesAxis
+	SupertypesAxis
+	PlayersAxis
+	RolesAxis
+	TraverseAxis
+	CharacteristicsAxis
+	ScopeAxis
+	LocatorsAxis
+	IndicatorsAxis
+	ItemAxis
+	ReifierAxis
+	AtomifyAxis
+)
+
+func (a *Axis) Capture(s []string) error {
+	*a = map[string]Axis{
+		"types":           TypesAxis,
+		"supertypes":      SupertypesAxis,
+		"players":         PlayersAxis,
+		"roles":           RolesAxis,
+		"traverse":        TraverseAxis,
+		"characteristics": CharacteristicsAxis,
+		"scope":           ScopeAxis,
+		"locators":        LocatorsAxis,
+		"indicators":      IndicatorsAxis,
+		"item":            ItemAxis,
+		"reifier":         ReifierAxis,
+		"atomify":         AtomifyAxis,
+	}[s[0]]
+	return nil
+}
+
 // TMQL [20] anchor
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#anchor
@@ -83,8 +148,8 @@ type Anchor struct {
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#simple-content
 type SimpleContent struct {
-	Anchor *Anchor `@@`
-	//Navigation []*Step `@@`
+	Anchor     *Anchor `@@`
+	Navigation []*Step `@@*`
 }
 
 // TMQL [23] content

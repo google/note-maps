@@ -17,9 +17,10 @@ package tmql
 
 import (
 	"io"
-	"regexp"
 
 	"github.com/alecthomas/participle"
+	"github.com/alecthomas/participle/lexer"
+	"github.com/alecthomas/participle/lexer/ebnf"
 )
 
 // TMQL [1] constant
@@ -34,28 +35,48 @@ type Constant struct {
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#atom
 type Atom struct {
-	Undefined bool    `( @"undef"`
-	True      bool    `| @"true"`
-	False     bool    `| @"false"`
-	Number    float64 `| ( @Int | @Float )`
+	Keyword Keyword `( @"undef" | @"true" | @"false" )`
+	Number  int     `| @Int`
+	String  string  `| @String`
 	//Date
 	//DateTime
-	IRI string `| @String )`
+}
+
+type Keyword string
+
+func (k *Keyword) Capture(s []string) error {
+	*k = Keyword(s[0])
+	return nil
+}
+
+const (
+	UndefKeyword Keyword = "undef"
+	TrueKeyword  Keyword = "true"
+	FalseKeyword Keyword = "false"
+)
+
+// TMQL [14] QName
+//
+// http://www.isotopicmaps.org/tmql/tmql.html#QName
+type QName struct {
+	Prefix     string `@Prefix`
+	Identifier string `@Identifier`
 }
 
 // TMQL [17] item-reference
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#item-reference
 type ItemReference struct {
-	QIRI string `"<" @String ">"`
+	Identifier string `( @Identifier`
+	QIRI       string `| @QIRI )`
 }
 
 // TMQL [20] anchor
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#anchor
 type Anchor struct {
-	Constant *Constant `@@`
-	//Variable string    `| @Variable )`
+	Constant *Constant `( @@`
+	Variable string    `| @Variable | @"." )`
 }
 
 // TMQL [21] simple-content
@@ -70,6 +91,16 @@ type SimpleContent struct {
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#content
 type Content struct {
+	QueryExpression *QueryExpression `( "{" @@ "}"`
+	PathExpression  *PathExpression  `| @@ )`
+}
+type OpContent struct {
+	ContentInfixOperator string   `( @"++" | @"--" | @"==" )`
+	Content              *Content `@@`
+}
+type CompositeContent struct {
+	Content   *Content   `@@`
+	OpContent *OpContent `@@*`
 }
 
 // TMQL [38] boolean-expression
@@ -92,9 +123,10 @@ type BooleanPrimitive struct {
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#exists-clause
 type ExistsClause struct {
-	ExistsQuantifier  *ExistsQuantifier  `@@`
-	BindingSet        *BindingSet        `@@`
-	BooleanExpression *BooleanExpression `"satisfies" @@`
+	ExistsQuantifier  *ExistsQuantifier  `( @@`
+	BindingSet        *BindingSet        `  @@`
+	BooleanExpression *BooleanExpression `  "satisfies" @@ )`
+	ExistsContent     *CompositeContent  `| "exists"? @@`
 }
 
 // TMQL [41] exists-quantifier
@@ -102,8 +134,8 @@ type ExistsClause struct {
 // http://www.isotopicmaps.org/tmql/tmql.html#exists-quantifier
 type ExistsQuantifier struct {
 	Some  bool `( @"some"`
-	Least int  `| "at" ( "least" @Integer`
-	Most  int  `       | "most" @Integer ) )`
+	Least int  `| "at" ( "least" @Int`
+	Most  int  `       | "most" @Int ))`
 }
 
 // TMQL [42] forall-clause
@@ -114,17 +146,12 @@ type ForallClause struct {
 	BooleanExpression *BooleanExpression `"satisfies" @@`
 }
 
-// TMQL [43] variable
-//
-// http://www.isotopicmaps.org/tmql/tmql.html#variable
-var Variable = regexp.MustCompile(`[$@%][\w#]+'*`)
-
 // TMQL [44] variable-assignment
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#variable-assignment
 type VariableAssignment struct {
-	Variable string   `@Variable`
-	Content  *Content `"in" @@`
+	Variable         string            `@Variable`
+	CompositeContent *CompositeContent `"in" @@`
 }
 
 // TMQL [45] binding-set
@@ -138,14 +165,14 @@ type BindingSet struct {
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#query-expression
 type QueryExpression struct {
-	PathExpression *PathExpression
+	PathExpression *PathExpression `@@`
 }
 
 // TMQL [53] path-expression
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#path-expression
 type PathExpression struct {
-	PostfixedExpression *PostfixedExpression
+	PostfixedExpression *PostfixedExpression `@@`
 	//PredicateInvocation *PredicateInvocation
 }
 
@@ -153,27 +180,47 @@ type PathExpression struct {
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#postfixed-expression
 type PostfixedExpression struct {
-	Simple  *SimpleContent
-	Postfix *Postfix
+	SimpleContent *SimpleContent `@@`
+	Postfix       []*Postfix     `@@*`
 }
 
 // TMQL [55] postfix
 //
 // http://www.isotopicmaps.org/tmql/tmql.html#postfix
 type Postfix struct {
-	FilterPostfix *FilterPostfix
-	//ProjectionPostfix *ProjectionPostfix
-}
+	// TMQL [56] filter-postfix
+	//
+	// http://www.isotopicmaps.org/tmql/tmql.html#filter-postfix
+	FilterPostfix *BooleanPrimitive `"[" @@ "]"`
 
-// TMQL [56] filter-postfix
-//
-// http://www.isotopicmaps.org/tmql/tmql.html#filter-postfix
-type FilterPostfix struct {
-	BooleanPrimitives []*BooleanPrimitive
+	//ProjectionPostfix *TupleExpression
 }
 
 var (
-	parser = participle.MustBuild(&SimpleContent{})
+	tmqlLexer = lexer.Must(ebnf.New(`
+		Whitespace = " " | "\t" | "\n" | "\r" .
+		Variable = ( "$" | "@" | "%" ) ( alpha | digit | "#" | "_" )
+		           { alpha | digit | "#" } { "'" } .
+		Prefix = word { word } ":" .
+    Identifier = word { word } .
+		QIRI = "<" iri { iri } ">" .
+
+		Int = digit { digit } .
+		String = "\"" { "\u0000"…"\uffff"-"\"" } "\"" .
+		Delim = delim { delim } .
+
+		iri = "\u0021"…"\uffff"-"^"-"<"-">"-"'"-"{"-"}"-"|"-"^" .
+		alpha = "a"…"z" | "A"…"Z" .
+		digit = "0"…"9" .
+		word = alpha | digit | "_" .
+		delim = "@" | "$" | "%" | "^" | "&" | "|" | "*" | "-" | "+" | "=" | "(" |
+		        ")" | "{" | "}" | "[" | "]" | "\"" | "'" | "/" | "\\" | "<" | ">" |
+		        ":" | "." | "," | "~" .
+  `))
+	parser = participle.MustBuild(&QueryExpression{},
+		participle.Lexer(tmqlLexer),
+		participle.Elide("Whitespace"),
+	)
 )
 
 func Parse(r io.Reader, v interface{}) error    { return parser.Parse(r, v) }

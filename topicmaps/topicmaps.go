@@ -24,17 +24,24 @@ const (
 	// SubjectSI is the subject identifier of a topic representing the base type
 	// of all topic map items. Every topic map item is an instance of the type
 	// represented by that topic.
-	SubjectSI string = "http://psi.topicmaps.org/iso13250/model/subject"
+	SubjectSI = "http://psi.topicmaps.org/iso13250/model/subject"
 
 	// TopicNameSI is the subject identifier of a topic representing the type of
 	// all topic names. Every topic name is an instance of the type represented
 	// by that topic.
-	TopicNameSI string = "http://psi.topicmaps.org/iso13250/model/topic-name"
+	TopicNameSI = "http://psi.topicmaps.org/iso13250/model/topic-name"
 
-	TypeSI      string = "http://psi.topicmaps.org/iso13250/model/type"
-	InstanceSI  string = "http://psi.topicmaps.org/iso13250/model/instance"
-	SubtypeSI   string = "http://psi.topicmaps.org/iso13250/model/subtype"
-	SupertypeSI string = "http://psi.topicmaps.org/iso13250/model/supertype"
+	TypeSI         = "http://psi.topicmaps.org/iso13250/model/type"
+	InstanceSI     = "http://psi.topicmaps.org/iso13250/model/instance"
+	TypeInstanceSI = "http://psi.topicmaps.org/iso13250/model/type-instance"
+
+	SupertypeSI        = "http://psi.topicmaps.org/iso13250/model/supertype"
+	SubtypeSI          = "http://psi.topicmaps.org/iso13250/model/subtype"
+	SupertypeSubtypeSI = "http://psi.topicmaps.org/iso13250/model/supertype-subtype"
+
+	// SortNameSI is the subject identifier of a topic that is included in the
+	// scope of topic name variants that are sort names.
+	SortNameSI = "http://psi.topicmaps.org/iso13250/model/sort"
 )
 
 // Merger is a sink for TMDM items.

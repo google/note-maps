@@ -50,8 +50,13 @@ func TestParser(t *testing.T) {
 			Want: tm.TopicMap{
 				Children: []*pb.AnyItem{
 					{
-						Refs:  []*pb.Ref{{Type: pb.RefType_ItemIdentifier, Iri: "test_id"}},
-						Names: []*pb.AnyItem{{Value: "Test Name"}},
+						Refs: []*pb.Ref{{Type: pb.RefType_ItemIdentifier, Iri: "test_id"}},
+						Names: []*pb.AnyItem{{
+							TypeRef: &pb.Ref{
+								Type: pb.RefType_SubjectIdentifier,
+								Iri:  tm.TopicNameSI,
+							},
+							Value: "Test Name"}},
 					},
 				},
 			},
@@ -68,7 +73,12 @@ func TestParser(t *testing.T) {
 							Type: pb.RefType_SubjectIdentifier,
 							Iri:  "http://en.wikipedia.org/wiki/John_Lennon",
 						}},
-						Names: []*pb.AnyItem{{Value: "John Lennon"}},
+						Names: []*pb.AnyItem{{
+							TypeRef: &pb.Ref{
+								Type: pb.RefType_SubjectIdentifier,
+								Iri:  tm.TopicNameSI,
+							},
+							Value: "John Lennon"}},
 					},
 				},
 			},
@@ -81,7 +91,12 @@ func TestParser(t *testing.T) {
 							Type: pb.RefType_ItemIdentifier,
 							Iri:  "canada",
 						}},
-						Names: []*pb.AnyItem{{Value: "Canada"}},
+						Names: []*pb.AnyItem{{
+							TypeRef: &pb.Ref{
+								Type: pb.RefType_SubjectIdentifier,
+								Iri:  tm.TopicNameSI,
+							},
+							Value: "Canada"}},
 						Occurrences: []*pb.AnyItem{{
 							TypeRef: &pb.Ref{
 								Type: pb.RefType_ItemIdentifier,

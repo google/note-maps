@@ -20,6 +20,23 @@ import (
 	"github.com/google/note-maps/store/pb"
 )
 
+const (
+	// SubjectSI is the subject identifier of a topic representing the base type
+	// of all topic map items. Every topic map item is an instance of the type
+	// represented by that topic.
+	SubjectSI string = "http://psi.topicmaps.org/iso13250/model/subject"
+
+	// TopicNameSI is the subject identifier of a topic representing the type of
+	// all topic names. Every topic name is an instance of the type represented
+	// by that topic.
+	TopicNameSI string = "http://psi.topicmaps.org/iso13250/model/topic-name"
+
+	TypeSI      string = "http://psi.topicmaps.org/iso13250/model/type"
+	InstanceSI  string = "http://psi.topicmaps.org/iso13250/model/instance"
+	SubtypeSI   string = "http://psi.topicmaps.org/iso13250/model/subtype"
+	SupertypeSI string = "http://psi.topicmaps.org/iso13250/model/supertype"
+)
+
 // Merger is a sink for TMDM items.
 type Merger interface {
 	Merge(t *pb.AnyItem) error

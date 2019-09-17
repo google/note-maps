@@ -240,6 +240,10 @@ func (p *parser) parseName() parserState {
 		return p.parseErrorf("expected string as name")
 	} else {
 		p.topic.Names = append(p.topic.Names, &pb.AnyItem{
+			TypeRef: &pb.Ref{
+				Type: pb.RefType_SubjectIdentifier,
+				Iri:  topicmaps.TopicNameSI,
+			},
 			Value: unquote(p.l.Value),
 		})
 		return p.parseTopicTail

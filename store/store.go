@@ -38,6 +38,7 @@ func NewTxn(ms models.Txn) Txn { return Txn{ms} }
 
 // Merge merges any topic map item into the backing store.
 func (tx Txn) Merge(t *pb.AnyItem) error {
+	// Establish the topic map for context.
 	if t.TopicMapId != 0 {
 		tx.Partition = kv.Entity(t.TopicMapId)
 	} else if tx.Partition == 0 {
@@ -45,6 +46,8 @@ func (tx Txn) Merge(t *pb.AnyItem) error {
 	} else {
 		t.TopicMapId = uint64(tx.Partition)
 	}
+
+	// Establish the item id as a kv.Entity.
 	var (
 		te  kv.Entity
 		err error
@@ -58,6 +61,8 @@ func (tx Txn) Merge(t *pb.AnyItem) error {
 		}
 		t.ItemId = uint64(te)
 	}
+
+	// Translate any incoming refs into IIs, SIs, and SLs.
 	var (
 		iis models.IIs
 		sis models.SIs
@@ -85,6 +90,8 @@ func (tx Txn) Merge(t *pb.AnyItem) error {
 		return err
 	}
 	log.Printf("item %v has SLs %#v", te, sls)
+
+	// Merge children: Names
 	ns := kv.EntitySlice(uint64sToEntities(t.NameIds))
 	ns.Sort()
 	for _, name := range t.Names {
@@ -97,6 +104,8 @@ func (tx Txn) Merge(t *pb.AnyItem) error {
 	if err := tx.SetTopicNames(te, models.TopicNames(ns)); err != nil {
 		return err
 	}
+
+	// Merge children: Occurrences
 	os := kv.EntitySlice(uint64sToEntities(t.OccurrenceIds))
 	os.Sort()
 	for _, occurrence := range t.Occurrences {
@@ -106,6 +115,11 @@ func (tx Txn) Merge(t *pb.AnyItem) error {
 		}
 		os.Insert(kv.Entity(occurrence.ItemId))
 	}
+	if err := tx.SetTopicOccurrences(te, models.TopicOccurrences(os)); err != nil {
+		return err
+	}
+
+	// Merge properties of reified item.
 	switch t.ItemType {
 	case pb.ItemType_NameItem:
 		n := &models.Name{}
@@ -114,10 +128,13 @@ func (tx Txn) Merge(t *pb.AnyItem) error {
 			return err
 		}
 	case pb.ItemType_OccurrenceItem:
+		o := &models.Occurrence{}
+		o.Value = t.Value
+		if err = tx.SetOccurrence(te, o); err != nil {
+			return err
+		}
 	}
-	if err := tx.SetTopicOccurrences(te, models.TopicOccurrences(os)); err != nil {
-		return err
-	}
+
 	return nil
 }
 

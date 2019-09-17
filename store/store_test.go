@@ -38,11 +38,14 @@ func TestStore(t *testing.T) {
 			Name: "basic test",
 			CTM: `
 				%prefix wiki http://en.wikipedia.org/wiki/
-				wiki:Canada - "Canada".
+				wiki:Canada - "Canada"; note: "cold".
 				wiki:Ontario - "Ontario".`,
 			Query: `<http://en.wikipedia.org/wiki/Canada> << indicators >> characteristics`,
 			Mask:  []pb.Mask{pb.Mask_ValueMask},
-			Want:  `tuples: { items: { value: "Canada" } }`,
+			Want: `
+				tuples: { items: { value: "Canada" } }
+				tuples: { items: { value: "cold" } }
+			`,
 		},
 	} {
 		t.Run(fmt.Sprintf("%v %s", itest, test.Name), func(t *testing.T) {

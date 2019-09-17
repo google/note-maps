@@ -37,6 +37,7 @@ type parser struct {
 	topic       *pb.AnyItem
 	association *pb.AnyItem
 	prefixes    map[string]string
+	ref         pb.Ref
 }
 
 // Parse reads CTM from r passing topics and associations into m until EOF.
@@ -203,24 +204,33 @@ func (p *parser) parseTopicOrAssociation() parserState {
 	} else {
 		p.topic = &pb.AnyItem{Refs: []*pb.Ref{&ref}}
 		p.rewind()
-		return p.parseTopic
+		return p.parseTopicTail
 	}
 }
 
-func (p *parser) parseTopic() parserState {
+func (p *parser) parseTopicTail() parserState {
 	if !p.skipMultiline() {
-		return nil
+		return p.parseErrorf("unexpected EOF while parsing topic")
 	} else if p.l.Match(lex.Delimiter, "-") {
 		return p.parseName
+	} else if p.l.Match(lex.Delimiter, ";") {
+		return p.parseTopicTail
 	} else if p.l.Match(lex.Delimiter, ".") {
 		if err := p.m.Merge(p.topic); err != nil {
 			return p.parseErrorf("%s: %v: merge error: %s", p.l, p.topic, err)
 		}
 		p.topic = nil
 		return p.parseBody
-	} else {
-		return p.parseErrorf("%s, want topic detail", p.l)
 	}
+	p.ref = p.readRef()
+	if p.ref.Iri == "" {
+		return p.parseErrorf("expected ref while parsing topic")
+	}
+	p.skipMultiline()
+	if p.l.Match(lex.Delimiter, ":") {
+		return p.parseOccurrence
+	}
+	return p.parseErrorf("failed while parsing topic")
 }
 
 func (p *parser) parseName() parserState {
@@ -232,8 +242,28 @@ func (p *parser) parseName() parserState {
 		p.topic.Names = append(p.topic.Names, &pb.AnyItem{
 			Value: unquote(p.l.Value),
 		})
-		return p.parseTopic
+		return p.parseTopicTail
 	}
+}
+
+func (p *parser) parseOccurrence() parserState {
+	typ := p.ref
+	o := &pb.AnyItem{TypeRef: &typ}
+	p.skipMultiline()
+	switch p.l.Type {
+	case lex.Name, lex.IRI:
+		ref := p.readRef()
+		if ref.Iri == "" {
+			return p.parseErrorf("expected valid IRI in occurrence value")
+		}
+		o.Value = ref.Iri
+	case lex.String:
+		o.Value = unquote(p.l.Value)
+	default:
+		return p.parseErrorf("unsupported occurrence value type: %v", p.l.Type)
+	}
+	p.topic.Occurrences = append(p.topic.Occurrences, o)
+	return p.parseTopicTail
 }
 
 func (p *parser) parseAssociation() parserState {

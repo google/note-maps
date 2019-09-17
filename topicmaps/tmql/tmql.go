@@ -36,8 +36,8 @@ type Constant struct {
 // http://www.isotopicmaps.org/tmql/tmql.html#atom
 type Atom struct {
 	Keyword Keyword `( @"undef" | @"true" | @"false" )`
-	Number  int     `| @Int`
-	String  string  `| @String`
+	Number  *int    `| @Int`
+	String  *string `| @String`
 	//Date
 	//DateTime
 }
@@ -134,6 +134,26 @@ func (a *Axis) Capture(s []string) error {
 		"atomify":         AtomifyAxis,
 	}[s[0]]
 	return nil
+}
+func (a Axis) String() string {
+	s, ok := map[Axis]string{
+		TypesAxis:           "types",
+		SupertypesAxis:      "supertypes",
+		PlayersAxis:         "players",
+		RolesAxis:           "roles",
+		TraverseAxis:        "traverse",
+		CharacteristicsAxis: "characteristics",
+		ScopeAxis:           "scope",
+		LocatorsAxis:        "locators",
+		IndicatorsAxis:      "indicators",
+		ItemAxis:            "item",
+		ReifierAxis:         "reifier",
+		AtomifyAxis:         "atomify",
+	}[a]
+	if !ok {
+		return "!unrecognized axis!"
+	}
+	return s
 }
 
 // TMQL [20] anchor

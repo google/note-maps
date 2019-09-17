@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/google/note-maps/kv"
 	"github.com/google/note-maps/kv/kvtest"
 	"github.com/google/note-maps/store/models"
 	"github.com/google/note-maps/store/pb"
@@ -31,7 +32,7 @@ func TestStore(t *testing.T) {
 		CTM   string
 		Query string
 		Want  string
-		Mask  pb.Mask
+		Mask  []pb.Mask
 	}{
 		{
 			Name: "basic test",
@@ -39,15 +40,16 @@ func TestStore(t *testing.T) {
 				%prefix wiki http://en.wikipedia.org/wiki/
 				wiki:Canada - "Canada".
 				wiki:Ontario - "Ontario".`,
-			Query: `<http://en.wikipedia.org/wiki/Canada> >> characteristics`,
-			Mask:  pb.Mask_ValueMask,
+			Query: `<http://en.wikipedia.org/wiki/Canada> << indicators >> characteristics`,
+			Mask:  []pb.Mask{pb.Mask_ValueMask},
 			Want:  `tuples: { items: { value: "Canada" } }`,
 		},
 	} {
 		t.Run(fmt.Sprintf("%v %s", itest, test.Name), func(t *testing.T) {
 			var (
-				err error
-				db  = kvtest.NewDB(t)
+				err       error
+				db        = kvtest.NewDB(t)
+				partition kv.Entity
 			)
 			defer db.Close()
 			{
@@ -57,6 +59,7 @@ func TestStore(t *testing.T) {
 				if s.Partition, err = s.Alloc(); err != nil {
 					t.Fatal(err)
 				}
+				partition = s.Partition
 				if err = ctm.ParseString(test.CTM, s); err != nil {
 					t.Errorf("error: %v", err)
 				}
@@ -72,10 +75,13 @@ func TestStore(t *testing.T) {
 				txn := db.NewTxn(false)
 				defer txn.Discard()
 				s := NewTxn(models.New(txn))
-				if got, err := s.QueryString(test.Query); err != nil {
-					t.Logf("error: %v", err) // TODO: Error
+				s.Partition = partition
+				if got, err := s.QueryString(test.Query, QueryMaskOption(test.Mask...)); err != nil {
+					t.Errorf("error: %v", err)
 				} else if !proto.Equal(got, &want) {
 					t.Errorf("got %s, want %s", got.String(), want.String())
+				} else {
+					t.Logf("%#v → %s", test.Query, got.String())
 				}
 			}
 		})

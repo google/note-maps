@@ -114,7 +114,7 @@ func (tos *TopicOccurrences) Decode(bs []byte) error {
 	return err
 }
 
-// Names wraps pb.Names to implement kv.Encoder and kv.Decoder interfaces.
+// Name wraps pb.Name to implement kv.Encoder and kv.Decoder interfaces.
 type Name struct{ pb.Name }
 
 func (n *Name) Encode() []byte          { return encodeProto(n) }
@@ -166,6 +166,9 @@ func encodeStringSlice(src []string) []byte {
 }
 
 func decodeStringSlice(dst *[]string, src []byte) error {
+	if len(src) == 0 {
+		return nil
+	}
 	return json.Unmarshal(src, dst)
 }
 

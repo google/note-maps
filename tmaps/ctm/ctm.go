@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/google/note-maps/store/pb"
 	"github.com/google/note-maps/tmaps"
 	"github.com/google/note-maps/tmaps/ctm/internal/lex"
+	"github.com/google/note-maps/tmaps/pb"
 )
 
 type parserState func() parserState

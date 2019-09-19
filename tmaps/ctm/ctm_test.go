@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/google/note-maps/store/pb"
 	"github.com/google/note-maps/tmaps"
+	"github.com/google/note-maps/tmaps/pb"
 )
 
 func TestParser(t *testing.T) {

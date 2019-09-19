@@ -21,8 +21,8 @@ import (
 	"time"
 
 	"github.com/google/note-maps/kv"
-	"github.com/google/note-maps/store/models"
-	"github.com/google/note-maps/store/pb"
+	"github.com/google/note-maps/tmaps/pb"
+	"github.com/google/note-maps/tmaps/tmdb/models"
 )
 
 type Gateway struct {

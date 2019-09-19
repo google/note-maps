@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package store
+package tmdb
 
 import (
 	"fmt"
 	"log"
 
 	"github.com/google/note-maps/kv"
-	"github.com/google/note-maps/store/models"
-	"github.com/google/note-maps/store/pb"
+	"github.com/google/note-maps/tmaps/pb"
+	"github.com/google/note-maps/tmaps/tmdb/models"
 	"github.com/google/note-maps/tmaps/tmql"
 )
 

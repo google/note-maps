@@ -27,8 +27,8 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/google/note-maps/kv/badger"
-	"github.com/google/note-maps/store/pb"
-	"github.com/google/note-maps/store/pbapi"
+	"github.com/google/note-maps/tmaps/pb"
+	"github.com/google/note-maps/tmaps/pbapi"
 )
 
 func SetPath(p string) {

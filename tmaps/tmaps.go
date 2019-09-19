@@ -17,7 +17,7 @@
 package tmaps
 
 import (
-	"github.com/google/note-maps/store/pb"
+	"github.com/google/note-maps/tmaps/pb"
 )
 
 const (

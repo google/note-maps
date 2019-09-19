@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	"github.com/google/note-maps/kv/kvtest"
-	"github.com/google/note-maps/store/pb"
+	"github.com/google/note-maps/tmaps/pb"
 )
 
 func TestTopicMap(t *testing.T) {

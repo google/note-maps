@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package tmdb is an application database library for storing topic maps.
+//
+// As an application database library, it does not connect over a network to a
+// remote service. Instead, the topic maps are stored locally.
 package tmdb
 
 import (
@@ -24,20 +28,36 @@ import (
 	"github.com/google/note-maps/tmaps/tmql"
 )
 
+// TopicMapNotSpecifiedError indicates that a database operation failed because
+// a topic map was not specified.
 type TopicMapNotSpecifiedError struct{}
 
+// Error just implements the error interface for TopicMapNotSpecifiedError.
 func (e TopicMapNotSpecifiedError) Error() string {
 	return "topic map not specified"
 }
 
+// Txn corresponds to an underlying ACID transaction and is the gateway to all
+// the storage and retrieval features provided by this package.
 type Txn struct {
 	models.Txn
 }
 
+// NewTxn is a low-level function for creating a Txn
 func NewTxn(ms models.Txn) Txn { return Txn{ms} }
 
 // Merge merges any topic map item into the backing store.
 func (tx Txn) Merge(t *pb.AnyItem) error {
+	// Rougly, Merge should:
+	//
+	// 1. Find items that should be merged with t.
+	// 2. Fail if the merged result would be incoherent.
+	// 3. Compute the merged result.
+	// 4. Store the meged result in the backing store.
+	//
+	// For now, Merge just stores t directly in the backing store without,
+	// actually merging only if t.ItemId!=0.
+
 	// Establish the topic map for context.
 	if t.TopicMapId != 0 {
 		tx.Partition = kv.Entity(t.TopicMapId)

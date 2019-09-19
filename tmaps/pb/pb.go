@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package pb includes protocol buffer message types for communication with
-// Note Maps clients.
+// Package pb defines protocol buffer message types intended for use in tmaps
+// APIs.
+//
+// These message types are different and independent from those used in
+// storage.
 package pb
 
 //go:generate protoc --go_out=. pb.proto

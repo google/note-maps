@@ -22,7 +22,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/google/note-maps/topicmaps/internal/lex"
+	"github.com/google/note-maps/tmaps/internal/lex"
 )
 
 const (

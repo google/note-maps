@@ -23,7 +23,7 @@ import (
 	"github.com/google/note-maps/kv/kvtest"
 	"github.com/google/note-maps/store/models"
 	"github.com/google/note-maps/store/pb"
-	"github.com/google/note-maps/topicmaps/ctm"
+	"github.com/google/note-maps/tmaps/ctm"
 )
 
 func TestStore(t *testing.T) {

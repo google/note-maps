@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/google/note-maps/topicmaps/internal/lex"
+	"github.com/google/note-maps/tmaps/internal/lex"
 )
 
 func TestLexer(t *testing.T) {

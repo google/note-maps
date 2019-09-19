@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package topicmaps defines a vocabulary of simple types and common constants
-// that related packages can use to share topic maps and topic map items.
-package topicmaps
+// Package tmaps defines a vocabulary of simple types and common constants that
+// related packages can use to share topic maps and topic map items.
+package tmaps
 
 import (
 	"github.com/google/note-maps/store/pb"

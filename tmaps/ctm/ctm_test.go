@@ -21,24 +21,24 @@ import (
 	"testing"
 
 	"github.com/google/note-maps/store/pb"
-	tm "github.com/google/note-maps/topicmaps"
+	"github.com/google/note-maps/tmaps"
 )
 
 func TestParser(t *testing.T) {
 	for itest, test := range []struct {
 		In   string
-		Want tm.TopicMap
+		Want tmaps.TopicMap
 		Err  bool
 	}{
-		{In: "", Want: tm.TopicMap{}},
-		{In: "# comment", Want: tm.TopicMap{}},
-		{In: `%encoding "UTF-8"`, Want: tm.TopicMap{}},
+		{In: "", Want: tmaps.TopicMap{}},
+		{In: "# comment", Want: tmaps.TopicMap{}},
+		{In: `%encoding "UTF-8"`, Want: tmaps.TopicMap{}},
 		{In: `%encoding "whatever"`, Err: true},
-		{In: `%version 1.0`, Want: tm.TopicMap{}},
+		{In: `%version 1.0`, Want: tmaps.TopicMap{}},
 		{In: `%version 2.0`, Err: true},
 		{
 			In:   "%encoding \"UTF-8\"\n%version 1.0\n# Empty with full prolog and comment",
-			Want: tm.TopicMap{},
+			Want: tmaps.TopicMap{},
 		},
 		{
 			In: `
@@ -47,14 +47,14 @@ func TestParser(t *testing.T) {
 					# A topic map with one topic.
 					test_id - "Test Name".
 					`,
-			Want: tm.TopicMap{
+			Want: tmaps.TopicMap{
 				Children: []*pb.AnyItem{
 					{
 						Refs: []*pb.Ref{{Type: pb.RefType_ItemIdentifier, Iri: "test_id"}},
 						Names: []*pb.AnyItem{{
 							TypeRef: &pb.Ref{
 								Type: pb.RefType_SubjectIdentifier,
-								Iri:  tm.TopicNameSI,
+								Iri:  tmaps.TopicNameSI,
 							},
 							Value: "Test Name"}},
 					},
@@ -66,7 +66,7 @@ func TestParser(t *testing.T) {
 					wiki:John_Lennon  # QName used as a subject identifier
 					- "John Lennon".
 					`,
-			Want: tm.TopicMap{
+			Want: tmaps.TopicMap{
 				Children: []*pb.AnyItem{
 					{
 						Refs: []*pb.Ref{{
@@ -76,7 +76,7 @@ func TestParser(t *testing.T) {
 						Names: []*pb.AnyItem{{
 							TypeRef: &pb.Ref{
 								Type: pb.RefType_SubjectIdentifier,
-								Iri:  tm.TopicNameSI,
+								Iri:  tmaps.TopicNameSI,
 							},
 							Value: "John Lennon"}},
 					},
@@ -84,7 +84,7 @@ func TestParser(t *testing.T) {
 			},
 		}, {
 			In: `canada note: "cold"; - "Canada".`,
-			Want: tm.TopicMap{
+			Want: tmaps.TopicMap{
 				Children: []*pb.AnyItem{
 					{
 						Refs: []*pb.Ref{{
@@ -94,7 +94,7 @@ func TestParser(t *testing.T) {
 						Names: []*pb.AnyItem{{
 							TypeRef: &pb.Ref{
 								Type: pb.RefType_SubjectIdentifier,
-								Iri:  tm.TopicNameSI,
+								Iri:  tmaps.TopicNameSI,
 							},
 							Value: "Canada"}},
 						Occurrences: []*pb.AnyItem{{
@@ -109,7 +109,7 @@ func TestParser(t *testing.T) {
 			},
 		}, {
 			In: "member_of(group: The_Beatles, member: John_Lennon)",
-			Want: tm.TopicMap{
+			Want: tmaps.TopicMap{
 				Children: []*pb.AnyItem{
 					{
 						TypeRef: &pb.Ref{Type: pb.RefType_ItemIdentifier, Iri: "member_of"},
@@ -129,7 +129,7 @@ func TestParser(t *testing.T) {
 		},
 	} {
 		t.Run(fmt.Sprintf("test %v %q", itest, test.In), func(t *testing.T) {
-			var got tm.TopicMap
+			var got tmaps.TopicMap
 			err := Parse(bytes.NewReader([]byte(test.In)), &got)
 			if err != nil {
 				if !test.Err {

@@ -21,8 +21,8 @@ import (
 	"io"
 
 	"github.com/google/note-maps/store/pb"
-	"github.com/google/note-maps/topicmaps"
-	"github.com/google/note-maps/topicmaps/ctm/internal/lex"
+	"github.com/google/note-maps/tmaps"
+	"github.com/google/note-maps/tmaps/ctm/internal/lex"
 )
 
 type parserState func() parserState
@@ -33,7 +33,7 @@ type parser struct {
 	rewound     bool
 	state       parserState
 	err         error
-	m           topicmaps.Merger
+	m           tmaps.Merger
 	topic       *pb.AnyItem
 	association *pb.AnyItem
 	prefixes    map[string]string
@@ -44,7 +44,7 @@ type parser struct {
 //
 // If parsing reaches EOF, Parse returns nil. Otherwise, Parse returns an error
 // explaining why parsing stopped before EOF.
-func Parse(r io.Reader, m topicmaps.Merger) error {
+func Parse(r io.Reader, m tmaps.Merger) error {
 	parser := parser{
 		lx:       lex.NewLexer(r),
 		m:        m,
@@ -60,7 +60,7 @@ func Parse(r io.Reader, m topicmaps.Merger) error {
 	return parser.err
 }
 
-func ParseString(s string, m topicmaps.Merger) error {
+func ParseString(s string, m tmaps.Merger) error {
 	return Parse(bytes.NewReader([]byte(s)), m)
 }
 
@@ -242,7 +242,7 @@ func (p *parser) parseName() parserState {
 		p.topic.Names = append(p.topic.Names, &pb.AnyItem{
 			TypeRef: &pb.Ref{
 				Type: pb.RefType_SubjectIdentifier,
-				Iri:  topicmaps.TopicNameSI,
+				Iri:  tmaps.TopicNameSI,
 			},
 			Value: unquote(p.l.Value),
 		})

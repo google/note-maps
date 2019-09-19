@@ -21,7 +21,7 @@ import (
 	"github.com/google/note-maps/kv"
 	"github.com/google/note-maps/store/models"
 	"github.com/google/note-maps/store/pb"
-	"github.com/google/note-maps/topicmaps/tmql"
+	"github.com/google/note-maps/tmaps/tmql"
 )
 
 type TopicMapNotSpecifiedError struct{}

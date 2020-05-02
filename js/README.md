@@ -1,6 +1,4 @@
-# Note Maps PWA
-
-Status: not actually a PWA yet.
+# Note Maps JavaScript
 
 Note maps can be treated like a set of structured documents, where topic names
 become headings, and where occurrences and associations become list items under
@@ -9,12 +7,12 @@ formatted text can be edited to apply corresponding updates to the same names,
 occurrences, and associations, then most people who have ever used a word
 processor will be able to easily develop their own note maps.
 
-In an this implementation,
+In this implementation,
 
 *   Every topic, name, variant, occurrence, role, and association is just a
-    `Note`.
+    "Note".
 *   Each name, variant, occurrence, role, or association that is reified by a
-    topic is represented together with that topic as a single `Note`.
+    topic is represented together with that topic as a single "Note".
 
 In an eventual functional implementation,
 
@@ -46,6 +44,16 @@ Some options:
     *   https://github.com/textileio/js-threads (technically possible, but not
         as straightforward as it looks.)
 
+## Development
+
+Get started with `git clone https://github.com/google/note-maps && cd
+note-maps/js && yarn`.
+
+This project uses [yarn workspaces][] so that dependencies of all
+`./packages/*/package.json` are installed once in `./node_modules/`. 
+
+[yarn workspaces]: https://classic.yarnpkg.com/en/docs/workspaces/
+
 ## Source Code Headers
 
 Every file containing source code must include copyright and license
@@ -55,7 +63,7 @@ doesn't comply with the license.)
 
 Apache header:
 
-    Copyright 2019 Google LLC
+    Copyright 2020 Google LLC
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

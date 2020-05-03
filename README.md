@@ -68,7 +68,14 @@ database on local storage, where they can be included in system backups.
 - [ ] Topic maps can be exported and imported
 - [ ] Data entry is reasonably easy
 
-## Source Code Headers
+## Development
+
+### Install Git Hooks
+
+This repository comes with a Git pre-commit hook in `./githooks`. Install it:
+`cp ./githooks/pre-commit .git/hooks/pre-commit`.
+
+### Source Code Headers
 
 Every file containing source code must include copyright and license
 information. This includes any JS/CSS files that you might be serving out to

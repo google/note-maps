@@ -162,7 +162,9 @@ func (i iterator) Seek(key []byte) { i.Iterator.Seek(append(i.prefix, key...)) }
 
 func (i iterator) Key() []byte { return i.Item().Key()[len(i.prefix):] }
 
-func (i iterator) Valid() bool { return i.Iterator.Valid() && bytes.HasPrefix(i.Item().Key(), i.prefix) }
+func (i iterator) Valid() bool {
+	return i.Iterator.Valid() && bytes.HasPrefix(i.Item().Key(), i.prefix)
+}
 
 func (i iterator) Value(f func([]byte) error) error { return i.Item().Value(f) }
 

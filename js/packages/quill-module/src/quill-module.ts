@@ -12,10 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import {
+  NoteBuffer,
+  NoteElementType,
+  NoteMapDelta,
+  NoteModel
+} from '@note-maps/models';
 import {Quill} from 'quill';
 import Delta from 'quill-delta';
 
-import {NoteBuffer, NoteElementType, NoteMapDelta, NoteModel} from './models';
 import NoteMapsQuillModuleOptions from './quill-module-options';
 
 export default class NoteMapsQuillModule {

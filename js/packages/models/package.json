@@ -1,0 +1,12 @@
+{
+  "name": "@note-maps/models",
+  "version": "0.1.0",
+  "description": "Note Maps models for communication between related abstractions",
+  "main": "dist/index.js",
+  "repository": "https://github.com/google/note-maps",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "tsc -b tsconfig.json",
+    "test": "polendina --cleanup --timeout 60 src/**/*.spec.ts --webpack-config ../../webpack.test.js"
+  }
+}

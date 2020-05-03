@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import NoteMapsQuillModule from '@note-maps/quill-module';
 import {expect} from 'chai';
 import {describe, it} from 'mocha';
 import {Quill} from 'quill';
-import NoteMapsQuillModule from './quill-module';
 
 describe('NoteMapsQuillModule', () => {
   it('is registered if imported', async () => {

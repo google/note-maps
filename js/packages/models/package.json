@@ -7,6 +7,10 @@
   "license": "Apache-2.0",
   "scripts": {
     "build": "tsc -b tsconfig.json",
-    "test": "polendina --cleanup --timeout 60 src/**/*.spec.ts --webpack-config ../../webpack.test.js"
+    "test": "ts-mocha -p tsconfig.json src/**/*.spec.ts"
+  },
+  "devDependencies": {
+    "mocha": "^7.1.2",
+    "ts-mocha": "^7.0.0"
   }
 }

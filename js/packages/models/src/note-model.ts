@@ -25,22 +25,27 @@ export interface NoteBuffer {
   ID?: string;
   value?: string;
   elementType?: NoteElementType;
-  noteType?: NoteBuffer|string;
-  children?: Array<NoteBuffer|string>;
+  noteType?: NoteBuffer | string;
+  children?: Array<NoteBuffer | string>;
 }
 
+/*
 function recordToBuffer(record: NoteRecord): NoteBuffer {
   return {
-    ID: record.ID, value: record.value, elementType: record.elementType,
-        noteType: record.noteTypeID, children: record.childrenIDs.map(id => id),
-  }
+    ID: record.ID,
+    value: record.value,
+    elementType: record.elementType,
+    noteType: record.noteTypeID,
+    children: record.childrenIDs.map((id) => id),
+  };
 }
+*/
 
 export interface NoteModelParameters extends NoteBuffer {
   loader: NoteRecordLoader;
 }
 
-export type NoteOrID = NoteRecord|string;
+export type NoteOrID = NoteRecord | string;
 
 export default class NoteModel implements NoteRecord {
   #ID: string;
@@ -56,29 +61,48 @@ export default class NoteModel implements NoteRecord {
     this.#value = record.value;
     this.#elementType = record.elementType;
     this.#noteTypeID = record.noteTypeID;
-    this.#childrenIDs = [...record.childrenIDs ];
+    this.#childrenIDs = [...record.childrenIDs];
     this.#loader = loader;
   }
 
-  get ID(): string { return this.#ID; }
-  get value(): string { return this.#value; }
-  get elementType(): NoteElementType { return this.#elementType; }
-  get noteTypeID(): string { return this.#noteTypeID; }
-  get childrenIDs(): string[] { return this.#childrenIDs; }
+  get ID(): string {
+    return this.#ID;
+  }
+
+  get value(): string {
+    return this.#value;
+  }
+
+  get elementType(): NoteElementType {
+    return this.#elementType;
+  }
+
+  get noteTypeID(): string {
+    return this.#noteTypeID;
+  }
+
+  get childrenIDs(): string[] {
+    return this.#childrenIDs;
+  }
 
   get shortName(): string {
     // TODO: return the name instead
     return this.ID.slice(0, 4);
   }
+
   get noteType(): NoteModel {
-    return new NoteModel(this.#loader.loadNoteRecord(this.#noteTypeID),
-                         this.#loader);
+    return new NoteModel(
+        this.#loader.loadNoteRecord(this.#noteTypeID),
+        this.#loader,
+    );
   }
+
   get children(): NoteModel[] {
     const children = [];
     for (const id of this.#childrenIDs) {
       children.push(
-          new NoteModel(this.#loader.loadNoteRecord(id), this.#loader));
+          new NoteModel(this.#loader.loadNoteRecord(id), this.#loader),
+      );
     }
     return children;
   }

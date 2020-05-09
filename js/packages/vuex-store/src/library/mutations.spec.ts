@@ -12,18 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// import NoteMapsQuillModule from './quill-module.ts';
-import './quill-module.ts';
+import 'mocha';
 import {expect} from 'chai';
-import Quill from 'quill';
+import {mutations} from './mutations';
+import {LibraryState} from './types';
 
-describe('NoteMapsQuillModule', () => {
-  it('is registered if imported', async () => {
-    const el = window.document.createElement('div');
-    const quill = new Quill(el);
-    expect(quill).to.not.be.null;
-    const quillModule = quill.getModule('note-maps');
-    expect(quillModule).to.not.be.null;
-    // expect(quillModule).to.not.be.a(NoteMapsQuillModule);
+// destructure assign `mutations`
+const {libraryLoaded} = mutations;
+
+describe('mutations', () => {
+  it('libraryLoaded', () => {
+    const state: LibraryState = {
+      error: true,
+      noteMaps: {},
+    };
+    libraryLoaded(state, [{ID: 't', title: 'testing'}]);
+    expect(state.noteMaps.t.title).to.equal('testing');
   });
 });

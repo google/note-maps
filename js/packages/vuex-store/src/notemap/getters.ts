@@ -12,18 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// import NoteMapsQuillModule from './quill-module.ts';
-import './quill-module.ts';
-import {expect} from 'chai';
-import Quill from 'quill';
+import {GetterTree} from 'vuex';
 
-describe('NoteMapsQuillModule', () => {
-  it('is registered if imported', async () => {
-    const el = window.document.createElement('div');
-    const quill = new Quill(el);
-    expect(quill).to.not.be.null;
-    const quillModule = quill.getModule('note-maps');
-    expect(quillModule).to.not.be.null;
-    // expect(quillModule).to.not.be.a(NoteMapsQuillModule);
-  });
-});
+import {RootState} from '../types';
+
+import {NoteMapState} from './types';
+
+export const getters: GetterTree<NoteMapState, RootState> = {
+  noteCount(state: NoteMapState): number | undefined {
+    if (!state.notes) {
+      return 0;
+    }
+    return Object.keys(state.notes).length;
+  },
+};

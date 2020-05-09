@@ -25,13 +25,15 @@ export default class NoteDelta {
 
   editValue(d: ValueDelta): NoteDelta {
     this.#valueDelta =
-        (this.#valueDelta === void 0) ? d : this.#valueDelta.compose(d);
+      this.#valueDelta === void 0 ? d : this.#valueDelta.compose(d);
     return this;
   }
+
   setElementType(t: NoteElementType): NoteDelta {
     this.#elementType = t;
     return this;
   }
+
   setNoteType(t: string): NoteDelta {
     this.#noteTypeID = t;
     return this;
@@ -39,15 +41,16 @@ export default class NoteDelta {
 
   apply(prev: NoteRecord): NoteRecord {
     return {
-      ID : prev.ID,
-      value : (this.#valueDelta === void 0)
-                  ? prev.value
-                  : this.#valueDelta.apply(prev.value),
-      elementType : (this.#elementType === void 0) ? prev.elementType
-                                                   : this.#elementType,
-      noteTypeID : (this.#noteTypeID === void 0) ? prev.noteTypeID
-                                                 : this.#noteTypeID,
-      childrenIDs : prev.childrenIDs,
+      ID: prev.ID,
+      value:
+        this.#valueDelta === void 0 ?
+          prev.value :
+          this.#valueDelta.apply(prev.value),
+      elementType:
+        this.#elementType === void 0 ? prev.elementType : this.#elementType,
+      noteTypeID:
+        this.#noteTypeID === void 0 ? prev.noteTypeID : this.#noteTypeID,
+      childrenIDs: prev.childrenIDs,
     };
   }
 }

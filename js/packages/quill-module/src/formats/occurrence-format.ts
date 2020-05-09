@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Quill} from 'quill';
 import NoteBlock from '../blots/note-block';
 
 export default class OccurrenceFormat extends NoteBlock {
-  public blotName: string = 'note-occurrence';
-  public tagName: string = 'p';
-  public className: string = 'note-occurrence';
+  public blotName = 'note-occurrence';
+  public tagName = 'p';
+  public className = 'note-occurrence';
 }

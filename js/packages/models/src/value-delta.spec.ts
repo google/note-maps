@@ -27,35 +27,40 @@ describe('ValueDelta', () => {
       expect(new ValueDelta().remove(3).apply('xyzabc')).to.equal('abc');
     });
     it('retain before insertion', () => {
-      expect(new ValueDelta().retain(3).insert('def').apply('abcghi'))
-          .to.equal('abcdefghi');
+      expect(new ValueDelta().retain(3).insert('def').apply('abcghi')).to.equal(
+          'abcdefghi',
+      );
     });
     it('retain before removal', () => {
-      expect(new ValueDelta().retain(3).remove(3).apply('abcxyzghi'))
-          .to.equal('abcghi');
+      expect(new ValueDelta().retain(3).remove(3).apply('abcxyzghi')).to.equal(
+          'abcghi',
+      );
     });
   });
   describe('when composed should apply', () => {
     it('insert before insertion', () => {
-      expect(new ValueDelta()
-                 .insert('def')
-                 .compose(new ValueDelta().insert('abc'))
-                 .apply('ghi'))
-          .to.equal('abcdefghi');
+      expect(
+          new ValueDelta()
+              .insert('def')
+              .compose(new ValueDelta().insert('abc'))
+              .apply('ghi'),
+      ).to.equal('abcdefghi');
     });
     it('retain and insert after insertion', () => {
-      expect(new ValueDelta()
-                 .insert('abc')
-                 .compose(new ValueDelta().retain(3).insert('def'))
-                 .apply('ghi'))
-          .to.equal('abcdefghi');
+      expect(
+          new ValueDelta()
+              .insert('abc')
+              .compose(new ValueDelta().retain(3).insert('def'))
+              .apply('ghi'),
+      ).to.equal('abcdefghi');
     });
     it('retain and remove after insertion', () => {
-      expect(new ValueDelta()
-                 .insert('abc')
-                 .compose(new ValueDelta().retain(3).remove(3))
-                 .apply('xyz'))
-          .to.equal('abc');
+      expect(
+          new ValueDelta()
+              .insert('abc')
+              .compose(new ValueDelta().retain(3).remove(3))
+              .apply('xyz'),
+      ).to.equal('abc');
     });
   });
 });

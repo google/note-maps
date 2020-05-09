@@ -12,41 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import NoteDelta from './note-delta';
-import NoteElementType from './note-element-type';
-import NoteModel from './note-model';
-
-// export NoteDelta from './note-delta';
-// export NoteModel from './note-model';
-
-export interface NoteRecord {
-  readonly ID: string;
-  readonly value: string;
-  readonly elementType: NoteElementType;
-  readonly noteTypeID: string;
-  readonly childrenIDs: Array<string>;
-}
-
-export interface NoteRecordLoader {
-  loadNoteRecord(ID: string): NoteRecord;
-}
-
-// TODO: Obsolete NoteBuffer by migrating to NoteDelta
-export interface NoteBuffer {
-  ID?: string;
-  value?: string;
-  elementType?: NoteElementType;
-  noteType?: NoteBuffer|string;
-  children?: Array<NoteBuffer|string>;
-}
-
-function recordToBuffer(record: NoteRecord): NoteBuffer {
-  return {
-    ID: record.ID, value: record.value, elementType: record.elementType,
-        noteType: record.noteTypeID, children: record.childrenIDs.map(id => id),
-  }
-}
-
-export interface NoteModelParameters extends NoteBuffer {
-  loader: NoteRecordLoader;
-}
+export {default as NoteDelta} from './note-delta';
+export {default as NoteElementType} from './note-element-type';
+export {default as NoteModel} from './note-model';
+export * from './note-model';
+export {default as NoteRecord} from './note-record';

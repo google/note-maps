@@ -7,10 +7,61 @@
   ],
   "scripts": {
     "build": "lerna run build",
+    "lint": "eslint 'packages/*/src/**/*.ts'",
+    "fmt": "eslint 'packages/*/src/**/*.ts' --quiet --fix",
     "test": "lerna run test"
   },
   "devDependencies": {
-    "lerna": "^3.20.2"
+    "@babel/compat-data": "^7.9.6",
+    "@typescript-eslint/eslint-plugin": "^2.33.0",
+    "@typescript-eslint/parser": "^2.33.0",
+    "eslint": "^6.0.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "eslint-plugin-vue": "^6.2.2",
+    "lerna": "^3.20.2",
+    "ts-loader": "^7.0.3",
+    "typescript": "^3.9.2",
+    "vue": "^2.6.11"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "eslintConfig": {
+    "env": {
+      "browser": true,
+      "es6": true,
+      "node": true
+    },
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/eslint-recommended",
+      "plugin:@typescript-eslint/recommended",
+      "google"
+    ],
+    "globals": {
+      "Atomics": "readonly",
+      "SharedArrayBuffer": "readonly"
+    },
+    "parserOptions": {
+      "ecmaVersion": 11,
+      "parser": "@typescript-eslint/parser",
+      "sourceType": "module"
+    },
+    "plugins": [
+      "@typescript-eslint"
+    ],
+    "rules": {
+      "no-unused-vars": [
+        "error",
+        {
+          "vars": "local"
+        }
+      ],
+      "require-jsdoc": "off",
+      "valid-jsdoc": "off"
+    }
+  }
 }

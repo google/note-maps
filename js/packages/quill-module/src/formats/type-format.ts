@@ -17,17 +17,20 @@ import {Quill} from 'quill';
 const Inline = Quill.import('blots/inline');
 
 export default class TypeFormat extends Inline {
-  public blotName: string = 'note-type';
-  public tagName: string = 'dt';
-  public className: string = 'note-type';
+  public blotName = 'note-type';
+  public tagName = 'dt';
+  public className = 'note-type';
   static create(value) {
-    let blot = super.create();
-    if (typeof value == 'string') {
+    const blot = super.create();
+    if (typeof value === 'string') {
       blot.setAttribute('data-notemaps-type-id', value);
     } else {
       blot.setAttribute('data-notemaps-type-id', '');
     }
     return blot;
   }
-  static formats(node) { return node.getAttribute('data-notemaps-type-id'); }
+
+  static formats(node) {
+    return node.getAttribute('data-notemaps-type-id');
+  }
 }

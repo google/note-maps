@@ -17,15 +17,18 @@ import {Quill} from 'quill';
 const Block = Quill.import('blots/block');
 
 export default class NoteBlock extends Block {
-  public blotName: string = 'note';
+  public blotName = 'note';
   static create(value) {
-    let blot = super.create();
-    if (typeof value == 'string') {
+    const blot = super.create();
+    if (typeof value === 'string') {
       blot.setAttribute('data-notemaps-id', value);
     } else {
       blot.setAttribute('data-notemaps-id', '');
     }
     return blot;
   }
-  static formats(node) { return node.getAttribute('data-notemaps-id'); }
+
+  static formats(node) {
+    return node.getAttribute('data-notemaps-id');
+  }
 }

@@ -1,27 +1,30 @@
 {
-  "name": "@note-maps/quill-module",
+  "name": "@note-maps/vuex-store",
   "version": "0.1.0",
-  "description": "Note Maps module for Quill",
+  "description": "Note Maps Vuex store",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "repository": "https://github.com/google/note-maps",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "polendina --cleanup src/**/*.spec.ts --webpack-config ../../webpack.test.js",
+    "test": "mocha src/**/*.spec.ts",
     "dev": "parcel src/index.ts",
     "build-parcel": "parcel build src/index.ts",
     "build-tsc": "tsc -b tsconfig.json",
     "build": "yarn build-parcel && yarn build-tsc"
   },
   "devDependencies": {
+    "@types/chai": "^4.2.11",
+    "@types/mocha": "^7.0.2",
     "chai": "^4.2.0",
-    "husky": "^4.2.5",
+    "eslint": "^7.0.0",
     "mocha": "^7.1.2",
-    "polendina": "^1.0.0",
-    "typescript": "^3.8.3"
+    "parcel-bundler": "^1.12.4",
+    "ts-mocha": "^7.0.0",
+    "ts-mockito": "^2.5.0"
   },
   "dependencies": {
     "@note-maps/models": "0.1.0",
-    "@types/quill": "^2.0.3",
-    "quill": "^1.3.7"
+    "vuex": "^3.3.0"
   }
 }

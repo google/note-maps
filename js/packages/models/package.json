@@ -3,19 +3,31 @@
   "version": "0.1.0",
   "description": "Note Maps models for communication between related abstractions",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "repository": "https://github.com/google/note-maps",
   "license": "Apache-2.0",
   "scripts": {
-    "build": "tsc -b tsconfig.json",
-    "test": "mocha src/**/*.spec.ts"
+    "test": "mocha src/**/*.spec.ts",
+    "dev": "parcel src/index.ts",
+    "build-parcel": "parcel build src/index.ts",
+    "build-tsc": "tsc -b tsconfig.json",
+    "build": "yarn build-parcel && yarn build-tsc"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
+    "@types/mocha": "^7.0.2",
+    "@typescript-eslint/eslint-plugin": "^2.33.0",
+    "@typescript-eslint/parser": "^2.33.0",
     "chai": "^4.2.0",
+    "eslint": "^7.0.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
     "mocha": "^7.1.2",
     "ts-mocha": "^7.0.0"
   },
-  "dependencies": {
-    "@types/mocha": "^7.0.2"
-  }
+  "dependencies": {}
 }

@@ -14,7 +14,9 @@
 
 import {NoteMapDelta, NoteModel} from '@note-maps/models';
 
-export default interface NoteMapsQuillModuleOptions {
-  onInput?: {(delta: NoteMapDelta): void};
+interface NoteMapsQuillModuleOptions {
+  onInput?: { (delta: NoteMapDelta): void };
   topic?: NoteModel;
 }
+
+export default NoteMapsQuillModuleOptions;

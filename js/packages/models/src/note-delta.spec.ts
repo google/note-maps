@@ -24,22 +24,22 @@ import ValueDelta from './value-delta';
 describe('NoteDelta', () => {
   it('should apply value changes', () => {
     const d = new NoteDelta('definition-1')
-                  .setElementType(NoteElementType.Occurrence)
-                  .setNoteType('definition')
-                  .editValue(new ValueDelta().insert('a test.'));
+        .setElementType(NoteElementType.Occurrence)
+        .setNoteType('definition')
+        .editValue(new ValueDelta().insert('a test.'));
     const note: NoteRecord = {
-      ID : 'test',
-      value : '',
-      elementType : NoteElementType.Any,
-      noteTypeID : '',
-      childrenIDs : [],
+      ID: 'test',
+      value: '',
+      elementType: NoteElementType.Any,
+      noteTypeID: '',
+      childrenIDs: [],
     };
-    expect(d.apply(note)).to.deep.equal(<NoteRecord>{
-      ID : 'test',
-      value : 'a test.',
-      elementType : NoteElementType.Occurrence,
-      noteTypeID : 'definition',
-      childrenIDs : [],
+    expect(d.apply(note)).to.deep.equal({
+      ID: 'test',
+      value: 'a test.',
+      elementType: NoteElementType.Occurrence,
+      noteTypeID: 'definition',
+      childrenIDs: [],
     });
   });
 });

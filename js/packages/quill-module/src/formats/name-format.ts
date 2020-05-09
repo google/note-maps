@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Quill} from 'quill';
 import NoteBlock from '../blots/note-block';
 
 export default class NameFormat extends NoteBlock {
-  public blotName: string = 'note-name';
-  public tagName: string = 'H1';
-  public className: string = 'note-name';
+  public blotName = 'note-name';
+  public tagName = 'H1';
+  public className = 'note-name';
 }

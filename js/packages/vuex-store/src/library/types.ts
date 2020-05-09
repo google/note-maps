@@ -12,18 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// import NoteMapsQuillModule from './quill-module.ts';
-import './quill-module.ts';
-import {expect} from 'chai';
-import Quill from 'quill';
+export interface NoteMap {
+  ID: string;
+  title: string;
+}
 
-describe('NoteMapsQuillModule', () => {
-  it('is registered if imported', async () => {
-    const el = window.document.createElement('div');
-    const quill = new Quill(el);
-    expect(quill).to.not.be.null;
-    const quillModule = quill.getModule('note-maps');
-    expect(quillModule).to.not.be.null;
-    // expect(quillModule).to.not.be.a(NoteMapsQuillModule);
-  });
-});
+export interface LibraryState {
+  error: boolean;
+  noteMaps: Record<string, NoteMap>;
+}

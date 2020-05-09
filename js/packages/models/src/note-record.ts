@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,10 +14,12 @@
 
 import NoteElementType from './note-element-type';
 
-export default interface NoteRecord {
+interface NoteRecord {
   readonly ID: string;
   readonly value: string;
   readonly elementType: NoteElementType;
   readonly noteTypeID: string;
   readonly childrenIDs: ReadonlyArray<string>;
 }
+
+export default NoteRecord;

@@ -12,6 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export interface RootState {
-  greeting: string;
+import NoteRecord from './note-record';
+
+/** Represents basic abilities to store and retrieve notes.
+ */
+interface API {
+  getNotes(
+    noteMapID: string,
+    noteIDs: string[]
+  ): Promise<Partial<NoteRecord>[]>;
 }
+
+export default API;

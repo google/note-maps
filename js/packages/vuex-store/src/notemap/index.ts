@@ -13,9 +13,8 @@
 // limitations under the License.
 
 import {Module} from 'vuex';
-
-import {API, RootState} from '../types';
-
+import {NoteMapsAPI} from '@note-maps/models';
+import {RootState} from '../types';
 import {actions} from './actions';
 import {getters} from './getters';
 import {mutations} from './mutations';
@@ -28,12 +27,13 @@ export const state: NoteMapState = {
 
 const namespaced = true;
 
-/** Builds a Vuex module including actions that delegate to an API.
+/** Builds a Vuex module including actions that delegate to an NoteMapsAPI.
  *
- * @param {API} api - The API responsible for fetching and storing notes.
+ * @param {NoteMapsAPI} api - The NoteMapsAPI responsible for fetching and
+ *   storing notes.
  * @return {Module} The new Vuex module.
  */
-export function Library(api: API): Module<NoteMapState, RootState> {
+export function Library(api: NoteMapsAPI): Module<NoteMapState, RootState> {
   return {
     namespaced,
     state,

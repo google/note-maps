@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+export {default as NoteMapsAPI} from './note-maps-api';
 export {default as NoteDelta} from './note-delta';
 export {default as NoteElementType} from './note-element-type';
 export {default as NoteModel} from './note-model';

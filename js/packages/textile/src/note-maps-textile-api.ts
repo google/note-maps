@@ -12,13 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {expect} from 'chai';
+import {NoteMapsAPI, NoteRecord} from '@note-maps/models';
 
-import {API} from './index';
-
-describe('API', ()=>{
-  it('is exported by index.ts', ()=>{
-    // well this wouldn't compile if it didn't, right?
-    expect(API).to.equal(API);
-  });
-});
+/** Stores and retrieves notes using Textile data storage systems.
+ */
+export default class NoteMapsTextileAPI implements NoteMapsAPI {
+  async getNotes(
+      noteMapID: string,
+      noteIDs: string[],
+  ): Promise<Partial<NoteRecord>[]> {
+    console.log(noteMapID);
+    console.log(noteIDs);
+    return [];
+  }
+}

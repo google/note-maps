@@ -18,5 +18,7 @@
     "mocha": "^7.1.2",
     "ts-mocha": "^7.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@note-maps/models": "0.1.0"
+  }
 }

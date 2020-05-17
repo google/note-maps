@@ -15,12 +15,11 @@
 import 'mocha';
 import {expect} from 'chai';
 import {actions} from './actions';
-import {NoteRecord} from '@note-maps/models';
+import {NoteMapsAPI, NoteRecord} from '@note-maps/models';
 import {NoteMapState} from './types';
-import {API} from '../types';
 import {ActionHandler, CommitMock} from '../actions.spec';
 
-const api: API = {
+const api: NoteMapsAPI = {
   async getNotes(
       noteMapID: string,
       noteIDs: string[],

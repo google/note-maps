@@ -12,6 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export interface RootState {
-  greeting: string;
-}
+import {expect} from 'chai';
+import NoteMapsTextileAPI from './note-maps-textile-api';
+
+describe('API', ()=>{
+  it('is exported by index.ts', async ()=>{
+    // well this wouldn't compile if it didn't, right?
+    const api = new NoteMapsTextileAPI();
+    const notes = await api.getNotes('some map', ['some note id']);
+    expect(notes).to.be.empty;
+  });
+});

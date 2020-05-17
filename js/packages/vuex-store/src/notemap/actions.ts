@@ -14,9 +14,9 @@
 
 import {ActionTree} from 'vuex';
 
-import {API, RootState} from '../types';
+import {RootState} from '../types';
 
-import {NoteRecord} from '@note-maps/models';
+import {NoteMapsAPI, NoteRecord} from '@note-maps/models';
 import {NoteMapState} from './types';
 
 /** Defines note map actions.
@@ -25,7 +25,7 @@ import {NoteMapState} from './types';
  * @return {ActionTree} The defined actions.
  */
 export function actions(params: {
-  api: API;
+  api: NoteMapsAPI;
 }): ActionTree<NoteMapState, RootState> {
   return {
     fetchNotes({commit}, payload: { noteIDs: string[] }): Promise<void> {

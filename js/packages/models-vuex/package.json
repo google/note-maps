@@ -1,7 +1,7 @@
 {
-  "name": "@note-maps/vuex-store",
+  "name": "@note-maps/models-vuex",
   "version": "0.1.0",
-  "description": "Note Maps Vuex store",
+  "description": "Vuex store for Note Maps",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": "https://github.com/google/note-maps",

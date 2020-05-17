@@ -17,9 +17,9 @@ import Quill from 'quill';
 const Inline = Quill.import('blots/inline');
 
 export default class TypeFormat extends Inline {
-  static public blotName = 'note-type';
-  static public tagName = 'dt';
-  static public className = 'note-type';
+  public static blotName = 'note-type';
+  public static tagName = 'dt';
+  public static className = 'note-type';
   static create(value) {
     const blot = super.create();
     if (typeof value === 'string') {

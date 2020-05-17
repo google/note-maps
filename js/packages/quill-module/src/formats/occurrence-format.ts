@@ -15,7 +15,7 @@
 import NoteBlock from '../blots/note-block';
 
 export default class OccurrenceFormat extends NoteBlock {
-  static public blotName = 'note-occurrence';
-  static public tagName = 'p';
-  static public className = 'note-occurrence';
+  public static blotName = 'note-occurrence';
+  public static tagName = 'p';
+  public static className = 'note-occurrence';
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@note-maps/textile",
+  "name": "@note-maps/api-textile",
   "version": "0.1.0",
   "description": "Note Maps backend based on Textile (https://textile.io)",
   "main": "dist/index.js",

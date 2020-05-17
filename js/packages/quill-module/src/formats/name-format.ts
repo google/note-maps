@@ -15,7 +15,7 @@
 import NoteBlock from '../blots/note-block';
 
 export default class NameFormat extends NoteBlock {
-  public blotName = 'note-name';
-  public tagName = 'H1';
-  public className = 'note-name';
+  static public blotName = 'note-name';
+  static public tagName = 'H1';
+  static public className = 'note-name';
 }

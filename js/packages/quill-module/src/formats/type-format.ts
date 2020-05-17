@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Quill} from 'quill';
+import Quill from 'quill';
 
 const Inline = Quill.import('blots/inline');
 
 export default class TypeFormat extends Inline {
-  public blotName = 'note-type';
-  public tagName = 'dt';
-  public className = 'note-type';
+  static public blotName = 'note-type';
+  static public tagName = 'dt';
+  static public className = 'note-type';
   static create(value) {
     const blot = super.create();
     if (typeof value === 'string') {

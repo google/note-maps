@@ -18,7 +18,7 @@ import {
   NoteMapDelta,
   NoteModel,
 } from '@note-maps/models';
-import {Quill} from 'quill';
+import Quill from 'quill';
 import Delta from 'quill-delta';
 
 import NoteMapsQuillModuleOptions from './quill-module-options';

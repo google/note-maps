@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Quill} from 'quill';
+import Quill from 'quill';
 
 const Block = Quill.import('blots/block');
 

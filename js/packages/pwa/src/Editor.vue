@@ -26,7 +26,7 @@
 </template>
 
 <script lang="ts">
-  import NoteMapsQuillModule from '@note-maps/quill-module';
+  import NoteMapsQuillModule from '@note-maps/ui-quill-module';
   import Quill from 'quill';
   import Vue from 'vue';
 

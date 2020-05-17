@@ -1,5 +1,5 @@
 {
-  "name": "@note-maps/quill-module",
+  "name": "@note-maps/ui-quill-module",
   "version": "0.1.0",
   "description": "Note Maps module for Quill",
   "main": "dist/index.js",

@@ -14,6 +14,6 @@
 
 import Vue from 'vue';
 import App from './App.vue';
-import '@note-maps/quill-module';
+import '@note-maps/ui-quill-module';
 
 new Vue({render: (createElement) => createElement(App)}).$mount('#app');

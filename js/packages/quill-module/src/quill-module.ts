@@ -19,35 +19,52 @@ import {
   NoteModel,
 } from '@note-maps/models';
 import Quill from 'quill';
+
 import Delta from 'quill-delta';
 
 import NoteMapsQuillModuleOptions from './quill-module-options';
 
 export default class NoteMapsQuillModule {
-  #topic: NoteModel;
-  #topicID: string;
-  #quill: Quill;
-  #onInput: { (delta: NoteMapDelta): void };
+  #topic: NoteModel|null=null;
+  #topicID: string|null=null;
+  #onInput: { (delta: NoteMapDelta): void }[]=[];
 
   static requiredFormats = ['note-name', 'note-occurrence', 'note-type'];
 
-  constructor(quill: Quill, options: NoteMapsQuillModuleOptions = {}) {
-    this.#quill = quill;
-    this.#onInput = options.onInput;
-    this.#topic = options.topic;
-    this.#quill.on('editor-change', (eventName, x, y, source) => {
-      this.#topic = null;
-      if (eventName == 'text-change' && source == 'user' && this.#onInput) {
-        this.#onInput(/* this.#topic */ {});
-      }
-    });
+  constructor(
+    private readonly quill: Quill,
+    options: NoteMapsQuillModuleOptions = {},
+  ) {
+    if (options.onInput) {
+      this.#onInput.push( options.onInput);
+    }
+    this.#topic = options.topic??null;
+    this.quill.on(
+        'text-change',
+        ( delta: Delta, oldContents: Delta, source: string) => {
+          this.#topic = null;
+          if (source == 'user' && this.#onInput) {
+            for (const callback of this.#onInput) {
+              callback(new NoteMapDelta()/* this.#topic */);
+            }
+          }
+        });
+    /*
+    this.quill.on(
+        'selection-change',
+        (range: { index: number; length: number },
+            oldRange: { index: number; length: number },
+            source: string ) => {
+          // Do nothing for now.
+        });
+        */
   }
 
-  set topic(topic: NoteModel) {
+  set topic(topic: NoteModel|null) {
     if (!topic) {
       this.#topic = null;
       this.#topicID = null;
-      this.#quill.setContents(new Delta([]));
+      this.quill.setContents(new Delta([]));
       return;
     }
     this.#topicID = topic.ID;
@@ -62,27 +79,24 @@ export default class NoteMapsQuillModule {
         });
       }
       ops.push({insert: note.value});
-      const vattrs = {};
+      const vattrs: Record<string, string>= {};
       vattrs['note-' + note.elementType] = note.ID;
       ops.push({insert: '\n', attributes: vattrs});
     }
-    const selection = this.#quill.getSelection();
+    const selection = this.quill.getSelection();
     console.log('topic to quill', ops);
-    this.#quill.setContents(delta);
+    this.quill.setContents(delta);
     if (selection) {
-      this.#quill.setSelection(selection.index, selection.length);
+      this.quill.setSelection(selection.index, selection.length);
     }
   }
 
-  get topic() {
+  get topic(): NoteModel|null{
     if (this.#topic) {
       return this.#topic;
     }
-    if (!this.#quill) {
-      return;
-    }
-    const ops = this.#quill.getContents().ops;
-    const uniqueIDs = {};
+    const ops = this.quill.getContents().ops;
+    const uniqueIDs: Record<string, boolean> = {};
     const notes: NoteBuffer[] = [];
     let note: NoteBuffer = {};
     for (const op of ops) {
@@ -138,13 +152,17 @@ export default class NoteMapsQuillModule {
           }
           uniqueIDs[note.ID] = true;
           note.value = note.value || '';
-          note.noteType = note.noteType || null;
+          note.noteType = note.noteType || undefined;
           notes.push(note);
           note = {};
         } else if (block.attributes && block.attributes['note-type']) {
           let shortName = block.insert;
-          if (shortName.endsWith(': ')) {
+          if ((typeof shortName==='string')&&shortName.endsWith(': ')) {
             shortName = shortName.slice(0, shortName.length - 2);
+          } else {
+            // TODO: find out what can cause shortName (block.insert) to be of
+            // type 'object'.
+            shortName=undefined;
           }
           note.noteType = {};
           note.noteType.ID = block.attributes['note-type'];

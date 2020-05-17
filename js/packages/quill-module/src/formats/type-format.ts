@@ -20,7 +20,7 @@ export default class TypeFormat extends Inline {
   public static blotName = 'note-type';
   public static tagName = 'dt';
   public static className = 'note-type';
-  static create(value) {
+  static create(value: any) {
     const blot = super.create();
     if (typeof value === 'string') {
       blot.setAttribute('data-notemaps-type-id', value);
@@ -30,7 +30,7 @@ export default class TypeFormat extends Inline {
     return blot;
   }
 
-  static formats(node) {
+  static formats(node: any) {
     return node.getAttribute('data-notemaps-type-id');
   }
 }

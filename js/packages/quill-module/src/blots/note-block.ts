@@ -18,7 +18,7 @@ const Block = Quill.import('blots/block');
 
 export default class NoteBlock extends Block {
   public blotName = 'note';
-  static create(value) {
+  static create(value: any) {
     const blot = super.create();
     if (typeof value === 'string') {
       blot.setAttribute('data-notemaps-id', value);
@@ -28,7 +28,7 @@ export default class NoteBlock extends Block {
     return blot;
   }
 
-  static formats(node) {
+  static formats(node: any) {
     return node.getAttribute('data-notemaps-id');
   }
 }

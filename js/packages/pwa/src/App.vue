@@ -18,7 +18,7 @@
 
 <script lang="ts">
   import Vue from "vue";
-  import NoteMap from './note-map.ts';
+  import {NoteMap} from '@note-maps/models';
   import Editor from './Editor.vue';
 
   export default Vue.extend({

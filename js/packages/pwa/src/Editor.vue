@@ -26,10 +26,9 @@
 </template>
 
 <script lang="ts">
+  import NoteMapsQuillModule from '@note-maps/quill-module';
   import Quill from 'quill';
   import Vue from 'vue';
-
-  import NoteMapsQuillModule from './quill-module.ts';
 
   export default Vue.extend({
     model: {

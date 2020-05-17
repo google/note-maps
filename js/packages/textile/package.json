@@ -1,0 +1,22 @@
+{
+  "name": "@note-maps/textile",
+  "version": "0.1.0",
+  "description": "Note Maps backend based on Textile (https://textile.io)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": "https://github.com/google/note-maps",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "mocha src/**/*.spec.ts",
+    "dev": "parcel src/index.ts",
+    "build-parcel": "parcel build src/index.ts",
+    "build-tsc": "tsc -b tsconfig.json",
+    "build": "yarn build-parcel && yarn build-tsc"
+  },
+  "devDependencies": {
+    "@types/mocha": "^7.0.2",
+    "mocha": "^7.1.2",
+    "ts-mocha": "^7.0.0"
+  },
+  "dependencies": {}
+}

@@ -47,7 +47,7 @@ Some options:
 ## Development
 
 Get started with `git clone https://github.com/google/note-maps && cd
-note-maps/js && yarn`.
+note-maps/js && yarn build`.
 
 This project uses [yarn workspaces][] so that dependencies of all
 `./packages/*/package.json` are installed once in `./node_modules/`. 

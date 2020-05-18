@@ -1,6 +1,7 @@
 {
   "npmClient": "yarn",
   "packages": [
+    "app",
     "packages/*",
     "third_party/@types/*"
   ],

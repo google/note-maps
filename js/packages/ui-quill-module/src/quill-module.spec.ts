@@ -12,13 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// import NoteMapsQuillModule from './quill-module.ts';
-import './quill-module.ts';
+import 'jsdom-global/register';
+import 'mutationobserver-shim';
 import {expect} from 'chai';
-import Quill from 'quill';
+
+global.MutationObserver = window.MutationObserver;
+let Quill = require('quill');
 
 describe('NoteMapsQuillModule', () => {
   it('is registered if imported', async () => {
+    require('./quill-module.ts');
+
     const el = window.document.createElement('div');
     const quill = new Quill(el);
     expect(quill).to.not.be.null;

@@ -13,7 +13,8 @@
     "build": "lerna run build",
     "lint": "eslint 'packages/*/src/**/*.ts'",
     "fmt": "eslint 'packages/*/src/**/*.ts' --quiet --fix",
-    "test": "lerna run test"
+    "test": "TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha",
+    "test-all": "lerna run test"
   },
   "devDependencies": {
     "@babel/compat-data": "^7.9.6",
@@ -69,5 +70,10 @@
       "require-jsdoc": "off",
       "valid-jsdoc": "off"
     }
+  },
+  "mocha": {
+    "extension": ["ts"],
+    "spec": "packages/*/src/**/*.spec.ts",
+    "require": "ts-node/register"
   }
 }

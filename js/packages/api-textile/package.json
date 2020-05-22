@@ -7,7 +7,7 @@
   "repository": "https://github.com/google/note-maps",
   "license": "Apache-2.0",
   "scripts": {
-    "test": "mocha src/**/*.spec.ts",
+    "test": "TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha",
     "dev": "parcel src/index.ts",
     "build-parcel": "parcel build src/index.ts",
     "build-tsc": "tsc --emitDeclarationOnly --skipLibCheck",

@@ -8,6 +8,8 @@
     "third_party/@types/*"
   ],
   "scripts": {
+    "clean": "git clean -nXd -e '!**/node_modules' -e '!**/node_modules/**'",
+    "clean-for-real": "git clean -fXd -e '!**/node_modules' -e '!**/node_modules/**'",
     "build": "lerna run build",
     "lint": "eslint 'packages/*/src/**/*.ts'",
     "fmt": "eslint 'packages/*/src/**/*.ts' --quiet --fix",

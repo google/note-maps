@@ -7,7 +7,7 @@
     "test": "echo \"Warning: no test specified.\"",
     "watch": "parcel serve src/index.html",
     "build-parcel": "parcel build src/index.ts",
-    "build-tsc": "tsc -b tsconfig.json",
+    "build-tsc": "tsc --emitDeclarationOnly --skipLibCheck",
     "build": "yarn build-parcel && yarn build-tsc"
   },
   "author": "Joshua Tacoma <joshua.tacoma@gmail.com>",

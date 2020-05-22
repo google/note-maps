@@ -9,7 +9,7 @@
     "test": "polendina --cleanup src/**/*.spec.ts --webpack-config ../../webpack.test.js",
     "dev": "parcel src/index.ts",
     "build-parcel": "parcel build src/index.ts",
-    "build-tsc": "tsc -b tsconfig.json",
+    "build-tsc": "tsc --emitDeclarationOnly --skipLibCheck",
     "build": "yarn build-parcel && yarn build-tsc"
   },
   "devDependencies": {

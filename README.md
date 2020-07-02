@@ -5,27 +5,33 @@
 [![Build Status](https://travis-ci.org/google/note-maps.svg?branch=master)](https://travis-ci.org/google/note-maps)
 [![Coverage Status](https://coveralls.io/repos/github/google/note-maps/badge.svg?branch=master)](https://coveralls.io/github/google/note-maps?branch=master)
 
-Note Maps is a personal knowledge base designed for use on mobile devices. The
-interface is modeled after the pages of a dictionary, or the index at the back
-of a book.
+Note Maps is a personal knowledge base intended for use on mobile devices.
+Notes are structured a bit like the contents of a dictionary, or the index at
+the back of a book.
 
 Each note map is a collection of information about a set of topics. Any topic
 can be described with a set of names, types, and miscellaneous notes that may
-include definitions, timestamps, or links to other kinds of media. Topics may be
+include definitions, timestamps, or links to images, videos, etc. Topics may be
 connected to each other through associations, and any association may itself be
 described as another topic. Even the role played by a topic in an association
 can, itself, be described as a topic.
 
-This model is isomorphic to the Topic Maps Data Model defined in
-[ISO/IEC 13250-2:2006][]. With Note Maps, topic maps can be imported from or
-exported to standard data formats including XTM ([ISO/IEC 13250-3:2013][]) and
-JTM ([JTM 1.1][]).
+This model is isomorphic to the Topic Maps Data Model defined in [ISO/IEC
+13250-2:2006][]. With Note Maps, it will be possible to for topic maps to be
+imported from or exported to standard data formats including XTM ([ISO/IEC
+13250-3:2013][]) and JTM ([JTM 1.1][]).
 
 [ISO/IEC 13250-2:2006]: https://www.iso.org/standard/40017.html
 [ISO/IEC 13250-3:2013]: https://www.iso.org/standard/59303.html
 [JTM 1.1]: http://cerny-online.com/jtm/1.1/
 
-## Architecture Overview
+A handful of mostly independent implementations are mixed together in this repository. Each focuses on different parts of the problem.
+
+1. [A mobile app](#mobile-app)
+2. [A progressive web app](#progressive-web-app)
+3. [A command line interface](#command-line-interface)
+
+## Mobile App
 
 The mobile app is a [Flutter][] front end with a UI focused on entering and
 organizing notes.  Notes are stored through a [Go][] backend in a [Badger][]
@@ -35,11 +41,15 @@ database on local storage, where they can be included in system backups.
 [Flutter]: https://flutter.dev
 [Go]: https://golang.org
 
-## Screenshots
+Code paths:
+
+- `./kv`
+- `./note-maps`
+- `./tmaps`
+
+### Screenshots
 
 ![screenshot of library page](https://github.com/google/note-maps/raw/master/docs/library.png) ![screenshot of topic page with speed-dial actinos](https://github.com/google/note-maps/raw/master/docs/fab.png) ![screenshot of topic editing page](https://github.com/google/note-maps/raw/master/docs/topic-edit.png) ![screenshot of browsing page](https://github.com/google/note-maps/raw/master/docs/browse.png)
-
-## Plan
 
 ### Roadmap to v0.1
 
@@ -67,6 +77,19 @@ database on local storage, where they can be included in system backups.
 
 - [ ] Topic maps can be exported and imported
 - [ ] Data entry is reasonably easy
+
+## Progressive Web App
+
+Code paths:
+
+- `./js`
+
+## Command Line Interface
+
+Code paths:
+
+- `./cmd`
+- `./notes`
 
 ## Development
 

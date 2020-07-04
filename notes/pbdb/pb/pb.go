@@ -17,6 +17,6 @@
 //
 // These messages are meant for use in implementation-agnostic interfaces for
 // storing and retrieving the contents of a note map.
-package notespb
+package pb
 
-//go:generate protoc --go_out=. notes.proto
+//go:generate protoc --go_out=. pb.proto

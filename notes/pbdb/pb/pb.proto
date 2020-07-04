@@ -14,40 +14,26 @@
 
 syntax = "proto3";
 
-//option go_package = "github.com/google/note-maps/tmaps/notes";
-option go_package = ".;notespb";
+package notes.pbdb.pb;
 
-message Subject {
+option go_package = ".;pb";
+
+message Note {
   uint64 id = 1;
-}
-
-message Info {
-  Subject subject = 1;
-  repeated Subject types = 2;
-  repeated Subject supertypes = 3;
+  repeated uint64 types = 2;
+  repeated uint64 supertypes = 3;
   repeated string indicators = 4;
   repeated string locators = 5;
   message Value {
     string lexical = 1;
-    Subject datatype = 2;
+    uint64 datatype = 2;
   }
   Value value = 6;
   message Role {
-    Subject type = 1;
-    Subject player = 2;
+    uint64 type = 1;
+    uint64 player = 2;
   }
-  message RolePlayed {
-    Subject type = 1;
-    Subject association = 2;
-  }
-  message Content {
-    oneof content {
-      Subject property = 1;
-      Role role = 2;
-      RolePlayed role_played = 3;
-    }
-  }
-  repeated Content contents = 7;
+  repeated uint64 contents = 7;
   Status status = 8;
 }
 

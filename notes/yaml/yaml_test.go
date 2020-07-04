@@ -18,66 +18,121 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/google/note-maps/notes/notespb"
+	"github.com/google/note-maps/notes"
+	"github.com/google/note-maps/notes/change"
 )
+
+type note struct {
+	id          uint64
+	types       []notes.Note
+	supertypes  []notes.Note
+	valuestring string
+	valuetype   notes.Note
+	contents    []notes.Note
+}
+
+func (n note) GetId() uint64                         { return n.id }
+func (n note) GetTypes() ([]notes.Note, error)       { return n.types, nil }
+func (n note) GetSupertypes() ([]notes.Note, error)  { return n.supertypes, nil }
+func (n note) GetValue() (string, notes.Note, error) { return n.valuestring, n.valuetype, nil }
+func (n note) GetContents() ([]notes.Note, error)    { return n.contents, nil }
+
+func getNote(d *notes.Stage, focus uint64) *note {
+	ns := make(map[uint64]*note)
+	get := func(id uint64) *note {
+		if focus == 0 {
+			focus = id
+		}
+		n, exists := ns[id]
+		if !exists {
+			n = &note{id: id}
+			ns[id] = n
+		}
+		return n
+	}
+	for _, dop := range d.Ops {
+		switch op := dop.(type) {
+		case *change.SetValue:
+			n := get(op.Id)
+			n.valuestring = op.Lexical
+			n.valuetype = get(op.Datatype)
+		case *change.AddContent:
+			n := get(op.Id)
+			n.contents = append(n.contents, get(op.Add))
+		default:
+			panic("unknown operation type")
+		}
+	}
+	return get(focus)
+}
+
+func yamlString(lines ...string) string { return strings.Join(lines, "\n") + "\n" }
 
 func TestMarshalUnmarshal(t *testing.T) {
 	for _, test := range []struct {
 		title string
-		proto *notespb.Info
-		yaml  []string
+		note  note
+		yaml  string
 	}{
 		//{},
 		//{ yaml: "note:\n- name: test", },
 		{
-			title: "subject with one note",
-			proto: &notespb.Info{
-				Subject: &notespb.Subject{Id: 10},
-				Contents: []*notespb.Info_Content{
-					{
-						Content: &notespb.Info_Content_Property{
-							Property: &notespb.Subject{Id: 11},
-						},
-					},
+			"note with one content",
+			note{
+				id: 10,
+				contents: []notes.Note{
+					&note{id: 11, valuestring: "test content"},
 				},
 			},
-			yaml: []string{
+			yamlString(
 				"note: &10",
-				"    - !id 11",
-			},
+				"    - &11 test content",
+			),
 		}, {
-			title: "subject with a value",
-			proto: &notespb.Info{
-				Subject: &notespb.Subject{Id: 10},
-				Value:   &notespb.Info_Value{Lexical: "test value"},
+			"note with a value and no content",
+			note{
+				id:          10,
+				valuestring: "test value",
 			},
-			yaml: []string{
+			yamlString(
 				"note: &10",
 				"    - is: test value",
-			},
+			),
 		},
 	} {
 		t.Run(test.title, func(t *testing.T) {
-			expectedYaml := strings.Join(test.yaml, "\n") + "\n"
-			var actualProto notespb.Info
-			err := UnmarshalNote([]byte(expectedYaml), &actualProto)
+			var (
+				diff notes.Stage
+				note = diff.Note(notes.EmptyId)
+			)
+			err := UnmarshalNote([]byte(test.yaml), note)
 			if err != nil {
 				t.Error(err)
-			} else if !proto.Equal(&actualProto, test.proto) {
-				t.Errorf(
-					"expected proto: %v actual proto: %v",
-					test.proto,
-					&actualProto)
+			} else {
+				t.Log("diff begin")
+				for _, op := range diff.Ops {
+					t.Log(op)
+				}
+				t.Log("diff end")
+				if equal, err := notes.Equal(note, test.note); err != nil {
+					t.Error(err)
+				} else if !equal {
+					diff, a, b, err := notes.DebugDiff(note, test.note)
+					if err != nil {
+						t.Error(err)
+					} else {
+						t.Errorf("mismatched notes: %s got %#v, expected %#v", diff, a, b)
+					}
+				}
 			}
-			actualYamlBytes, err := MarshalNote(test.proto)
+			bs, err := MarshalNote(test.note)
 			if err != nil {
 				t.Error(err)
-			} else if string(actualYamlBytes) != expectedYaml {
+			} else if string(bs) != test.yaml {
 				t.Errorf(
 					"expected yaml: %#v actual yaml: %#v",
-					expectedYaml,
-					string(actualYamlBytes))
+					test.yaml,
+					string(bs))
 			}
 		})
 	}

@@ -18,35 +18,34 @@ import (
 	"fmt"
 	"strconv"
 
-	//"github.com/google/note-maps/notes"
-	"github.com/google/note-maps/notes/notespb"
+	"github.com/google/note-maps/notes"
 	"gopkg.in/yaml.v3"
 )
 
-func MarshalNote(src *notespb.Info) ([]byte, error) {
+func MarshalNote(src notes.Note) ([]byte, error) {
 	doc := yaml.Node{Kind: yaml.DocumentNode}
-	if err := protoToNode(src, &doc); err != nil {
+	if err := noteToNode(src, &doc); err != nil {
 		return nil, err
 	}
 	return yaml.Marshal(&doc)
 }
 
-func UnmarshalNote(src []byte, dst *notespb.Info) error {
+func UnmarshalNote(src []byte, dst *notes.StageNote) error {
 	n := yaml.Node{Kind: yaml.DocumentNode}
 	if err := yaml.Unmarshal(src, &n); err != nil {
 		return err
 	}
-	return nodeToProto(&n, dst)
+	return yamlToNote(&n, dst)
 }
 
-func protoToNode(src *notespb.Info, dst *yaml.Node) error {
+func noteToNode(src notes.Note, dst *yaml.Node) error {
 	if src == nil {
 		return nil
 	}
 	// Note contents and more will be marshalled into this YAML sequence.
 	var sequence = &yaml.Node{Kind: yaml.SequenceNode}
 	// Marshal src identifier.
-	id := src.GetSubject().GetId()
+	id := src.GetId()
 	if id != 0 {
 		sequence.Anchor = strconv.FormatUint(id, 10)
 	}
@@ -68,41 +67,45 @@ func protoToNode(src *notespb.Info, dst *yaml.Node) error {
 	// Marshal subject value. Usually this should be a simple scalar wherever
 	// possible, but in the top-level note of a YAML document it should make room
 	// for more complexity.
-	if src.Value != nil && src.Value.Lexical != "" {
+	if vs, _, err := src.GetValue(); err != nil {
+		return err
+	} else if vs != "" {
 		sequence.Content = append(sequence.Content, &yaml.Node{
 			Kind: yaml.MappingNode,
 			Content: []*yaml.Node{
 				{Kind: yaml.ScalarNode, Value: "is"},
-				{Kind: yaml.ScalarNode, Value: src.Value.Lexical},
+				{Kind: yaml.ScalarNode, Value: vs},
 			},
 		})
 	}
 	// Marshal src.Contents into sequence, which is dst.Content[1].
-	for _, c := range src.Contents {
-		var o yaml.Node
-		switch x := c.Content.(type) {
-		case *notespb.Info_Content_Property:
-			o = yaml.Node{
-				Kind:  yaml.ScalarNode,
-				Value: strconv.FormatUint(x.Property.GetId(), 10),
-				Tag:   "!id",
+	if ss, err := src.GetContents(); err != nil {
+		return err
+	} else {
+		for _, s := range ss {
+			vs, _, err := s.GetValue()
+			if err != nil {
+				return err
 			}
-		default:
-			return fmt.Errorf("unsupported content %#v", c.Content)
+			y := yaml.Node{
+				Kind:   yaml.ScalarNode,
+				Value:  vs,
+				Anchor: strconv.FormatUint(s.GetId(), 10),
+			}
+			sequence.Content = append(sequence.Content, &y)
 		}
-		sequence.Content = append(sequence.Content, &o)
 	}
 	return nil
 }
 
-func nodeToProto(src *yaml.Node, dst *notespb.Info) error {
+func yamlToNote(src *yaml.Node, dst *notes.StageNote) error {
 	// Unwrap the outer YAML document structure.
 	if src.Kind == yaml.DocumentNode {
 		if len(src.Content) == 0 {
 			return nil
 		}
 		if len(src.Content) > 1 {
-			return fmt.Errorf("expected document to contain just one node")
+			return fmt.Errorf("expected document to contain just one yaml node")
 		}
 		src = src.Content[0]
 		if src.Kind != yaml.MappingNode {
@@ -123,35 +126,37 @@ func nodeToProto(src *yaml.Node, dst *notespb.Info) error {
 			return err
 		}
 		if id != 0 {
-			dst.Subject = &notespb.Subject{Id: id}
+			dst.Id = id
 		}
 	}
 	for _, s := range src.Content {
-		var d notespb.Info_Content
 		switch s.Kind {
 		case yaml.ScalarNode:
-			if s.Tag == "!id" {
-				// Unmarshal s.Value into d.Id
-				id, err := strconv.ParseUint(s.Value, 10, 64)
+			/*
+				if s.ShortTag() == "!id" {
+					// Unmarshal s.Value into d.Id
+					id, err := strconv.ParseUint(s.Value, 10, 64)
+					if err != nil {
+						return err
+					}
+					d = dst.Diff.Note(id)
+				} else {
+			*/
+			var id uint64
+			if s.Anchor != "" {
+				var err error
+				id, err = strconv.ParseUint(s.Anchor, 10, 64)
 				if err != nil {
 					return err
 				}
-				d.Content = &notespb.Info_Content_Property{
-					Property: &notespb.Subject{Id: id},
-				}
-			} else {
-				return fmt.Errorf("unsupported node type: %v", s.Tag)
 			}
+			dst.AddContent(id).SetValue(s.Value, 0)
 		case yaml.MappingNode:
 			if len(s.Content) == 2 && s.Content[0].Kind == yaml.ScalarNode && s.Content[0].Value == "is" {
 				// Unmarshal s.Content[1] into dst.Value
-				if dst.Value != nil && dst.Value.Lexical != "" {
-					// ...consider turning value into a list in this case?
-					return fmt.Errorf("subject cannot have multiple values")
-				}
 				switch s.Content[1].Kind {
 				case yaml.ScalarNode:
-					dst.Value = &notespb.Info_Value{Lexical: s.Content[1].Value}
+					dst.SetValue(s.Content[1].Value, 0)
 				default:
 					return fmt.Errorf("unsupported YAML type %v (%#v) for subject value", s.Kind, s.Value)
 				}
@@ -160,7 +165,6 @@ func nodeToProto(src *yaml.Node, dst *notespb.Info) error {
 		default:
 			return fmt.Errorf("unsupported content in note, kind=%#v", s.Kind)
 		}
-		dst.Contents = append(dst.Contents, &d)
 	}
 	return nil
 }

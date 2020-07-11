@@ -38,7 +38,7 @@ func TestIntegration_SetFindGet(t *testing.T) {
 		t.Fatal(err)
 	}
 	var (
-		nm    = pbdb.NewNoteMap(db)
+		nm    = pbdb.NewNoteMap(noCloseDB{db})
 		cfg   = Config{overrideDb: nm}
 		find  = findCmd{&cfg}
 		set   = setCmd{&cfg}

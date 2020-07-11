@@ -22,29 +22,27 @@ import (
 	"path/filepath"
 
 	"github.com/google/note-maps/notes"
-	"github.com/google/note-maps/notes/notespb"
+	"github.com/google/note-maps/notes/genji"
+	"github.com/google/note-maps/notes/pbdb"
 	"github.com/google/subcommands"
 )
 
 type Config struct {
 	Db         string
-	overrideDb NotesDB
+	overrideDb notes.NoteMap
 	input      io.Reader
 	output     io.Writer
 }
 
-type NotesDB interface {
-	Close() error
-	List() (*notes.NoteSet, error)
-	Get(subject uint64) (*notespb.Info, error)
-	Set(info *notespb.Info) error
-}
-
-func (c *Config) open() (NotesDB, error) {
+func (c *Config) open() (notes.NoteMap, error) {
 	if c.overrideDb != nil {
 		return c.overrideDb, nil
 	}
-	return notes.Open(c.Db)
+	db, err := genji.Open(c.Db)
+	if err != nil {
+		return nil, err
+	}
+	return pbdb.NewNoteMap(db), nil
 }
 
 var (

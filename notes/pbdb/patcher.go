@@ -15,21 +15,63 @@
 package pbdb
 
 import (
+	"github.com/google/note-maps/notes"
 	"github.com/google/note-maps/notes/change"
+	"github.com/google/note-maps/notes/pbdb/pb"
 )
 
 type patcher struct{ w DbReadWriter }
 
 func (x patcher) Patch(ops []change.Operation) error {
+	ns := make(map[uint64]notes.Note)
 	for _, op := range ops {
-		switch op.(type) {
+		switch o := op.(type) {
 		case change.SetValue:
-			panic("operation not yet implemented")
+			ns[o.Id] = nil
 		case change.AddContent:
-			panic("operation not yet implemented")
+			ns[o.Id] = nil
 		default:
 			panic("operation unknown")
 		}
 	}
-	return nil
+	ids := make([]uint64, 0, len(ns))
+	for id := range ns {
+		if id == 0 {
+			return notes.InvalidId
+		}
+		ids = append(ids, id)
+	}
+	ps, err := x.w.Load(ids...)
+	if err != nil {
+		if _, nf := err.(notes.NotFound); nf {
+			for i, p := range ps {
+				if p == nil {
+					ps[i] = &pb.Note{Id: ids[i]}
+				}
+			}
+		}
+		return err
+	}
+	stage := notes.Stage{Base: loader{x.w}, Ops: ops}
+	for _, p := range ps {
+		n := stage.Note(p.Id)
+		s, dt, err := n.GetValue()
+		if err != nil {
+			return err
+		}
+		if s != "" {
+			p.Value = &pb.Note_Value{
+				Lexical:  s,
+				Datatype: dt.GetId(),
+			}
+		}
+		cs, err := n.GetContents()
+		if err != nil {
+			return err
+		}
+		for _, c := range cs {
+			p.Contents = append(p.Contents, c.GetId())
+		}
+	}
+	return x.w.Store(ps)
 }

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/google/note-maps/notes"
 	"github.com/google/note-maps/notes/yaml"
 	"github.com/google/subcommands"
 )
@@ -45,10 +46,9 @@ func (c *findCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 		return subcommands.ExitFailure
 	}
 	defer db.Close()
-	noteset, err := db.List()
-	for _, subject := range noteset.Subjects {
-		info := noteset.Infos[subject]
-		bs, err := yaml.MarshalNote(info)
+	ns, err := db.Find(&notes.Query{})
+	for _, n := range ns {
+		bs, err := yaml.MarshalNote(n)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return subcommands.ExitFailure
@@ -56,7 +56,7 @@ func (c *findCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 		c.cfg.output.Write([]byte("---\n"))
 		c.cfg.output.Write(bs)
 	}
-	if len(noteset.Subjects) > 0 {
+	if len(ns) > 0 {
 		c.cfg.output.Write([]byte("---\n"))
 	}
 	return subcommands.ExitSuccess

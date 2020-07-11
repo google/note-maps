@@ -21,24 +21,25 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/note-maps/notes"
+	//"github.com/google/note-maps/notes"
+	"github.com/google/note-maps/notes/genji"
+	"github.com/google/note-maps/notes/pbdb"
 	"github.com/google/subcommands"
 )
 
-type noCloseDB struct{ *notes.GenjiNoteMap }
+type noCloseDB struct{ *genji.GenjiNoteMap }
 
 func (noCloseDB) Close() error { return nil }
 
 func TestIntegration_SetFindGet(t *testing.T) {
-	var (
-		ctx     = context.Background()
-		db, err = notes.Open(":memory:")
-	)
+	ctx := context.Background()
+	db, err := genji.Open(":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
 	var (
-		cfg   = Config{overrideDb: noCloseDB{db}}
+		nm    = pbdb.NewNoteMap(db)
+		cfg   = Config{overrideDb: nm}
 		find  = findCmd{&cfg}
 		set   = setCmd{&cfg}
 		flags = flag.NewFlagSet("", flag.PanicOnError)
@@ -53,7 +54,7 @@ func TestIntegration_SetFindGet(t *testing.T) {
 		status := cmdr.Execute(ctx)
 		return buf.String(), status
 	}
-	if o, s := exec("set", `subject{ id: 42 }   value{ lexical: "hello" }`); s != subcommands.ExitSuccess {
+	if o, s := exec("set", "note: &42\n- is: hello"); s != subcommands.ExitSuccess {
 		t.Fatal("failed to set initial note")
 	} else {
 		expect := `42` + "\n"

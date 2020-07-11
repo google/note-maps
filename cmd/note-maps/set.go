@@ -22,7 +22,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/note-maps/notes/notespb"
+	"github.com/google/note-maps/notes"
 	"github.com/google/note-maps/notes/yaml"
 	"github.com/google/subcommands"
 )
@@ -48,35 +48,38 @@ func (c *setCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) s
 	} else {
 		bs, err := ioutil.ReadAll(c.cfg.input)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintln(os.Stderr, "set: while reading input:", err)
 			return subcommands.ExitFailure
 		}
 		text = string(bs)
 	}
-	var info notespb.Info
-	err := yaml.UnmarshalNote([]byte(text), &info)
+	var (
+		stage notes.Stage
+		note  = stage.Note(notes.EmptyId)
+	)
+	err := yaml.UnmarshalNote([]byte(text), note)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, "set: while parsing input", err)
 		return subcommands.ExitFailure
 	}
-	if info.GetSubject().GetId() == 0 {
-		fmt.Fprintln(os.Stderr, "a non-zero id is required")
+	if note.GetId() == 0 {
+		fmt.Fprintln(os.Stderr, "set: a non-zero id is required")
 		return subcommands.ExitFailure
 	}
 
 	db, err := c.cfg.open()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, "set:", err)
 		return subcommands.ExitFailure
 	}
 	defer db.Close()
 
-	if err = db.Set(&info); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	if err = db.Patch(stage.Ops); err != nil {
+		fmt.Fprintln(os.Stderr, "set:", err)
 		return subcommands.ExitFailure
 	}
 
-	fmt.Fprintln(c.cfg.output, info.GetSubject().GetId())
+	fmt.Fprintln(c.cfg.output, note.GetId())
 	return subcommands.ExitSuccess
 }
 

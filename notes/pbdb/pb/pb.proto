@@ -14,9 +14,9 @@
 
 syntax = "proto3";
 
-package notes.pbdb.pb;
+package notemaps.notes.pbdb.pb;
 
-option go_package = ".;pb";
+option go_package = "github.com/google/note-maps/notes/pbdb/pb";
 
 message Note {
   uint64 id = 1;

@@ -24,7 +24,7 @@ import (
 	"github.com/google/note-maps/notes/pbdb"
 	"github.com/google/note-maps/notes/pbdb/pb"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 	//"github.com/genjidb/genji"
 	//"github.com/genjidb/genji/document"
 )

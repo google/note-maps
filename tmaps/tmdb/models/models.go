@@ -24,9 +24,9 @@ import (
 	"log"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/google/note-maps/kv"
 	"github.com/google/note-maps/tmaps/tmdb/models/internal/pb"
+	"google.golang.org/protobuf/proto"
 )
 
 const (

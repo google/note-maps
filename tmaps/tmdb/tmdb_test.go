@@ -18,12 +18,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/google/note-maps/kv"
 	"github.com/google/note-maps/kv/kvtest"
 	"github.com/google/note-maps/tmaps/ctm"
 	"github.com/google/note-maps/tmaps/pb"
 	"github.com/google/note-maps/tmaps/tmdb/models"
+	"google.golang.org/protobuf/encoding/prototext"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestStore(t *testing.T) {
@@ -71,7 +72,7 @@ func TestStore(t *testing.T) {
 				}
 			}
 			var want pb.TupleSequence
-			if err := proto.UnmarshalText(test.Want, &want); err != nil {
+			if err := prototext.Unmarshal([]byte(test.Want), &want); err != nil {
 				t.Fatalf("can't unmarshal wanted response: %s", err)
 			}
 			{

@@ -15,4 +15,4 @@
 // Package pb includes protocol buffer message types.
 package pb
 
-//go:generate protoc --go_out=. pb.proto
+//go:generate protoc --go_out=$GOPATH/src pb.proto

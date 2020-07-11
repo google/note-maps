@@ -25,10 +25,10 @@ import (
 	"os"
 	"sync"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/google/note-maps/kv/badger"
 	"github.com/google/note-maps/tmaps/pb"
 	"github.com/google/note-maps/tmaps/pbapi"
+	"google.golang.org/protobuf/proto"
 )
 
 func SetPath(p string) {

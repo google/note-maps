@@ -19,4 +19,4 @@
 // storing and retrieving the contents of a note map.
 package pb
 
-//go:generate protoc --go_out=. pb.proto
+//go:generate protoc --go_out=$GOPATH/src pb.proto

@@ -23,6 +23,7 @@ import (
 )
 
 func TestFindCmd(t *testing.T) {
+	t.Skip()
 	ctx := context.Background()
 	flag.NewFlagSet("", flag.PanicOnError)
 	flag.CommandLine.Parse([]string{"-db=:memory:", "find"})

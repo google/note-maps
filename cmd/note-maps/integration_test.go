@@ -82,6 +82,7 @@ func TestIntegration_SetFindGet(t *testing.T) {
 			input:        "note: &42\n- is: hello",
 			expectOutput: `42` + "\n",
 		}.Exec)
+	t.Skip()
 	t.Run("find initial note",
 		CommandForTest{
 			db:  db,

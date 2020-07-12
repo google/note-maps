@@ -109,7 +109,7 @@ func yamlToNote(src *yaml.Node, dst *notes.StageNote) error {
 		}
 		src = src.Content[0]
 		if src.Kind != yaml.MappingNode {
-			return fmt.Errorf("expected document to contain a map")
+			return fmt.Errorf("expected document to contain a map (%v), found %v in %#v", yaml.MappingNode, src.Kind, src)
 		}
 		if len(src.Content) != 2 {
 			return fmt.Errorf("expected document to contain a map with exactly one key")

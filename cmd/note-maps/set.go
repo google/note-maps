@@ -18,9 +18,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/google/note-maps/notes"
 	"github.com/google/note-maps/notes/yaml"
@@ -34,30 +34,40 @@ type setCmd struct {
 func (*setCmd) Name() string     { return "set" }
 func (*setCmd) Synopsis() string { return "Set the info about a subject." }
 func (*setCmd) Usage() string {
-	return `set id:<id> <info>:
-  Set the info about a subject.
+	return `set:
+  Import a note in YAML format.
 `
 }
+func (c *setCmd) SetConfig(cfg *Config) { c.cfg = cfg }
 func (c *setCmd) SetFlags(f *flag.FlagSet) {
 	//f.BoolVar(&c.capitalize, "capitalize", false, "capitalize output")
 }
 func (c *setCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
-	var text string
-	if len(f.Args()) > 0 {
-		text = strings.Join(f.Args(), " ")
-	} else {
-		bs, err := ioutil.ReadAll(c.cfg.input)
+	var (
+		r   io.Reader
+		err error
+	)
+	if len(f.Args()) > 1 {
+		return subcommands.ExitUsageError
+	} else if len(f.Args()) == 1 {
+		r, err = os.Open(f.Args()[0])
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "set: while reading input:", err)
+			fmt.Fprintln(os.Stderr, "set: while opening", f.Args()[0], ":", err)
 			return subcommands.ExitFailure
 		}
-		text = string(bs)
+	} else {
+		r = c.cfg.input
+	}
+	input, err := ioutil.ReadAll(r)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "set: while reading input:", err)
+		return subcommands.ExitFailure
 	}
 	var (
 		stage notes.Stage
 		note  = stage.Note(notes.EmptyId)
 	)
-	err := yaml.UnmarshalNote([]byte(text), note)
+	err = yaml.UnmarshalNote(input, note)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "set: while parsing input", err)
 		return subcommands.ExitFailure
@@ -69,13 +79,13 @@ func (c *setCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) s
 
 	db, err := c.cfg.open()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "set:", err)
+		fmt.Fprintln(os.Stderr, "set: while opening db:", err)
 		return subcommands.ExitFailure
 	}
 	defer db.Close()
 
 	if err = db.Patch(stage.Ops); err != nil {
-		fmt.Fprintln(os.Stderr, "set:", err)
+		fmt.Fprintln(os.Stderr, "set: while applying change:", err)
 		return subcommands.ExitFailure
 	}
 

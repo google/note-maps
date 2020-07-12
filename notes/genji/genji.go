@@ -17,13 +17,37 @@
 package genji
 
 import (
-	"github.com/google/note-maps/notes"
-	"github.com/google/note-maps/notes/pbdb"
-	"github.com/google/note-maps/notes/pbdb/pb"
+	"errors"
 
 	"github.com/genjidb/genji"
 	"github.com/genjidb/genji/document"
+
+	"github.com/google/note-maps/notes"
+	"github.com/google/note-maps/notes/pbdb"
+	"github.com/google/note-maps/notes/pbdb/pb"
 )
+
+type Error struct {
+	S string
+	E error
+}
+
+func (e Error) Error() string {
+	if e.E != nil {
+		return "notes/genji: " + e.S + ": " + e.E.Error()
+	} else {
+		return "notes/genji: " + e.S
+	}
+}
+
+func (e Error) Unwrap() error { return e.E }
+
+func ifError(err error, msg string) error {
+	if err != nil {
+		return Error{msg, err}
+	}
+	return nil
+}
 
 type GenjiNoteMap struct {
 	db *genji.DB
@@ -40,12 +64,12 @@ func Open(path string) (*GenjiNoteMap, error) {
 
 func (x *GenjiNoteMap) NewReaderTransaction() pbdb.DbReaderTransaction {
 	t, err := x.db.Begin(false)
-	return &readerTransaction{t, err}
+	return &readerTransaction{t, ifError(err, "failed to get a read-only transaction")}
 }
 
 func (x *GenjiNoteMap) NewReadWriterTransaction() pbdb.DbReadWriterTransaction {
 	t, err := x.db.Begin(true)
-	return &writerTransaction{readerTransaction{t, err}}
+	return &writerTransaction{readerTransaction{t, ifError(err, "failed to get a read/write transaction")}}
 }
 
 func (x *GenjiNoteMap) Close() error {
@@ -76,9 +100,19 @@ func (r readerTransaction) Load(ids ...uint64) ([]*pb.Note, error) {
 		return nil, nil
 	}
 	sql, args := whereIds(ids)
-	query, err := r.t.Query(`SELECT * FROM topics20200701 WHERE`+sql, args...)
+	sql = `SELECT * FROM topics20200701 WHERE` + sql
+	query, err := r.t.Query(sql, args...)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, document.ErrFieldNotFound) {
+			// Table is empty.
+			ns := make([]*pb.Note, len(ids))
+			for i, id := range ids {
+				ns[i] = &pb.Note{Id: id}
+			}
+			return ns, nil
+		} else {
+			return nil, Error{"failed to select identified notes (" + sql + ")", err}
+		}
 	}
 	defer query.Close()
 	var ns []*pb.Note
@@ -100,7 +134,7 @@ func (r readerTransaction) Find(q *notes.Query) ([]uint64, error) {
 	}
 	query, err := r.t.Query("SELECT id FROM topics20200701")
 	if err != nil {
-		return nil, err
+		return nil, Error{"failed to select any notes", err}
 	}
 	defer query.Close()
 	var ids []uint64
@@ -112,7 +146,7 @@ func (r readerTransaction) Find(q *notes.Query) ([]uint64, error) {
 		ids = append(ids, n.GetId())
 		return nil
 	})
-	return ids, err
+	return ids, ifError(err, "failed while trying to find notes")
 }
 
 func (r readerTransaction) Discard() { r.t.Rollback() }
@@ -127,13 +161,13 @@ func (w writerTransaction) Store(ns []*pb.Note) error {
 	}
 	for _, n := range ns {
 		id := n.GetId()
-		err := w.t.Exec(`DELETE FROM topics20200701 WHERE subject.id = ?`, id)
-		if err != nil {
-			return err
+		err := w.t.Exec(`DELETE FROM topics20200701 WHERE id = ?`, id)
+		if err != nil && !errors.Is(err, document.ErrFieldNotFound) {
+			return Error{"failed while deleting old version of note", err}
 		}
 		err = w.t.Exec(`INSERT INTO topics20200701 VALUES ?`, n)
 		if err != nil {
-			return err
+			return Error{"failed while inserting new version of note", err}
 		}
 	}
 	return nil
@@ -143,11 +177,19 @@ func (w writerTransaction) Delete(ids []uint64) error {
 		return w.broken
 	}
 	sql, args := whereIds(ids)
-	return w.t.Exec(`DELETE FROM topics20200701 WHERE `+sql, args...)
+	err := w.t.Exec(`DELETE FROM topics20200701 WHERE `+sql, args...)
+	if err != nil {
+		if errors.Is(err, document.ErrFieldNotFound) {
+			// Typical error for empty database...
+			return nil
+		}
+		return Error{"failed while deleting notes", err}
+	}
+	return nil
 }
 func (w writerTransaction) Commit() error {
 	if w.broken != nil {
 		return w.broken
 	}
-	return w.t.Commit()
+	return ifError(w.t.Commit(), "failed while committing changes to db")
 }

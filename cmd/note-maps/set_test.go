@@ -15,22 +15,20 @@
 package main
 
 import (
-	"context"
-	"flag"
 	"testing"
 
-	"github.com/google/subcommands"
+	"github.com/google/note-maps/notes/genji"
 )
 
 func TestSetCmd(t *testing.T) {
-	ctx := context.Background()
-	flag.CommandLine.Parse([]string{
-		"-db=:memory:",
-		"set",
-		`subject{id:42}`,
-		`value{lexical:"test"}`,
-	})
-	if subcommands.Execute(ctx) != subcommands.ExitSuccess {
-		t.Fatal("expected success with set")
+	db, err := genji.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
 	}
+	CommandForTest{
+		db:           db,
+		cmd:          &setCmd{},
+		input:        "note: &42\n- is: hello",
+		expectOutput: `42` + "\n",
+	}.Exec(t)
 }

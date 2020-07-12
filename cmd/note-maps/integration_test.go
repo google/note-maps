@@ -27,52 +27,70 @@ import (
 	"github.com/google/subcommands"
 )
 
-type noCloseDB struct{ *genji.GenjiNoteMap }
+type dontClose struct{ *genji.GenjiNoteMap }
 
-func (noCloseDB) Close() error { return nil }
+func (dontClose) Close() error { return nil }
+
+type Command interface {
+	subcommands.Command
+	SetConfig(*Config)
+}
+
+type CommandForTest struct {
+	db           *genji.GenjiNoteMap
+	cmd          Command
+	args         []string
+	input        string
+	expectExit   subcommands.ExitStatus
+	expectOutput string
+}
+
+func (c CommandForTest) Exec(t *testing.T) {
+	ctx := context.Background()
+	var (
+		flags  = flag.NewFlagSet("", flag.PanicOnError)
+		cmdr   = subcommands.NewCommander(flags, t.Name())
+		nm     = pbdb.NewNoteMap(dontClose{c.db})
+		output = bytes.NewBuffer(nil)
+		cfg    = Config{
+			overrideDb: nm,
+			input:      bytes.NewReader([]byte(c.input)),
+			output:     output,
+		}
+	)
+	c.cmd.SetConfig(&cfg)
+	cmdr.Register(c.cmd, "")
+	flags.Parse(append([]string{c.cmd.Name()}, c.args...))
+	exit := cmdr.Execute(ctx)
+	if exit != c.expectExit {
+		t.Error("got exit status", exit, "expected exit status", c.expectExit)
+	}
+	if string(output.Bytes()) != c.expectOutput {
+		t.Fatalf("got output %#v, expected %#v", string(output.Bytes()), c.expectOutput)
+	}
+}
 
 func TestIntegration_SetFindGet(t *testing.T) {
-	ctx := context.Background()
 	db, err := genji.Open(":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
-	var (
-		nm    = pbdb.NewNoteMap(noCloseDB{db})
-		cfg   = Config{overrideDb: nm}
-		find  = findCmd{&cfg}
-		set   = setCmd{&cfg}
-		flags = flag.NewFlagSet("", flag.PanicOnError)
-		cmdr  = subcommands.NewCommander(flags, "testing")
-	)
-	cmdr.Register(&find, "")
-	cmdr.Register(&set, "")
-	exec := func(args ...string) (string, subcommands.ExitStatus) {
-		buf := bytes.NewBuffer(nil)
-		cfg.output = buf
-		flags.Parse(args)
-		status := cmdr.Execute(ctx)
-		return buf.String(), status
-	}
-	if o, s := exec("set", "note: &42\n- is: hello"); s != subcommands.ExitSuccess {
-		t.Fatal("failed to set initial note")
-	} else {
-		expect := `42` + "\n"
-		if o != expect {
-			t.Fatalf("expected %#v, got %#v", expect, o)
-		}
-	}
-	if o, s := exec(`find`); s != subcommands.ExitSuccess {
-		t.Fatal("failed to set initial note")
-	} else {
-		expect := strings.Join([]string{
-			"---",
-			"note: &42",
-			"    - is: hello",
-			"---",
-		}, "\n") + "\n"
-		if o != expect {
-			t.Fatalf("expected %#v, got %#v", expect, o)
-		}
-	}
+	t.Run("set initial note",
+		CommandForTest{
+			db:           db,
+			cmd:          &setCmd{},
+			input:        "note: &42\n- is: hello",
+			expectOutput: `42` + "\n",
+		}.Exec)
+	t.Run("find initial note",
+		CommandForTest{
+			db:  db,
+			cmd: &findCmd{},
+			expectOutput: strings.Join([]string{
+				"---",
+				"note: &42",
+				"    - is: hello",
+				"---",
+			}, "\n") + "\n",
+		}.Exec)
 }

@@ -36,6 +36,7 @@ func (*findCmd) Usage() string {
   Print matching notes to stdout.
 `
 }
+func (c *findCmd) SetConfig(cfg *Config) { c.cfg = cfg }
 func (c *findCmd) SetFlags(f *flag.FlagSet) {
 	//f.BoolVar(&c.capitalize, "capitalize", false, "capitalize output")
 }
@@ -58,6 +59,9 @@ func (c *findCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 	}
 	if len(ns) > 0 {
 		c.cfg.output.Write([]byte("---\n"))
+	}
+	if len(ns) == 0 {
+		return subcommands.ExitFailure
 	}
 	return subcommands.ExitSuccess
 }

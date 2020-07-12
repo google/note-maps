@@ -25,8 +25,6 @@ import (
 	"github.com/google/note-maps/notes/pbdb/pb"
 
 	"google.golang.org/protobuf/proto"
-	//"github.com/genjidb/genji"
-	//"github.com/genjidb/genji/document"
 )
 
 func memoryDb(t *testing.T) pbdb.Db {
@@ -53,30 +51,90 @@ func Test_NewNoteMapIsEmpty(t *testing.T) {
 func Test_StoreFindLoad(t *testing.T) {
 	db := memoryDb(t)
 	defer db.Close()
-	txn := db.NewReadWriterTransaction()
-	defer txn.Discard()
 	input := &pb.Note{
 		Id:       1,
 		Value:    &pb.Note_Value{Lexical: "test value"},
 		Contents: []uint64{2, 3},
 	}
-	err := txn.Store([]*pb.Note{input})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if ids, err := txn.Find(&notes.Query{}); err != nil {
-		t.Error(err)
-	} else if !reflect.DeepEqual(ids, []uint64{1}) {
-		t.Errorf("got %#v, expected 1", ids)
-	}
-	if ns, err := txn.Load(1); err != nil {
-		t.Error(err)
-	} else if len(ns) != 1 {
-		t.Errorf("got %v notes, expected %v", len(ns), 1)
-	} else if !proto.Equal(ns[0], input) {
-		t.Errorf("got %v, expected %v", ns[0], input)
-	}
+	t.Run("store", func(t *testing.T) {
+		txn := db.NewReadWriterTransaction()
+		defer txn.Discard()
+		err := txn.Store([]*pb.Note{input})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = txn.Commit(); err != nil {
+			t.Fatal(err)
+		}
+	})
+	t.Run("find", func(t *testing.T) {
+		txn := db.NewReaderTransaction()
+		defer txn.Discard()
+		if ids, err := txn.Find(&notes.Query{}); err != nil {
+			t.Error(err)
+		} else if !reflect.DeepEqual(ids, []uint64{1}) {
+			t.Errorf("got %#v, expected 1", ids)
+		}
+	})
+	t.Run("load", func(t *testing.T) {
+		txn := db.NewReaderTransaction()
+		defer txn.Discard()
+		if ns, err := txn.Load(1); err != nil {
+			t.Error(err)
+		} else if len(ns) != 1 {
+			t.Errorf("got %v notes, expected %v", len(ns), 1)
+		} else if !proto.Equal(ns[0], input) {
+			t.Errorf("got %v, expected %v", ns[0], input)
+		}
+	})
 }
 
 func Test_StoreDeleteFindLoad(t *testing.T) {
+	db := memoryDb(t)
+	defer db.Close()
+	input := &pb.Note{
+		Id:       1,
+		Value:    &pb.Note_Value{Lexical: "test value"},
+		Contents: []uint64{2, 3},
+	}
+	t.Run("store", func(t *testing.T) {
+		txn := db.NewReadWriterTransaction()
+		defer txn.Discard()
+		err := txn.Store([]*pb.Note{input})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = txn.Commit(); err != nil {
+			t.Fatal(err)
+		}
+	})
+	t.Run("delete", func(t *testing.T) {
+		txn := db.NewReadWriterTransaction()
+		defer txn.Discard()
+		err := txn.Delete([]uint64{input.Id})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = txn.Commit(); err != nil {
+			t.Fatal(err)
+		}
+	})
+	t.Run("find", func(t *testing.T) {
+		txn := db.NewReaderTransaction()
+		defer txn.Discard()
+		if ids, err := txn.Find(&notes.Query{}); err != nil {
+			t.Error(err)
+		} else if len(ids) != 0 {
+			t.Errorf("got %#v, expected none", ids)
+		}
+	})
+	t.Run("load", func(t *testing.T) {
+		txn := db.NewReaderTransaction()
+		defer txn.Discard()
+		if ns, err := txn.Load(1); err != nil {
+			t.Error(err)
+		} else if len(ns) != 0 {
+			t.Errorf("got %v notes, expected %v", len(ns), 0)
+		}
+	})
 }

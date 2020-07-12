@@ -44,9 +44,6 @@ func (x *Stage) GetBase(defaultEmpty bool) Loader {
 	if base == nil {
 		base = EmptyLoader
 	}
-	if defaultEmpty {
-		base = LoaderEmptyIfNotFound{base}
-	}
 	return base
 }
 

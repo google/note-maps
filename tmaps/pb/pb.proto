@@ -21,7 +21,7 @@ option go_package = ".;pb";
 message Library { repeated uint64 topic_map_ids = 1; }
 
 enum Mask {
-	UnspecifiedMask = 0;
+  UnspecifiedMask = 0;
   IdsMask = 1;
   RefsMask = 2;
   TopicsMask = 3;
@@ -70,26 +70,26 @@ message AnyItem {
   ItemType item_type = 3;
   repeated Ref refs = 4;
   repeated uint64 name_ids = 5;
-	repeated AnyItem names = 6;
+  repeated AnyItem names = 6;
   repeated uint64 occurrence_ids = 7;
-	repeated AnyItem occurrences = 8;
+  repeated AnyItem occurrences = 8;
   string value = 9;
-	Ref type_ref = 10;
+  Ref type_ref = 10;
   repeated uint64 role_ids = 12;
-	repeated AnyItem roles = 13;
-	Ref player_ref = 11;
+  repeated AnyItem roles = 13;
+  Ref player_ref = 11;
 }
 
 message Ref {
   RefType type = 1;
-	string iri = 2;
+  string iri = 2;
 }
 
 enum RefType {
-	UnspecifiedRefType = 0;
+  UnspecifiedRefType = 0;
   ItemIdentifier = 1;
-	SubjectIdentifier = 2;
-	SubjectLocator = 3;
+  SubjectIdentifier = 2;
+  SubjectLocator = 3;
 }
 
 enum ItemType {

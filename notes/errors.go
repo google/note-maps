@@ -18,12 +18,6 @@ package notes
 
 import "strconv"
 
-// NotFound is returned when some of the notes a query was meant to find could
-// not be found.
-type NotFound []uint64
-
-func (e NotFound) Error() string { return "not found" }
-
 type Error int
 
 const (

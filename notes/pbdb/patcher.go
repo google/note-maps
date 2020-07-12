@@ -43,13 +43,6 @@ func (x patcher) Patch(ops []change.Operation) error {
 	}
 	ps, err := x.w.Load(ids...)
 	if err != nil {
-		if _, nf := err.(notes.NotFound); nf {
-			for i, p := range ps {
-				if p == nil {
-					ps[i] = &pb.Note{Id: ids[i]}
-				}
-			}
-		}
 		return err
 	}
 	stage := notes.Stage{Base: loader{x.w}, Ops: ops}

@@ -29,7 +29,7 @@ type EmptyNote uint64
 func (x EmptyNote) GetId() uint64                   { return uint64(x) }
 func (x EmptyNote) GetTypes() ([]Note, error)       { return nil, nil }
 func (x EmptyNote) GetSupertypes() ([]Note, error)  { return nil, nil }
-func (x EmptyNote) GetValue() (string, Note, error) { return "", nil, nil }
+func (x EmptyNote) GetValue() (string, Note, error) { return "", EmptyNote(0), nil }
 func (x EmptyNote) GetContents() ([]Note, error)    { return nil, nil }
 
 const (
@@ -41,24 +41,12 @@ const (
 type emptyLoader int
 
 func (x emptyLoader) Load(ids []uint64) ([]Note, error) {
-	return make([]Note, len(ids)), NotFound(ids)
-}
-
-// LoaderEmptyIfNotFound translates NotFound errors into empty notes.
-type LoaderEmptyIfNotFound struct{ Loader }
-
-func (x LoaderEmptyIfNotFound) Load(ids []uint64) ([]Note, error) {
-	ns, err := x.Loader.Load(ids)
-	if err != nil {
-		switch err.(type) {
-		case NotFound:
-			for i, n := range ns {
-				if n == nil {
-					ns[i] = EmptyNote(ids[i])
-				}
-			}
-			return ns, nil
+	ns := make([]Note, len(ids))
+	for i, id := range ids {
+		if id == EmptyId {
+			return nil, InvalidId
 		}
+		ns[i] = EmptyNote(id)
 	}
-	return ns, err
+	return ns, nil
 }

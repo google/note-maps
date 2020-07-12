@@ -296,7 +296,7 @@ var (
 		           { alpha | digit | "#" } { "'" } .
 		Prefix = word { word } ":" .
 		Null = "null" .
-    Identifier = word { word } .
+		Identifier = word { word } .
 		QIRI = "<" iri { iri } ">" .
 
 		Int = digit { digit } .

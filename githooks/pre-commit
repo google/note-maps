@@ -25,12 +25,9 @@ then
 fi
 
 # TODO: renable test-on-pre-commit when Go tests are passing again.
-if false
+gotest="$(go test -timeout 30s -short ${gopkgs})"
+if [ $? -ne 0 ]
 then
-	gotest="$(go test -timeout 30s -short ${gopkgs})"
-	if [ $? -ne 0 ]
-	then
-		echo -e "${gotest}"
-		false
-	fi
+	echo -e "${gotest}"
+	false
 fi

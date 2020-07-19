@@ -23,6 +23,8 @@ package notes
 // identifiers a bit more readable.
 const EmptyID ID = ""
 
+func (id ID) Empty() bool { return id == EmptyID }
+
 // EmptyNote is simply an empty Note with nothing more than an ID.
 type EmptyNote ID
 

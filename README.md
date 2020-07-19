@@ -2,8 +2,8 @@
 
 [![GoDoc](https://godoc.org/github.com/google/note-maps?status.svg)](https://godoc.org/github.com/google/note-maps)
 [![Go Report Card](https://goreportcard.com/badge/github.com/google/note-maps)](https://goreportcard.com/report/github.com/google/note-maps)
-[![Build Status](https://travis-ci.org/google/note-maps.svg?branch=master)](https://travis-ci.org/google/note-maps)
-[![Coverage Status](https://coveralls.io/repos/github/google/note-maps/badge.svg?branch=master)](https://coveralls.io/github/google/note-maps?branch=master)
+[![Build Status](https://travis-ci.org/google/note-maps.svg?branch=main)](https://travis-ci.org/google/note-maps)
+[![Coverage Status](https://coveralls.io/repos/github/google/note-maps/badge.svg?branch=main)](https://coveralls.io/github/google/note-maps?branch=main)
 
 Note Maps is a personal knowledge base intended for use on mobile devices.
 Notes are structured a bit like the contents of a dictionary, or the index at

@@ -18,9 +18,9 @@ package notes
 
 import (
 	"io"
-
-	"github.com/google/note-maps/notes/change"
 )
+
+type ID string
 
 // NoteMap can be implemented to support finding and patching notes in a note map.
 //
@@ -44,12 +44,12 @@ type Loader interface {
 	//
 	// If the error is NotFound, the returned notes includes all found
 	// notes and NotFound.Ids holds the ids of notes that were not found.
-	Load(ids []uint64) ([]Note, error)
+	Load(ids []ID) ([]Note, error)
 }
 
 // LoadOne is a convenience function for loading just one note.
-func LoadOne(l Loader, id uint64) (Note, error) {
-	ns, err := l.Load([]uint64{id})
+func LoadOne(l Loader, id ID) (Note, error) {
+	ns, err := l.Load([]ID{id})
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func LoadOne(l Loader, id uint64) (Note, error) {
 // operations like loading query results from a storage backend, most methods
 // can return an error instead of the requested data.
 type Note interface {
-	GetId() uint64
+	GetID() ID
 	GetTypes() ([]Note, error)
 	GetSupertypes() ([]Note, error)
 	GetValue() (string, Note, error)
@@ -72,5 +72,5 @@ type Note interface {
 // Patcher can be implemented to support making changes to notes in a note map
 // by applying a set of differences to them.
 type Patcher interface {
-	Patch(ops []change.Operation) error
+	Patch(ops []Operation) error
 }

@@ -17,44 +17,42 @@ package notes
 import (
 	"reflect"
 	"testing"
-
-	"github.com/google/note-maps/notes/change"
 )
 
 type expectation struct {
 	vs   string
-	cids []uint64
+	cids []ID
 }
 
 func TestDiffNote(t *testing.T) {
 	for _, test := range []struct {
 		title    string
 		fluent   func(dst *Stage)
-		input    []change.Operation
-		expected map[uint64]expectation
+		input    []Operation
+		expected map[ID]expectation
 	}{
 		{
 			"set value and add content",
 			func(s *Stage) {
-				n1 := s.Note(1)
-				n1.SetValue("test value1", 0)
-				n3 := n1.AddContent(3)
-				n3.SetValue("test value3", 0)
-				n4 := s.Note(4)
-				n4.SetValue("test value4", 0)
-				n1.AddContent(4)
+				n1 := s.Note("1")
+				n1.SetValue("test value1", EmptyID)
+				n3 := n1.AddContent("3")
+				n3.SetValue("test value3", EmptyID)
+				n4 := s.Note("4")
+				n4.SetValue("test value4", EmptyID)
+				n1.AddContent("4")
 			},
-			[]change.Operation{
-				change.SetValue{1, "test value1", 0},
-				change.AddContent{1, 3},
-				change.SetValue{3, "test value3", 0},
-				change.SetValue{4, "test value4", 0},
-				change.AddContent{1, 4},
+			[]Operation{
+				SetValue{"1", "test value1", EmptyID},
+				AddContent{"1", "3"},
+				SetValue{"3", "test value3", EmptyID},
+				SetValue{"4", "test value4", EmptyID},
+				AddContent{"1", "4"},
 			},
-			map[uint64]expectation{
-				1: {vs: "test value1", cids: []uint64{3, 4}},
-				3: {vs: "test value3", cids: []uint64{}},
-				4: {vs: "test value4", cids: []uint64{}},
+			map[ID]expectation{
+				"1": {vs: "test value1", cids: []ID{"3", "4"}},
+				"3": {vs: "test value3", cids: []ID{}},
+				"4": {vs: "test value4", cids: []ID{}},
 			},
 		},
 	} {
@@ -78,9 +76,9 @@ func TestDiffNote(t *testing.T) {
 				if cs, err := actual.GetContents(); err != nil {
 					t.Error(err)
 				} else {
-					var cids []uint64
+					var cids []ID
 					for _, c := range cs {
-						cids = append(cids, c.GetId())
+						cids = append(cids, c.GetID())
 					}
 					if !(len(cids) == 0 && len(expected.cids) == 0) &&
 						!reflect.DeepEqual(cids, expected.cids) {

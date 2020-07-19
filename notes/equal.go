@@ -18,8 +18,8 @@ package notes
 
 type simpleNote struct {
 	valuestring string
-	valuetype   uint64
-	contents    []uint64
+	valuetype   ID
+	contents    []ID
 }
 
 func simplify(src Note) (dst simpleNote, err error) {
@@ -29,17 +29,17 @@ func simplify(src Note) (dst simpleNote, err error) {
 		return
 	}
 	if dt != nil {
-		dst.valuetype = dt.GetId()
+		dst.valuetype = dt.GetID()
 	}
 	var cs []Note
 	cs, err = src.GetContents()
 	if err != nil {
 		return
 	}
-	dst.contents = make([]uint64, len(cs))
+	dst.contents = make([]ID, len(cs))
 	for i, c := range cs {
 		if c != nil {
-			dst.contents[i] = c.GetId()
+			dst.contents[i] = c.GetID()
 		}
 	}
 	return
@@ -48,7 +48,7 @@ func Equal(a, b Note) (bool, error) {
 	if a == b {
 		return true, nil
 	}
-	if a.GetId() != b.GetId() {
+	if a.GetID() != b.GetID() {
 		return false, nil
 	}
 	sa, err := simplify(a)
@@ -75,8 +75,8 @@ func DebugDiff(a, b Note) (string, interface{}, interface{}, error) {
 	if a == b {
 		return "", nil, nil, nil
 	}
-	if a.GetId() != b.GetId() {
-		return "id", a.GetId(), b.GetId(), nil
+	if a.GetID() != b.GetID() {
+		return "id", a.GetID(), b.GetID(), nil
 	}
 	sa, err := simplify(a)
 	if err != nil {

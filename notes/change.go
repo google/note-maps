@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package change
+package notes
 
 type Operation interface {
-	AffectsId(id uint64) bool
+	AffectsID(id ID) bool
 }
 
 type SetValue struct {
-	Id       uint64
+	ID       ID
 	Lexical  string
-	Datatype uint64
+	Datatype ID
 }
 
-func (x SetValue) AffectsId(id uint64) bool { return x.Id == id }
+func (x SetValue) AffectsID(id ID) bool { return x.ID == id }
 
 type AddContent struct {
-	Id  uint64
-	Add uint64
+	ID  ID
+	Add ID
 }
 
-func (x AddContent) AffectsId(id uint64) bool { return x.Id == id }
+func (x AddContent) AffectsID(id ID) bool { return x.ID == id }

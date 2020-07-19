@@ -14,9 +14,9 @@
 
 package main
 
+/*
 import (
 	"testing"
-
 	"github.com/google/note-maps/notes/genji"
 )
 
@@ -32,3 +32,4 @@ func TestSetCmd(t *testing.T) {
 		expectOutput: `42` + "\n",
 	}.Exec(t)
 }
+*/

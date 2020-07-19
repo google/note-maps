@@ -14,6 +14,7 @@
 
 package main
 
+/*
 import (
 	"bytes"
 	"context"
@@ -95,3 +96,4 @@ func TestIntegration_SetFindGet(t *testing.T) {
 			}, "\n") + "\n",
 		}.Exec)
 }
+*/

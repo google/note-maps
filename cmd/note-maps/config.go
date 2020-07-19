@@ -21,9 +21,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/99designs/keyring"
 	"github.com/google/note-maps/notes"
-	"github.com/google/note-maps/notes/genji"
-	"github.com/google/note-maps/notes/pbdb"
+	"github.com/google/note-maps/notes/textile"
 	"github.com/google/subcommands"
 )
 
@@ -32,17 +32,68 @@ type Config struct {
 	overrideDb notes.NoteMap
 	input      io.Reader
 	output     io.Writer
+	dataHome   string
+	thread     string
+}
+
+type addCloser struct {
+	notes.NoteMap
+	closer func() error
+}
+
+func (c addCloser) Close() error {
+	e0 := c.NoteMap.Close()
+	e1 := c.closer()
+	if e0 != nil {
+		return e0
+	}
+	return e1
 }
 
 func (c *Config) open() (notes.NoteMap, error) {
 	if c.overrideDb != nil {
 		return c.overrideDb, nil
 	}
-	db, err := genji.Open(c.Db)
+	baseDir := filepath.Join(c.dataHome, "textile")
+	n, err := textile.DefaultNetwork(baseDir)
 	if err != nil {
 		return nil, err
 	}
-	return pbdb.NewNoteMap(db), nil
+	kr, err := keyring.Open(keyring.Config{
+		ServiceName: "Note Maps",
+	})
+	if err != nil {
+		return nil, err
+	}
+	opts := []textile.Option{
+		textile.WithBaseDirectory(c.dataHome),
+		textile.WithGetSecret(func(key string) ([]byte, error) {
+			item, err := kr.Get(key)
+			if err != nil {
+				return nil, err
+			}
+			return item.Data, nil
+		}),
+		textile.WithSetSecret(func(key string, secret []byte) error {
+			return kr.Set(keyring.Item{
+				Key:         key,
+				Data:        secret,
+				Label:       "keys for " + key,
+				Description: "ThreadsDB encryption keys",
+			})
+		}),
+	}
+	if c.Db != "" {
+		opts = append(opts, textile.WithPath(c.Db))
+	}
+	if c.thread != "" {
+		opts = append(opts, textile.WithThread(c.thread))
+	}
+	nm, err := textile.Open(context.Background(), n, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return addCloser{nm, n.Close}, nil
 }
 
 var (
@@ -64,12 +115,13 @@ func init() {
 			}
 			return v
 		}
-		dataHome = os.Expand(
-			filepath.Join("$XDG_DATA_HOME", "note-maps"),
-			getEnv)
 	)
-	os.MkdirAll(dataHome, 0700) // ignore error, it might not matter.
-	flag.StringVar(&globalConfig.Db, "db", filepath.Join(dataHome, "notes.db"), "location for data files")
+	globalConfig.dataHome = os.Expand(
+		filepath.Join("$XDG_DATA_HOME", "note-maps"),
+		getEnv)
+	os.MkdirAll(globalConfig.dataHome, 0700) // ignore error, it might not matter.
+	flag.StringVar(&globalConfig.Db, "db", "", "location for data files")
+	flag.StringVar(&globalConfig.thread, "thread_id", "", "ThreadsDB thread id")
 }
 
 type configCmd struct {

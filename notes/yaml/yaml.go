@@ -16,7 +16,6 @@ package yaml
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/google/note-maps/notes"
 	"gopkg.in/yaml.v3"
@@ -45,9 +44,9 @@ func noteToNode(src notes.Note, dst *yaml.Node) error {
 	// Note contents and more will be marshalled into this YAML sequence.
 	var sequence = &yaml.Node{Kind: yaml.SequenceNode}
 	// Marshal src identifier.
-	id := src.GetId()
-	if id != 0 {
-		sequence.Anchor = strconv.FormatUint(id, 10)
+	id := src.GetID()
+	if id != notes.EmptyID {
+		sequence.Anchor = string(id)
 	}
 	// Build outer YAML document structure
 	if dst.Kind == yaml.DocumentNode {
@@ -90,7 +89,7 @@ func noteToNode(src notes.Note, dst *yaml.Node) error {
 			y := yaml.Node{
 				Kind:   yaml.ScalarNode,
 				Value:  vs,
-				Anchor: strconv.FormatUint(s.GetId(), 10),
+				Anchor: string(s.GetID()),
 			}
 			sequence.Content = append(sequence.Content, &y)
 		}
@@ -121,12 +120,9 @@ func yamlToNote(src *yaml.Node, dst *notes.StageNote) error {
 	}
 	// Unwrap the subject identifier.
 	if src.Anchor != "" {
-		id, err := strconv.ParseUint(src.Anchor, 10, 64)
-		if err != nil {
-			return err
-		}
-		if id != 0 {
-			dst.Id = id
+		id := notes.ID(src.Anchor)
+		if id != notes.EmptyID {
+			dst.ID = id
 		}
 	}
 	for _, s := range src.Content {
@@ -134,7 +130,7 @@ func yamlToNote(src *yaml.Node, dst *notes.StageNote) error {
 		case yaml.ScalarNode:
 			/*
 				if s.ShortTag() == "!id" {
-					// Unmarshal s.Value into d.Id
+					// Unmarshal s.Value into d.ID
 					id, err := strconv.ParseUint(s.Value, 10, 64)
 					if err != nil {
 						return err
@@ -142,21 +138,17 @@ func yamlToNote(src *yaml.Node, dst *notes.StageNote) error {
 					d = dst.Diff.Note(id)
 				} else {
 			*/
-			var id uint64
+			var id notes.ID
 			if s.Anchor != "" {
-				var err error
-				id, err = strconv.ParseUint(s.Anchor, 10, 64)
-				if err != nil {
-					return err
-				}
+				id = notes.ID(s.Anchor)
 			}
-			dst.AddContent(id).SetValue(s.Value, 0)
+			dst.AddContent(id).SetValue(s.Value, notes.EmptyID)
 		case yaml.MappingNode:
 			if len(s.Content) == 2 && s.Content[0].Kind == yaml.ScalarNode && s.Content[0].Value == "is" {
 				// Unmarshal s.Content[1] into dst.Value
 				switch s.Content[1].Kind {
 				case yaml.ScalarNode:
-					dst.SetValue(s.Content[1].Value, 0)
+					dst.SetValue(s.Content[1].Value, notes.EmptyID)
 				default:
 					return fmt.Errorf("unsupported YAML type %v (%#v) for subject value", s.Kind, s.Value)
 				}

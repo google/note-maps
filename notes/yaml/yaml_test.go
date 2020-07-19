@@ -19,11 +19,10 @@ import (
 	"testing"
 
 	"github.com/google/note-maps/notes"
-	"github.com/google/note-maps/notes/change"
 )
 
 type note struct {
-	id          uint64
+	id          notes.ID
 	types       []notes.Note
 	supertypes  []notes.Note
 	valuestring string
@@ -31,16 +30,16 @@ type note struct {
 	contents    []notes.Note
 }
 
-func (n note) GetId() uint64                         { return n.id }
+func (n note) GetID() notes.ID                       { return n.id }
 func (n note) GetTypes() ([]notes.Note, error)       { return n.types, nil }
 func (n note) GetSupertypes() ([]notes.Note, error)  { return n.supertypes, nil }
 func (n note) GetValue() (string, notes.Note, error) { return n.valuestring, n.valuetype, nil }
 func (n note) GetContents() ([]notes.Note, error)    { return n.contents, nil }
 
-func getNote(d *notes.Stage, focus uint64) *note {
-	ns := make(map[uint64]*note)
-	get := func(id uint64) *note {
-		if focus == 0 {
+func getNote(d *notes.Stage, focus notes.ID) *note {
+	ns := make(map[notes.ID]*note)
+	get := func(id notes.ID) *note {
+		if focus == notes.EmptyID {
 			focus = id
 		}
 		n, exists := ns[id]
@@ -52,12 +51,12 @@ func getNote(d *notes.Stage, focus uint64) *note {
 	}
 	for _, dop := range d.Ops {
 		switch op := dop.(type) {
-		case *change.SetValue:
-			n := get(op.Id)
+		case *notes.SetValue:
+			n := get(op.ID)
 			n.valuestring = op.Lexical
 			n.valuetype = get(op.Datatype)
-		case *change.AddContent:
-			n := get(op.Id)
+		case *notes.AddContent:
+			n := get(op.ID)
 			n.contents = append(n.contents, get(op.Add))
 		default:
 			panic("unknown operation type")
@@ -79,9 +78,9 @@ func TestMarshalUnmarshal(t *testing.T) {
 		{
 			"note with one content",
 			note{
-				id: 10,
+				id: "10",
 				contents: []notes.Note{
-					&note{id: 11, valuestring: "test content"},
+					&note{id: "11", valuestring: "test content"},
 				},
 			},
 			yamlString(
@@ -91,7 +90,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		}, {
 			"note with a value and no content",
 			note{
-				id:          10,
+				id:          "10",
 				valuestring: "test value",
 			},
 			yamlString(
@@ -103,7 +102,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		t.Run(test.title, func(t *testing.T) {
 			var (
 				diff notes.Stage
-				note = diff.Note(notes.EmptyId)
+				note = diff.Note(notes.EmptyID)
 			)
 			err := UnmarshalNote([]byte(test.yaml), note)
 			if err != nil {

@@ -202,6 +202,14 @@ func (nm *NoteMap) find(q *db.Query) ([]notes.Note, error) {
 	return notes, nil
 }
 
+func (nm *NoteMap) loadRecord(id notes.ID, r *record) error {
+	bs, err := nm.note.FindByID(core.InstanceID(id))
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(bs, &r)
+}
+
 func (nm *NoteMap) Find(q *notes.Query) ([]notes.Note, error) {
 	if err := nm.init(); err != nil {
 		return nil, err
@@ -282,14 +290,14 @@ func (nm *NoteMap) Patch(ops []notes.Operation) error {
 				}
 				n.record.Contents = append(
 					n.record.Contents,
-					core.InstanceID(o.Add))
+					o.Add)
 			case notes.SetValue:
 				n, err := get(o.ID)
 				if err != nil {
 					return err
 				}
 				n.record.ValueString = o.Lexical
-				n.record.ValueType = core.InstanceID(o.Datatype)
+				n.record.ValueType = o.Datatype
 			default:
 				panic("unrecognized op type")
 			}
@@ -321,26 +329,39 @@ func (nm *NoteMap) Patch(ops []notes.Operation) error {
 func (nm *NoteMap) Close() error { return nm.t.Close() }
 
 type record struct {
-	ID          core.InstanceID   `json:"_id"`
-	Types       []core.InstanceID `json:"types,omitempty"`
-	Supertypes  []core.InstanceID `json:"super_types,omitempty"`
-	ValueString string            `json:"value_string,omitempty"`
-	ValueType   core.InstanceID   `json:"value_type,omitempty"`
-	Contents    []core.InstanceID `json:"contents,omitempty"`
+	ID          core.InstanceID `json:"_id"`
+	Types       []notes.ID      `json:"types,omitempty"`
+	Supertypes  []notes.ID      `json:"super_types,omitempty"`
+	ValueString string          `json:"value_string,omitempty"`
+	ValueType   notes.ID        `json:"value_type,omitempty"`
+	Contents    []notes.ID      `json:"contents,omitempty"`
 }
 
 type note struct {
 	record
 	loaded bool
+	mu     sync.Mutex
+	loader *NoteMap
 }
 
 func (n *note) load() error {
-	panic("not implemented")
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	var id = notes.ID(n.record.ID)
+	if id.Empty() {
+		return errors.New("can't load note with empty ID")
+	}
+	if !n.loaded {
+		err := n.loader.loadRecord(id, &n.record)
+		if err != nil {
+			return err
+		}
+		n.loaded = true
+	}
+	return nil
 }
 
-func (n *note) GetID() notes.ID {
-	return notes.ID(n.ID)
-}
+func (n *note) GetID() notes.ID { return notes.ID(n.ID) }
 
 func (n *note) GetTypes() ([]notes.Note, error) {
 	if err := n.load(); err != nil {
@@ -348,7 +369,7 @@ func (n *note) GetTypes() ([]notes.Note, error) {
 	}
 	ns := make([]notes.Note, len(n.Types))
 	for i, id := range n.Types {
-		ns[i] = &note{record: record{ID: id}}
+		ns[i] = &note{record: record{ID: core.InstanceID(id)}}
 	}
 	return ns, nil
 }
@@ -358,7 +379,13 @@ func (n *note) GetSupertypes() ([]notes.Note, error) {
 }
 
 func (n *note) GetValue() (string, notes.Note, error) {
-	return notes.EmptyNote(0).GetValue()
+	if err := n.load(); err != nil {
+		return "", nil, err
+	}
+	return n.record.ValueString, &note{
+		record: record{ID: core.InstanceID(n.record.ValueType)},
+		loader: n.loader,
+	}, nil
 }
 
 func (n *note) GetContents() ([]notes.Note, error) {

@@ -55,7 +55,6 @@ func TestPatchLoad(t *testing.T) {
 	if len(ns) != 2 {
 		t.Errorf("got %v notes, expected 2", len(ns))
 	}
-	t.Skip("let's switch from uint64 to string identifiers first")
 	if len(ns) > 0 {
 		if eq, err := notes.Equal(ns[0], stage.Note("1")); err != nil {
 			t.Error(err)

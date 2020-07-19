@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package textile uses Textileio ThreadsDB to implement the
+// github.com/google/note-maps/notes interfaces.
 package textile
 
 import (
@@ -67,12 +69,13 @@ type Options struct {
 
 func (o *Options) expand() error {
 	// Resolve the thread id:
-	if o.Thread == "" {
+	randomNewThread := o.Thread == ""
+	if randomNewThread {
 		o.Thread = thread.NewIDV1(thread.Raw, 32).String()
 	}
 	// Resolve the thread encryption keys:
 	if o.Key == "" {
-		if o.GetSecret != nil {
+		if !randomNewThread && o.GetSecret != nil {
 			secret, err := o.GetSecret(o.Thread)
 			if err != nil {
 				return wrapError("loading key for "+o.Thread, err)
@@ -95,7 +98,6 @@ type Option func(*Options)
 func WithBaseDirectory(d string) Option {
 	return func(o *Options) { o.BaseDirectory = d }
 }
-
 func WithPath(p string) Option {
 	return func(o *Options) {
 		o.BaseDirectory, o.Thread = filepath.Split(p)
@@ -103,6 +105,12 @@ func WithPath(p string) Option {
 }
 
 func WithThread(t string) Option { return func(o *Options) { o.Thread = t } }
+func WithGetSecret(f GetSecret) Option {
+	return func(o *Options) { o.GetSecret = f }
+}
+func WithSetSecret(f SetSecret) Option {
+	return func(o *Options) { o.SetSecret = f }
+}
 
 // DefaultNetwork is a convenience function to build a
 // github.com/textileio/core/app.Net for use with Open().
@@ -113,15 +121,19 @@ func DefaultNetwork(dir string) (app.Net, error) {
 		common.WithNetHostAddr(util.FreeLocalAddr()))
 }
 
-type Database struct {
+// NoteMap is meant to implement the notes.NoteMap interface.
+type NoteMap struct {
 	t        *db.DB
 	initOnce sync.Once
 	note     *db.Collection
 	broke    error
 }
 
-// Open attempts to open a thread with local storage
-func Open(ctx context.Context, n app.Net, opts ...Option) (*Database, error) {
+// Open creates a NoteMap that replicates through net n.
+//
+// All options are optional, but if non are provided the database may not be
+// reusable.
+func Open(ctx context.Context, n app.Net, opts ...Option) (*NoteMap, error) {
 	var o Options
 	for _, opt := range opts {
 		opt(&o)
@@ -150,34 +162,34 @@ func Open(ctx context.Context, n app.Net, opts ...Option) (*Database, error) {
 			return nil, wrapError("storing thread key", err)
 		}
 	}
-	return &Database{t: d}, nil
+	return &NoteMap{t: d}, nil
 }
 
-func (d *Database) init() error {
-	d.initOnce.Do(func() {
-		cs := d.t.ListCollections()
+func (nm *NoteMap) init() error {
+	nm.initOnce.Do(func() {
+		cs := nm.t.ListCollections()
 		for _, c := range cs {
 			if c.GetName() == "Notes" {
-				d.note = c
+				nm.note = c
 			}
 		}
-		if d.note != nil {
+		if nm.note != nil {
 			return
 		}
 		var err error
-		d.note, err = d.t.NewCollection(db.CollectionConfig{
+		nm.note, err = nm.t.NewCollection(db.CollectionConfig{
 			Name:   "Note",
 			Schema: util.SchemaFromInstance(&record{}, false),
 		})
 		if err != nil {
-			d.broke = wrapError("creating note schema in database", err)
+			nm.broke = wrapError("creating note schema in database", err)
 		}
 	})
-	return d.broke
+	return nm.broke
 }
 
-func (d *Database) find(q *db.Query) ([]notes.Note, error) {
-	bss, err := d.note.Find(q)
+func (nm *NoteMap) find(q *db.Query) ([]notes.Note, error) {
+	bss, err := nm.note.Find(q)
 	if err != nil {
 		return nil, err
 	}
@@ -192,15 +204,15 @@ func (d *Database) find(q *db.Query) ([]notes.Note, error) {
 	return notes, nil
 }
 
-func (d *Database) Find(q *notes.Query) ([]notes.Note, error) {
-	if err := d.init(); err != nil {
+func (nm *NoteMap) Find(q *notes.Query) ([]notes.Note, error) {
+	if err := nm.init(); err != nil {
 		return nil, err
 	}
-	return d.find(&db.Query{})
+	return nm.find(&db.Query{})
 }
 
-func (d *Database) Load(ids []uint64) ([]notes.Note, error) {
-	if err := d.init(); err != nil {
+func (nm *NoteMap) Load(ids []uint64) ([]notes.Note, error) {
+	if err := nm.init(); err != nil {
 		return nil, err
 	}
 	var q *db.Query
@@ -212,7 +224,7 @@ func (d *Database) Load(ids []uint64) ([]notes.Note, error) {
 			q = q.Or(or)
 		}
 	}
-	found, err := d.find(&db.Query{})
+	found, err := nm.find(&db.Query{})
 	if err != nil {
 		return nil, err
 	}
@@ -231,11 +243,11 @@ func (d *Database) Load(ids []uint64) ([]notes.Note, error) {
 	return ns, nil
 }
 
-func (d *Database) Patch(ops []change.Operation) error {
-	if err := d.init(); err != nil {
+func (nm *NoteMap) Patch(ops []change.Operation) error {
+	if err := nm.init(); err != nil {
 		return err
 	}
-	return d.note.WriteTxn(func(txn *db.Txn) error {
+	return nm.note.WriteTxn(func(txn *db.Txn) error {
 		cache := make(map[uint64]*note)
 		created := make(map[uint64]bool)
 		get := func(id uint64) (*note, error) {
@@ -308,7 +320,7 @@ func (d *Database) Patch(ops []change.Operation) error {
 	})
 }
 
-func (d *Database) Close() error { return d.t.Close() }
+func (nm *NoteMap) Close() error { return nm.t.Close() }
 
 type record struct {
 	ID          core.InstanceID   `json:"_id"`

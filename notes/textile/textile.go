@@ -339,10 +339,12 @@ type note struct {
 func (n *note) load() error {
 	panic("not implemented")
 }
+
 func (n *note) GetId() uint64 {
 	u, _ := strconv.ParseUint(string(n.ID), 10, 64)
 	return u
 }
+
 func (n *note) GetTypes() ([]notes.Note, error) {
 	if err := n.load(); err != nil {
 		return nil, err
@@ -353,12 +355,15 @@ func (n *note) GetTypes() ([]notes.Note, error) {
 	}
 	return ns, nil
 }
+
 func (n *note) GetSupertypes() ([]notes.Note, error) {
 	return notes.EmptyNote(0).GetSupertypes()
 }
+
 func (n *note) GetValue() (string, notes.Note, error) {
 	return notes.EmptyNote(0).GetValue()
 }
+
 func (n *note) GetContents() ([]notes.Note, error) {
 	return notes.EmptyNote(0).GetContents()
 }

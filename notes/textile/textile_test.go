@@ -16,51 +16,112 @@ package textile
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"os"
 	"testing"
 
 	"github.com/google/note-maps/notes"
+	"github.com/textileio/go-threads/core/app"
 )
 
-func TestSomething(t *testing.T) {
-	d, clean := createMemDB(t)
-	defer clean()
-	defer d.Close()
-
+// TestPatchLoad applies some simple operations to a note map and verifies
+// their impact in the result.
+func TestPatchLoad(t *testing.T) {
+	dir, rmdir := testDir(t)
+	defer rmdir()
+	n := defaultNetwork(t, dir)
+	defer func() {
+		if err := n.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}()
+	nm := open(t, n, WithBaseDirectory(dir))
+	defer func() {
+		if err := nm.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}()
 	var stage notes.Stage
 	stage.Note(1).SetValue("Title1", 0)
 	stage.Note(2).SetValue("Title2", 0)
-	if err := d.Patch(stage.Ops); err != nil {
-		t.Error(err)
+	if err := nm.Patch(stage.Ops); err != nil {
+		t.Fatal(err)
 	}
-
-	ns, err := d.Find(&notes.Query{})
+	ns, err := nm.Load([]uint64{1, 2})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(ns) != 2 {
-		panic("there should be two notes")
+		t.Errorf("got %v notes, expected 2", len(ns))
+	}
+	t.Skip("let's switch from uint64 to string identifiers first")
+	if len(ns) > 0 {
+		if eq, err := notes.Equal(ns[0], stage.Note(1)); err != nil {
+			t.Error(err)
+		} else if !eq {
+			t.Error(notes.DebugDiff(ns[0], stage.Note(1)))
+		}
+	}
+	if len(ns) > 1 {
+		if eq, err := notes.Equal(ns[1], stage.Note(2)); err != nil {
+			t.Error(err)
+		} else if !eq {
+			t.Error(notes.DebugDiff(ns[1], stage.Note(2)))
+		}
 	}
 }
 
-func createMemDB(t *testing.T) (notes.NoteMap, func()) {
+// Make sure we can open the same database more than once.
+func TestOpenOpen(t *testing.T) {
+	dir, rmdir := testDir(t)
+	defer rmdir()
+	n := defaultNetwork(t, dir)
+	secrets := make(map[string][]byte)
+	opts := []Option{
+		WithBaseDirectory(dir),
+		WithGetSecret(func(k string) ([]byte, error) {
+			s, ok := secrets[k]
+			if !ok {
+				return nil, errors.New("no secret")
+			}
+			return s, nil
+		}),
+		WithSetSecret(func(k string, s []byte) error {
+			secrets[k] = s
+			return nil
+		}),
+	}
+	nm0 := open(t, n, opts...)
+	if err := nm0.Close(); err != nil {
+		t.Fatal(err)
+	}
+	nm1 := open(t, n, opts...)
+	if err := nm1.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func testDir(t *testing.T) (string, func()) {
 	dir, err := ioutil.TempDir("", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	n, err := DefaultNetwork(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	d, err := Open(context.Background(), n, WithBaseDirectory(dir))
-	if err != nil {
-		t.Fatal(err)
-	}
-	return d, func() {
-		if err := n.Close(); err != nil {
-			panic(err)
-		}
+	return dir, func() {
 		_ = os.RemoveAll(dir)
 	}
+}
+func defaultNetwork(t *testing.T, d string) app.Net {
+	n, err := DefaultNetwork(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return n
+}
+func open(t *testing.T, n app.Net, opts ...Option) notes.NoteMap {
+	d, err := Open(context.Background(), n, opts...)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return d
 }

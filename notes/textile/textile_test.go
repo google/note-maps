@@ -43,12 +43,12 @@ func TestPatchLoad(t *testing.T) {
 		}
 	}()
 	var stage notes.Stage
-	stage.Note(1).SetValue("Title1", 0)
-	stage.Note(2).SetValue("Title2", 0)
+	stage.Note("1").SetValue("Title1", notes.EmptyID)
+	stage.Note("2").SetValue("Title2", notes.EmptyID)
 	if err := nm.Patch(stage.Ops); err != nil {
 		t.Fatal(err)
 	}
-	ns, err := nm.Load([]uint64{1, 2})
+	ns, err := nm.Load([]notes.ID{"1", "2"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,17 +57,17 @@ func TestPatchLoad(t *testing.T) {
 	}
 	t.Skip("let's switch from uint64 to string identifiers first")
 	if len(ns) > 0 {
-		if eq, err := notes.Equal(ns[0], stage.Note(1)); err != nil {
+		if eq, err := notes.Equal(ns[0], stage.Note("1")); err != nil {
 			t.Error(err)
 		} else if !eq {
-			t.Error(notes.DebugDiff(ns[0], stage.Note(1)))
+			t.Error(notes.DebugDiff(ns[0], stage.Note("1")))
 		}
 	}
 	if len(ns) > 1 {
-		if eq, err := notes.Equal(ns[1], stage.Note(2)); err != nil {
+		if eq, err := notes.Equal(ns[1], stage.Note("2")); err != nil {
 			t.Error(err)
 		} else if !eq {
-			t.Error(notes.DebugDiff(ns[1], stage.Note(2)))
+			t.Error(notes.DebugDiff(ns[1], stage.Note("2")))
 		}
 	}
 }

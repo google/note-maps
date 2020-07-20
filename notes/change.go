@@ -12,34 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto3";
+package notes
 
-package notemaps.notes.pbdb.pb;
-
-option go_package = "github.com/google/note-maps/notes/pbdb/pb";
-
-message Note {
-  uint64 id = 1;
-  repeated uint64 types = 2;
-  repeated uint64 supertypes = 3;
-  repeated string indicators = 4;
-  repeated string locators = 5;
-  message Value {
-    string lexical = 1;
-    uint64 datatype = 2;
-  }
-  Value value = 6;
-  message Role {
-    uint64 type = 1;
-    uint64 player = 2;
-  }
-  repeated uint64 contents = 7;
-  Status status = 8;
+type Operation interface {
+	AffectsID(id ID) bool
 }
 
-enum Status {
-  New = 0;
-  Created = 1;
-  Archived = 2;
-  Discarded = 3;
+type SetValue struct {
+	ID       ID
+	Lexical  string
+	Datatype ID
 }
+
+func (x SetValue) AffectsID(id ID) bool { return x.ID == id }
+
+type AddContent struct {
+	ID  ID
+	Add ID
+}
+
+func (x AddContent) AffectsID(id ID) bool { return x.ID == id }

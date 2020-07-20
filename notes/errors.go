@@ -21,12 +21,12 @@ import "strconv"
 type Error int
 
 const (
-	InvalidId Error = iota
+	InvalidID Error = iota
 )
 
 func (e Error) Error() string {
 	switch e {
-	case InvalidId:
+	case InvalidID:
 		return "invalid note id"
 	default:
 		return "unknown note maps error code " +

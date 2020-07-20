@@ -65,14 +65,14 @@ func (c *setCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) s
 	}
 	var (
 		stage notes.Stage
-		note  = stage.Note(notes.EmptyId)
+		note  = stage.Note(notes.EmptyID)
 	)
 	err = yaml.UnmarshalNote(input, note)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "set: while parsing input", err)
 		return subcommands.ExitFailure
 	}
-	if note.GetId() == 0 {
+	if note.GetID() == notes.EmptyID {
 		fmt.Fprintln(os.Stderr, "set: a non-zero id is required")
 		return subcommands.ExitFailure
 	}
@@ -89,7 +89,7 @@ func (c *setCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) s
 		return subcommands.ExitFailure
 	}
 
-	fmt.Fprintln(c.cfg.output, note.GetId())
+	fmt.Fprintln(c.cfg.output, note.GetID())
 	return subcommands.ExitSuccess
 }
 

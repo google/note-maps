@@ -14,10 +14,6 @@
 
 package notes
 
-import (
-	"github.com/google/note-maps/notes/change"
-)
-
 // Stage describes a set of changes that might be made to a note map.
 //
 // The default stage describes an empty set of changes to be made to an empty
@@ -25,18 +21,18 @@ import (
 //
 // A default Stage{} is an empty set of changes made to an empty note map.
 type Stage struct {
-	Ops  []change.Operation
+	Ops  []Operation
 	Base Loader
 }
 
 // Add simply appends o to the set of operations described by x.
-func (x *Stage) Add(o change.Operation) *Stage {
+func (x *Stage) Add(o Operation) *Stage {
 	x.Ops = append(x.Ops, o)
 	return x
 }
 
 // Note returns a note-specific StageNote focused on note with id.
-func (x *Stage) Note(id uint64) *StageNote { return &StageNote{x, id} }
+func (x *Stage) Note(id ID) *StageNote { return &StageNote{x, id} }
 
 // GetBase returns a non-nil Loader derived from x.Base.
 func (x *Stage) GetBase(defaultEmpty bool) Loader {
@@ -52,26 +48,26 @@ func (x *Stage) GetBase(defaultEmpty bool) Loader {
 // the batch applied.
 type StageNote struct {
 	Stage *Stage
-	Id    uint64
+	ID    ID
 }
 
-func (x *StageNote) GetId() uint64 { return x.Id }
+func (x *StageNote) GetID() ID { return x.ID }
 func (x *StageNote) GetTypes() ([]Note, error) {
-	base, err := LoadOne(x.Stage.GetBase(true), x.Id)
+	base, err := LoadOne(x.Stage.GetBase(true), x.ID)
 	if err != nil {
 		return nil, err
 	}
 	return base.GetTypes()
 }
 func (x *StageNote) GetSupertypes() ([]Note, error) {
-	base, err := LoadOne(x.Stage.GetBase(true), x.Id)
+	base, err := LoadOne(x.Stage.GetBase(true), x.ID)
 	if err != nil {
 		return nil, err
 	}
 	return base.GetSupertypes()
 }
 func (x *StageNote) GetValue() (string, Note, error) {
-	base, err := LoadOne(x.Stage.GetBase(true), x.Id)
+	base, err := LoadOne(x.Stage.GetBase(true), x.ID)
 	if err != nil {
 		return "", nil, err
 	}
@@ -80,9 +76,9 @@ func (x *StageNote) GetValue() (string, Note, error) {
 		return lex, dtype, err
 	}
 	for _, op := range x.Stage.Ops {
-		if op.AffectsId(x.Id) {
+		if op.AffectsID(x.ID) {
 			switch o := op.(type) {
-			case change.SetValue:
+			case SetValue:
 				lex, dtype = o.Lexical, x.Stage.Note(o.Datatype)
 			}
 		}
@@ -90,7 +86,7 @@ func (x *StageNote) GetValue() (string, Note, error) {
 	return lex, dtype, nil
 }
 func (x *StageNote) GetContents() ([]Note, error) {
-	base, err := LoadOne(x.Stage.GetBase(true), x.Id)
+	base, err := LoadOne(x.Stage.GetBase(true), x.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -99,9 +95,9 @@ func (x *StageNote) GetContents() ([]Note, error) {
 		return ns, err
 	}
 	for _, op := range x.Stage.Ops {
-		if op.AffectsId(x.Id) {
+		if op.AffectsID(x.ID) {
 			switch o := op.(type) {
-			case change.AddContent:
+			case AddContent:
 				ns = append(ns, x.Stage.Note(o.Add))
 			}
 		}
@@ -110,18 +106,18 @@ func (x *StageNote) GetContents() ([]Note, error) {
 }
 
 // SetValue expands the staged operations to update the value of this note.
-func (x *StageNote) SetValue(lexical string, datatype uint64) {
-	if x.Id == 0 {
-		panic("id is still 0")
+func (x *StageNote) SetValue(lexical string, datatype ID) {
+	if x.ID == EmptyID {
+		panic("cannot set value before specifying an ID")
 	}
-	x.Stage.Add(change.SetValue{Id: x.Id, Lexical: lexical, Datatype: datatype})
+	x.Stage.Add(SetValue{ID: x.ID, Lexical: lexical, Datatype: datatype})
 }
 
 // AddContent expands the staged operations to add content to this note.
-func (x *StageNote) AddContent(id uint64) *StageNote {
-	if x.Id == 0 {
-		panic("id is still 0")
+func (x *StageNote) AddContent(id ID) *StageNote {
+	if x.ID == EmptyID {
+		panic("cannot add content before specifying an ID")
 	}
-	x.Stage.Add(change.AddContent{Id: x.Id, Add: id})
+	x.Stage.Add(AddContent{ID: x.ID, Add: id})
 	return &StageNote{x.Stage, id}
 }

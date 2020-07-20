@@ -21,11 +21,9 @@ import (
 	"encoding/json"
 	"errors"
 	"path/filepath"
-	"strconv"
 	"sync"
 
 	"github.com/google/note-maps/notes"
-	"github.com/google/note-maps/notes/change"
 	"github.com/textileio/go-threads/common"
 	"github.com/textileio/go-threads/core/app"
 	core "github.com/textileio/go-threads/core/db"
@@ -211,13 +209,13 @@ func (nm *NoteMap) Find(q *notes.Query) ([]notes.Note, error) {
 	return nm.find(&db.Query{})
 }
 
-func (nm *NoteMap) Load(ids []uint64) ([]notes.Note, error) {
+func (nm *NoteMap) Load(ids []notes.ID) ([]notes.Note, error) {
 	if err := nm.init(); err != nil {
 		return nil, err
 	}
 	var q *db.Query
 	for _, id := range ids {
-		or := db.Where("Id").Eq(id)
+		or := db.Where("ID").Eq(id)
 		if q == nil {
 			q = or
 		} else {
@@ -228,9 +226,9 @@ func (nm *NoteMap) Load(ids []uint64) ([]notes.Note, error) {
 	if err != nil {
 		return nil, err
 	}
-	id2found := make(map[uint64]int)
+	id2found := make(map[notes.ID]int)
 	for i, n := range found {
-		id2found[n.GetId()] = i
+		id2found[n.GetID()] = i
 	}
 	ns := make([]notes.Note, len(ids))
 	for i, id := range ids {
@@ -243,16 +241,16 @@ func (nm *NoteMap) Load(ids []uint64) ([]notes.Note, error) {
 	return ns, nil
 }
 
-func (nm *NoteMap) Patch(ops []change.Operation) error {
+func (nm *NoteMap) Patch(ops []notes.Operation) error {
 	if err := nm.init(); err != nil {
 		return err
 	}
 	return nm.note.WriteTxn(func(txn *db.Txn) error {
-		cache := make(map[uint64]*note)
-		created := make(map[uint64]bool)
-		get := func(id uint64) (*note, error) {
+		cache := make(map[notes.ID]*note)
+		created := make(map[notes.ID]bool)
+		get := func(id notes.ID) (*note, error) {
 			if _, ok := cache[id]; !ok {
-				cid := core.InstanceID(strconv.FormatUint(id, 10))
+				cid := core.InstanceID(id)
 				bs, err := txn.FindByID(cid)
 				if err != nil {
 					if err == db.ErrInstanceNotFound {
@@ -277,21 +275,21 @@ func (nm *NoteMap) Patch(ops []change.Operation) error {
 		}
 		for _, op := range ops {
 			switch o := op.(type) {
-			case change.AddContent:
-				n, err := get(o.Id)
+			case notes.AddContent:
+				n, err := get(o.ID)
 				if err != nil {
 					return err
 				}
 				n.record.Contents = append(
 					n.record.Contents,
-					core.InstanceID(strconv.FormatUint(o.Add, 10)))
-			case change.SetValue:
-				n, err := get(o.Id)
+					core.InstanceID(o.Add))
+			case notes.SetValue:
+				n, err := get(o.ID)
 				if err != nil {
 					return err
 				}
 				n.record.ValueString = o.Lexical
-				n.record.ValueType = core.InstanceID(strconv.FormatUint(o.Datatype, 10))
+				n.record.ValueType = core.InstanceID(o.Datatype)
 			default:
 				panic("unrecognized op type")
 			}
@@ -301,12 +299,12 @@ func (nm *NoteMap) Patch(ops []change.Operation) error {
 			if err != nil {
 				return wrapError("marshalling updated note for storage", err)
 			}
-			if created[n.GetId()] {
+			if created[n.GetID()] {
 				actual, err := txn.Create(bs)
 				if err != nil {
 					return wrapError("while saving note", err)
 				}
-				intended := strconv.FormatUint(n.GetId(), 10)
+				intended := string(n.GetID())
 				if string(actual[0]) != intended {
 					return errors.New("created note " + string(actual[0]) + ", intended " + intended)
 				}
@@ -340,9 +338,8 @@ func (n *note) load() error {
 	panic("not implemented")
 }
 
-func (n *note) GetId() uint64 {
-	u, _ := strconv.ParseUint(string(n.ID), 10, 64)
-	return u
+func (n *note) GetID() notes.ID {
+	return notes.ID(n.ID)
 }
 
 func (n *note) GetTypes() ([]notes.Note, error) {

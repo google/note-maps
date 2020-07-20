@@ -16,20 +16,20 @@
 // data storage system.
 package notes
 
-// EmptyId is the zero or nil value for note identifiers, and never identifies
+// EmptyID is the zero or nil value for note identifiers, and never identifies
 // a valid note.
 //
-// EmptyId exists only to make code that specifies the zero value for Note
+// EmptyID exists only to make code that specifies the zero value for Note
 // identifiers a bit more readable.
-const EmptyId uint64 = 0
+const EmptyID ID = ""
 
-// EmptyNote is simply an empty Note with nothing more than an Id.
-type EmptyNote uint64
+// EmptyNote is simply an empty Note with nothing more than an ID.
+type EmptyNote ID
 
-func (x EmptyNote) GetId() uint64                   { return uint64(x) }
+func (x EmptyNote) GetID() ID                       { return ID(x) }
 func (x EmptyNote) GetTypes() ([]Note, error)       { return nil, nil }
 func (x EmptyNote) GetSupertypes() ([]Note, error)  { return nil, nil }
-func (x EmptyNote) GetValue() (string, Note, error) { return "", EmptyNote(0), nil }
+func (x EmptyNote) GetValue() (string, Note, error) { return "", EmptyNote(EmptyID), nil }
 func (x EmptyNote) GetContents() ([]Note, error)    { return nil, nil }
 
 const (
@@ -40,11 +40,11 @@ const (
 
 type emptyLoader int
 
-func (x emptyLoader) Load(ids []uint64) ([]Note, error) {
+func (x emptyLoader) Load(ids []ID) ([]Note, error) {
 	ns := make([]Note, len(ids))
 	for i, id := range ids {
-		if id == EmptyId {
-			return nil, InvalidId
+		if id == EmptyID {
+			return nil, InvalidID
 		}
 		ns[i] = EmptyNote(id)
 	}

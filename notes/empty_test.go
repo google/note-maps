@@ -30,16 +30,6 @@ func TestEmptyNote(t *testing.T) {
 	if id := n.GetID(); id != "7" {
 		t.Errorf("got %v, expected %v", id, "7")
 	}
-	if ns, err := n.GetTypes(); err != nil {
-		t.Errorf("got %v, expected nil", err)
-	} else if len(ns) != 0 {
-		t.Errorf("got %#v, expected empty slice", ns)
-	}
-	if ns, err := n.GetSupertypes(); err != nil {
-		t.Errorf("got %v, expected nil", err)
-	} else if len(ns) != 0 {
-		t.Errorf("got %#v, expected empty slice", ns)
-	}
 	if s, n, err := n.GetValue(); err != nil {
 		t.Errorf("got %v, expected nil", err)
 	} else if s != "" || n.GetID() != EmptyID {

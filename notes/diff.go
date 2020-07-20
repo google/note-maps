@@ -52,20 +52,6 @@ type StageNote struct {
 }
 
 func (x *StageNote) GetID() ID { return x.ID }
-func (x *StageNote) GetTypes() ([]Note, error) {
-	base, err := LoadOne(x.Stage.GetBase(true), x.ID)
-	if err != nil {
-		return nil, err
-	}
-	return base.GetTypes()
-}
-func (x *StageNote) GetSupertypes() ([]Note, error) {
-	base, err := LoadOne(x.Stage.GetBase(true), x.ID)
-	if err != nil {
-		return nil, err
-	}
-	return base.GetSupertypes()
-}
 func (x *StageNote) GetValue() (string, Note, error) {
 	base, err := LoadOne(x.Stage.GetBase(true), x.ID)
 	if err != nil {

@@ -29,8 +29,6 @@ func (id ID) Empty() bool { return id == EmptyID }
 type EmptyNote ID
 
 func (x EmptyNote) GetID() ID                       { return ID(x) }
-func (x EmptyNote) GetTypes() ([]Note, error)       { return nil, nil }
-func (x EmptyNote) GetSupertypes() ([]Note, error)  { return nil, nil }
 func (x EmptyNote) GetValue() (string, Note, error) { return "", EmptyNote(EmptyID), nil }
 func (x EmptyNote) GetContents() ([]Note, error)    { return nil, nil }
 

@@ -84,7 +84,9 @@ func (c *setCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) s
 	}
 	defer db.Close()
 
-	if err = db.Patch(stage.Ops); err != nil {
+	if err = db.IsolatedWrite(func(w notes.FindLoadPatcher) error {
+		return w.Patch(stage.Ops)
+	}); err != nil {
 		fmt.Fprintln(os.Stderr, "set: while applying change:", err)
 		return subcommands.ExitFailure
 	}

@@ -20,16 +20,18 @@ import (
 	"io"
 )
 
+// ID is the type of values that identify notes.
 type ID string
 
-// NoteMap can be implemented to support finding and patching notes in a note map.
+// Note is a graph-like interface to a note in a note map.
 //
-// An instance of DB should be closed when it is no longer needed.
-type NoteMap interface {
-	Finder
-	Loader
-	Patcher
-	io.Closer
+// Since traversing from note to note in a note map may require fragile
+// operations like loading query results from a storage backend, most methods
+// can return an error instead of the requested data.
+type Note interface {
+	GetID() ID
+	GetValue() (string, Note, error)
+	GetContents() ([]Note, error)
 }
 
 // Finder can be implemented to support finding notes in a note map according
@@ -42,9 +44,15 @@ type Finder interface {
 type Loader interface {
 	// Load returns a slice of all found notes.
 	//
-	// If the error is NotFound, the returned notes includes all found
-	// notes and NotFound.Ids holds the ids of notes that were not found.
+	// All notes exist implicitly, even if they are empty. An error indicates
+	// something actually went wrong.
 	Load(ids []ID) ([]Note, error)
+}
+
+// FindLoader combines the Finder and Loader interfaces.
+type FindLoader interface {
+	Finder
+	Loader
 }
 
 // LoadOne is a convenience function for loading just one note.
@@ -56,21 +64,43 @@ func LoadOne(l Loader, id ID) (Note, error) {
 	return ns[0], nil
 }
 
-// Note is a graph-like interface to a note in a note map.
-//
-// Since traversing from note to note in a note map may require fragile
-// operations like loading query results from a storage backend, most methods
-// can return an error instead of the requested data.
-type Note interface {
-	GetID() ID
-	GetTypes() ([]Note, error)
-	GetSupertypes() ([]Note, error)
-	GetValue() (string, Note, error)
-	GetContents() ([]Note, error)
-}
-
 // Patcher can be implemented to support making changes to notes in a note map
 // by applying a set of differences to them.
 type Patcher interface {
 	Patch(ops []Operation) error
+}
+
+// FindLoadPatcher combines the Finder, Loader, and Patcher interfaces.
+type FindLoadPatcher interface {
+	Finder
+	Loader
+	Patcher
+}
+
+// IsolatedReader provides isolated read operations over a note map.
+type IsolatedReader interface {
+	// IsolatedRead invokes f with a FindLoader that will read from an
+	// unchanging version of the note map.
+	IsolatedRead(f func(r FindLoader) error) error
+}
+
+// IsolatedWriter provides atomic isolated write operations over a note map.
+type IsolatedWriter interface {
+	// IsolatedWrite invokes f with an isolated FindLoadPatcher that can read and
+	// change a note map.
+	//
+	// If f returns an error, none of the changes will be saved. Implementations
+	// should return an error in any case when changes are not saved.
+	IsolatedWrite(f func(rw FindLoadPatcher) error) error
+}
+
+// IsolatedReadWriteCloser provides atomic isolated read and write operations
+// over a note map.
+//
+// An instance of IsolatedReadWriteCloser should be closed when it is no longer
+// needed.
+type IsolatedReadWriteCloser interface {
+	IsolatedReader
+	IsolatedWriter
+	io.Closer
 }

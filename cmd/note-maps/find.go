@@ -47,7 +47,15 @@ func (c *findCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 		return subcommands.ExitFailure
 	}
 	defer db.Close()
-	ns, err := db.Find(&notes.Query{})
+	var ns []notes.Note
+	err = db.IsolatedRead(func(r notes.FindLoader) (e error) {
+		ns, e = r.Find(&notes.Query{})
+		return e
+	})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return subcommands.ExitFailure
+	}
 	for _, n := range ns {
 		bs, err := yaml.MarshalNote(n)
 		if err != nil {
@@ -61,6 +69,7 @@ func (c *findCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 		c.cfg.output.Write([]byte("---\n"))
 	}
 	if len(ns) == 0 {
+		fmt.Fprintln(os.Stderr, "no matching notes found")
 		return subcommands.ExitFailure
 	}
 	return subcommands.ExitSuccess

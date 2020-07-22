@@ -35,7 +35,7 @@ func (x *Stage) Add(o Operation) *Stage {
 func (x *Stage) Note(id ID) *StageNote { return &StageNote{x, id} }
 
 // GetBase returns a non-nil Loader derived from x.Base.
-func (x *Stage) GetBase(defaultEmpty bool) Loader {
+func (x *Stage) GetBase() Loader {
 	base := x.Base
 	if base == nil {
 		base = EmptyLoader
@@ -53,7 +53,7 @@ type StageNote struct {
 
 func (x *StageNote) GetID() ID { return x.ID }
 func (x *StageNote) GetValue() (string, Note, error) {
-	base, err := LoadOne(x.Stage.GetBase(true), x.ID)
+	base, err := LoadOne(x.Stage.GetBase(), x.ID)
 	if err != nil {
 		return "", nil, err
 	}
@@ -72,7 +72,7 @@ func (x *StageNote) GetValue() (string, Note, error) {
 	return lex, dtype, nil
 }
 func (x *StageNote) GetContents() ([]Note, error) {
-	base, err := LoadOne(x.Stage.GetBase(true), x.ID)
+	base, err := LoadOne(x.Stage.GetBase(), x.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,9 @@ func (x *StageNote) GetContents() ([]Note, error) {
 		if op.AffectsID(x.ID) {
 			switch o := op.(type) {
 			case AddContent:
-				ns = append(ns, x.Stage.Note(o.Add))
+				if o.ID == x.ID {
+					ns = append(ns, x.Stage.Note(o.Add))
+				}
 			}
 		}
 	}

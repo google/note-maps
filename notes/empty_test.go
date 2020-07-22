@@ -25,6 +25,15 @@ func TestEmptyID(t *testing.T) {
 	}
 }
 
+func TestID_Empty(t *testing.T) {
+	if !EmptyID.Empty() {
+		t.Error("EmptyID is not empty, expected empty")
+	}
+	if ID("0").Empty() {
+		t.Errorf("%#v is empty, expected not empty", ID("0"))
+	}
+}
+
 func TestEmptyNote(t *testing.T) {
 	var n Note = EmptyNote("7")
 	if id := n.GetID(); id != "7" {
@@ -39,5 +48,27 @@ func TestEmptyNote(t *testing.T) {
 		t.Errorf("got %v, expected nil", err)
 	} else if len(ns) != 0 {
 		t.Errorf("got %#v, expected empty slice", ns)
+	}
+}
+
+func TestEmptyLoader_Load(t *testing.T) {
+	ns, err := EmptyLoader.Load([]ID{"this is ok", "this is fine too"})
+	if err != nil {
+		t.Errorf("got %#v, expected %#v", err, nil)
+	} else if len(ns) != 2 {
+		t.Fatalf("got %v notes, expected %v", len(ns), 2)
+	}
+	if ns[0].GetID() != "this is ok" {
+		t.Fatalf("got %#v, expected %#v", ns[0].GetID(), "this is ok")
+	}
+	if ns[1].GetID() != "this is fine too" {
+		t.Fatalf("got %#v, expected %#v", ns[0].GetID(), "this is fine too")
+	}
+}
+
+func TestEmptyLoader_Load_withInvalidID(t *testing.T) {
+	_, err := EmptyLoader.Load([]ID{"this is ok", "this is fine too", EmptyID})
+	if err != InvalidID {
+		t.Errorf("got %#v, expected %#v", err, InvalidID)
 	}
 }

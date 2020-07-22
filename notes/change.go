@@ -31,4 +31,4 @@ type AddContent struct {
 	Add ID
 }
 
-func (x AddContent) AffectsID(id ID) bool { return x.ID == id }
+func (x AddContent) AffectsID(id ID) bool { return x.ID == id || x.Add == id }

@@ -75,6 +75,97 @@ func (x TruncatedNote) Equals(y TruncatedNote) bool {
 	return true
 }
 
+// Diff produces a set of operations that if applied to a would make it match
+// b.
+//
+// Differences in ID are not considered: a and b are not required to have the
+// same ID, and applying the operations to a will not cause it to have the same
+// ID as b.
+func Diff(a, b TruncatedNote) []notes.Operation {
+	var ops []notes.Operation
+	if a.ValueType != b.ValueType {
+		ops = append(ops, notes.SetValue{a.ID, b.ValueString, b.ValueType})
+	} else if a.ValueString != b.ValueString {
+		ops = append(ops, notes.OpSetValueString{notes.Op{a.ID}, b.ValueString})
+	}
+	// assumption: an ID cannot occur twice in the same note's contents, but can
+	// be present in multiple notes.
+	acm := make(map[notes.ID]bool)
+	for _, c := range a.Contents {
+		acm[c] = true
+	}
+	res := append([]notes.ID{}, a.Contents...)
+	is := make(map[notes.ID]int)
+	for i, c := range b.Contents {
+		if !acm[c] {
+			// c is in b but not in a, add it to a.
+			if i >= len(a.Contents) {
+				ops = append(ops, notes.AddContent{a.ID, c})
+				res = append(res, c)
+			} else {
+				ops = append(ops, notes.OpInsertContent{notes.Op{a.ID}, c, i})
+				res = append(res, c)
+				copy(res[i+1:], res[i:len(res)-1])
+				res[i] = c
+			}
+		}
+		is[c] = i
+	}
+	for i0, c := range a.Contents {
+		_, ok := is[c]
+		if !ok {
+			// c is in a but not in b, remove it from a.
+			ops = append(ops, notes.OpRemoveContent{notes.Op{a.ID}, c})
+			res = append(res[:i0], res[i0+1:]...)
+		}
+	}
+	if len(res) != len(b.Contents) {
+		panic("unintended: res is not the same size as b")
+	}
+	for i0 := range b.Contents {
+		i1, ok := is[res[i0]]
+		if !ok {
+			panic("unintended: res contains c that is not in b")
+		}
+		if i0 != i1 {
+			ops = append(ops, notes.OpSwapContent{notes.Op{a.ID}, i0, i1})
+			res[i0], res[i1] = res[i1], res[i0]
+		}
+	}
+	return ops
+}
+
+// Patch applies a set of operations to a.
+func Patch(a *TruncatedNote, ops []notes.Operation) error {
+	for _, op := range ops {
+		if !op.AffectsID(a.ID) {
+			continue
+		}
+		switch o := op.(type) {
+		case notes.SetValue:
+			a.ValueString = o.Lexical
+			a.ValueType = o.Datatype
+		case notes.OpSetValueString:
+			a.ValueString = o.Lexical
+		case notes.AddContent:
+			a.Contents = append(a.Contents, o.Add)
+		case notes.OpInsertContent:
+			a.Contents = append(a.Contents, o.Content)
+			copy(a.Contents[o.Index+1:], a.Contents[o.Index:len(a.Contents)-1])
+			a.Contents[o.Index] = o.Content
+		case notes.OpRemoveContent:
+			for i, c := range a.Contents {
+				if c == o.Content {
+					a.Contents = append(a.Contents[:i], a.Contents[i+1:]...)
+				}
+			}
+		case notes.OpSwapContent:
+			a.Contents[o.A], a.Contents[o.B] = a.Contents[o.B], a.Contents[o.A]
+		}
+	}
+	return nil
+}
+
 type note struct {
 	TruncatedNote
 	l notes.Loader

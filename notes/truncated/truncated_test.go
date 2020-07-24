@@ -228,3 +228,41 @@ func TestExpandLoader(t *testing.T) {
 		t.Errorf("expected %v, got %v", four, cs[1])
 	}
 }
+
+func TestDiffPatch(t *testing.T) {
+	for _, test := range []struct {
+		Title string
+		A, B  TruncatedNote
+	}{
+		{Title: "empty notes"},
+		{Title: "change value string",
+			A: TruncatedNote{ValueString: "a"},
+			B: TruncatedNote{ValueString: "b"}},
+		{Title: "change value type",
+			A: TruncatedNote{ValueType: "vt0"},
+			B: TruncatedNote{ValueType: "vt1"}},
+		{Title: "add content",
+			A: TruncatedNote{Contents: []notes.ID{"a"}},
+			B: TruncatedNote{Contents: []notes.ID{"a", "b"}}},
+		{Title: "remove content",
+			A: TruncatedNote{Contents: []notes.ID{"a", "b"}},
+			B: TruncatedNote{Contents: []notes.ID{"a"}}},
+		{Title: "insert content",
+			A: TruncatedNote{Contents: []notes.ID{"a", "b"}},
+			B: TruncatedNote{Contents: []notes.ID{"a", "c", "b"}}},
+		{Title: "swap content",
+			A: TruncatedNote{Contents: []notes.ID{"a", "b"}},
+			B: TruncatedNote{Contents: []notes.ID{"b", "a"}}},
+	} {
+		t.Run(test.Title, func(t *testing.T) {
+			ops := Diff(test.A, test.B)
+			newB := test.A
+			if err := Patch(&newB, ops); err != nil {
+				t.Error(err)
+			} else if !newB.Equals(test.B) {
+				t.Errorf("got %#v, expected %#v, applying %#v to %#v",
+					newB, test.B, ops, test.A)
+			}
+		})
+	}
+}

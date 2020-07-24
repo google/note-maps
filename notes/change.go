@@ -32,3 +32,28 @@ type AddContent struct {
 }
 
 func (x AddContent) AffectsID(id ID) bool { return x.ID == id || x.Add == id }
+
+type Op struct{ ID }
+
+func (x Op) AffectsID(id ID) bool { return x.ID == id }
+
+type OpSetValueString struct {
+	Op
+	Lexical string
+}
+
+type OpInsertContent struct {
+	Op
+	Content ID
+	Index   int
+}
+
+type OpRemoveContent struct {
+	Op
+	Content ID
+}
+
+type OpSwapContent struct {
+	Op
+	A, B int
+}

@@ -15,10 +15,137 @@
 package truncated
 
 import (
+	"errors"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/google/note-maps/notes"
+	notes_testing "github.com/google/note-maps/notes/testing"
 )
+
+type nn struct {
+	notes.ID
+	VS string
+	VT notes.Note
+	CS []notes.Note
+}
+
+func (n nn) GetID() notes.ID                       { return n.ID }
+func (n nn) GetValue() (string, notes.Note, error) { return n.VS, n.VT, nil }
+func (n nn) GetContents() ([]notes.Note, error)    { return n.CS, nil }
+
+type brokenValue struct{ nn }
+
+func (n brokenValue) GetValue() (string, notes.Note, error) {
+	return "", nil, errors.New("brokenValue")
+}
+
+type brokenContents struct{ nn }
+
+func (n brokenContents) GetContents() ([]notes.Note, error) {
+	return nil, errors.New("brokenContents")
+}
+
+func TestTruncateNote(t *testing.T) {
+	actual, err := TruncateNote(nn{
+		ID: "id",
+		VS: "value",
+		VT: notes.EmptyNote("vt"),
+		CS: []notes.Note{notes.EmptyNote("c0"), notes.EmptyNote("c1")},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := TruncatedNote{
+		ID:          "id",
+		ValueString: "value",
+		ValueType:   "vt",
+		Contents:    []notes.ID{"c0", "c1"},
+	}
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("got %#v, expected %#v", actual, expected)
+	}
+}
+
+func TestTruncateNote_errorIfValueBroken(t *testing.T) {
+	_, err := TruncateNote(brokenValue{nn{
+		ID: "id",
+		VS: "value",
+		VT: notes.EmptyNote("vt"),
+		CS: []notes.Note{notes.EmptyNote("c0"), notes.EmptyNote("c1")},
+	}})
+	if err == nil || !strings.HasSuffix(err.Error(), "brokenValue") {
+		t.Fatal("got", err, "expected brokenValue")
+	}
+}
+
+func TestTruncateNote_errorIfContentsBroken(t *testing.T) {
+	_, err := TruncateNote(brokenContents{nn{
+		ID: "id",
+		VS: "value",
+		VT: notes.EmptyNote("vt"),
+		CS: []notes.Note{notes.EmptyNote("c0"), notes.EmptyNote("c1")},
+	}})
+	if err == nil || !strings.HasSuffix(err.Error(), "brokenContents") {
+		t.Fatal("got", err, "expected brokenContents")
+	}
+}
+
+func TestTruncateNote_Equals(t *testing.T) {
+	for _, test := range []struct {
+		A, B  TruncatedNote
+		Equal bool
+	}{
+		{TruncatedNote{}, TruncatedNote{}, true},
+		{
+			TruncatedNote{},
+			TruncatedNote{"", "", "", []notes.ID{}},
+			true,
+		},
+		{TruncatedNote{ID: "0"}, TruncatedNote{}, false},
+		{TruncatedNote{ID: "0"}, TruncatedNote{ID: "0"}, true},
+		{
+			TruncatedNote{ValueString: "x"},
+			TruncatedNote{ValueString: "y"},
+			false,
+		},
+		{
+			TruncatedNote{ValueString: "x"},
+			TruncatedNote{ValueString: "x"},
+			true,
+		},
+		{
+			TruncatedNote{ValueType: "x"},
+			TruncatedNote{ValueType: "y"},
+			false,
+		},
+		{
+			TruncatedNote{ValueType: "x"},
+			TruncatedNote{ValueType: "x"},
+			true,
+		},
+		{
+			TruncatedNote{Contents: []notes.ID{"x"}},
+			TruncatedNote{Contents: []notes.ID{"y"}},
+			false,
+		},
+		{
+			TruncatedNote{Contents: []notes.ID{"x"}},
+			TruncatedNote{Contents: []notes.ID{"x"}},
+			true,
+		},
+	} {
+		if test.A.Equals(test.B) != test.B.Equals(test.A) {
+			t.Errorf("A.Equals(B) != B.Equals(A) : %v != %v",
+				test.A.Equals(test.B), test.B.Equals(test.A))
+		}
+		if test.A.Equals(test.B) != test.Equal {
+			t.Errorf("%#v==%#v got %v, expected %v",
+				test.A, test.B, !test.Equal, test.Equal)
+		}
+	}
+}
 
 type findloader map[notes.ID]TruncatedNote
 
@@ -51,6 +178,7 @@ func TestExpandLoader(t *testing.T) {
 		fl[tn.ID] = tn
 	}
 	l := ExpandLoader(fl)
+	notes_testing.TestLoader(t, l)
 	ns, err := l.Load([]notes.ID{"one", "two"})
 	if err != nil {
 		t.Fatal(err)

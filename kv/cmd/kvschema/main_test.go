@@ -67,6 +67,9 @@ type ImplementerReport struct {
 }
 
 func TestStuff(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping slow test in -short mode")
+	}
 	for _, test := range tests {
 		fset := token.NewFileSet()
 		f, err := parser.ParseFile(fset, "input.go", test.Source, 0)

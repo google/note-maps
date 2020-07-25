@@ -102,6 +102,9 @@ func verifyDocuments(s *Txn, des []kv.Entity, ds []Document) {
 }
 
 func TestCreateRead(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping slow test in -short mode")
+	}
 	test := func(s_ kv.Txn) {
 		s := New(s_)
 		samples := sampleDocuments("Test", 5)
@@ -112,6 +115,9 @@ func TestCreateRead(t *testing.T) {
 }
 
 func TestCreateUpdateRead(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping slow test in -short mode")
+	}
 	test := func(s_ kv.Txn) {
 		s := New(s_)
 		des := createDocuments(&s, sampleDocuments("Initial", 5))
@@ -125,6 +131,9 @@ func TestCreateUpdateRead(t *testing.T) {
 }
 
 func TestIterator(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping slow test in -short mode")
+	}
 	test := func(s_ kv.Txn) {
 		s := New(s_)
 		createDocuments(&s, sampleDocuments("Foo", 5))
@@ -175,6 +184,9 @@ func TestIterator(t *testing.T) {
 }
 
 func TestAllDocumentEntities(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping slow test in -short mode")
+	}
 	test := func(s_ kv.Txn) {
 		s := New(s_)
 		want := createDocuments(&s, sampleDocuments("All", 5))

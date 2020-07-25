@@ -296,11 +296,10 @@ func (w findloadpatcher) Patch(ops []notes.Operation) error {
 	ids := make(map[notes.ID]bool)
 	for _, op := range ops {
 		switch o := op.(type) {
-		case notes.AddContent:
-			ids[o.ID] = true
-			ids[o.Add] = true
-		case notes.SetValue:
-			ids[o.ID] = true
+		case notes.OpAddContent:
+			ids[o.GetID()] = true
+		case notes.OpSetValue:
+			ids[o.GetID()] = true
 		default:
 			panic("unrecognized op type")
 		}

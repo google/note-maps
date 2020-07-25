@@ -18,9 +18,9 @@ import (
 	"testing"
 )
 
-func TestSetValue_AffectsID(t *testing.T) {
-	v := SetValue{
-		ID:       "test0",
+func TestOpSetValue_AffectsID(t *testing.T) {
+	v := OpSetValue{
+		Op:       "test0",
 		Lexical:  "test1",
 		Datatype: "test2",
 	}
@@ -35,15 +35,15 @@ func TestSetValue_AffectsID(t *testing.T) {
 	}
 }
 
-func TestAddContent_AffectsID(t *testing.T) {
-	v := AddContent{
-		ID:  "test0",
+func TestOpAddContent_AffectsID(t *testing.T) {
+	v := OpAddContent{
+		Op:  "test0",
 		Add: "test1",
 	}
 	if !v.AffectsID("test0") {
 		t.Error("AddContent should affect the note whose content is being increased")
 	}
-	if !v.AffectsID("test1") {
-		t.Error("AddContent should affect the note that is being added")
+	if v.AffectsID("test1") {
+		t.Error("AddContent should not affect the note that is being added")
 	}
 }

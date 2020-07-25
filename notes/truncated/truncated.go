@@ -82,11 +82,11 @@ func (x TruncatedNote) Equals(y TruncatedNote) bool {
 // same ID, and applying the operations to a will not cause it to have the same
 // ID as b.
 func Diff(a, b TruncatedNote) []notes.Operation {
-	var ops []notes.Operation
+	var ops notes.OperationSlice
 	if a.ValueType != b.ValueType {
-		ops = append(ops, notes.SetValue{a.ID, b.ValueString, b.ValueType})
+		ops = ops.SetValue(a.ID, b.ValueString, b.ValueType)
 	} else if a.ValueString != b.ValueString {
-		ops = append(ops, notes.OpSetValueString{notes.Op{a.ID}, b.ValueString})
+		ops = ops.SetValueString(a.ID, b.ValueString)
 	}
 	// assumption: an ID cannot occur twice in the same note's contents, but can
 	// be present in multiple notes.
@@ -100,10 +100,10 @@ func Diff(a, b TruncatedNote) []notes.Operation {
 		if !acm[c] {
 			// c is in b but not in a, add it to a.
 			if i >= len(a.Contents) {
-				ops = append(ops, notes.AddContent{a.ID, c})
+				ops = ops.AddContent(a.ID, c)
 				res = append(res, c)
 			} else {
-				ops = append(ops, notes.OpInsertContent{notes.Op{a.ID}, c, i})
+				ops = ops.InsertContent(a.ID, i, c)
 				res = append(res, c)
 				copy(res[i+1:], res[i:len(res)-1])
 				res[i] = c
@@ -115,7 +115,7 @@ func Diff(a, b TruncatedNote) []notes.Operation {
 		_, ok := is[c]
 		if !ok {
 			// c is in a but not in b, remove it from a.
-			ops = append(ops, notes.OpRemoveContent{notes.Op{a.ID}, c})
+			ops = ops.RemoveContent(a.ID, c)
 			res = append(res[:i0], res[i0+1:]...)
 		}
 	}
@@ -128,7 +128,7 @@ func Diff(a, b TruncatedNote) []notes.Operation {
 			panic("unintended: res contains c that is not in b")
 		}
 		if i0 != i1 {
-			ops = append(ops, notes.OpSwapContent{notes.Op{a.ID}, i0, i1})
+			ops = ops.SwapContent(a.ID, i0, i1)
 			res[i0], res[i1] = res[i1], res[i0]
 		}
 	}
@@ -142,12 +142,12 @@ func Patch(a *TruncatedNote, ops []notes.Operation) error {
 			continue
 		}
 		switch o := op.(type) {
-		case notes.SetValue:
+		case notes.OpSetValue:
 			a.ValueString = o.Lexical
 			a.ValueType = o.Datatype
 		case notes.OpSetValueString:
 			a.ValueString = o.Lexical
-		case notes.AddContent:
+		case notes.OpAddContent:
 			a.Contents = append(a.Contents, o.Add)
 		case notes.OpInsertContent:
 			a.Contents = append(a.Contents, o.Content)

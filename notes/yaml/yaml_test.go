@@ -52,12 +52,12 @@ func getNote(d *notes.Stage, focus notes.ID) *note {
 	}
 	for _, dop := range d.Ops {
 		switch op := dop.(type) {
-		case *notes.SetValue:
-			n := get(op.ID)
+		case *notes.OpSetValue:
+			n := get(op.GetID())
 			n.valuestring = op.Lexical
 			n.valuetype = get(op.Datatype)
-		case *notes.AddContent:
-			n := get(op.ID)
+		case *notes.OpAddContent:
+			n := get(op.GetID())
 			n.contents = append(n.contents, get(op.Add))
 		default:
 			panic("unknown operation type")

@@ -64,7 +64,7 @@ func (x *StageNote) GetValue() (string, Note, error) {
 	for _, op := range x.Stage.Ops {
 		if op.AffectsID(x.ID) {
 			switch o := op.(type) {
-			case SetValue:
+			case OpSetValue:
 				lex, dtype = o.Lexical, x.Stage.Note(o.Datatype)
 			}
 		}
@@ -83,8 +83,8 @@ func (x *StageNote) GetContents() ([]Note, error) {
 	for _, op := range x.Stage.Ops {
 		if op.AffectsID(x.ID) {
 			switch o := op.(type) {
-			case AddContent:
-				if o.ID == x.ID {
+			case OpAddContent:
+				if o.GetID() == x.ID {
 					ns = append(ns, x.Stage.Note(o.Add))
 				}
 			}
@@ -98,7 +98,7 @@ func (x *StageNote) SetValue(lexical string, datatype ID) {
 	if x.ID == EmptyID {
 		panic("cannot set value before specifying an ID")
 	}
-	x.Stage.Add(SetValue{ID: x.ID, Lexical: lexical, Datatype: datatype})
+	x.Stage.Add(OpSetValue{Op: Op(x.ID), Lexical: lexical, Datatype: datatype})
 }
 
 // AddContent expands the staged operations to add content to this note.
@@ -106,6 +106,6 @@ func (x *StageNote) AddContent(id ID) *StageNote {
 	if x.ID == EmptyID {
 		panic("cannot add content before specifying an ID")
 	}
-	x.Stage.Add(AddContent{ID: x.ID, Add: id})
+	x.Stage.Add(OpAddContent{Op: Op(x.ID), Add: id})
 	return &StageNote{x.Stage, id}
 }

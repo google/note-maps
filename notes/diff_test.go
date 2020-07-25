@@ -78,11 +78,11 @@ func TestStage_Note(t *testing.T) {
 				n1.AddContent("4")
 			},
 			[]Operation{
-				SetValue{"1", "test value1", EmptyID},
-				AddContent{"1", "3"},
-				SetValue{"3", "test value3", EmptyID},
-				SetValue{"4", "test value4", EmptyID},
-				AddContent{"1", "4"},
+				OpSetValue{"1", "test value1", EmptyID},
+				OpAddContent{"1", "3"},
+				OpSetValue{"3", "test value3", EmptyID},
+				OpSetValue{"4", "test value4", EmptyID},
+				OpAddContent{"1", "4"},
 			},
 			map[ID]expectation{
 				"1": {vs: "test value1", cids: []ID{"3", "4"}},

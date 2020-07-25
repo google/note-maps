@@ -29,6 +29,9 @@ import (
 // TestPatchLoad applies some simple operations to a note map and verifies
 // their impact in the result.
 func TestPatchLoad(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that uses IO and network")
+	}
 	dir, rmdir := testDir(t)
 	defer rmdir()
 	n := defaultNetwork(t, dir)
@@ -72,6 +75,9 @@ func TestPatchLoad(t *testing.T) {
 
 // Make sure we can open the same database more than once.
 func TestOpenOpen(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that uses IO and network")
+	}
 	dir, rmdir := testDir(t)
 	defer rmdir()
 	n := defaultNetwork(t, dir)

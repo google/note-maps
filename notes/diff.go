@@ -21,7 +21,7 @@ package notes
 //
 // A default Stage{} is an empty set of changes made to an empty note map.
 type Stage struct {
-	Ops  []Operation
+	Ops  OperationSlice
 	Base Loader
 }
 
@@ -98,7 +98,7 @@ func (x *StageNote) SetValue(lexical string, datatype ID) {
 	if x.ID == EmptyID {
 		panic("cannot set value before specifying an ID")
 	}
-	x.Stage.Add(OpSetValue{Op: Op(x.ID), Lexical: lexical, Datatype: datatype})
+	x.Stage.Ops = x.Stage.Ops.SetValue(x.ID, lexical, datatype)
 }
 
 // AddContent expands the staged operations to add content to this note.
@@ -106,6 +106,6 @@ func (x *StageNote) AddContent(id ID) *StageNote {
 	if x.ID == EmptyID {
 		panic("cannot add content before specifying an ID")
 	}
-	x.Stage.Add(OpAddContent{Op: Op(x.ID), Add: id})
+	x.Stage.Ops = x.Stage.Ops.AddContent(x.ID, id)
 	return &StageNote{x.Stage, id}
 }

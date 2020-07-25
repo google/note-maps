@@ -63,7 +63,7 @@ func TestStage_Note(t *testing.T) {
 	for _, test := range []struct {
 		title    string
 		fluent   func(dst *Stage)
-		input    []Operation
+		input    OperationSlice
 		expected map[ID]expectation
 	}{
 		{
@@ -77,7 +77,7 @@ func TestStage_Note(t *testing.T) {
 				n4.SetValue("test value4", EmptyID)
 				n1.AddContent("4")
 			},
-			[]Operation{
+			OperationSlice{
 				OpSetValue{"1", "test value1", EmptyID},
 				OpAddContent{"1", "3"},
 				OpSetValue{"3", "test value3", EmptyID},
@@ -95,7 +95,7 @@ func TestStage_Note(t *testing.T) {
 			var stage Stage
 			test.fluent(&stage)
 			if !reflect.DeepEqual(stage.Ops, test.input) {
-				t.Error("got", stage.Ops, "expected", test.input)
+				t.Errorf("got %#v, expected %#v", stage.Ops, test.input)
 			}
 			stage.Ops = nil
 			for _, op := range test.input {

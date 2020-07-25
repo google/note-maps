@@ -27,7 +27,7 @@ type breakingLoader struct {
 	err        error
 }
 
-func (l *breakingLoader) Load(ids []ID) ([]Note, error) {
+func (l *breakingLoader) Load(ids []ID) ([]GraphNote, error) {
 	l.count++
 	if l.errAtCount == l.count-1 && l.err != nil {
 		return nil, l.err
@@ -40,14 +40,14 @@ type brokenNote struct {
 	err error
 }
 
-func (n brokenNote) GetID() ID                       { return n.ID }
-func (n brokenNote) GetValue() (string, Note, error) { return "", nil, n.err }
-func (n brokenNote) GetContents() ([]Note, error)    { return nil, n.err }
+func (n brokenNote) GetID() ID                            { return n.ID }
+func (n brokenNote) GetValue() (string, GraphNote, error) { return "", nil, n.err }
+func (n brokenNote) GetContents() ([]GraphNote, error)    { return nil, n.err }
 
 type brokenNoteLoader struct{ err error }
 
-func (l *brokenNoteLoader) Load(ids []ID) ([]Note, error) {
-	ns := make([]Note, len(ids))
+func (l *brokenNoteLoader) Load(ids []ID) ([]GraphNote, error) {
+	ns := make([]GraphNote, len(ids))
 	for i, id := range ids {
 		ns[i] = brokenNote{ID: id, err: l.err}
 	}

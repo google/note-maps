@@ -47,7 +47,7 @@ func (c *findCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 		return subcommands.ExitFailure
 	}
 	defer db.Close()
-	var ns []notes.Note
+	var ns []notes.GraphNote
 	err = db.IsolatedRead(func(r notes.FindLoader) (e error) {
 		ns, e = r.Find(&notes.Query{})
 		return e

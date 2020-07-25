@@ -22,7 +22,7 @@ import (
 )
 
 // Equal returns true only if a and b have the same ID, value, and contents.
-func Equal(t *testing.T, a, b notes.Note) bool {
+func Equal(t *testing.T, a, b notes.GraphNote) bool {
 	if a == b {
 		return true
 	}
@@ -53,7 +53,7 @@ func Equal(t *testing.T, a, b notes.Note) bool {
 }
 
 // ExpectEqual emits a detailed diff as a test error if a and b are not equal.
-func ExpectEqual(t *testing.T, a, b notes.Note) {
+func ExpectEqual(t *testing.T, a, b notes.GraphNote) {
 	if !Equal(t, a, b) {
 		if a.GetID() != b.GetID() {
 			t.Error("expected equal notes, got IDs", a.GetID(), b.GetID())
@@ -66,7 +66,7 @@ func ExpectEqual(t *testing.T, a, b notes.Note) {
 
 // Diff returns a sequence of operations that could be applied to a to make its
 // value and contents match b.
-func Diff(t *testing.T, a, b notes.Note) []notes.Operation {
+func Diff(t *testing.T, a, b notes.GraphNote) []notes.Operation {
 	if a == b {
 		return nil
 	}

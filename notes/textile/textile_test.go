@@ -51,7 +51,7 @@ func TestPatchLoad(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	var ns []notes.Note
+	var ns []notes.GraphNote
 	if err := nm.IsolatedRead(func(r notes.FindLoader) error {
 		var e error
 		ns, e = r.Load([]notes.ID{"test1", "test2"})

@@ -27,23 +27,23 @@ import (
 type nn struct {
 	notes.ID
 	VS string
-	VT notes.Note
-	CS []notes.Note
+	VT notes.GraphNote
+	CS []notes.GraphNote
 }
 
-func (n nn) GetID() notes.ID                       { return n.ID }
-func (n nn) GetValue() (string, notes.Note, error) { return n.VS, n.VT, nil }
-func (n nn) GetContents() ([]notes.Note, error)    { return n.CS, nil }
+func (n nn) GetID() notes.ID                            { return n.ID }
+func (n nn) GetValue() (string, notes.GraphNote, error) { return n.VS, n.VT, nil }
+func (n nn) GetContents() ([]notes.GraphNote, error)    { return n.CS, nil }
 
 type brokenValue struct{ nn }
 
-func (n brokenValue) GetValue() (string, notes.Note, error) {
+func (n brokenValue) GetValue() (string, notes.GraphNote, error) {
 	return "", nil, errors.New("brokenValue")
 }
 
 type brokenContents struct{ nn }
 
-func (n brokenContents) GetContents() ([]notes.Note, error) {
+func (n brokenContents) GetContents() ([]notes.GraphNote, error) {
 	return nil, errors.New("brokenContents")
 }
 
@@ -52,7 +52,7 @@ func TestTruncateNote(t *testing.T) {
 		ID: "id",
 		VS: "value",
 		VT: notes.EmptyNote("vt"),
-		CS: []notes.Note{notes.EmptyNote("c0"), notes.EmptyNote("c1")},
+		CS: []notes.GraphNote{notes.EmptyNote("c0"), notes.EmptyNote("c1")},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -73,7 +73,7 @@ func TestTruncateNote_errorIfValueBroken(t *testing.T) {
 		ID: "id",
 		VS: "value",
 		VT: notes.EmptyNote("vt"),
-		CS: []notes.Note{notes.EmptyNote("c0"), notes.EmptyNote("c1")},
+		CS: []notes.GraphNote{notes.EmptyNote("c0"), notes.EmptyNote("c1")},
 	}})
 	if err == nil || !strings.HasSuffix(err.Error(), "brokenValue") {
 		t.Fatal("got", err, "expected brokenValue")
@@ -85,7 +85,7 @@ func TestTruncateNote_errorIfContentsBroken(t *testing.T) {
 		ID: "id",
 		VS: "value",
 		VT: notes.EmptyNote("vt"),
-		CS: []notes.Note{notes.EmptyNote("c0"), notes.EmptyNote("c1")},
+		CS: []notes.GraphNote{notes.EmptyNote("c0"), notes.EmptyNote("c1")},
 	}})
 	if err == nil || !strings.HasSuffix(err.Error(), "brokenContents") {
 		t.Fatal("got", err, "expected brokenContents")

@@ -74,14 +74,14 @@ func TestBreakingLoader_Load(t *testing.T) {
 func TestBrokenNote(t *testing.T) {
 	id := RandomID()
 	expectErr := errors.New("testing")
-	var n notes.Note = BrokenNote{id, expectErr}
+	var n notes.GraphNote = BrokenNote{id, expectErr}
 	if n.GetID() != id {
 		t.Error("got", n.GetID(), "expected", id)
 	}
 	expectBroken(t, n, expectErr)
 }
 
-func expectBroken(t *testing.T, n notes.Note, expectErr error) {
+func expectBroken(t *testing.T, n notes.GraphNote, expectErr error) {
 	vs, vt, err := n.GetValue()
 	if err == nil || err.Error() != expectErr.Error() {
 		t.Errorf("broken note GetValue would return %v, got %v",
@@ -113,9 +113,9 @@ type fakeT struct {
 
 func (t *fakeT) Error(args ...interface{}) { fmt.Fprintln(t.b, args...) }
 
-type loaderFunc func([]notes.ID) ([]notes.Note, error)
+type loaderFunc func([]notes.ID) ([]notes.GraphNote, error)
 
-func (l loaderFunc) Load(ids []notes.ID) ([]notes.Note, error) { return l(ids) }
+func (l loaderFunc) Load(ids []notes.ID) ([]notes.GraphNote, error) { return l(ids) }
 
 func TestTestLoader_acceptsEmptyLoader(t *testing.T) {
 	TestLoader(t, notes.EmptyLoader)
@@ -131,7 +131,7 @@ func TestTestLoader(t *testing.T) {
 		{"accepts empty loader", notes.EmptyLoader, ""},
 		{
 			"verifies empty request gets no error",
-			loaderFunc(func(ids []notes.ID) ([]notes.Note, error) {
+			loaderFunc(func(ids []notes.ID) ([]notes.GraphNote, error) {
 				if len(ids) == 0 {
 					return nil, errors.New("bad error for empty request")
 				}
@@ -141,9 +141,9 @@ func TestTestLoader(t *testing.T) {
 		},
 		{
 			"verifies empty request gets no notes",
-			loaderFunc(func(ids []notes.ID) ([]notes.Note, error) {
+			loaderFunc(func(ids []notes.ID) ([]notes.GraphNote, error) {
 				if len(ids) == 0 {
-					return []notes.Note{notes.EmptyNote("0")}, nil
+					return []notes.GraphNote{notes.EmptyNote("0")}, nil
 				}
 				return good.Load(ids)
 			}),
@@ -151,7 +151,7 @@ func TestTestLoader(t *testing.T) {
 		},
 		{
 			"verifies request for one note gets no error",
-			loaderFunc(func(ids []notes.ID) ([]notes.Note, error) {
+			loaderFunc(func(ids []notes.ID) ([]notes.GraphNote, error) {
 				if len(ids) == 1 {
 					return nil, errors.New("testing error")
 				}
@@ -161,7 +161,7 @@ func TestTestLoader(t *testing.T) {
 		},
 		{
 			"verifies request for one note gets one note",
-			loaderFunc(func(ids []notes.ID) ([]notes.Note, error) {
+			loaderFunc(func(ids []notes.ID) ([]notes.GraphNote, error) {
 				if len(ids) == 1 {
 					return nil, nil
 				}
@@ -171,9 +171,9 @@ func TestTestLoader(t *testing.T) {
 		},
 		{
 			"verifies request for one note gets right note",
-			loaderFunc(func(ids []notes.ID) ([]notes.Note, error) {
+			loaderFunc(func(ids []notes.ID) ([]notes.GraphNote, error) {
 				if len(ids) == 1 {
-					return []notes.Note{notes.EmptyNote("nope")}, nil
+					return []notes.GraphNote{notes.EmptyNote("nope")}, nil
 				}
 				return good.Load(ids)
 			}),
@@ -181,7 +181,7 @@ func TestTestLoader(t *testing.T) {
 		},
 		{
 			"verifies request for multiple notes gets no error",
-			loaderFunc(func(ids []notes.ID) ([]notes.Note, error) {
+			loaderFunc(func(ids []notes.ID) ([]notes.GraphNote, error) {
 				ns, err := good.Load(ids)
 				if len(ids) > 1 && err == nil {
 					err = errors.New("error for multiple notes")
@@ -192,7 +192,7 @@ func TestTestLoader(t *testing.T) {
 		},
 		{
 			"verifies request for multiple notes gets right number of notes",
-			loaderFunc(func(ids []notes.ID) ([]notes.Note, error) {
+			loaderFunc(func(ids []notes.ID) ([]notes.GraphNote, error) {
 				ns, err := good.Load(ids)
 				if len(ids) > 1 && err == nil {
 					ns = ns[:1]
@@ -203,7 +203,7 @@ func TestTestLoader(t *testing.T) {
 		},
 		{
 			"verifies request for multiple notes gets notes in the right order",
-			loaderFunc(func(ids []notes.ID) ([]notes.Note, error) {
+			loaderFunc(func(ids []notes.ID) ([]notes.GraphNote, error) {
 				ns, err := good.Load(ids)
 				if len(ns) > 2 {
 					ns[1], ns[2] = ns[2], ns[1]
@@ -213,7 +213,7 @@ func TestTestLoader(t *testing.T) {
 			"(. expected ID .* got ID .*\n){2}",
 		}, {
 			"verifies request for invalid IDs gets InvalidID",
-			loaderFunc(func(ids []notes.ID) ([]notes.Note, error) {
+			loaderFunc(func(ids []notes.ID) ([]notes.GraphNote, error) {
 				for _, id := range ids {
 					if id.Empty() {
 						return nil, errors.New("some other error")

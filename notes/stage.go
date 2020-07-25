@@ -44,15 +44,15 @@ func (x *Stage) GetBase() Loader {
 }
 
 // StageNote supports updating the content of a note within a batch, and also
-// implements the Note interface to read the hypothetical state of a note with
-// the batch applied.
+// implements the GraphNote interface to read the hypothetical state of a note
+// with the batch applied.
 type StageNote struct {
 	Stage *Stage
 	ID    ID
 }
 
 func (x *StageNote) GetID() ID { return x.ID }
-func (x *StageNote) GetValue() (string, Note, error) {
+func (x *StageNote) GetValue() (string, GraphNote, error) {
 	base, err := LoadOne(x.Stage.GetBase(), x.ID)
 	if err != nil {
 		return "", nil, err
@@ -71,7 +71,7 @@ func (x *StageNote) GetValue() (string, Note, error) {
 	}
 	return lex, dtype, nil
 }
-func (x *StageNote) GetContents() ([]Note, error) {
+func (x *StageNote) GetContents() ([]GraphNote, error) {
 	base, err := LoadOne(x.Stage.GetBase(), x.ID)
 	if err != nil {
 		return nil, err

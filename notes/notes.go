@@ -23,21 +23,21 @@ import (
 // ID is the type of values that identify notes.
 type ID string
 
-// Note is a graph-like interface to a note in a note map.
+// GraphNote is a graph-like interface to a note in a note map.
 //
 // Since traversing from note to note in a note map may require fragile
 // operations like loading query results from a storage backend, most methods
 // can return an error instead of the requested data.
-type Note interface {
+type GraphNote interface {
 	GetID() ID
-	GetValue() (string, Note, error)
-	GetContents() ([]Note, error)
+	GetValue() (string, GraphNote, error)
+	GetContents() ([]GraphNote, error)
 }
 
 // Finder can be implemented to support finding notes in a note map according
 // to a query.
 type Finder interface {
-	Find(*Query) ([]Note, error)
+	Find(*Query) ([]GraphNote, error)
 }
 
 // Loader can be implemented to support loading notes by id.
@@ -46,7 +46,7 @@ type Loader interface {
 	//
 	// All notes exist implicitly, even if they are empty. An error indicates
 	// something actually went wrong.
-	Load(ids []ID) ([]Note, error)
+	Load(ids []ID) ([]GraphNote, error)
 }
 
 // FindLoader combines the Finder and Loader interfaces.
@@ -56,7 +56,7 @@ type FindLoader interface {
 }
 
 // LoadOne is a convenience function for loading just one note.
-func LoadOne(l Loader, id ID) (Note, error) {
+func LoadOne(l Loader, id ID) (GraphNote, error) {
 	ns, err := l.Load([]ID{id})
 	if err != nil {
 		return nil, err

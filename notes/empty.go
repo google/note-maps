@@ -19,18 +19,18 @@ package notes
 // EmptyID is the zero or nil value for note identifiers, and never identifies
 // a valid note.
 //
-// EmptyID exists only to make code that specifies the zero value for Note
+// EmptyID exists only to make code that specifies the zero value for note
 // identifiers a bit more readable.
 const EmptyID ID = ""
 
 func (id ID) Empty() bool { return id == EmptyID }
 
-// EmptyNote is simply an empty Note with nothing more than an ID.
+// EmptyNote is simply an empty GraphNote with nothing more than an ID.
 type EmptyNote ID
 
-func (x EmptyNote) GetID() ID                       { return ID(x) }
-func (x EmptyNote) GetValue() (string, Note, error) { return "", EmptyNote(EmptyID), nil }
-func (x EmptyNote) GetContents() ([]Note, error)    { return nil, nil }
+func (x EmptyNote) GetID() ID                            { return ID(x) }
+func (x EmptyNote) GetValue() (string, GraphNote, error) { return "", EmptyNote(EmptyID), nil }
+func (x EmptyNote) GetContents() ([]GraphNote, error)    { return nil, nil }
 
 const (
 	// EmptyLoader implements the Loader interface for a note map that is
@@ -40,8 +40,8 @@ const (
 
 type emptyLoader int
 
-func (x emptyLoader) Load(ids []ID) ([]Note, error) {
-	ns := make([]Note, len(ids))
+func (x emptyLoader) Load(ids []ID) ([]GraphNote, error) {
+	ns := make([]GraphNote, len(ids))
 	for i, id := range ids {
 		if id == EmptyID {
 			return nil, InvalidID

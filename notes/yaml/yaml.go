@@ -21,7 +21,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func MarshalNote(src notes.Note) ([]byte, error) {
+func MarshalNote(src notes.GraphNote) ([]byte, error) {
 	doc := yaml.Node{Kind: yaml.DocumentNode}
 	if err := noteToNode(src, &doc); err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func UnmarshalNote(src []byte, dst *notes.StageNote) error {
 	return yamlToNote(&n, dst)
 }
 
-func noteToNode(src notes.Note, dst *yaml.Node) error {
+func noteToNode(src notes.GraphNote, dst *yaml.Node) error {
 	if src == nil {
 		return nil
 	}

@@ -24,18 +24,18 @@ import (
 
 type note struct {
 	id          notes.ID
-	types       []notes.Note
-	supertypes  []notes.Note
+	types       []notes.GraphNote
+	supertypes  []notes.GraphNote
 	valuestring string
-	valuetype   notes.Note
-	contents    []notes.Note
+	valuetype   notes.GraphNote
+	contents    []notes.GraphNote
 }
 
-func (n note) GetID() notes.ID                       { return n.id }
-func (n note) GetTypes() ([]notes.Note, error)       { return n.types, nil }
-func (n note) GetSupertypes() ([]notes.Note, error)  { return n.supertypes, nil }
-func (n note) GetValue() (string, notes.Note, error) { return n.valuestring, n.valuetype, nil }
-func (n note) GetContents() ([]notes.Note, error)    { return n.contents, nil }
+func (n note) GetID() notes.ID                            { return n.id }
+func (n note) GetTypes() ([]notes.GraphNote, error)       { return n.types, nil }
+func (n note) GetSupertypes() ([]notes.GraphNote, error)  { return n.supertypes, nil }
+func (n note) GetValue() (string, notes.GraphNote, error) { return n.valuestring, n.valuetype, nil }
+func (n note) GetContents() ([]notes.GraphNote, error)    { return n.contents, nil }
 
 func getNote(d *notes.Stage, focus notes.ID) *note {
 	ns := make(map[notes.ID]*note)
@@ -80,7 +80,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 			"note with one content",
 			note{
 				id: "10",
-				contents: []notes.Note{
+				contents: []notes.GraphNote{
 					&note{id: "11", valuestring: "test content"},
 				},
 			},

@@ -35,7 +35,7 @@ func TestID_Empty(t *testing.T) {
 }
 
 func TestEmptyNote(t *testing.T) {
-	var n Note = EmptyNote("7")
+	var n GraphNote = EmptyNote("7")
 	if id := n.GetID(); id != "7" {
 		t.Errorf("got %v, expected %v", id, "7")
 	}

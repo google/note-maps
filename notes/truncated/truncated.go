@@ -29,7 +29,7 @@ type TruncatedNote struct {
 }
 
 // TruncateNote returns a TruncatedNote representation of n.
-func TruncateNote(n notes.Note) (TruncatedNote, error) {
+func TruncateNote(n notes.GraphNote) (TruncatedNote, error) {
 	vs, vt, err := n.GetValue()
 	if err != nil {
 		return TruncatedNote{}, err
@@ -54,8 +54,8 @@ func TruncateNote(n notes.Note) (TruncatedNote, error) {
 	}, nil
 }
 
-// ExpandNote uses tn and l to provide a full notes.Note implementation.
-func ExpandNote(tn TruncatedNote, l notes.Loader) notes.Note {
+// ExpandNote uses tn and l to provide a full notes.GraphNote implementation.
+func ExpandNote(tn TruncatedNote, l notes.Loader) notes.GraphNote {
 	return &note{tn, l}
 }
 
@@ -172,14 +172,14 @@ type note struct {
 }
 
 func (n *note) GetID() notes.ID { return n.ID }
-func (n *note) GetValue() (string, notes.Note, error) {
+func (n *note) GetValue() (string, notes.GraphNote, error) {
 	if n.ValueType.Empty() {
 		return n.ValueString, notes.EmptyNote(notes.EmptyID), nil
 	}
 	vtype, err := notes.LoadOne(n.l, n.ValueType)
 	return n.ValueString, vtype, err
 }
-func (n *note) GetContents() ([]notes.Note, error) {
+func (n *note) GetContents() ([]notes.GraphNote, error) {
 	return n.l.Load(n.Contents)
 }
 
@@ -201,7 +201,7 @@ type finder struct {
 	l notes.Loader
 }
 
-func (f *finder) Find(q *notes.Query) ([]notes.Note, error) {
+func (f *finder) Find(q *notes.Query) ([]notes.GraphNote, error) {
 	ids, err := f.FindNoteIDs(q)
 	if err != nil {
 		return nil, err
@@ -234,9 +234,9 @@ type loader struct {
 	cache sync.Map
 }
 
-func (l *loader) Load(ids []notes.ID) ([]notes.Note, error) {
+func (l *loader) Load(ids []notes.ID) ([]notes.GraphNote, error) {
 	var (
-		ns    = make([]notes.Note, len(ids))
+		ns    = make([]notes.GraphNote, len(ids))
 		q     = ids
 		q2ids map[int]int
 	)
@@ -246,7 +246,7 @@ func (l *loader) Load(ids []notes.ID) ([]notes.Note, error) {
 		}
 		in, ok := l.cache.Load(id)
 		if ok {
-			ns[i] = in.(notes.Note)
+			ns[i] = in.(notes.GraphNote)
 			if len(q) == len(ids) {
 				q = append([]notes.ID{}, ids[:i]...)
 				q2ids = make(map[int]int)
@@ -266,7 +266,7 @@ func (l *loader) Load(ids []notes.ID) ([]notes.Note, error) {
 			i = qi
 		}
 		in, _ := l.cache.LoadOrStore(ids[i], ExpandNote(tns[qi], l))
-		ns[i] = in.(notes.Note)
+		ns[i] = in.(notes.GraphNote)
 	}
 	return ns, nil
 }

@@ -42,7 +42,7 @@ type BreakingLoader struct {
 // In any case, Load() will increment Count.
 //
 // When l.Err is nil, l is just a Count incrementing proxy to l.Loader.
-func (l *BreakingLoader) Load(ids []notes.ID) ([]notes.Note, error) {
+func (l *BreakingLoader) Load(ids []notes.ID) ([]notes.GraphNote, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -53,7 +53,7 @@ func (l *BreakingLoader) Load(ids []notes.ID) ([]notes.Note, error) {
 	return l.Loader.Load(ids)
 }
 
-// BrokenNote implements notes.Note but always returns an error when attempting
+// BrokenNote implements notes.GraphNote but always returns an error when attempting
 // to read anything other than the ID.
 type BrokenNote struct {
 	notes.ID
@@ -64,10 +64,10 @@ type BrokenNote struct {
 func (n BrokenNote) GetID() notes.ID { return n.ID }
 
 // GetValue always returns n.Err.
-func (n BrokenNote) GetValue() (string, notes.Note, error) { return "", nil, n.Err }
+func (n BrokenNote) GetValue() (string, notes.GraphNote, error) { return "", nil, n.Err }
 
 // GetContents always returns n.Err.
-func (n BrokenNote) GetContents() ([]notes.Note, error) { return nil, n.Err }
+func (n BrokenNote) GetContents() ([]notes.GraphNote, error) { return nil, n.Err }
 
 // BrokenNoteLoader loads instances of BrokenNote.
 type BrokenNoteLoader struct{ Err error }
@@ -75,8 +75,8 @@ type BrokenNoteLoader struct{ Err error }
 // Load will always successfully load all requested notes without error, but
 // the returned notes will always return errors when attempts are made to read
 // them.
-func (l *BrokenNoteLoader) Load(ids []notes.ID) ([]notes.Note, error) {
-	ns := make([]notes.Note, len(ids))
+func (l *BrokenNoteLoader) Load(ids []notes.ID) ([]notes.GraphNote, error) {
+	ns := make([]notes.GraphNote, len(ids))
 	for i, id := range ids {
 		if id.Empty() {
 			return nil, notes.InvalidID

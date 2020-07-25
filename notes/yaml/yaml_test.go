@@ -24,47 +24,20 @@ import (
 
 type note struct {
 	id          notes.ID
-	types       []notes.GraphNote
-	supertypes  []notes.GraphNote
 	valuestring string
 	valuetype   notes.GraphNote
 	contents    []notes.GraphNote
 }
 
-func (n note) GetID() notes.ID                            { return n.id }
-func (n note) GetTypes() ([]notes.GraphNote, error)       { return n.types, nil }
-func (n note) GetSupertypes() ([]notes.GraphNote, error)  { return n.supertypes, nil }
-func (n note) GetValue() (string, notes.GraphNote, error) { return n.valuestring, n.valuetype, nil }
-func (n note) GetContents() ([]notes.GraphNote, error)    { return n.contents, nil }
-
-func getNote(d *notes.Stage, focus notes.ID) *note {
-	ns := make(map[notes.ID]*note)
-	get := func(id notes.ID) *note {
-		if focus == notes.EmptyID {
-			focus = id
-		}
-		n, exists := ns[id]
-		if !exists {
-			n = &note{id: id}
-			ns[id] = n
-		}
-		return n
+func (n note) GetID() notes.ID { return n.id }
+func (n note) GetValue() (string, notes.GraphNote, error) {
+	vt := n.valuetype
+	if vt == nil {
+		vt = notes.EmptyNote(notes.EmptyID)
 	}
-	for _, dop := range d.Ops {
-		switch op := dop.(type) {
-		case *notes.OpSetValue:
-			n := get(op.GetID())
-			n.valuestring = op.Lexical
-			n.valuetype = get(op.Datatype)
-		case *notes.OpAddContent:
-			n := get(op.GetID())
-			n.contents = append(n.contents, get(op.Add))
-		default:
-			panic("unknown operation type")
-		}
-	}
-	return get(focus)
+	return n.valuestring, vt, nil
 }
+func (n note) GetContents() ([]notes.GraphNote, error) { return n.contents, nil }
 
 func yamlString(lines ...string) string { return strings.Join(lines, "\n") + "\n" }
 
@@ -89,7 +62,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 				"    - &11 test content",
 			),
 		}, {
-			"note with a value and no content",
+			"note with an untyped value and no content",
 			note{
 				id:          "10",
 				valuestring: "test value",
@@ -97,6 +70,33 @@ func TestMarshalUnmarshal(t *testing.T) {
 			yamlString(
 				"note: &10",
 				"    - is: test value",
+			),
+		}, {
+			"note with a value and multiple contents",
+			note{
+				id:          "10",
+				valuestring: "value10",
+				contents: []notes.GraphNote{
+					&note{id: "11", valuestring: "value11"},
+					&note{id: "12", valuestring: "value12"},
+				},
+			},
+			yamlString(
+				"note: &10",
+				"    - is: value10",
+				"    - &11 value11",
+				"    - &12 value12",
+			),
+		}, {
+			"note with a typed value",
+			note{
+				id:          "10",
+				valuestring: "value10",
+				valuetype:   note{id: "type11"},
+			},
+			yamlString(
+				"note: &10",
+				"    - is: !<type11> value10",
 			),
 		},
 	} {

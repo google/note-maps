@@ -66,14 +66,14 @@ func noteToNode(src notes.GraphNote, dst *yaml.Node) error {
 	// Marshal subject value. Usually this should be a simple scalar wherever
 	// possible, but in the top-level note of a YAML document it should make room
 	// for more complexity.
-	if vs, _, err := src.GetValue(); err != nil {
+	if vs, vt, err := src.GetValue(); err != nil {
 		return err
 	} else if vs != "" {
 		sequence.Content = append(sequence.Content, &yaml.Node{
 			Kind: yaml.MappingNode,
 			Content: []*yaml.Node{
 				{Kind: yaml.ScalarNode, Value: "is"},
-				{Kind: yaml.ScalarNode, Value: vs},
+				{Kind: yaml.ScalarNode, Value: vs, Tag: string(vt.GetID())},
 			},
 		})
 	}
@@ -128,27 +128,25 @@ func yamlToNote(src *yaml.Node, dst *notes.StageNote) error {
 	for _, s := range src.Content {
 		switch s.Kind {
 		case yaml.ScalarNode:
-			/*
-				if s.ShortTag() == "!id" {
-					// Unmarshal s.Value into d.ID
-					id, err := strconv.ParseUint(s.Value, 10, 64)
-					if err != nil {
-						return err
-					}
-					d = dst.Diff.Note(id)
-				} else {
-			*/
 			var id notes.ID
 			if s.Anchor != "" {
 				id = notes.ID(s.Anchor)
 			}
-			dst.AddContent(id).SetValue(s.Value, notes.EmptyID)
+			var vt notes.ID
+			if s.LongTag() != "tag:yaml.org,2002:str" {
+				vt = notes.ID(s.ShortTag())
+			}
+			dst.AddContent(id).SetValue(s.Value, vt)
 		case yaml.MappingNode:
 			if len(s.Content) == 2 && s.Content[0].Kind == yaml.ScalarNode && s.Content[0].Value == "is" {
 				// Unmarshal s.Content[1] into dst.Value
 				switch s.Content[1].Kind {
 				case yaml.ScalarNode:
-					dst.SetValue(s.Content[1].Value, notes.EmptyID)
+					var vt notes.ID
+					if s.Content[1].LongTag() != "tag:yaml.org,2002:str" {
+						vt = notes.ID(s.Content[1].ShortTag())
+					}
+					dst.SetValue(s.Content[1].Value, vt)
 				default:
 					return fmt.Errorf("unsupported YAML type %v (%#v) for subject value", s.Kind, s.Value)
 				}

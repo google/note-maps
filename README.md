@@ -80,16 +80,27 @@ Code paths:
 
 ## Progressive Web App
 
+Emphasis on presenting and editing a subgraph of a note map as a structured
+document using QuillJS.
+
 Code paths:
 
 - `./js`
 
 ## Command Line Interface
 
+Emphasis on plain text representations of notes, plausible integration with
+text editor, and client-side-encrypted peer-to-peer storage.
+
 Code paths:
 
 - `./cmd`
 - `./notes`
+
+### Roadmap to v0.1
+
+- [x] Use [Textilio's ThreadsDB](https://docs.textile.io/threads/) for storage.
+- [ ] Support a minimal [Zettelkasten](https://zettelkasten.de/) workflow.
 
 ## Development
 

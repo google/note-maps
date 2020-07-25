@@ -16,20 +16,8 @@
 // data storage system.
 package notes
 
-import "strconv"
+import "errors"
 
-type Error int
-
-const (
-	InvalidID Error = iota
+var (
+	InvalidID = errors.New("invalid note id")
 )
-
-func (e Error) Error() string {
-	switch e {
-	case InvalidID:
-		return "invalid note id"
-	default:
-		return "unknown note maps error code " +
-			strconv.FormatInt(int64(e), 10)
-	}
-}

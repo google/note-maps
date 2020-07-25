@@ -15,35 +15,83 @@
 package notes
 
 import (
+	"reflect"
 	"testing"
 )
 
-func TestOpSetValue_AffectsID(t *testing.T) {
-	v := OpSetValue{
-		Op:       "test0",
-		Lexical:  "test1",
-		Datatype: "test2",
+func TestOp(t *testing.T) {
+	id := ID("test")
+	op := Op(id)
+	if !op.AffectsID(id) {
+		t.Errorf("%#v should affect %#v", op, id)
 	}
-	if !v.AffectsID("test0") {
-		t.Error("SetValue should affect the note whose value is being set")
+	if op.AffectsID("other") {
+		t.Errorf("%#v should not affect %#v", op, ID("other"))
 	}
-	if v.AffectsID("test1") {
-		t.Error("SetValue should not affect a note whose ID just happens to match the value being set")
-	}
-	if v.AffectsID("test2") {
-		t.Error("SetValue should not affect the note that represents the datatype of the value being set")
+	if got := op.GetID(); got != id {
+		t.Errorf("%#v.GetID() should return %#v, returned %#v", op, id, got)
 	}
 }
 
-func TestOpAddContent_AffectsID(t *testing.T) {
-	v := OpAddContent{
-		Op:  "test0",
-		Add: "test1",
+func TestOperationSlice_SetValue(t *testing.T) {
+	var ops OperationSlice
+	ops = ops.SetValue("id0", "vs1", "dt2")
+	if !reflect.DeepEqual(ops, OperationSlice{
+		OpSetValue{Op: "id0", Lexical: "vs1", Datatype: "dt2"},
+	}) {
+		t.Error(ops)
 	}
-	if !v.AffectsID("test0") {
-		t.Error("AddContent should affect the note whose content is being increased")
+}
+
+func TestOperationSlice_SetValueString(t *testing.T) {
+	var ops OperationSlice
+	ops = ops.SetValueString("id0", "vs1")
+	if !reflect.DeepEqual(ops, OperationSlice{
+		OpSetValueString{Op: "id0", Lexical: "vs1"},
+	}) {
+		t.Error(ops)
 	}
-	if v.AffectsID("test1") {
-		t.Error("AddContent should not affect the note that is being added")
+}
+
+func TestOperationSlice_AddContent(t *testing.T) {
+	var ops OperationSlice
+	ops = ops.AddContent("id0", "c0", "c1")
+	if !reflect.DeepEqual(ops, OperationSlice{
+		OpAddContent{Op: "id0", Add: "c0"},
+		OpAddContent{Op: "id0", Add: "c1"},
+	}) {
+		t.Error(ops)
+	}
+}
+
+func TestOperationSlice_InsertContent(t *testing.T) {
+	var ops OperationSlice
+	ops = ops.InsertContent("id0", 1, "c2", "c3")
+	if !reflect.DeepEqual(ops, OperationSlice{
+		OpInsertContent{Op: "id0", Index: 1, Content: "c2"},
+		OpInsertContent{Op: "id0", Index: 2, Content: "c3"},
+	}) {
+		t.Error(ops)
+	}
+}
+
+func TestOperationSlice_RemoveContent(t *testing.T) {
+	var ops OperationSlice
+	ops = ops.RemoveContent("id0", "c1", "c2")
+	if !reflect.DeepEqual(ops, OperationSlice{
+		OpRemoveContent{Op: "id0", Content: "c1"},
+		OpRemoveContent{Op: "id0", Content: "c2"},
+	}) {
+		t.Error(ops)
+	}
+}
+
+func TestOperationSlice_SwapContent(t *testing.T) {
+	var ops OperationSlice
+	ops = ops.SwapContent("id0", 1, 2)
+	if !reflect.DeepEqual(ops, OperationSlice{
+		OpSwapContent{Op: "id0", A: 1, B: 2},
+	}) {
+		t.Error(ops)
 	}
 }

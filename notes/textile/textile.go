@@ -271,14 +271,14 @@ func (r reader) loadRecord(id notes.ID, rec *record) error {
 	return json.Unmarshal(bs, rec)
 }
 
-func (r reader) LoadTruncatedNotes(ids []notes.ID) ([]truncated.TruncatedNote, error) {
-	tns := make([]truncated.TruncatedNote, len(ids))
+func (r reader) LoadTruncatedNotes(ids []notes.ID) ([]notes.TruncatedNote, error) {
+	tns := make([]notes.TruncatedNote, len(ids))
 	for i, id := range ids {
 		var rec record
 		if err := r.loadRecord(id, &rec); err != nil {
 			return nil, err
 		}
-		tns[i] = truncated.TruncatedNote{
+		tns[i] = notes.TruncatedNote{
 			ID:          notes.ID(rec.ID),
 			ValueString: rec.ValueString,
 			ValueType:   rec.ValueType,

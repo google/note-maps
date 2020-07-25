@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	"github.com/google/note-maps/notes"
-	"github.com/google/note-maps/notes/truncated"
 )
 
 // Equal returns true only if a and b have the same ID, value, and contents.
@@ -29,12 +28,12 @@ func Equal(t *testing.T, a, b notes.GraphNote) bool {
 	if a.GetID() != b.GetID() {
 		return false
 	}
-	sa, err := truncated.TruncateNote(a)
+	sa, err := notes.TruncateNote(a)
 	if err != nil {
 		t.Error(a.GetID(), err)
 		return false
 	}
-	sb, err := truncated.TruncateNote(b)
+	sb, err := notes.TruncateNote(b)
 	if err != nil {
 		t.Error(b.GetID(), err)
 		return false
@@ -70,15 +69,15 @@ func Diff(t *testing.T, a, b notes.GraphNote) []notes.Operation {
 	if a == b {
 		return nil
 	}
-	sa, err := truncated.TruncateNote(a)
+	sa, err := notes.TruncateNote(a)
 	if err != nil {
 		t.Error(err)
 		return nil
 	}
-	sb, err := truncated.TruncateNote(b)
+	sb, err := notes.TruncateNote(b)
 	if err != nil {
 		t.Error(err)
 		return nil
 	}
-	return truncated.Diff(sa, sb)
+	return notes.Diff(sa, sb)
 }

@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/google/note-maps/notes"
+	"github.com/google/note-maps/notes/notestest"
 	"github.com/textileio/go-threads/core/app"
 )
 
@@ -62,18 +63,10 @@ func TestPatchLoad(t *testing.T) {
 		t.Errorf("got %v notes, expected 2", len(ns))
 	}
 	if len(ns) > 0 {
-		if eq, err := notes.Equal(ns[0], stage.Note("test1")); err != nil {
-			t.Error(err)
-		} else if !eq {
-			t.Error(notes.DebugDiff(ns[0], stage.Note("test1")))
-		}
+		notestest.ExpectEqual(t, ns[0], stage.Note("test1"))
 	}
 	if len(ns) > 1 {
-		if eq, err := notes.Equal(ns[1], stage.Note("test2")); err != nil {
-			t.Error(err)
-		} else if !eq {
-			t.Error(notes.DebugDiff(ns[1], stage.Note("test2")))
-		}
+		notestest.ExpectEqual(t, ns[1], stage.Note("test2"))
 	}
 }
 

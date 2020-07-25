@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"github.com/google/note-maps/notes"
-	"github.com/google/note-maps/notes/notestest"
+	"github.com/google/note-maps/notes/dbtest"
 )
 
 type nn struct {
@@ -178,7 +178,7 @@ func TestExpandLoader(t *testing.T) {
 		fl[tn.ID] = tn
 	}
 	l := ExpandLoader(fl)
-	notestest.TestLoader(t, l)
+	dbtest.TestLoader(t, l)
 	ns, err := l.Load([]notes.ID{"one", "two"})
 	if err != nil {
 		t.Fatal(err)

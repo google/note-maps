@@ -15,120 +15,70 @@
 package notestest
 
 import (
-	"errors"
-	"math/rand"
-	"strconv"
 	"testing"
 
 	"github.com/google/note-maps/notes"
+	"github.com/google/note-maps/notes/truncated"
 )
 
-// RandomID returns a pseudo-random ID using package math/rand.
-func RandomID() notes.ID {
-	return notes.ID(strconv.FormatUint(rand.Uint64(), 10))
-}
-
-// BreakingLoader is an optionally partly broken proxy to a Loader.
-type BreakingLoader struct {
-	notes.Loader
-	Count      int
-	ErrAtCount int
-	Err        error
-}
-
-// Load returns l.Err when l.Count==l.ErrAtCount, and otherwise return
-// l.Loader.Load(ids).
-//
-// In any case, Load() will increment Count.
-//
-// When l.Err is nil, l is just a Count incrementing proxy to l.Loader.
-func (l *BreakingLoader) Load(ids []notes.ID) ([]notes.Note, error) {
-	if len(ids) == 0 {
-		return nil, nil
+// Equal returns true only if a and b have the same ID, value, and contents.
+func Equal(t *testing.T, a, b notes.Note) bool {
+	if a == b {
+		return true
 	}
-	l.Count++
-	if l.ErrAtCount == l.Count-1 && l.Err != nil {
-		return nil, l.Err
+	if a.GetID() != b.GetID() {
+		return false
 	}
-	return l.Loader.Load(ids)
-}
-
-// BrokenNote implements notes.Note but always returns an error when attempting
-// to read anything other than the ID.
-type BrokenNote struct {
-	notes.ID
-	Err error
-}
-
-// GetID always gets the ID.
-func (n BrokenNote) GetID() notes.ID { return n.ID }
-
-// GetValue always returns n.Err.
-func (n BrokenNote) GetValue() (string, notes.Note, error) { return "", nil, n.Err }
-
-// GetContents always returns n.Err.
-func (n BrokenNote) GetContents() ([]notes.Note, error) { return nil, n.Err }
-
-// BrokenNoteLoader loads instances of BrokenNote.
-type BrokenNoteLoader struct{ Err error }
-
-// Load will always successfully load all requested notes without error, but
-// the returned notes will always return errors when attempts are made to read
-// them.
-func (l *BrokenNoteLoader) Load(ids []notes.ID) ([]notes.Note, error) {
-	ns := make([]notes.Note, len(ids))
-	for i, id := range ids {
-		if id.Empty() {
-			return nil, notes.InvalidID
+	sa, err := truncated.TruncateNote(a)
+	if err != nil {
+		t.Error(a.GetID(), err)
+		return false
+	}
+	sb, err := truncated.TruncateNote(b)
+	if err != nil {
+		t.Error(b.GetID(), err)
+		return false
+	}
+	if sa.ValueString != sb.ValueString ||
+		sa.ValueType != sb.ValueType ||
+		len(sa.Contents) != len(sb.Contents) {
+		return false
+	}
+	for i, ac := range sa.Contents {
+		if sb.Contents[i] != ac {
+			return false
 		}
-		ns[i] = BrokenNote{ID: id, Err: l.Err}
 	}
-	return ns, nil
+	return true
 }
 
-// TestLoader will run a few tests against l that are meant to fail if l does
-// not implement the notes.Loader interface correctly.
-func TestLoader(t testing.TB, l notes.Loader) {
-	t.Log("loading zero notes...")
-	ns, err := l.Load(nil)
+// ExpectEqual emits a detailed diff as a test error if a and b are not equal.
+func ExpectEqual(t *testing.T, a, b notes.Note) {
+	if !Equal(t, a, b) {
+		if a.GetID() != b.GetID() {
+			t.Error("expected equal notes, got IDs", a.GetID(), b.GetID())
+		}
+		for _, op := range Diff(t, a, b) {
+			t.Error("expected equal notes, but got diff", op)
+		}
+	}
+}
+
+// Diff returns a sequence of operations that could be applied to a to make its
+// value and contents match b.
+func Diff(t *testing.T, a, b notes.Note) []notes.Operation {
+	if a == b {
+		return nil
+	}
+	sa, err := truncated.TruncateNote(a)
 	if err != nil {
 		t.Error(err)
-	} else if len(ns) != 0 {
-		t.Error("expected zero notes, got", len(ns))
+		return nil
 	}
-	t.Log("loading one note...")
-	id := RandomID()
-	ns, err = l.Load([]notes.ID{id})
+	sb, err := truncated.TruncateNote(b)
 	if err != nil {
 		t.Error(err)
-	} else if len(ns) != 1 {
-		t.Error("expected one note, got", len(ns), "and no error")
-	} else if len(ns) >= 1 {
-		if actual := ns[0].GetID(); actual != id {
-			t.Error("expected", id, "got", actual)
-		}
+		return nil
 	}
-	t.Log("loading multiple notes...")
-	ids := []notes.ID{RandomID(), RandomID(), RandomID()}
-	ns, err = l.Load(ids)
-	if err != nil {
-		t.Error(err)
-	} else if len(ns) != len(ids) {
-		t.Error("expected", len(ids), "notes, got", len(ns))
-	}
-	for i, expected := range ids {
-		if i < len(ns) && ns[i].GetID() != expected {
-			t.Error(i, "expected ID", expected, "got ID", ns[i].GetID())
-		}
-	}
-	t.Log("sending EmptyID...")
-	ids = []notes.ID{RandomID(), RandomID(), RandomID()}
-	for i := range ids {
-		bads := append([]notes.ID{}, ids...)
-		bads[i] = notes.EmptyID
-		_, err := l.Load(bads)
-		if !errors.Is(err, notes.InvalidID) {
-			t.Error("with bad ID at", i, "expected", notes.InvalidID)
-		}
-	}
+	return truncated.Diff(sa, sb)
 }

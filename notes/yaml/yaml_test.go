@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/google/note-maps/notes"
+	"github.com/google/note-maps/notes/notestest"
 )
 
 type note struct {
@@ -113,16 +114,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 					t.Log(op)
 				}
 				t.Log("diff end")
-				if equal, err := notes.Equal(note, test.note); err != nil {
-					t.Error(err)
-				} else if !equal {
-					diff, a, b, err := notes.DebugDiff(note, test.note)
-					if err != nil {
-						t.Error(err)
-					} else {
-						t.Errorf("mismatched notes: %s got %#v, expected %#v", diff, a, b)
-					}
-				}
+				notestest.ExpectEqual(t, note, test.note)
 			}
 			bs, err := MarshalNote(test.note)
 			if err != nil {

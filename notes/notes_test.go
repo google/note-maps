@@ -144,6 +144,16 @@ func TestTruncateNote_Equals(t *testing.T) {
 	}
 }
 
+func TestPatch_mismatchedID(t *testing.T) {
+	tn := TruncatedNote{ID: "id0"}
+	ops := OperationSlice(nil).SetValue("id1", "vs", "vt").AddContent("id1", "c0")
+	Patch(&tn, []Operation(ops))
+	expect := TruncatedNote{ID: "id0"}
+	if !reflect.DeepEqual(tn, expect) {
+		t.Error("got", tn, "expected", expect)
+	}
+}
+
 func TestDiffPatch(t *testing.T) {
 	for _, test := range []struct {
 		Title string
@@ -179,5 +189,33 @@ func TestDiffPatch(t *testing.T) {
 					newB, test.B, ops, test.A)
 			}
 		})
+	}
+}
+
+func TestExpandNote(t *testing.T) {
+	n := ExpandNote(TruncatedNote{
+		ID:          "id0",
+		ValueString: "vs",
+		ValueType:   "vt",
+		Contents:    []ID{"c0"},
+	}, EmptyLoader)
+	if id := n.GetID(); id != "id0" {
+		t.Error("got", id, "expected", ID("id0"))
+	}
+	if vs, vt, err := n.GetValue(); vs != "vs" || vt.GetID() != "vt" || err != nil {
+		t.Error("got", vs, vt, err, "expected", "vs", EmptyNote("vt"), nil)
+	}
+	if cs, err := n.GetContents(); len(cs) != 1 || cs[0].GetID() != "c0" || err != nil {
+		t.Error("got", cs, err, "expected", []GraphNote{EmptyNote("c0")}, nil)
+	}
+}
+
+func TestExpandNote_noDatatype(t *testing.T) {
+	n := ExpandNote(TruncatedNote{
+		ID:          "id0",
+		ValueString: "vs",
+	}, EmptyLoader)
+	if vs, vt, err := n.GetValue(); vs != "vs" || !vt.GetID().Empty() || err != nil {
+		t.Error("got", vs, vt, err, "expected", "vs", EmptyNote("vt"), nil)
 	}
 }

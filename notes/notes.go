@@ -119,14 +119,8 @@ func Diff(a, b TruncatedNote) []Operation {
 			res = append(res[:i0], res[i0+1:]...)
 		}
 	}
-	if len(res) != len(b.Contents) {
-		panic("unintended: res is not the same size as b")
-	}
 	for i0 := range b.Contents {
-		i1, ok := is[res[i0]]
-		if !ok {
-			panic("unintended: res contains c that is not in b")
-		}
+		i1 := is[res[i0]]
 		if i0 != i1 {
 			ops = ops.SwapContent(a.ID, i0, i1)
 			res[i0], res[i1] = res[i1], res[i0]

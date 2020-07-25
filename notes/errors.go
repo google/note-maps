@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package notes provides types and functions for interacting with a note maps
-// data storage system.
 package notes
 
 import "errors"

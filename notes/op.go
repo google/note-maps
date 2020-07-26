@@ -54,59 +54,19 @@ func (os OperationSlice) SetValueString(id ID, vs string) OperationSlice {
 	return append(os, OpSetValueString{Op(id), vs})
 }
 
-// OpAddContent appends Add to the end of a note's contents.
-type OpAddContent struct {
+type OpIDSliceDelta struct {
 	Op
-	Add ID
+	IDSliceOps []IDSliceOp
 }
 
-// AddContent returns a new OperationSlice that also appends cs to the contents of note id.
-func (os OperationSlice) AddContent(id ID, cs ...ID) OperationSlice {
-	for _, c := range cs {
-		os = append(os, OpAddContent{Op(id), c})
-	}
-	return os
-}
-
-// OpInsertContent inserts Content at a Index within a note's contents.
-type OpInsertContent struct {
-	Op
-	Content ID
-	Index   int
-}
+type OpContentDelta OpIDSliceDelta
 
 // InsertContent returns a new OperationSlice that also inserts cs to the
 // contents of note id at index.
 func (os OperationSlice) InsertContent(id ID, index int, cs ...ID) OperationSlice {
-	for i, c := range cs {
-		os = append(os, OpInsertContent{Op(id), c, index + i})
-	}
-	return os
+	return append(os, OpContentDelta{Op(id), IDSlice{}.Insert(index, cs...)})
 }
 
-// OpRemoveContent removes Content from a note's contents.
-type OpRemoveContent struct {
-	Op
-	Content ID
-}
-
-// RemoveContent returns a new OperationSlice that also removes cs from the
-// contents of note id.
-func (os OperationSlice) RemoveContent(id ID, cs ...ID) OperationSlice {
-	for _, c := range cs {
-		os = append(os, OpRemoveContent{Op(id), c})
-	}
-	return os
-}
-
-// OpSwapContent swaps the notes at indices A and B within a note's contents.
-type OpSwapContent struct {
-	Op
-	A, B int
-}
-
-// SwapContent returns a new OperationSlice that also swaps the contents of
-// note id and indices a and b.
-func (os OperationSlice) SwapContent(id ID, a, b int) OperationSlice {
-	return append(os, OpSwapContent{Op(id), a, b})
+func (os OperationSlice) PatchContent(id ID, ops []IDSliceOp) OperationSlice {
+	return append(os, OpContentDelta{Op(id), ops})
 }

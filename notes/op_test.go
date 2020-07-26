@@ -55,10 +55,9 @@ func TestOperationSlice_SetValueString(t *testing.T) {
 
 func TestOperationSlice_AddContent(t *testing.T) {
 	var ops OperationSlice
-	ops = ops.AddContent("id0", "c0", "c1")
+	ops = ops.InsertContent("id0", 0, "c0", "c1")
 	if !reflect.DeepEqual(ops, OperationSlice{
-		OpAddContent{Op: "id0", Add: "c0"},
-		OpAddContent{Op: "id0", Add: "c1"},
+		OpContentDelta{"id0", []IDSliceOp{IDSliceOpInsert{"c0", "c1"}}},
 	}) {
 		t.Error(ops)
 	}
@@ -68,8 +67,7 @@ func TestOperationSlice_InsertContent(t *testing.T) {
 	var ops OperationSlice
 	ops = ops.InsertContent("id0", 1, "c2", "c3")
 	if !reflect.DeepEqual(ops, OperationSlice{
-		OpInsertContent{Op: "id0", Index: 1, Content: "c2"},
-		OpInsertContent{Op: "id0", Index: 2, Content: "c3"},
+		OpContentDelta{"id0", []IDSliceOp{IDSliceOpRetain(1), IDSliceOpInsert{"c2", "c3"}}},
 	}) {
 		t.Error(ops)
 	}
@@ -77,20 +75,9 @@ func TestOperationSlice_InsertContent(t *testing.T) {
 
 func TestOperationSlice_RemoveContent(t *testing.T) {
 	var ops OperationSlice
-	ops = ops.RemoveContent("id0", "c1", "c2")
+	ops = ops.PatchContent("id0", IDSlice{"c0", "c1", "c2"}.DeleteIDs("c1", "c2"))
 	if !reflect.DeepEqual(ops, OperationSlice{
-		OpRemoveContent{Op: "id0", Content: "c1"},
-		OpRemoveContent{Op: "id0", Content: "c2"},
-	}) {
-		t.Error(ops)
-	}
-}
-
-func TestOperationSlice_SwapContent(t *testing.T) {
-	var ops OperationSlice
-	ops = ops.SwapContent("id0", 1, 2)
-	if !reflect.DeepEqual(ops, OperationSlice{
-		OpSwapContent{Op: "id0", A: 1, B: 2},
+		OpContentDelta{"id0", []IDSliceOp{IDSliceOpRetain(1), IDSliceOpDelete(2)}},
 	}) {
 		t.Error(ops)
 	}

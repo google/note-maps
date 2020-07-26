@@ -23,6 +23,70 @@ type ID string
 
 type IDSlice []ID
 
+func (ids IDSlice) Append(add ...ID) IDSliceDelta {
+	return ids.Insert(len(ids), add...)
+}
+
+func (ids IDSlice) Retain(r int) IDSliceDelta {
+	return IDSliceDelta{}.Retain(r)
+}
+
+func (ids IDSlice) Insert(i int, add ...ID) IDSliceDelta {
+	return ids.Retain(i).Insert(add...)
+}
+
+func (ids IDSlice) Delete(i, num int) IDSliceDelta {
+	return IDSliceDelta{IDSliceOpRetain(i), IDSliceOpDelete(num)}
+}
+
+func (ids IDSlice) DeleteIDs(del ...ID) IDSliceDelta {
+	is := make(map[int]bool)
+	for _, r := range del {
+		for i, id := range ids {
+			if id == r {
+				is[i] = true
+			}
+		}
+	}
+	var delta IDSliceDelta
+	from := 0
+	deleting := false
+	for i := range ids {
+		if deleting {
+			if !is[i] {
+				delta = delta.Delete(i - from)
+				deleting = false
+				from = i
+			}
+		} else {
+			if is[i] {
+				delta = delta.Retain(i - from)
+				deleting = true
+				from = i
+			}
+		}
+	}
+	if deleting {
+		delta = delta.Delete(len(ids) - from)
+	}
+	return delta
+}
+
+type IDSliceDelta []IDSliceOp
+
+func (x IDSliceDelta) Retain(r int) IDSliceDelta {
+	if r == 0 {
+		return x
+	}
+	return append(x, IDSliceOpRetain(r))
+}
+func (x IDSliceDelta) Insert(add ...ID) IDSliceDelta {
+	return append(x, IDSliceOpInsert(add))
+}
+func (x IDSliceDelta) Delete(d int) IDSliceDelta {
+	return append(x, IDSliceOpDelete(d))
+}
+
 type IDSliceOp interface {
 	// Leaves returns how many items would be left in the slice beyond the scope
 	// of this op. If it returns a negative number, then calling Apply on a slice
@@ -55,8 +119,6 @@ func (x IDSliceOpDelete) Leaves(in int) int { return in - int(x) }
 func (x IDSliceOpDelete) Apply(ids IDSlice) (IDSlice, IDSlice) {
 	return nil, ids[x:]
 }
-
-type IDSliceDelta []IDSliceOp
 
 func (ids IDSlice) CanApply(ops []IDSliceOp) bool {
 	ln := len(ids)

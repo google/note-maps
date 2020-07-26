@@ -85,44 +85,7 @@ func Diff(a, b TruncatedNote) []Operation {
 	} else if a.ValueString != b.ValueString {
 		ops = ops.SetValueString(a.ID, b.ValueString)
 	}
-	// assumption: an ID cannot occur twice in the same note's contents, but can
-	// be present in multiple notes.
-	acm := make(map[ID]bool)
-	for _, c := range a.Contents {
-		acm[c] = true
-	}
-	res := append([]ID{}, a.Contents...)
-	is := make(map[ID]int)
-	for i, c := range b.Contents {
-		if !acm[c] {
-			// c is in b but not in a, add it to a.
-			if i >= len(a.Contents) {
-				ops = ops.AddContent(a.ID, c)
-				res = append(res, c)
-			} else {
-				ops = ops.InsertContent(a.ID, i, c)
-				res = append(res, c)
-				copy(res[i+1:], res[i:len(res)-1])
-				res[i] = c
-			}
-		}
-		is[c] = i
-	}
-	for i0, c := range a.Contents {
-		_, ok := is[c]
-		if !ok {
-			// c is in a but not in b, remove it from a.
-			ops = ops.RemoveContent(a.ID, c)
-			res = append(res[:i0], res[i0+1:]...)
-		}
-	}
-	for i0 := range b.Contents {
-		i1 := is[res[i0]]
-		if i0 != i1 {
-			ops = ops.SwapContent(a.ID, i0, i1)
-			res[i0], res[i1] = res[i1], res[i0]
-		}
-	}
+	ops = append(ops, OpContentDelta{Op(a.ID), IDSlice(a.Contents).Diff(IDSlice(b.Contents))})
 	return ops
 }
 
@@ -138,20 +101,8 @@ func Patch(a *TruncatedNote, ops []Operation) error {
 			a.ValueType = o.Datatype
 		case OpSetValueString:
 			a.ValueString = o.Lexical
-		case OpAddContent:
-			a.Contents = append(a.Contents, o.Add)
-		case OpInsertContent:
-			a.Contents = append(a.Contents, o.Content)
-			copy(a.Contents[o.Index+1:], a.Contents[o.Index:len(a.Contents)-1])
-			a.Contents[o.Index] = o.Content
-		case OpRemoveContent:
-			for i, c := range a.Contents {
-				if c == o.Content {
-					a.Contents = append(a.Contents[:i], a.Contents[i+1:]...)
-				}
-			}
-		case OpSwapContent:
-			a.Contents[o.A], a.Contents[o.B] = a.Contents[o.B], a.Contents[o.A]
+		case OpContentDelta:
+			a.Contents = IDSlice(a.Contents).Apply(o.IDSliceOps)
 		}
 	}
 	return nil

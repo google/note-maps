@@ -71,7 +71,7 @@ func TestStage_Note(t *testing.T) {
 			func(s *Stage) {
 				n1 := s.Note("1")
 				n1.SetValue("test value1", EmptyID)
-				n3 := n1.AddContent("3")
+				n3 := MustStageNote(n1.AddContent("3"))
 				n3.SetValue("test value3", EmptyID)
 				n4 := s.Note("4")
 				n4.SetValue("test value4", EmptyID)
@@ -79,10 +79,13 @@ func TestStage_Note(t *testing.T) {
 			},
 			OperationSlice{
 				OpSetValue{"1", "test value1", EmptyID},
-				OpAddContent{"1", "3"},
+				OpContentDelta{"1", []IDSliceOp{IDSliceOpInsert{"3"}}},
 				OpSetValue{"3", "test value3", EmptyID},
 				OpSetValue{"4", "test value4", EmptyID},
-				OpAddContent{"1", "4"},
+				OpContentDelta{"1", []IDSliceOp{
+					IDSliceOpRetain(1),
+					IDSliceOpInsert{"4"},
+				}},
 			},
 			map[ID]expectation{
 				"1": {vs: "test value1", cids: []ID{"3", "4"}},

@@ -136,7 +136,11 @@ func yamlToNote(src *yaml.Node, dst *notes.StageNote) error {
 			if s.LongTag() != "tag:yaml.org,2002:str" {
 				vt = notes.ID(s.ShortTag())
 			}
-			dst.AddContent(id).SetValue(s.Value, vt)
+			added, err := dst.AddContent(id)
+			if err != nil {
+				return err
+			}
+			added.SetValue(s.Value, vt)
 		case yaml.MappingNode:
 			if len(s.Content) == 2 && s.Content[0].Kind == yaml.ScalarNode && s.Content[0].Value == "is" {
 				// Unmarshal s.Content[1] into dst.Value

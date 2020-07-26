@@ -146,7 +146,7 @@ func TestTruncateNote_Equals(t *testing.T) {
 
 func TestPatch_mismatchedID(t *testing.T) {
 	tn := TruncatedNote{ID: "id0"}
-	ops := OperationSlice(nil).SetValue("id1", "vs", "vt").AddContent("id1", "c0")
+	ops := OperationSlice(nil).SetValue("id1", "vs", "vt").InsertContent("id1", 0, "c0")
 	Patch(&tn, []Operation(ops))
 	expect := TruncatedNote{ID: "id0"}
 	if !reflect.DeepEqual(tn, expect) {

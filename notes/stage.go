@@ -14,6 +14,8 @@
 
 package notes
 
+import "errors"
+
 // Stage describes a set of changes that might be made to a note map.
 //
 // The default stage describes an empty set of changes to be made to an empty
@@ -72,40 +74,64 @@ func (x *StageNote) GetValue() (string, GraphNote, error) {
 	return lex, dtype, nil
 }
 func (x *StageNote) GetContents() ([]GraphNote, error) {
+	cids, err := x.GetContentIDs()
+	if err != nil {
+		return nil, err
+	}
+	return x.Stage.GetBase().Load(cids)
+}
+func (x *StageNote) GetContentIDs() ([]ID, error) {
 	base, err := LoadOne(x.Stage.GetBase(), x.ID)
 	if err != nil {
 		return nil, err
 	}
 	ns, err := base.GetContents()
 	if err != nil {
-		return ns, err
+		return nil, err
+	}
+	cids := make(IDSlice, len(ns))
+	for i, n := range ns {
+		cids[i] = n.GetID()
 	}
 	for _, op := range x.Stage.Ops {
 		if op.AffectsID(x.ID) {
 			switch o := op.(type) {
-			case OpAddContent:
-				if o.GetID() == x.ID {
-					ns = append(ns, x.Stage.Note(o.Add))
+			case OpContentDelta:
+				if !cids.CanApply(o.IDSliceOps) {
+					return nil, errors.New("cannot apply delta")
 				}
+				cids = cids.Apply(o.IDSliceOps)
 			}
 		}
 	}
-	return ns, nil
+	return cids, nil
 }
 
 // SetValue expands the staged operations to update the value of this note.
-func (x *StageNote) SetValue(lexical string, datatype ID) {
+func (x *StageNote) SetValue(lexical string, datatype ID) error {
 	if x.ID == EmptyID {
 		panic("cannot set value before specifying an ID")
 	}
 	x.Stage.Ops = x.Stage.Ops.SetValue(x.ID, lexical, datatype)
+	return nil
 }
 
 // AddContent expands the staged operations to add content to this note.
-func (x *StageNote) AddContent(id ID) *StageNote {
+func (x *StageNote) AddContent(id ID) (*StageNote, error) {
 	if x.ID == EmptyID {
 		panic("cannot add content before specifying an ID")
 	}
-	x.Stage.Ops = x.Stage.Ops.AddContent(x.ID, id)
-	return &StageNote{x.Stage, id}
+	cids, err := x.GetContentIDs()
+	if err != nil {
+		return nil, err
+	}
+	x.Stage.Ops = x.Stage.Ops.PatchContent(x.ID, IDSlice(cids).Append(id))
+	return &StageNote{x.Stage, id}, nil
+}
+
+func MustStageNote(n *StageNote, err error) *StageNote {
+	if err != nil {
+		panic(err)
+	}
+	return n
 }

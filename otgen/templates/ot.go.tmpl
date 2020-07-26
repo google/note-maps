@@ -1,0 +1,207 @@
+{{- /*
+    Copyright 2020 Google LLC
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/ -}}
+
+// {{.GeneratedCodeWarning}}
+
+package {{.PackageName}}
+
+{{if .OpStringer -}}
+import "strconv"
+{{- end}}
+
+func (xs {{.SliceType}}) Append(add ...{{.ElementType}}) {{.DeltaType}} {
+	return xs.Insert(len(xs), add...)
+}
+
+func (xs {{.SliceType}}) Retain(r int) {{.DeltaType}} {
+	return {{.DeltaType}}{}.Retain(r)
+}
+
+func (xs {{.SliceType}}) Insert(i int, add ...{{.ElementType}}) {{.DeltaType}} {
+	return xs.Retain(i).Insert(add...)
+}
+
+func (xs {{.SliceType}}) Delete(i, num int) {{.DeltaType}} {
+	return {{.DeltaType}}{{"{"}}{{.OpType}}Retain(i), {{.OpType}}Delete(num)}
+}
+
+func (xs {{.SliceType}}) DeleteElements(del ...{{.ElementType}}) {{.DeltaType}} {
+	is := make(map[int]bool)
+	for _, r := range del {
+		for i, x := range xs {
+			if x == r {
+				is[i] = true
+			}
+		}
+	}
+	var delta {{.DeltaType}}
+	from := 0
+	deleting := false
+	for i := range xs {
+		if deleting {
+			if !is[i] {
+				delta = delta.Delete(i - from)
+				deleting = false
+				from = i
+			}
+		} else {
+			if is[i] {
+				delta = delta.Retain(i - from)
+				deleting = true
+				from = i
+			}
+		}
+	}
+	if deleting {
+		delta = delta.Delete(len(xs) - from)
+	}
+	return delta
+}
+
+// PrefixMatch returns the number of elements at the beginning of xs that match the
+// elements at the beginning of ys.
+func (xs {{.SliceType}}) PrefixMatch(ys []{{.ElementType}}) int {
+	i := 0
+	for ; i < len(xs) && i < len(ys); i++ {
+		if xs[i] != ys[i] {
+			break
+		}
+	}
+	return i
+}
+
+type {{.DeltaType}} []{{.OpType}}
+
+func (x {{.DeltaType}}) Retain(r int) {{.DeltaType}} {
+	if r == 0 {
+		return x
+	}
+	return append(x, {{.OpType}}Retain(r))
+}
+func (x {{.DeltaType}}) Insert(add ...{{.ElementType}}) {{.DeltaType}} {
+	return append(x, {{.OpType}}Insert(add))
+}
+func (x {{.DeltaType}}) Delete(d int) {{.DeltaType}} {
+	return append(x, {{.OpType}}Delete(d))
+}
+
+type {{.OpType}} interface {
+	// Leaves returns how many elements of a slice of length n would remain
+	// to be transformed by additional ops after applying this op. Returns
+	// a negative number if and only if this op cannot be coherently
+	// applied to a slice of length n.
+	Leaves(n int) int
+	Apply({{.SliceType}}) (include {{.SliceType}}, remainder {{.SliceType}})
+{{- if .OpStringer}}
+	String() string
+{{- end }}
+}
+
+type {{.OpType}}Insert []{{.ElementType}}
+type {{.OpType}}Retain int
+type {{.OpType}}Delete int
+
+func (x {{.OpType}}Insert) Leaves(in int) int { return in }
+func (x {{.OpType}}Insert) Apply(xs {{.SliceType}}) ({{.SliceType}}, {{.SliceType}}) {
+	return {{.SliceType}}(x), xs
+}
+
+{{if .OpStringer -}}
+func (x {{.OpType}}Insert) String() string {
+	return "insert " + {{.SliceType}}(x).String()
+}
+func (x {{.OpType}}Retain) String() string {
+	return "retain " + strconv.Itoa(int(x))
+}
+func (x {{.OpType}}Delete) String() string {
+	return "delete " + strconv.Itoa(int(x))
+}
+{{- end}}
+
+func (x {{.OpType}}Retain) Leaves(in int) int { return in - int(x) }
+func (x {{.OpType}}Retain) Apply(xs {{.SliceType}}) ({{.SliceType}}, {{.SliceType}}) {
+	return xs[:x], xs[x:]
+}
+
+func (x {{.OpType}}Delete) Leaves(in int) int { return in - int(x) }
+func (x {{.OpType}}Delete) Apply(xs {{.SliceType}}) ({{.SliceType}}, {{.SliceType}}) {
+	return nil, xs[x:]
+}
+
+func (xs {{.SliceType}}) CanApply(ops []{{.OpType}}) bool {
+	ln := len(xs)
+	for _, op := range ops {
+		if ln = op.Leaves(ln); ln < 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func (xs {{.SliceType}}) Apply(ops []{{.OpType}}) {{.SliceType}} {
+	var head, mid, tail {{.SliceType}}
+	tail = xs
+	for _, op := range ops {
+		mid, tail = op.Apply(tail)
+		head = append(head, mid...)
+	}
+	return append(head, tail...)
+}
+
+// {{.SliceType}}Diff produces a set of operations that can be applied to xs to
+// produce a slice that would match slice b.
+func {{.SliceType}}Diff(a, b {{.SliceType}}) {{.DeltaType}} {
+	var (
+		ops                {{.DeltaType}}
+		amid, bmid, midlen = idSliceLCS(a, b)
+	)
+	if midlen == 0 {
+		if len(a) > 0 {
+			ops = append(ops, {{.OpType}}Delete(len(a)))
+		}
+		if len(b) > 0 {
+			ops = append(ops, {{.OpType}}Insert(b))
+		}
+	} else {
+		ops = append(ops, {{.SliceType}}Diff(a[:amid], b[:bmid])...)
+		ops = append(ops, {{.OpType}}Retain(midlen))
+		ops = append(ops, {{.SliceType}}Diff(a[amid+midlen:], b[bmid+midlen:])...)
+	}
+	return ops
+}
+
+func idSliceLCS(a, b {{.SliceType}}) (ai, bi, ln int) {
+	ls := make([]int, len(a)*len(b))
+	max := 0
+	a0, b0 := 0, 0
+	for ai, aa := range a {
+		for bi, bb := range b {
+			if aa == bb {
+				li := ai*len(b) + bi
+				if ai == 0 || bi == 0 {
+					ls[li] = 1
+				} else {
+					ls[li] = ls[(ai-1)*len(b)+bi-1] + 1
+				}
+				if ls[li] > max {
+					max = ls[li]
+					a0, b0 = ai+1-max, bi+1-max
+				}
+			}
+		}
+	}
+	return a0, b0, max
+}

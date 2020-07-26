@@ -1,0 +1,252 @@
+{{- /*
+    Copyright 2020 Google LLC
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/ -}}
+
+// {{.GeneratedCodeWarning}}
+
+// NOTE: these tests require the following definitions in a nearby _test.go
+// file:
+//
+// const (
+//   Test{{.ElementName}}0
+//   Test{{.ElementName}}1
+//   Test{{.ElementName}}2
+//   Test{{.ElementName}}3
+// )
+
+package {{.PackageName}}
+
+import (
+	"reflect"
+	"testing"
+)
+
+func Test{{.OpType}}_String(t *testing.T) {
+	slice := {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1}
+	for _, test := range []struct {
+		O {{.OpType}}
+		S string
+	}{
+		{{"{"}}{{.OpType}}Delete(3), "delete 3"},
+		{{"{"}}{{.OpType}}Retain(3), "retain 3"},
+		{{"{"}}{{.OpType}}Insert(slice), "insert " + slice.String()},
+	} {
+		if actual := test.O.String(); actual != test.S {
+			t.Errorf("got %#v, expected %#v", actual, test.S)
+		}
+	}
+}
+
+func Test{{.SliceType}}_PrefixMatch(t *testing.T) {
+	for _, test := range []struct {
+		N    string
+		A, B {{.SliceType}}
+		M    int
+	}{
+		{N: "empty"},
+		{
+			N: "short A",
+			A: {{.SliceType}}{Test{{.ElementName}}0},
+			B: {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1},
+			M: 1,
+		},
+		{
+			N: "long A",
+			A: {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1},
+			B: {{.SliceType}}{Test{{.ElementName}}0},
+			M: 1,
+		},
+		{
+			N: "equal length partial match",
+			A: {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1},
+			B: {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}2},
+			M: 1,
+		},
+		{
+			N: "equal length full match",
+			A: {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1},
+			B: {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1},
+			M: 2,
+		},
+	} {
+		t.Run(test.N, func(t *testing.T) {
+			actual := test.A.PrefixMatch(test.B)
+			if actual != test.M {
+				t.Error("got", actual, "expected", test.M)
+			}
+		})
+	}
+	delta := {{.SliceType}}{Test{{.ElementName}}0}.
+		Append(Test{{.ElementName}}1, Test{{.ElementName}}2)
+	actual := {{.SliceType}}{Test{{.ElementName}}3}.Apply(delta)
+	expect := {{.SliceType}}{
+		Test{{.ElementName}}3,
+		Test{{.ElementName}}1,
+		Test{{.ElementName}}2,
+	}
+	if len(actual) != len(expect) || actual.PrefixMatch(expect) != len(actual) {
+		t.Error("got", actual, "expected", expect)
+	}
+}
+
+func Test{{.SliceType}}_CanApply(t *testing.T) {
+	for _, test := range []struct {
+		S   {{.SliceType}}
+		D   []{{.OpType}}
+		Can bool
+	}{
+		{Can: false, D: []{{.OpType}}{{"{"}}{{.OpType}}Delete(1)}},
+		{Can: false, D: []{{.OpType}}{{"{"}}{{.OpType}}Retain(1)}},
+		{Can: true, D: []{{.OpType}}{{"{"}}{{.OpType}}Insert{Test{{.ElementName}}0}}},
+	} {
+		if can := test.S.CanApply(test.D); can != test.Can {
+			t.Error("got", can, "expected", test.Can, "for", test.S, test.D)
+		}
+	}
+}
+
+func Test{{.SliceType}}_Append(t *testing.T) {
+	delta := {{.SliceType}}{Test{{.ElementName}}0}.
+		Append(Test{{.ElementName}}1, Test{{.ElementName}}2)
+	actual := {{.SliceType}}{Test{{.ElementName}}3}.Apply(delta)
+	expect := {{.SliceType}}{
+		Test{{.ElementName}}3,
+		Test{{.ElementName}}1,
+		Test{{.ElementName}}2,
+	}
+	if len(actual) != len(expect) || actual.PrefixMatch(expect) != len(actual) {
+		t.Error("got", actual, "expected", expect)
+	}
+}
+
+func Test{{.SliceType}}_DeleteElements(t *testing.T) {
+	base := {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1, Test{{.ElementName}}0}
+	delta := base.DeleteElements(Test{{.ElementName}}0)
+	if !base.CanApply(delta) {
+		t.Error("delta", delta, "cannot be applied to the slice used to create it",
+			base)
+	}
+	actual := base.Apply(delta)
+	expect := {{.SliceType}}{Test{{.ElementName}}1}
+	if len(actual) != len(expect) || actual.PrefixMatch(expect) != len(actual) {
+		t.Error("got", actual, "expected", expect)
+	}
+}
+
+func Test{{.SliceType}}_fluentDelta(t *testing.T) {
+	base := {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1}
+	delta := base.
+		Delete(0, 1).
+		Insert(Test{{.ElementName}}2).
+		Retain(1).
+		Insert(Test{{.ElementName}}0)
+	if !base.CanApply(delta) {
+		t.Error("delta", delta, "cannot be applied to the slice used to create it",
+			base)
+	}
+	actual := base.Apply(delta)
+	expect := {{.SliceType}}{
+		Test{{.ElementName}}2,
+		Test{{.ElementName}}1,
+		Test{{.ElementName}}0,
+	}
+	if len(actual) != len(expect) || actual.PrefixMatch(expect) != len(actual) {
+		t.Error("got", actual, "expected", expect)
+	}
+}
+
+func Test{{.SliceType}}_Apply(t *testing.T) {
+	for _, test := range []struct {
+		In       {{.SliceType}}
+		Ops      []{{.OpType}}
+		Out      {{.SliceType}}
+		CanApply bool
+	}{
+		{
+			In:       {{.SliceType}}{Test{{.ElementName}}0},
+			Ops:      []{{.OpType}}{{"{"}}{{.OpType}}Retain(1)},
+			CanApply: true,
+			Out:      {{.SliceType}}{Test{{.ElementName}}0},
+		},
+	} {
+		apply := test.In.CanApply(test.Ops)
+		if apply != test.CanApply {
+			t.Error("got apply=", apply, "expected apply=", test.CanApply)
+		}
+		if !apply {
+			continue
+		}
+		out := test.In.Apply(test.Ops)
+		if !reflect.DeepEqual(out, test.Out) {
+			t.Error("got", out, "expected", test.Out)
+		}
+	}
+}
+
+func Test{{.SliceType}}_Diff_andApply(t *testing.T) {
+	for _, test := range []struct {
+		N      string
+		A, B   {{.SliceType}}
+		LenOps int
+	}{
+		{"insert", {{.SliceType}}{}, {{.SliceType}}{Test{{.ElementName}}0}, 1},
+		{"delete", {{.SliceType}}{Test{{.ElementName}}0}, {{.SliceType}}{}, 1},
+		{"retain", {{.SliceType}}{Test{{.ElementName}}0}, {{.SliceType}}{Test{{.ElementName}}0}, 1},
+		{"insert, delete", {{.SliceType}}{Test{{.ElementName}}0}, {{.SliceType}}{Test{{.ElementName}}1}, 2},
+		{"delete, retain", {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1, Test{{.ElementName}}2}, {{.SliceType}}{Test{{.ElementName}}1, Test{{.ElementName}}2}, 2},
+		{"retain, delete", {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1, Test{{.ElementName}}2}, {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1}, 2},
+		{"retain, delete, insert, retain", {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1, Test{{.ElementName}}2}, {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}3, Test{{.ElementName}}2}, 4},
+	} {
+		t.Run(test.N, func(t *testing.T) {
+			diff := StringDiff(test.A, test.B)
+			if len(diff) != test.LenOps {
+				t.Error("got", diff, "with len", len(diff), "expected len", test.LenOps)
+			}
+			if !test.A.CanApply(diff) {
+				t.Error("cannot apply diff")
+			} else {
+				actual := test.A.Apply(diff)
+				if !(len(actual) == 0 && len(test.B) == 0) &&
+					!reflect.DeepEqual(actual, test.B) {
+					t.Error("got", actual, "expected", test.B)
+				}
+			}
+		})
+	}
+}
+
+func Test_idSliceLCS(t *testing.T) {
+	for _, test := range []struct {
+		N          string
+		A, B       {{.SliceType}}
+		AI, BI, LN int
+	}{
+		{"both empty", {{.SliceType}}{}, {{.SliceType}}{}, 0, 0, 0},
+		{"a empty", {{.SliceType}}{Test{{.ElementName}}0}, {{.SliceType}}{}, 0, 0, 0},
+		{"b empty", {{.SliceType}}{}, {{.SliceType}}{Test{{.ElementName}}0}, 0, 0, 0},
+		{"total mismatch", {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1}, {{.SliceType}}{Test{{.ElementName}}2, Test{{.ElementName}}4}, 0, 0, 0},
+		{"match at start", {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1}, {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}2}, 0, 0, 1},
+		{"match at end", {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1}, {{.SliceType}}{Test{{.ElementName}}2, Test{{.ElementName}}1}, 1, 1, 1},
+		{"match all", {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1}, {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1}, 0, 0, 2},
+		{"match multi middle", {{.SliceType}}{Test{{.ElementName}}2, Test{{.ElementName}}0, Test{{.ElementName}}1, Test{{.ElementName}}3}, {{.SliceType}}{Test{{.ElementName}}3, Test{{.ElementName}}0, Test{{.ElementName}}1, Test{{.ElementName}}2}, 1, 1, 2},
+	} {
+		t.Run(test.N, func(t *testing.T) {
+			ai, bi, ln := idSliceLCS(test.A, test.B)
+			if ai != test.AI || bi != test.BI || ln != test.LN {
+				t.Error("got", ai, bi, ln, "expected", test.AI, test.BI, test.LN)
+			}
+		})
+	}
+}

@@ -11,6 +11,8 @@ require (
 	github.com/genjidb/genji v0.6.0
 	github.com/golang/protobuf v1.4.2
 	github.com/google/subcommands v1.2.0
+	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
+	github.com/shurcooL/vfsgen v0.0.0-20200627165143-92b8a710ab6c // indirect
 	github.com/textileio/go-threads v0.1.23
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae // indirect

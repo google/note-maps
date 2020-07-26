@@ -38,17 +38,7 @@ func Equal(t *testing.T, a, b notes.GraphNote) bool {
 		t.Error(b.GetID(), err)
 		return false
 	}
-	if sa.ValueString != sb.ValueString ||
-		sa.ValueType != sb.ValueType ||
-		len(sa.Contents) != len(sb.Contents) {
-		return false
-	}
-	for i, ac := range sa.Contents {
-		if sb.Contents[i] != ac {
-			return false
-		}
-	}
-	return true
+	return sa.Equals(sb)
 }
 
 // ExpectEqual emits a detailed diff as a test error if a and b are not equal.

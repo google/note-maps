@@ -43,6 +43,7 @@ type brokenNote struct {
 func (n brokenNote) GetID() ID                            { return n.ID }
 func (n brokenNote) GetValue() (string, GraphNote, error) { return "", nil, n.err }
 func (n brokenNote) GetContents() ([]GraphNote, error)    { return nil, n.err }
+func (n brokenNote) GetTypes() ([]GraphNote, error)       { return nil, n.err }
 
 type brokenNoteLoader struct{ err error }
 

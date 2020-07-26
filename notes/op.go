@@ -43,10 +43,18 @@ func (os OperationSlice) SetValue(id ID, vs string, vt ID) OperationSlice {
 	return append(os, OpSetValue{Op(id), vs, vt})
 }
 
+func (os OpSetValue) String() string {
+	return "set " + string(os.Op) + " value type " + string(os.Datatype) + " and value " + os.Lexical
+}
+
 // OpSetValueString sets the value of a note to Lexical.
 type OpSetValueString struct {
 	Op
 	Lexical string
+}
+
+func (os OpSetValueString) String() string {
+	return "set " + string(os.Op) + " value to " + os.Lexical
 }
 
 // SetValue returns a new OperationSlice that also sets the value of note id to vs.
@@ -59,14 +67,45 @@ type OpIDSliceDelta struct {
 	IDSliceOps []IDSliceOp
 }
 
+func (o OpIDSliceDelta) String() string {
+	s := "ids patch for " + string(o.Op) + ":"
+	for _, op := range o.IDSliceOps {
+		s += " " + op.String()
+	}
+	return s + "."
+}
+
 type OpContentDelta OpIDSliceDelta
+
+func (o OpContentDelta) String() string { return "content " + OpIDSliceDelta(o).String() }
 
 // InsertContent returns a new OperationSlice that also inserts cs to the
 // contents of note id at index.
 func (os OperationSlice) InsertContent(id ID, index int, cs ...ID) OperationSlice {
+	if len(cs) == 0 {
+		return os
+	}
 	return append(os, OpContentDelta{Op(id), IDSlice{}.Insert(index, cs...)})
 }
 
+// PatchContent returns a new OperationSlice that also applies ops to the
+// contents of note id.
 func (os OperationSlice) PatchContent(id ID, ops []IDSliceOp) OperationSlice {
+	if len(ops) == 0 {
+		return os
+	}
 	return append(os, OpContentDelta{Op(id), ops})
+}
+
+type OpTypesDelta OpIDSliceDelta
+
+func (o OpTypesDelta) String() string { return "types " + OpIDSliceDelta(o).String() }
+
+// PatchTypes returns a new OperationSlice that also applies ops to the types
+// of note id.
+func (os OperationSlice) PatchTypes(id ID, ops []IDSliceOp) OperationSlice {
+	if len(ops) == 0 {
+		return os
+	}
+	return append(os, OpTypesDelta{Op(id), ops})
 }

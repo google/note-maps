@@ -69,6 +69,9 @@ func (n BrokenNote) GetValue() (string, notes.GraphNote, error) { return "", nil
 // GetContents always returns n.Err.
 func (n BrokenNote) GetContents() ([]notes.GraphNote, error) { return nil, n.Err }
 
+// GetTypes always returns n.Err.
+func (n BrokenNote) GetTypes() ([]notes.GraphNote, error) { return nil, n.Err }
+
 // BrokenNoteLoader loads instances of BrokenNote.
 type BrokenNoteLoader struct{ Err error }
 

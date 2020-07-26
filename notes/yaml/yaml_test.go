@@ -27,6 +27,7 @@ type note struct {
 	valuestring string
 	valuetype   notes.GraphNote
 	contents    []notes.GraphNote
+	types       []notes.GraphNote
 }
 
 func (n note) GetID() notes.ID { return n.id }
@@ -38,42 +39,44 @@ func (n note) GetValue() (string, notes.GraphNote, error) {
 	return n.valuestring, vt, nil
 }
 func (n note) GetContents() ([]notes.GraphNote, error) { return n.contents, nil }
+func (n note) GetTypes() ([]notes.GraphNote, error)    { return n.types, nil }
 
 func yamlString(lines ...string) string { return strings.Join(lines, "\n") + "\n" }
 
 func TestMarshalUnmarshal(t *testing.T) {
 	for _, test := range []struct {
-		title string
-		note  note
-		yaml  string
+		title     string
+		skip      string
+		note      note
+		canonical string
 	}{
 		//{},
 		//{ yaml: "note:\n- name: test", },
 		{
-			"note with one content",
-			note{
+			title: "note with one content",
+			note: note{
 				id: "10",
 				contents: []notes.GraphNote{
 					&note{id: "11", valuestring: "test content"},
 				},
 			},
-			yamlString(
+			canonical: yamlString(
 				"note: &10",
 				"    - &11 test content",
 			),
 		}, {
-			"note with an untyped value and no content",
-			note{
+			title: "note with an untyped value and no content",
+			note: note{
 				id:          "10",
 				valuestring: "test value",
 			},
-			yamlString(
+			canonical: yamlString(
 				"note: &10",
 				"    - is: test value",
 			),
 		}, {
-			"note with a value and multiple contents",
-			note{
+			title: "note with a value and multiple contents",
+			note: note{
 				id:          "10",
 				valuestring: "value10",
 				contents: []notes.GraphNote{
@@ -81,31 +84,85 @@ func TestMarshalUnmarshal(t *testing.T) {
 					&note{id: "12", valuestring: "value12"},
 				},
 			},
-			yamlString(
+			canonical: yamlString(
 				"note: &10",
 				"    - is: value10",
 				"    - &11 value11",
 				"    - &12 value12",
 			),
 		}, {
-			"note with a typed value",
-			note{
+			title: "note with a typed value",
+			note: note{
 				id:          "10",
 				valuestring: "value10",
 				valuetype:   note{id: "type11"},
 			},
-			yamlString(
+			canonical: yamlString(
 				"note: &10",
 				"    - is: !<type11> value10",
+			),
+		}, {
+			title: "note with typed content",
+			note: note{
+				id: "10",
+				contents: []notes.GraphNote{
+					&note{
+						id:          "11",
+						valuestring: "topic name",
+						types: []notes.GraphNote{
+							&note{id: "name"},
+						},
+					},
+				},
+			},
+			canonical: yamlString(
+				"note: &10",
+				"    - name: &11 topic name",
+			),
+		}, {
+			title: "note with complex content",
+			skip:  "this doesn't quite work yet",
+			note: note{
+				id: "10",
+				contents: []notes.GraphNote{
+					&note{
+						id:          "11",
+						valuestring: "ThreadsDB",
+						types: []notes.GraphNote{
+							&note{id: "name"},
+						},
+						contents: []notes.GraphNote{
+							&note{
+								id: "en",
+								types: []notes.GraphNote{
+									&note{id: "lang"},
+								},
+							},
+						},
+					},
+					&note{
+						id:          "12",
+						valuestring: "encrypted p2p database",
+					},
+				},
+			},
+			canonical: yamlString(
+				"note: &10",
+				"    - name: &11 ThreadsDB",
+				"      lang: &en",
+				"    - &12 encrypted p2p database",
 			),
 		},
 	} {
 		t.Run(test.title, func(t *testing.T) {
+			if test.skip != "" {
+				t.Skip(test.skip)
+			}
 			var (
 				diff notes.Stage
 				note = diff.Note(notes.EmptyID)
 			)
-			err := UnmarshalNote([]byte(test.yaml), note)
+			err := UnmarshalNote([]byte(test.canonical), note)
 			if err != nil {
 				t.Error(err)
 			} else {
@@ -119,10 +176,10 @@ func TestMarshalUnmarshal(t *testing.T) {
 			bs, err := MarshalNote(test.note)
 			if err != nil {
 				t.Error(err)
-			} else if string(bs) != test.yaml {
+			} else if string(bs) != test.canonical {
 				t.Errorf(
 					"expected yaml: %#v actual yaml: %#v",
-					test.yaml,
+					test.canonical,
 					string(bs))
 			}
 		})

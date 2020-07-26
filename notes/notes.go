@@ -28,6 +28,7 @@ type TruncatedNote struct {
 	ValueString string
 	ValueType   ID
 	Contents    []ID
+	Types       []ID
 }
 
 // TruncateNote returns a TruncatedNote representation of n.
@@ -48,28 +49,30 @@ func TruncateNote(n GraphNote) (TruncatedNote, error) {
 	for i, c := range cs {
 		cids[i] = c.GetID()
 	}
+	ts, err := n.GetTypes()
+	if err != nil {
+		return TruncatedNote{}, err
+	}
+	tids := make([]ID, len(ts))
+	for i, t := range ts {
+		tids[i] = t.GetID()
+	}
 	return TruncatedNote{
 		ID:          n.GetID(),
 		ValueString: vs,
 		ValueType:   vtid,
 		Contents:    cids,
+		Types:       tids,
 	}, nil
 }
 
 // Equals return true if and only if x is deeply equal to y.
 func (x TruncatedNote) Equals(y TruncatedNote) bool {
-	eq := x.ID == y.ID &&
+	return x.ID == y.ID &&
 		x.ValueString == y.ValueString && x.ValueType == y.ValueType &&
-		len(x.Contents) == len(y.Contents)
-	if !eq {
-		return false
-	}
-	for i, xc := range x.Contents {
-		if y.Contents[i] != xc {
-			return false
-		}
-	}
-	return true
+		len(x.Contents) == len(y.Contents) && len(x.Types) == len(y.Types) &&
+		IDSlice(x.Contents).PrefixMatch(y.Contents) == len(x.Contents) &&
+		IDSlice(x.Types).PrefixMatch(y.Types) == len(x.Types)
 }
 
 // Diff produces a set of operations that if applied to a would make it match
@@ -85,7 +88,8 @@ func Diff(a, b TruncatedNote) []Operation {
 	} else if a.ValueString != b.ValueString {
 		ops = ops.SetValueString(a.ID, b.ValueString)
 	}
-	ops = append(ops, OpContentDelta{Op(a.ID), IDSlice(a.Contents).Diff(IDSlice(b.Contents))})
+	ops = ops.PatchContent(a.ID, IDSlice(a.Contents).Diff(IDSlice(b.Contents)))
+	ops = ops.PatchTypes(a.ID, IDSlice(a.Types).Diff(IDSlice(b.Types)))
 	return ops
 }
 
@@ -103,6 +107,8 @@ func Patch(a *TruncatedNote, ops []Operation) error {
 			a.ValueString = o.Lexical
 		case OpContentDelta:
 			a.Contents = IDSlice(a.Contents).Apply(o.IDSliceOps)
+		case OpTypesDelta:
+			a.Types = IDSlice(a.Types).Apply(o.IDSliceOps)
 		}
 	}
 	return nil
@@ -117,6 +123,7 @@ type GraphNote interface {
 	GetID() ID
 	GetValue() (string, GraphNote, error)
 	GetContents() ([]GraphNote, error)
+	GetTypes() ([]GraphNote, error)
 }
 
 // ExpandNote uses tn and l to provide a full GraphNote implementation.
@@ -139,6 +146,9 @@ func (n *loaderNote) GetValue() (string, GraphNote, error) {
 }
 func (n *loaderNote) GetContents() ([]GraphNote, error) {
 	return n.l.Load(n.Contents)
+}
+func (n *loaderNote) GetTypes() ([]GraphNote, error) {
+	return n.l.Load(n.Types)
 }
 
 // Finder can be implemented to support finding notes in a note map according

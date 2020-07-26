@@ -26,11 +26,13 @@ type nn struct {
 	VS string
 	VT GraphNote
 	CS []GraphNote
+	TS []GraphNote
 }
 
 func (n nn) GetID() ID                            { return n.ID }
 func (n nn) GetValue() (string, GraphNote, error) { return n.VS, n.VT, nil }
 func (n nn) GetContents() ([]GraphNote, error)    { return n.CS, nil }
+func (n nn) GetTypes() ([]GraphNote, error)       { return n.TS, nil }
 
 type brokenValue struct{ nn }
 
@@ -50,6 +52,7 @@ func TestTruncateNote(t *testing.T) {
 		VS: "value",
 		VT: EmptyNote("vt"),
 		CS: []GraphNote{EmptyNote("c0"), EmptyNote("c1")},
+		TS: []GraphNote{EmptyNote("t0"), EmptyNote("t1")},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -59,6 +62,7 @@ func TestTruncateNote(t *testing.T) {
 		ValueString: "value",
 		ValueType:   "vt",
 		Contents:    []ID{"c0", "c1"},
+		Types:       []ID{"t0", "t1"},
 	}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("got %#v, expected %#v", actual, expected)
@@ -97,7 +101,7 @@ func TestTruncateNote_Equals(t *testing.T) {
 		{TruncatedNote{}, TruncatedNote{}, true},
 		{
 			TruncatedNote{},
-			TruncatedNote{"", "", "", []ID{}},
+			TruncatedNote{"", "", "", []ID{}, []ID{}},
 			true,
 		},
 		{TruncatedNote{ID: "0"}, TruncatedNote{}, false},

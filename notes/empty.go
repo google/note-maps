@@ -29,6 +29,7 @@ type EmptyNote ID
 func (x EmptyNote) GetID() ID                            { return ID(x) }
 func (x EmptyNote) GetValue() (string, GraphNote, error) { return "", EmptyNote(EmptyID), nil }
 func (x EmptyNote) GetContents() ([]GraphNote, error)    { return nil, nil }
+func (x EmptyNote) GetTypes() ([]GraphNote, error)       { return nil, nil }
 
 const (
 	// EmptyLoader implements the Loader interface for a note map that is

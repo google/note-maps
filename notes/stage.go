@@ -73,6 +73,7 @@ func (x *StageNote) GetValue() (string, GraphNote, error) {
 	}
 	return lex, dtype, nil
 }
+
 func (x *StageNote) GetContents() ([]GraphNote, error) {
 	cids, err := x.GetContentIDs()
 	if err != nil {
@@ -107,6 +108,43 @@ func (x *StageNote) GetContentIDs() ([]ID, error) {
 	return cids, nil
 }
 
+func (x *StageNote) GetTypes() ([]GraphNote, error) {
+	tids, err := x.GetTypeIDs()
+	if err != nil {
+		return nil, err
+	}
+	return x.Stage.GetBase().Load(tids)
+}
+func (x *StageNote) GetTypeIDs() ([]ID, error) {
+	base, err := LoadOne(x.Stage.GetBase(), x.ID)
+	if err != nil {
+		return nil, err
+	}
+	ns, err := base.GetTypes()
+	if err != nil {
+		return nil, err
+	}
+	tids := make(IDSlice, len(ns))
+	for i, n := range ns {
+		tids[i] = n.GetID()
+	}
+	for _, op := range x.Stage.Ops {
+		if op.AffectsID(x.ID) {
+			switch o := op.(type) {
+			case OpTypesDelta:
+				if !tids.CanApply(o.IDSliceOps) {
+					return nil, errors.New("cannot apply delta")
+				}
+				tids = tids.Apply(o.IDSliceOps)
+			}
+		}
+	}
+	return tids, nil
+}
+
+// Note returns the identified note from the underlying stage.
+func (x *StageNote) Note(id ID) *StageNote { return x.Stage.Note(id) }
+
 // SetValue expands the staged operations to update the value of this note.
 func (x *StageNote) SetValue(lexical string, datatype ID) error {
 	if x.ID == EmptyID {
@@ -127,6 +165,19 @@ func (x *StageNote) AddContent(id ID) (*StageNote, error) {
 	}
 	x.Stage.Ops = x.Stage.Ops.PatchContent(x.ID, IDSlice(cids).Append(id))
 	return &StageNote{x.Stage, id}, nil
+}
+
+// AddContent expands the staged operations to add content to this note.
+func (x *StageNote) InsertTypes(i int, add ...ID) error {
+	if x.ID == EmptyID {
+		panic("cannot set types before specifying an ID")
+	}
+	tids, err := x.GetTypeIDs()
+	if err != nil {
+		return err
+	}
+	x.Stage.Ops = x.Stage.Ops.PatchTypes(x.ID, IDSlice(tids).Append(add...))
+	return nil
 }
 
 func MustStageNote(n *StageNote, err error) *StageNote {

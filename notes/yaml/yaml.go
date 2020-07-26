@@ -23,7 +23,7 @@ import (
 
 func MarshalNote(src notes.GraphNote) ([]byte, error) {
 	doc := yaml.Node{Kind: yaml.DocumentNode}
-	if err := noteToNode(src, &doc); err != nil {
+	if err := noteToYaml(src, &doc); err != nil {
 		return nil, err
 	}
 	return yaml.Marshal(&doc)
@@ -34,10 +34,10 @@ func UnmarshalNote(src []byte, dst *notes.StageNote) error {
 	if err := yaml.Unmarshal(src, &n); err != nil {
 		return err
 	}
-	return yamlToNote(&n, dst)
+	return yamlDocumentToNote(&n, dst)
 }
 
-func noteToNode(src notes.GraphNote, dst *yaml.Node) error {
+func noteToYaml(src notes.GraphNote, dst *yaml.Node) error {
 	if src == nil {
 		return nil
 	}
@@ -86,18 +86,31 @@ func noteToNode(src notes.GraphNote, dst *yaml.Node) error {
 			if err != nil {
 				return err
 			}
-			y := yaml.Node{
+			y := &yaml.Node{
 				Kind:   yaml.ScalarNode,
 				Value:  vs,
 				Anchor: string(s.GetID()),
 			}
-			sequence.Content = append(sequence.Content, &y)
+			ts, err := s.GetTypes()
+			if err != nil {
+				return err
+			}
+			if len(ts) > 0 {
+				y = &yaml.Node{
+					Kind: yaml.MappingNode,
+					Content: []*yaml.Node{
+						{Kind: yaml.ScalarNode, Value: string(ts[0].GetID())},
+						y,
+					},
+				}
+			}
+			sequence.Content = append(sequence.Content, y)
 		}
 	}
 	return nil
 }
 
-func yamlToNote(src *yaml.Node, dst *notes.StageNote) error {
+func yamlDocumentToNote(src *yaml.Node, dst *notes.StageNote) error {
 	// Unwrap the outer YAML document structure.
 	if src.Kind == yaml.DocumentNode {
 		if len(src.Content) == 0 {
@@ -118,32 +131,28 @@ func yamlToNote(src *yaml.Node, dst *notes.StageNote) error {
 		}
 		src = src.Content[1]
 	}
-	// Unwrap the subject identifier.
+	return yamlNodeToNote(src, dst)
+}
+
+func yamlNodeToNote(src *yaml.Node, dst *notes.StageNote) error {
 	if src.Anchor != "" {
 		id := notes.ID(src.Anchor)
 		if id != notes.EmptyID {
 			dst.ID = id
 		}
 	}
-	for _, s := range src.Content {
-		switch s.Kind {
-		case yaml.ScalarNode:
-			var id notes.ID
-			if s.Anchor != "" {
-				id = notes.ID(s.Anchor)
-			}
-			var vt notes.ID
-			if s.LongTag() != "tag:yaml.org,2002:str" {
-				vt = notes.ID(s.ShortTag())
-			}
-			added, err := dst.AddContent(id)
-			if err != nil {
-				return err
-			}
-			added.SetValue(s.Value, vt)
-		case yaml.MappingNode:
-			if len(s.Content) == 2 && s.Content[0].Kind == yaml.ScalarNode && s.Content[0].Value == "is" {
-				// Unmarshal s.Content[1] into dst.Value
+	if dst.ID.Empty() {
+		dst.ID = notes.RandomID()
+	}
+	// A note without an ID might not be usable, but some ops may work. Let's go
+	// ahead either way.
+	switch src.Kind {
+	case yaml.SequenceNode:
+		for _, s := range src.Content {
+			if s.Kind == yaml.MappingNode && len(s.Content) == 2 &&
+				s.Content[0].Kind == yaml.ScalarNode && s.Content[0].Value == "is" {
+				// A note expressed as a sequence may set its own value with a sequence
+				// item that is a map, mapping "is" to the value of the note.
 				switch s.Content[1].Kind {
 				case yaml.ScalarNode:
 					var vt notes.ID
@@ -154,11 +163,53 @@ func yamlToNote(src *yaml.Node, dst *notes.StageNote) error {
 				default:
 					return fmt.Errorf("unsupported YAML type %v (%#v) for subject value", s.Kind, s.Value)
 				}
-				continue //value is not appended to contents
+			} else {
+				// TODO: use a different id when notes are cached and shared? random id
+				// to start?
+				content := dst.Note(notes.EmptyID)
+				if err := yamlNodeToNote(s, content); err != nil {
+					return err
+				}
+				dst.AddContent(content.GetID())
 			}
-		default:
-			return fmt.Errorf("unsupported content in note, kind=%#v", s.Kind)
 		}
+	case yaml.ScalarNode:
+		var id notes.ID
+		if src.Anchor != "" {
+			id = notes.ID(src.Anchor)
+		}
+		var vt notes.ID
+		if src.LongTag() != "tag:yaml.org,2002:str" {
+			vt = notes.ID(src.ShortTag())
+		}
+		added, err := dst.AddContent(id)
+		if err != nil {
+			return err
+		}
+		added.SetValue(src.Value, vt)
+	case yaml.MappingNode:
+		if len(src.Content) >= 2 && src.Content[1].Kind == yaml.ScalarNode {
+			// A note expressed as a map may use its first key-value pair to specify
+			// the note type and note value.
+			types, val := src.Content[0], src.Content[1]
+			// assumption: key.Kind==yaml.ScalarNode
+			dst.InsertTypes(0, notes.ID(types.Value))
+			yamlNodeToNote(val, dst)
+			for i := 2; i < len(src.Content); i += 2 {
+				key, val := src.Content[i], src.Content[i+1]
+				// assumption: key.Kind==yaml.ScalarNode
+				c := dst.Note(notes.EmptyID)
+				if err := yamlNodeToNote(val, c); err != nil {
+					return err
+				}
+				dst.AddContent(c.GetID())
+				if err := c.InsertTypes(0, notes.ID(key.Value)); err != nil {
+					return err
+				}
+			}
+		}
+	default:
+		return fmt.Errorf("unsupported content in note, kind=%#v", src.Kind)
 	}
 	return nil
 }

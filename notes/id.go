@@ -16,12 +16,43 @@
 // data storage system.
 package notes
 
-import "strconv"
+import (
+	"math/rand"
+	"strconv"
+)
 
 // ID is the type of values that identify notes.
 type ID string
 
+// RandomID returns a pseudo-random ID using package math/rand.
+func RandomID() ID {
+	return ID(strconv.FormatUint(rand.Uint64(), 10))
+}
+
 type IDSlice []ID
+
+func (ids IDSlice) String() string {
+	s := "["
+	for i, id := range ids {
+		if i > 0 {
+			s += ","
+		}
+		s += string(id)
+	}
+	return s + "]"
+}
+
+// PrefixMatch returns the number of IDs at the beginning of ids that match the
+// ids at the beginning of b.
+func (ids IDSlice) PrefixMatch(b []ID) int {
+	i := 0
+	for ; i < len(ids) && i < len(b); i++ {
+		if ids[i] != b[i] {
+			break
+		}
+	}
+	return i
+}
 
 func (ids IDSlice) Append(add ...ID) IDSliceDelta {
 	return ids.Insert(len(ids), add...)
@@ -93,6 +124,7 @@ type IDSliceOp interface {
 	// of that length may panic.
 	Leaves(in int) (out int)
 	Apply(IDSlice) (include IDSlice, remainder IDSlice)
+	String() string
 }
 
 type IDSliceOpInsert []ID
@@ -102,6 +134,9 @@ type IDSliceOpDelete int
 func (x IDSliceOpInsert) Leaves(in int) int { return in }
 func (x IDSliceOpInsert) Apply(ids IDSlice) (IDSlice, IDSlice) {
 	return IDSlice(x), ids
+}
+func (x IDSliceOpInsert) String() string {
+	return "insert " + IDSlice(x).String()
 }
 
 func (x IDSliceOpRetain) String() string {

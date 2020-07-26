@@ -20,9 +20,6 @@ import (
 	"io"
 )
 
-// ID is the type of values that identify notes.
-type ID string
-
 // TruncatedNote is a minimal representation of a note intended for storage
 // integrations and for algorithms that don't need to traverse a graph of
 // notes.

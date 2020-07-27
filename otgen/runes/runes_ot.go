@@ -141,10 +141,10 @@ func (xs String) Apply(ops []StringOp) String {
 
 // StringDiff produces a set of operations that can be applied to xs to
 // produce a slice that would match slice b.
-func StringDiff(a, b String) StringDelta {
+func StringDiff(a, b []rune) StringDelta {
 	var (
 		ops                StringDelta
-		amid, bmid, midlen = idSliceLCS(a, b)
+		amid, bmid, midlen = idSliceLCS(String(a), String(b))
 	)
 	if midlen == 0 {
 		if len(a) > 0 {

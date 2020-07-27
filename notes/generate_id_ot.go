@@ -12,12 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package notes
+// +build ignore
 
-const (
-	TestID0 = "a"
-	TestID1 = "b"
-	TestID2 = "c"
-	TestID3 = "d"
-	TestID4 = "d"
+package main
+
+import (
+	"log"
+
+	"github.com/google/note-maps/otgen"
 )
+
+func main() {
+	err := otgen.Generate(otgen.Options{
+		PackageName: "notes",
+		ElementType: "ID",
+		SliceType:   "IDSlice",
+		BaseName:    "id_ot",
+		OpStringer:  true,
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+}

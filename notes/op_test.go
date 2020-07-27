@@ -75,7 +75,7 @@ func TestOperationSlice_InsertContent(t *testing.T) {
 
 func TestOperationSlice_RemoveContent(t *testing.T) {
 	var ops OperationSlice
-	ops = ops.PatchContent("id0", IDSlice{"c0", "c1", "c2"}.DeleteIDs("c1", "c2"))
+	ops = ops.PatchContent("id0", IDSlice{"c0", "c1", "c2"}.DeleteElements("c1", "c2"))
 	if !reflect.DeepEqual(ops, OperationSlice{
 		OpContentDelta{"id0", []IDSliceOp{IDSliceOpRetain(1), IDSliceOpDelete(2)}},
 	}) {

@@ -163,10 +163,10 @@ func (xs {{.SliceType}}) Apply(ops []{{.OpType}}) {{.SliceType}} {
 
 // {{.SliceType}}Diff produces a set of operations that can be applied to xs to
 // produce a slice that would match slice b.
-func {{.SliceType}}Diff(a, b {{.SliceType}}) {{.DeltaType}} {
+func {{.SliceType}}Diff(a, b []{{.ElementType}}) {{.DeltaType}} {
 	var (
 		ops                {{.DeltaType}}
-		amid, bmid, midlen = idSliceLCS(a, b)
+		amid, bmid, midlen = idSliceLCS({{.SliceType}}(a), {{.SliceType}}(b))
 	)
 	if midlen == 0 {
 		if len(a) > 0 {

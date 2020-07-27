@@ -88,8 +88,8 @@ func Diff(a, b TruncatedNote) []Operation {
 	} else if a.ValueString != b.ValueString {
 		ops = ops.SetValueString(a.ID, b.ValueString)
 	}
-	ops = ops.PatchContent(a.ID, IDSlice(a.Contents).Diff(IDSlice(b.Contents)))
-	ops = ops.PatchTypes(a.ID, IDSlice(a.Types).Diff(IDSlice(b.Types)))
+	ops = ops.PatchContent(a.ID, IDSliceDiff(a.Contents, b.Contents))
+	ops = ops.PatchTypes(a.ID, IDSliceDiff(a.Types, b.Types))
 	return ops
 }
 

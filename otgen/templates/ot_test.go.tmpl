@@ -210,7 +210,7 @@ func Test{{.SliceType}}_Diff_andApply(t *testing.T) {
 		{"retain, delete, insert, retain", {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}1, Test{{.ElementName}}2}, {{.SliceType}}{Test{{.ElementName}}0, Test{{.ElementName}}3, Test{{.ElementName}}2}, 4},
 	} {
 		t.Run(test.N, func(t *testing.T) {
-			diff := StringDiff(test.A, test.B)
+			diff := {{.SliceType}}Diff(test.A, test.B)
 			if len(diff) != test.LenOps {
 				t.Error("got", diff, "with len", len(diff), "expected len", test.LenOps)
 			}

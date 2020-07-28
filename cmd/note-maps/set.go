@@ -65,7 +65,7 @@ func (c *setCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) s
 	}
 	var (
 		stage notes.Stage
-		note  = yaml.NoteModel
+		note  yaml.NoteModel
 	)
 	err = yaml.UnmarshalNote(input, &note)
 	if err != nil {

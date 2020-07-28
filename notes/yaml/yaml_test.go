@@ -15,6 +15,7 @@
 package yaml
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -43,144 +44,193 @@ func (n note) GetTypes() ([]notes.GraphNote, error)    { return n.types, nil }
 
 func yamlString(lines ...string) string { return strings.Join(lines, "\n") + "\n" }
 
-func TestMarshalUnmarshal(t *testing.T) {
-	for _, test := range []struct {
-		title     string
-		skip      string
-		note      note
-		canonical string
-	}{
-		//{},
-		//{ yaml: "note:\n- name: test", },
-		{
-			title: "note with one content",
-			note: note{
-				id: "10",
-				contents: []notes.GraphNote{
-					&note{id: "11", valuestring: "test content"},
-				},
+var TestCases = []struct {
+	// Name of test case
+	N string
+	// Reason to skip the test case
+	Skip string
+	// Alternative input YAML docs that should represent the same thing, each
+	// with a key that describes what is different about that YAML doc.
+	IY map[string]string
+	// GraphNote representation of note
+	GN note
+	// Canonical YAML
+	CY string
+}{
+	{
+		N: "note with one content",
+		GN: note{
+			id: "10",
+			contents: []notes.GraphNote{
+				&note{id: "11", valuestring: "test content"},
 			},
-			canonical: yamlString(
-				"note: &10",
-				"    - &11 test content",
-			),
-		}, {
-			title: "note with an untyped value and no content",
-			note: note{
-				id:          "10",
-				valuestring: "test value",
-			},
-			canonical: yamlString(
-				"note: &10",
-				"    - is: test value",
-			),
-		}, {
-			title: "note with a value and multiple contents",
-			note: note{
-				id:          "10",
-				valuestring: "value10",
-				contents: []notes.GraphNote{
-					&note{id: "11", valuestring: "value11"},
-					&note{id: "12", valuestring: "value12"},
-				},
-			},
-			canonical: yamlString(
-				"note: &10",
-				"    - is: value10",
-				"    - &11 value11",
-				"    - &12 value12",
-			),
-		}, {
-			title: "note with a typed value",
-			note: note{
-				id:          "10",
-				valuestring: "value10",
-				valuetype:   note{id: "type11"},
-			},
-			canonical: yamlString(
-				"note: &10",
-				"    - is: !<type11> value10",
-			),
-		}, {
-			title: "note with typed content",
-			note: note{
-				id: "10",
-				contents: []notes.GraphNote{
-					&note{
-						id:          "11",
-						valuestring: "topic name",
-						types: []notes.GraphNote{
-							&note{id: "name"},
-						},
-					},
-				},
-			},
-			canonical: yamlString(
-				"note: &10",
-				"    - name: &11 topic name",
-			),
-		}, {
-			title: "note with complex content",
-			skip:  "this doesn't quite work yet",
-			note: note{
-				id: "10",
-				contents: []notes.GraphNote{
-					&note{
-						id:          "11",
-						valuestring: "ThreadsDB",
-						types: []notes.GraphNote{
-							&note{id: "name"},
-						},
-						contents: []notes.GraphNote{
-							&note{
-								id: "en",
-								types: []notes.GraphNote{
-									&note{id: "lang"},
-								},
-							},
-						},
-					},
-					&note{
-						id:          "12",
-						valuestring: "encrypted p2p database",
-					},
-				},
-			},
-			canonical: yamlString(
-				"note: &10",
-				"    - name: &11 ThreadsDB",
-				"      lang: &en",
-				"    - &12 encrypted p2p database",
-			),
 		},
-	} {
-		t.Run(test.title, func(t *testing.T) {
-			if test.skip != "" {
-				t.Skip(test.skip)
+		CY: yamlString(
+			"note: &10",
+			"    - &11 test content",
+		),
+	}, {
+		N: "note with an untyped value and no content",
+		GN: note{
+			id:          "10",
+			valuestring: "test value",
+		},
+		CY: yamlString(
+			"note: &10",
+			"    - is: test value",
+		),
+	}, {
+		N: "note with a value and multiple contents",
+		GN: note{
+			id:          "10",
+			valuestring: "value10",
+			contents: []notes.GraphNote{
+				&note{id: "11", valuestring: "value11"},
+				&note{id: "12", valuestring: "value12"},
+			},
+		},
+		CY: yamlString(
+			"note: &10",
+			"    - is: value10",
+			"    - &11 value11",
+			"    - &12 value12",
+		),
+	}, {
+		N: "note with a typed value",
+		GN: note{
+			id:          "10",
+			valuestring: "value10",
+			valuetype:   note{id: "type11"},
+		},
+		CY: yamlString(
+			"note: &10",
+			"    - is: !<type11> value10",
+		),
+	}, {
+		N: "note with typed content",
+		GN: note{
+			id: "10",
+			contents: []notes.GraphNote{
+				&note{
+					id:          "11",
+					valuestring: "topic name",
+					types: []notes.GraphNote{
+						&note{id: "name"},
+					},
+				},
+			},
+		},
+		CY: yamlString(
+			"note: &10",
+			"    - name: &11 topic name",
+		),
+	}, {
+		N: "note with complex content",
+		GN: note{
+			id: "10",
+			contents: []notes.GraphNote{
+				&note{
+					id:          "11",
+					valuestring: "ThreadsDB",
+					types: []notes.GraphNote{
+						&note{id: "name"},
+					},
+					contents: []notes.GraphNote{
+						&note{
+							id:          "13",
+							types:       []notes.GraphNote{&note{id: "question"}},
+							valuestring: "can one DB have many threads?",
+						},
+					},
+				},
+				&note{
+					id:          "12",
+					valuestring: "encrypted p2p database",
+				},
+			},
+		},
+		CY: yamlString(
+			"note: &10",
+			"    - name: &11",
+			"        - is: ThreadsDB",
+			"        - question: &13 can one DB have many threads?",
+			"    - &12 encrypted p2p database",
+		),
+	},
+}
+
+func TestMarshal(t *testing.T) {
+	for _, test := range TestCases {
+		t.Run(test.N, func(t *testing.T) {
+			if test.Skip != "" {
+				t.Skip(test.Skip)
 			}
-			var (
-				diff notes.Stage
-				note = diff.Note(notes.EmptyID)
-			)
-			err := UnmarshalNote([]byte(test.canonical), note)
+			bs, err := MarshalNote(test.GN)
+			if err != nil {
+				t.Error(err)
+			} else if string(bs) != test.CY {
+				t.Errorf(
+					"expected yaml:\n%vactual yaml:\n%v",
+					test.CY,
+					string(bs))
+			}
+		})
+	}
+}
+
+func TestUnmarshal(t *testing.T) {
+	for _, test := range TestCases {
+		t.Run(test.N, func(t *testing.T) {
+			if test.Skip != "" {
+				t.Skip(test.Skip)
+			}
+			t.Logf("CY %v", test.CY)
+			t.Logf("GN %#v", test.GN)
+			bss, err := json.Marshal(test.GN)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var actual NoteModel
+			err = UnmarshalNote([]byte(test.CY), &actual)
+			if err != nil {
+				t.Error(err)
+			} else if !notestest.ExpectEqual(t, &actual, test.GN) {
+				bs0, err := json.Marshal(actual)
+				if err != nil {
+					t.Fatal(err)
+				}
+				bs1, err := json.Marshal(test.GN)
+				if err != nil {
+					t.Fatal(err)
+				}
+				t.Log("got  ", string(bs0))
+				t.Log("want ", string(bs1))
+				t.Log("wan0 ", string(bss))
+			}
+		})
+	}
+}
+
+func TestUnmarshalMarshal_canonical(t *testing.T) {
+	for _, test := range TestCases {
+		t.Run(test.N, func(t *testing.T) {
+			if test.Skip != "" {
+				t.Skip(test.Skip)
+			}
+			var m NoteModel
+			err := UnmarshalNote([]byte(test.CY), &m)
 			if err != nil {
 				t.Error(err)
 			} else {
-				t.Log("diff begin")
-				for _, op := range diff.Ops {
-					t.Log(op)
+				bs, err := MarshalNote(test.GN)
+				if err != nil {
+					t.Error(err)
+				} else if string(bs) != test.CY {
+					t.Errorf(
+						"expected yaml:\n%vactual yaml:\n%v",
+						test.CY,
+						string(bs))
 				}
-				t.Log("diff end")
-				notestest.ExpectEqual(t, note, test.note)
-			}
-			bs, err := MarshalNote(test.note)
-			if err != nil {
-				t.Error(err)
-			} else if string(bs) != test.canonical {
-				t.Errorf(
-					"expected yaml: %#v actual yaml: %#v",
-					test.canonical,
-					string(bs))
 			}
 		})
 	}

@@ -65,9 +65,9 @@ func (c *setCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) s
 	}
 	var (
 		stage notes.Stage
-		note  = stage.Note(notes.EmptyID)
+		note  = yaml.NoteModel
 	)
-	err = yaml.UnmarshalNote(input, note)
+	err = yaml.UnmarshalNote(input, &note)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "set: while parsing input", err)
 		return subcommands.ExitFailure

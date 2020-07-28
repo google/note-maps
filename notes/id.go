@@ -35,6 +35,8 @@ func RandomID() ID {
 	return ID(strconv.FormatUint(rand.Uint64(), 10))
 }
 
+func (x ID) String() string { return string(x) }
+
 type IDSlice []ID
 
 func (ids IDSlice) String() string {

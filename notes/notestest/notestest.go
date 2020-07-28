@@ -42,15 +42,17 @@ func Equal(t *testing.T, a, b notes.GraphNote) bool {
 }
 
 // ExpectEqual emits a detailed diff as a test error if a and b are not equal.
-func ExpectEqual(t *testing.T, a, b notes.GraphNote) {
+func ExpectEqual(t *testing.T, a, b notes.GraphNote) bool {
 	if !Equal(t, a, b) {
 		if a.GetID() != b.GetID() {
 			t.Error("expected equal notes, got IDs", a.GetID(), b.GetID())
 		}
 		for _, op := range Diff(t, a, b) {
-			t.Error("expected equal notes, but got diff", op)
+			t.Error("expected equal notes, but must", op)
 		}
+		return false
 	}
+	return true
 }
 
 // Diff returns a sequence of operations that could be applied to a to make its

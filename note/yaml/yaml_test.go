@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/google/note-maps/note"
-	"github.com/google/note-maps/note/notestest"
+	"github.com/google/note-maps/note/notetest"
 )
 
 type N struct {
@@ -194,7 +194,7 @@ func TestUnmarshal(t *testing.T) {
 			err = UnmarshalNote([]byte(test.CY), &actual)
 			if err != nil {
 				t.Error(err)
-			} else if !notestest.ExpectEqual(t, actual.GraphNote(), test.GN) {
+			} else if !notetest.ExpectEqual(t, actual.GraphNote(), test.GN) {
 				bs0, err := json.Marshal(actual)
 				if err != nil {
 					t.Fatal(err)

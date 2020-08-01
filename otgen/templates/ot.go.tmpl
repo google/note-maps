@@ -35,7 +35,7 @@ func (xs {{.SliceType}}) Insert(i int, add ...{{.ElementType}}) {{.DeltaType}} {
 }
 
 func (xs {{.SliceType}}) Delete(i, num int) {{.DeltaType}} {
-	return {{.DeltaType}}{{"{"}}{{.OpType}}Retain(i), {{.OpType}}Delete(num)}
+	return xs.Retain(i).Delete(num)
 }
 
 func (xs {{.SliceType}}) DeleteElements(del ...{{.ElementType}}) {{.DeltaType}} {
@@ -97,6 +97,51 @@ func (x {{.DeltaType}}) Insert(add ...{{.ElementType}}) {{.DeltaType}} {
 func (x {{.DeltaType}}) Delete(d int) {{.DeltaType}} {
 	return append(x, {{.OpType}}Delete(d))
 }
+func (x {{.DeltaType}}) Rebase(base {{.DeltaType}}) ({{.DeltaType}}, error) {
+	var res {{.DeltaType}}
+	xi, bi := 0, 0
+	var r, xop, bop {{.OpType}}
+	for {
+		if xop == nil {
+			if xi >= len(x) {
+				break
+			}
+			xop = x[xi]
+			xi++
+		}
+		if bop == nil {
+			if bi >= len(base) {
+				break
+			}
+			bop = base[bi]
+			bi++
+		}
+		r, xop, bop = xop.Rebase(bop)
+		if r != nil {
+			res = append(res, r)
+		}
+	}
+	if xop != nil {
+		res = append(res, xop)
+	}
+	res = append(res, x[xi:]...)
+	var cres {{.DeltaType}}
+	for _, r := range res {
+		if len(cres) == 0 {
+			if r.Len() > 0 {
+				cres = append(cres, r)
+			}
+		} else {
+			c, ok := cres[len(cres)-1].Compact(r)
+			if ok {
+				cres[len(cres)-1] = c
+			} else if !ok && r.Len() > 0 {
+				cres = append(cres, r)
+			}
+		}
+	}
+	return cres, nil
+}
 
 type {{.OpType}} interface {
 	// Leaves returns how many elements of a slice of length n would remain
@@ -104,6 +149,18 @@ type {{.OpType}} interface {
 	// a negative number if and only if this op cannot be coherently
 	// applied to a slice of length n.
 	Leaves(n int) int
+	// Len returns the number of elements inserted, retained, or deleted by
+	// this op.
+	Len() int
+	// Skip returns an equivalent op that assumes its intent is already carried
+	// out for the first n elements. May panic if n > Len().
+	Skip(n int) {{.OpType}}
+	// Rebase transforms op into a rebased op r (or nil), a subsequent op for
+	// rebasing xn (or nil), and a subsequent base bn (or nil).
+	Rebase(base {{.OpType}}) (r {{.OpType}}, xn {{.OpType}}, bn {{.OpType}})
+	// Compact expands this op to include o if possible, returning true if
+	// successful.
+	Compact(o {{.OpType}}) ({{.OpType}}, bool)
 	Apply({{.SliceType}}) (include {{.SliceType}}, remainder {{.SliceType}})
 {{- if .OpStringer}}
 	String() string
@@ -115,6 +172,26 @@ type {{.OpType}}Retain int
 type {{.OpType}}Delete int
 
 func (x {{.OpType}}Insert) Leaves(in int) int { return in }
+func (x {{.OpType}}Insert) Len() int          { return len(x) }
+
+func (x {{.OpType}}Insert) Skip(n int) {{.OpType}} { return x[n:] }
+func (x {{.OpType}}Insert) Rebase(base {{.OpType}}) ({{.OpType}}, {{.OpType}}, {{.OpType}}) {
+	switch bo := base.(type) {
+	case {{.OpType}}Insert:
+		return {{.OpType}}Retain(bo.Len()), x, nil
+	case {{.OpType}}Retain:
+		return x, nil, bo
+	case {{.OpType}}Delete:
+		return x, nil, bo
+	}
+	panic("unknown base type")
+}
+func (x {{.OpType}}Insert) Compact(op {{.OpType}}) ({{.OpType}}, bool) {
+	if o, ok := op.({{.OpType}}Insert); ok {
+		return append(x, o...), true
+	}
+	return x, false
+}
 func (x {{.OpType}}Insert) Apply(xs {{.SliceType}}) ({{.SliceType}}, {{.SliceType}}) {
 	return {{.SliceType}}(x), xs
 }
@@ -132,11 +209,86 @@ func (x {{.OpType}}Delete) String() string {
 {{- end}}
 
 func (x {{.OpType}}Retain) Leaves(in int) int { return in - int(x) }
+func (x {{.OpType}}Retain) Len() int          { return int(x) }
+
+func (x {{.OpType}}Retain) Skip(n int) {{.OpType}} { return x - {{.OpType}}Retain(n) }
+func (x {{.OpType}}Retain) Rebase(base {{.OpType}}) ({{.OpType}}, {{.OpType}}, {{.OpType}}) {
+	switch bo := base.(type) {
+	case {{.OpType}}Insert:
+		// Retain what has been inserted
+		return x + {{.OpType}}Retain(len(bo)), nil, nil
+	case {{.OpType}}Retain:
+		// Retain the matching prefix
+		switch {
+		case x < bo:
+			return x, nil, bo - x
+		case x == bo:
+			return x, nil, nil
+		case x > bo:
+			return bo, x - bo, nil
+		}
+	case {{.OpType}}Delete:
+		// Can't retain what has been deleted
+		switch {
+		case x.Len() < bo.Len():
+			// Retention is cancelled by deletion and there is still more to delete.
+			return nil, nil, bo - {{.OpType}}Delete(x)
+		case x.Len() == bo.Len():
+			// Retention is cancelled by deletion.
+			return nil, nil, nil
+		case x.Len() > bo.Len():
+			// Retention is partially cancelled by deletion, there is more to retain.
+			return nil, x - {{.OpType}}Retain(bo), nil
+		}
+	}
+	panic("unknown base type")
+}
+func (x {{.OpType}}Retain) Compact(op {{.OpType}}) ({{.OpType}}, bool) {
+	if o, ok := op.({{.OpType}}Retain); ok {
+		return x + o, true
+	}
+	return x, false
+}
 func (x {{.OpType}}Retain) Apply(xs {{.SliceType}}) ({{.SliceType}}, {{.SliceType}}) {
 	return xs[:x], xs[x:]
 }
 
 func (x {{.OpType}}Delete) Leaves(in int) int { return in - int(x) }
+func (x {{.OpType}}Delete) Len() int          { return int(x) }
+
+func (x {{.OpType}}Delete) Skip(n int) {{.OpType}} { return x - {{.OpType}}Delete(n) }
+func (x {{.OpType}}Delete) Rebase(base {{.OpType}}) ({{.OpType}}, {{.OpType}}, {{.OpType}}) {
+	switch bo := base.(type) {
+	case {{.OpType}}Insert:
+		return {{.OpType}}Retain(bo.Len()), x, nil
+	case {{.OpType}}Retain:
+		// Delete the matching prefix
+		switch {
+		case x.Len() < bo.Len():
+			return x, nil, bo - {{.OpType}}Retain(x)
+		case x.Len() == bo.Len():
+			return x, nil, nil
+		case x.Len() > bo.Len():
+			return {{.OpType}}Delete(bo), x.Skip(bo.Len()), nil
+		}
+	case {{.OpType}}Delete:
+		switch {
+		case x.Len() < bo.Len():
+			return nil, nil, bo.Skip(x.Len())
+		case x.Len() == bo.Len():
+			return nil, nil, nil
+		case x.Len() > bo.Len():
+			return nil, x - bo, nil
+		}
+	}
+	panic("unknown base type")
+}
+func (x {{.OpType}}Delete) Compact(op {{.OpType}}) ({{.OpType}}, bool) {
+	if o, ok := op.({{.OpType}}Delete); ok {
+		return x + o, true
+	}
+	return x, false
+}
 func (x {{.OpType}}Delete) Apply(xs {{.SliceType}}) ({{.SliceType}}, {{.SliceType}}) {
 	return nil, xs[x:]
 }

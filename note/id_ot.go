@@ -17,7 +17,7 @@ func (xs IDSlice) Insert(i int, add ...ID) IDSliceDelta {
 }
 
 func (xs IDSlice) Delete(i, num int) IDSliceDelta {
-	return IDSliceDelta{IDSliceOpRetain(i), IDSliceOpDelete(num)}
+	return xs.Retain(i).Delete(num)
 }
 
 func (xs IDSlice) DeleteElements(del ...ID) IDSliceDelta {
@@ -79,6 +79,51 @@ func (x IDSliceDelta) Insert(add ...ID) IDSliceDelta {
 func (x IDSliceDelta) Delete(d int) IDSliceDelta {
 	return append(x, IDSliceOpDelete(d))
 }
+func (x IDSliceDelta) Rebase(base IDSliceDelta) (IDSliceDelta, error) {
+	var res IDSliceDelta
+	xi, bi := 0, 0
+	var r, xop, bop IDSliceOp
+	for {
+		if xop == nil {
+			if xi >= len(x) {
+				break
+			}
+			xop = x[xi]
+			xi++
+		}
+		if bop == nil {
+			if bi >= len(base) {
+				break
+			}
+			bop = base[bi]
+			bi++
+		}
+		r, xop, bop = xop.Rebase(bop)
+		if r != nil {
+			res = append(res, r)
+		}
+	}
+	if xop != nil {
+		res = append(res, xop)
+	}
+	res = append(res, x[xi:]...)
+	var cres IDSliceDelta
+	for _, r := range res {
+		if len(cres) == 0 {
+			if r.Len() > 0 {
+				cres = append(cres, r)
+			}
+		} else {
+			c, ok := cres[len(cres)-1].Compact(r)
+			if ok {
+				cres[len(cres)-1] = c
+			} else if !ok && r.Len() > 0 {
+				cres = append(cres, r)
+			}
+		}
+	}
+	return cres, nil
+}
 
 type IDSliceOp interface {
 	// Leaves returns how many elements of a slice of length n would remain
@@ -86,6 +131,18 @@ type IDSliceOp interface {
 	// a negative number if and only if this op cannot be coherently
 	// applied to a slice of length n.
 	Leaves(n int) int
+	// Len returns the number of elements inserted, retained, or deleted by
+	// this op.
+	Len() int
+	// Skip returns an equivalent op that assumes its intent is already carried
+	// out for the first n elements. May panic if n > Len().
+	Skip(n int) IDSliceOp
+	// Rebase transforms op into a rebased op r (or nil), a subsequent op for
+	// rebasing xn (or nil), and a subsequent base bn (or nil).
+	Rebase(base IDSliceOp) (r IDSliceOp, xn IDSliceOp, bn IDSliceOp)
+	// Compact expands this op to include o if possible, returning true if
+	// successful.
+	Compact(o IDSliceOp) (IDSliceOp, bool)
 	Apply(IDSlice) (include IDSlice, remainder IDSlice)
 	String() string
 }
@@ -95,6 +152,26 @@ type IDSliceOpRetain int
 type IDSliceOpDelete int
 
 func (x IDSliceOpInsert) Leaves(in int) int { return in }
+func (x IDSliceOpInsert) Len() int          { return len(x) }
+
+func (x IDSliceOpInsert) Skip(n int) IDSliceOp { return x[n:] }
+func (x IDSliceOpInsert) Rebase(base IDSliceOp) (IDSliceOp, IDSliceOp, IDSliceOp) {
+	switch bo := base.(type) {
+	case IDSliceOpInsert:
+		return IDSliceOpRetain(bo.Len()), x, nil
+	case IDSliceOpRetain:
+		return x, nil, bo
+	case IDSliceOpDelete:
+		return x, nil, bo
+	}
+	panic("unknown base type")
+}
+func (x IDSliceOpInsert) Compact(op IDSliceOp) (IDSliceOp, bool) {
+	if o, ok := op.(IDSliceOpInsert); ok {
+		return append(x, o...), true
+	}
+	return x, false
+}
 func (x IDSliceOpInsert) Apply(xs IDSlice) (IDSlice, IDSlice) {
 	return IDSlice(x), xs
 }
@@ -110,11 +187,86 @@ func (x IDSliceOpDelete) String() string {
 }
 
 func (x IDSliceOpRetain) Leaves(in int) int { return in - int(x) }
+func (x IDSliceOpRetain) Len() int          { return int(x) }
+
+func (x IDSliceOpRetain) Skip(n int) IDSliceOp { return x - IDSliceOpRetain(n) }
+func (x IDSliceOpRetain) Rebase(base IDSliceOp) (IDSliceOp, IDSliceOp, IDSliceOp) {
+	switch bo := base.(type) {
+	case IDSliceOpInsert:
+		// Retain what has been inserted
+		return x + IDSliceOpRetain(len(bo)), nil, nil
+	case IDSliceOpRetain:
+		// Retain the matching prefix
+		switch {
+		case x < bo:
+			return x, nil, bo - x
+		case x == bo:
+			return x, nil, nil
+		case x > bo:
+			return bo, x - bo, nil
+		}
+	case IDSliceOpDelete:
+		// Can't retain what has been deleted
+		switch {
+		case x.Len() < bo.Len():
+			// Retention is cancelled by deletion and there is still more to delete.
+			return nil, nil, bo - IDSliceOpDelete(x)
+		case x.Len() == bo.Len():
+			// Retention is cancelled by deletion.
+			return nil, nil, nil
+		case x.Len() > bo.Len():
+			// Retention is partially cancelled by deletion, there is more to retain.
+			return nil, x - IDSliceOpRetain(bo), nil
+		}
+	}
+	panic("unknown base type")
+}
+func (x IDSliceOpRetain) Compact(op IDSliceOp) (IDSliceOp, bool) {
+	if o, ok := op.(IDSliceOpRetain); ok {
+		return x + o, true
+	}
+	return x, false
+}
 func (x IDSliceOpRetain) Apply(xs IDSlice) (IDSlice, IDSlice) {
 	return xs[:x], xs[x:]
 }
 
 func (x IDSliceOpDelete) Leaves(in int) int { return in - int(x) }
+func (x IDSliceOpDelete) Len() int          { return int(x) }
+
+func (x IDSliceOpDelete) Skip(n int) IDSliceOp { return x - IDSliceOpDelete(n) }
+func (x IDSliceOpDelete) Rebase(base IDSliceOp) (IDSliceOp, IDSliceOp, IDSliceOp) {
+	switch bo := base.(type) {
+	case IDSliceOpInsert:
+		return IDSliceOpRetain(bo.Len()), x, nil
+	case IDSliceOpRetain:
+		// Delete the matching prefix
+		switch {
+		case x.Len() < bo.Len():
+			return x, nil, bo - IDSliceOpRetain(x)
+		case x.Len() == bo.Len():
+			return x, nil, nil
+		case x.Len() > bo.Len():
+			return IDSliceOpDelete(bo), x.Skip(bo.Len()), nil
+		}
+	case IDSliceOpDelete:
+		switch {
+		case x.Len() < bo.Len():
+			return nil, nil, bo.Skip(x.Len())
+		case x.Len() == bo.Len():
+			return nil, nil, nil
+		case x.Len() > bo.Len():
+			return nil, x - bo, nil
+		}
+	}
+	panic("unknown base type")
+}
+func (x IDSliceOpDelete) Compact(op IDSliceOp) (IDSliceOp, bool) {
+	if o, ok := op.(IDSliceOpDelete); ok {
+		return x + o, true
+	}
+	return x, false
+}
 func (x IDSliceOpDelete) Apply(xs IDSlice) (IDSlice, IDSlice) {
 	return nil, xs[x:]
 }

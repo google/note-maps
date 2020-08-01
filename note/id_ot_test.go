@@ -234,3 +234,82 @@ func Test_idSliceLCS(t *testing.T) {
 		})
 	}
 }
+
+func TestIDSliceDelta_Rebase(t *testing.T) {
+	for _, test := range []struct {
+		N            string
+		A, B, Expect IDSliceDelta
+	}{
+		{"both empty", nil, nil, nil},
+		{"insert1 vs empty", IDSlice{}.Insert(0, TestID1), nil, nil},
+		{"retain1 vs empty", IDSlice{}.Retain(1), nil, nil},
+		{"delete1 vs empty", IDSlice{}.Delete(0, 1), nil, nil},
+		{"empty vs insert1", nil, IDSlice{}.Insert(0, TestID1), IDSlice{}.Insert(0, TestID1)},
+		{"empty vs retain1", nil, IDSlice{}.Retain(1), IDSlice{}.Retain(1)},
+		{"empty vs delete1", nil, IDSlice{}.Delete(0, 1), IDSlice{}.Delete(0, 1)},
+		{
+			"insert1 vs insert1",
+			IDSlice{}.Insert(0, TestID1),
+			IDSlice{}.Insert(0, TestID2),
+			IDSlice{}.Insert(1, TestID2),
+		},
+		{
+			"insert1 vs retain1",
+			IDSlice{}.Insert(0, TestID1),
+			IDSlice{}.Retain(1),
+			IDSlice{}.Retain(2),
+		},
+		{
+			"insert1 vs delete1",
+			IDSlice{}.Insert(0, TestID1),
+			IDSlice{}.Delete(0, 1),
+			IDSlice{}.Retain(1).Delete(1),
+		},
+		{
+			"retain1 vs insert1",
+			IDSlice{}.Retain(1),
+			IDSlice{}.Insert(0, TestID1),
+			IDSlice{}.Insert(0, TestID1),
+		},
+		{
+			"retain1 vs retain1",
+			IDSlice{}.Retain(1),
+			IDSlice{}.Retain(1),
+			IDSlice{}.Retain(1),
+		},
+		{
+			"retain1 vs delete1",
+			IDSlice{}.Retain(1),
+			IDSlice{}.Delete(0, 1),
+			IDSlice{}.Delete(0, 1),
+		},
+		{
+			"delete1 vs insert1",
+			IDSlice{}.Delete(0, 1),
+			IDSlice{}.Insert(0, TestID1),
+			IDSlice{}.Insert(0, TestID1),
+		},
+		{
+			"delete1 vs retain1",
+			IDSlice{}.Delete(0, 1),
+			IDSlice{}.Retain(1),
+			IDSlice{}.Retain(0),
+		},
+		{
+			"delete1 vs delete1",
+			IDSlice{}.Delete(0, 1),
+			IDSlice{}.Delete(0, 1),
+			IDSlice{}.Retain(0),
+		},
+	} {
+		t.Run(test.N, func(t *testing.T) {
+			actual, err := test.B.Rebase(test.A)
+			if err != nil {
+				t.Error(err)
+			} else if len(actual) == 0 && len(test.Expect) == 0 {
+			} else if !reflect.DeepEqual(actual, test.Expect) {
+				t.Error("got", actual, "expected", test.Expect)
+			}
+		})
+	}
+}

@@ -234,3 +234,82 @@ func Test_idSliceLCS(t *testing.T) {
 		})
 	}
 }
+
+func TestStringDelta_Rebase(t *testing.T) {
+	for _, test := range []struct {
+		N            string
+		A, B, Expect StringDelta
+	}{
+		{"both empty", nil, nil, nil},
+		{"insert1 vs empty", String{}.Insert(0, TestRune1), nil, nil},
+		{"retain1 vs empty", String{}.Retain(1), nil, nil},
+		{"delete1 vs empty", String{}.Delete(0, 1), nil, nil},
+		{"empty vs insert1", nil, String{}.Insert(0, TestRune1), String{}.Insert(0, TestRune1)},
+		{"empty vs retain1", nil, String{}.Retain(1), String{}.Retain(1)},
+		{"empty vs delete1", nil, String{}.Delete(0, 1), String{}.Delete(0, 1)},
+		{
+			"insert1 vs insert1",
+			String{}.Insert(0, TestRune1),
+			String{}.Insert(0, TestRune2),
+			String{}.Insert(1, TestRune2),
+		},
+		{
+			"insert1 vs retain1",
+			String{}.Insert(0, TestRune1),
+			String{}.Retain(1),
+			String{}.Retain(2),
+		},
+		{
+			"insert1 vs delete1",
+			String{}.Insert(0, TestRune1),
+			String{}.Delete(0, 1),
+			String{}.Retain(1).Delete(1),
+		},
+		{
+			"retain1 vs insert1",
+			String{}.Retain(1),
+			String{}.Insert(0, TestRune1),
+			String{}.Insert(0, TestRune1),
+		},
+		{
+			"retain1 vs retain1",
+			String{}.Retain(1),
+			String{}.Retain(1),
+			String{}.Retain(1),
+		},
+		{
+			"retain1 vs delete1",
+			String{}.Retain(1),
+			String{}.Delete(0, 1),
+			String{}.Delete(0, 1),
+		},
+		{
+			"delete1 vs insert1",
+			String{}.Delete(0, 1),
+			String{}.Insert(0, TestRune1),
+			String{}.Insert(0, TestRune1),
+		},
+		{
+			"delete1 vs retain1",
+			String{}.Delete(0, 1),
+			String{}.Retain(1),
+			String{}.Retain(0),
+		},
+		{
+			"delete1 vs delete1",
+			String{}.Delete(0, 1),
+			String{}.Delete(0, 1),
+			String{}.Retain(0),
+		},
+	} {
+		t.Run(test.N, func(t *testing.T) {
+			actual, err := test.B.Rebase(test.A)
+			if err != nil {
+				t.Error(err)
+			} else if len(actual) == 0 && len(test.Expect) == 0 {
+			} else if !reflect.DeepEqual(actual, test.Expect) {
+				t.Error("got", actual, "expected", test.Expect)
+			}
+		})
+	}
+}

@@ -21,48 +21,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type NoteModel struct {
-	ID          notes.ID
-	ValueString string
-	ValueType   *NoteModel
-	Contents    []*NoteModel
-	Types       []*NoteModel
-}
-
-func (x *NoteModel) GetID() notes.ID {
-	if x == nil {
-		return notes.EmptyID
-	}
-	return x.ID
-}
-func (x *NoteModel) GetValue() (string, notes.GraphNote, error) {
-	if x == nil {
-		return "", notes.EmptyNote(notes.EmptyID), nil
-	}
-	return x.ValueString, x.ValueType, nil
-}
-func (x *NoteModel) GetContents() ([]notes.GraphNote, error) {
-	if x == nil {
-		return nil, nil
-	}
-	return nmslice(x.Contents)
-}
-func (x *NoteModel) GetTypes() ([]notes.GraphNote, error) {
-	if x == nil {
-		return nil, nil
-	}
-	return nmslice(x.Types)
-}
-
-func nmslice(ms []*NoteModel) ([]notes.GraphNote, error) {
-	gs := make([]notes.GraphNote, len(ms))
-	for i, m := range ms {
-		gs[i] = m
-	}
-	return gs, nil
-}
-
-func UnmarshalNote(src []byte, dst *NoteModel) error {
+func UnmarshalNote(src []byte, dst *notes.PlainNote) error {
 	n := yaml.Node{Kind: yaml.DocumentNode}
 	if err := yaml.Unmarshal(src, &n); err != nil {
 		return err
@@ -70,7 +29,7 @@ func UnmarshalNote(src []byte, dst *NoteModel) error {
 	return yamlDocumentToNote(&n, dst)
 }
 
-func yamlDocumentToNote(src *yaml.Node, dst *NoteModel) error {
+func yamlDocumentToNote(src *yaml.Node, dst *notes.PlainNote) error {
 	// Unwrap the outer YAML document structure.
 	if src.Kind == yaml.DocumentNode {
 		if len(src.Content) == 0 {
@@ -91,7 +50,7 @@ func yamlDocumentToNote(src *yaml.Node, dst *NoteModel) error {
 	return yamlNodeToNote(src, dst)
 }
 
-func yamlNodeToNote(src *yaml.Node, dst *NoteModel) error {
+func yamlNodeToNote(src *yaml.Node, dst *notes.PlainNote) error {
 	if src.Anchor != "" {
 		dst.ID = notes.ID(src.Anchor)
 	}
@@ -109,7 +68,7 @@ func yamlNodeToNote(src *yaml.Node, dst *NoteModel) error {
 					var vt notes.ID
 					if s.Content[1].LongTag() != "tag:yaml.org,2002:str" {
 						vt = notes.ID(s.Content[1].ShortTag())
-						dst.ValueType = &NoteModel{ID: vt}
+						dst.ValueType = &notes.PlainNote{ID: vt}
 					}
 					dst.ValueString = s.Content[1].Value
 				default:
@@ -119,7 +78,7 @@ func yamlNodeToNote(src *yaml.Node, dst *NoteModel) error {
 			} else {
 				// TODO: use a different id when notes are cached and shared? random id
 				// to start?
-				var c NoteModel
+				var c notes.PlainNote
 				if err := yamlNodeToNote(s, &c); err != nil {
 					return err
 				}
@@ -128,20 +87,22 @@ func yamlNodeToNote(src *yaml.Node, dst *NoteModel) error {
 		}
 	case yaml.ScalarNode:
 		if src.LongTag() != "tag:yaml.org,2002:str" {
-			dst.ValueType = &NoteModel{ID: notes.ID(src.ShortTag())}
+			dst.ValueType = &notes.PlainNote{ID: notes.ID(src.ShortTag())}
 		}
 		dst.ValueString = src.Value
 	case yaml.MappingNode:
 		if len(src.Content) >= 1 {
 			typ := src.Content[0]
-			dst.Types = append(dst.Types, &NoteModel{ID: notes.ID(typ.Value)})
+			dst.Types = append(dst.Types, &notes.PlainNote{ID: notes.ID(typ.Value)})
 		}
 		if len(src.Content) >= 2 {
 			yamlNodeToNote(src.Content[1], dst)
 		}
 		for i := 2; i < len(src.Content); i += 2 {
 			key, val := src.Content[i], src.Content[i+1]
-			c := &NoteModel{Types: []*NoteModel{&NoteModel{ID: notes.ID(key.Value)}}}
+			c := &notes.PlainNote{
+				Types: []*notes.PlainNote{&notes.PlainNote{ID: notes.ID(key.Value)}},
+			}
 			if err := yamlNodeToNote(val, c); err != nil {
 				return err
 			}

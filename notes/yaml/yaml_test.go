@@ -190,11 +190,11 @@ func TestUnmarshal(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			var actual NoteModel
+			var actual notes.PlainNote
 			err = UnmarshalNote([]byte(test.CY), &actual)
 			if err != nil {
 				t.Error(err)
-			} else if !notestest.ExpectEqual(t, &actual, test.GN) {
+			} else if !notestest.ExpectEqual(t, actual.GraphNote(), test.GN) {
 				bs0, err := json.Marshal(actual)
 				if err != nil {
 					t.Fatal(err)
@@ -217,7 +217,7 @@ func TestUnmarshalMarshal_canonical(t *testing.T) {
 			if test.Skip != "" {
 				t.Skip(test.Skip)
 			}
-			var m NoteModel
+			var m notes.PlainNote
 			err := UnmarshalNote([]byte(test.CY), &m)
 			if err != nil {
 				t.Error(err)

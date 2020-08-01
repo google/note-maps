@@ -19,7 +19,7 @@ var tmpls = func() http.FileSystem {
 	fs := vfsgen۰FS{
 		"/": &vfsgen۰DirInfo{
 			name:    "/",
-			modTime: time.Date(2020, 7, 27, 0, 3, 57, 313780035, time.UTC),
+			modTime: time.Date(2020, 8, 1, 15, 54, 42, 969507651, time.UTC),
 		},
 		"/ot.go.tmpl": &vfsgen۰CompressedFileInfo{
 			name:             "ot.go.tmpl",

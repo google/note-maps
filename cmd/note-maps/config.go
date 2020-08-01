@@ -22,14 +22,14 @@ import (
 	"path/filepath"
 
 	"github.com/99designs/keyring"
-	"github.com/google/note-maps/notes"
-	"github.com/google/note-maps/notes/textile"
+	"github.com/google/note-maps/note"
+	"github.com/google/note-maps/note/textile"
 	"github.com/google/subcommands"
 )
 
 type Config struct {
 	Db         string
-	overrideDb notes.IsolatedReadWriteCloser
+	overrideDb note.IsolatedReadWriteCloser
 	input      io.Reader
 	output     io.Writer
 	dataHome   string
@@ -37,7 +37,7 @@ type Config struct {
 }
 
 type addCloser struct {
-	notes.IsolatedReadWriteCloser
+	note.IsolatedReadWriteCloser
 	closer func() error
 }
 
@@ -50,7 +50,7 @@ func (c addCloser) Close() error {
 	return e1
 }
 
-func (c *Config) open() (notes.IsolatedReadWriteCloser, error) {
+func (c *Config) open() (note.IsolatedReadWriteCloser, error) {
 	if c.overrideDb != nil {
 		return c.overrideDb, nil
 	}

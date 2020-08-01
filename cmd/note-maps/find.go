@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/google/note-maps/notes"
-	"github.com/google/note-maps/notes/yaml"
+	"github.com/google/note-maps/note"
+	"github.com/google/note-maps/note/yaml"
 	"github.com/google/subcommands"
 )
 
@@ -47,9 +47,9 @@ func (c *findCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 		return subcommands.ExitFailure
 	}
 	defer db.Close()
-	var ns []notes.GraphNote
-	err = db.IsolatedRead(func(r notes.FindLoader) (e error) {
-		ns, e = r.Find(&notes.Query{})
+	var ns []note.GraphNote
+	err = db.IsolatedRead(func(r note.FindLoader) (e error) {
+		ns, e = r.Find(&note.Query{})
 		return e
 	})
 	if err != nil {

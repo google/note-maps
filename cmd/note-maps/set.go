@@ -22,8 +22,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/google/note-maps/notes"
-	"github.com/google/note-maps/notes/yaml"
+	"github.com/google/note-maps/note"
+	"github.com/google/note-maps/note/yaml"
 	"github.com/google/subcommands"
 )
 
@@ -64,15 +64,15 @@ func (c *setCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) s
 		return subcommands.ExitFailure
 	}
 	var (
-		stage notes.Stage
-		note  notes.PlainNote
+		stage note.Stage
+		n     note.PlainNote
 	)
-	err = yaml.UnmarshalNote(input, &note)
+	err = yaml.UnmarshalNote(input, &n)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "set: while parsing input", err)
 		return subcommands.ExitFailure
 	}
-	if note.ID == notes.EmptyID {
+	if n.ID == note.EmptyID {
 		fmt.Fprintln(os.Stderr, "set: a non-zero id is required")
 		return subcommands.ExitFailure
 	}
@@ -84,17 +84,17 @@ func (c *setCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) s
 	}
 	defer db.Close()
 
-	if err = db.IsolatedWrite(func(w notes.FindLoadPatcher) error {
+	if err = db.IsolatedWrite(func(w note.FindLoadPatcher) error {
 		return w.Patch(stage.Ops)
 	}); err != nil {
 		fmt.Fprintln(os.Stderr, "set: while applying change:", err)
 		return subcommands.ExitFailure
 	}
 
-	fmt.Fprintln(c.cfg.output, note.ID)
+	fmt.Fprintln(c.cfg.output, n.ID)
 	return subcommands.ExitSuccess
 }
 
 func init() {
-	subcommands.Register(&setCmd{&globalConfig}, "notes")
+	subcommands.Register(&setCmd{&globalConfig}, "note")
 }

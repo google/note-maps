@@ -23,10 +23,6 @@ import (
 
 //go:generate go run generate_id_ot.go
 
-type String []rune
-
-func (xs String) String() string { return string(xs) }
-
 // ID is the type of values that identify note.
 type ID string
 

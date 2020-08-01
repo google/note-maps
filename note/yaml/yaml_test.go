@@ -190,7 +190,7 @@ func TestUnmarshal(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			var actual note.PlainNote
+			var actual note.Plain
 			err = UnmarshalNote([]byte(test.CY), &actual)
 			if err != nil {
 				t.Error(err)
@@ -217,7 +217,7 @@ func TestUnmarshalMarshal_canonical(t *testing.T) {
 			if test.Skip != "" {
 				t.Skip(test.Skip)
 			}
-			var m note.PlainNote
+			var m note.Plain
 			err := UnmarshalNote([]byte(test.CY), &m)
 			if err != nil {
 				t.Error(err)

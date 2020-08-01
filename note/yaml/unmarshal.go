@@ -21,7 +21,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func UnmarshalNote(src []byte, dst *note.PlainNote) error {
+func UnmarshalNote(src []byte, dst *note.Plain) error {
 	n := yaml.Node{Kind: yaml.DocumentNode}
 	if err := yaml.Unmarshal(src, &n); err != nil {
 		return err
@@ -29,7 +29,7 @@ func UnmarshalNote(src []byte, dst *note.PlainNote) error {
 	return yamlDocumentToNote(&n, dst)
 }
 
-func yamlDocumentToNote(src *yaml.Node, dst *note.PlainNote) error {
+func yamlDocumentToNote(src *yaml.Node, dst *note.Plain) error {
 	// Unwrap the outer YAML document structure.
 	if src.Kind == yaml.DocumentNode {
 		if len(src.Content) == 0 {
@@ -50,7 +50,7 @@ func yamlDocumentToNote(src *yaml.Node, dst *note.PlainNote) error {
 	return yamlNodeToNote(src, dst)
 }
 
-func yamlNodeToNote(src *yaml.Node, dst *note.PlainNote) error {
+func yamlNodeToNote(src *yaml.Node, dst *note.Plain) error {
 	if src.Anchor != "" {
 		dst.ID = note.ID(src.Anchor)
 	}
@@ -68,7 +68,7 @@ func yamlNodeToNote(src *yaml.Node, dst *note.PlainNote) error {
 					var vt note.ID
 					if s.Content[1].LongTag() != "tag:yaml.org,2002:str" {
 						vt = note.ID(s.Content[1].ShortTag())
-						dst.ValueType = &note.PlainNote{ID: vt}
+						dst.ValueType = &note.Plain{ID: vt}
 					}
 					dst.ValueString = s.Content[1].Value
 				default:
@@ -78,7 +78,7 @@ func yamlNodeToNote(src *yaml.Node, dst *note.PlainNote) error {
 			} else {
 				// TODO: use a different id when notes are cached and shared? random id
 				// to start?
-				var c note.PlainNote
+				var c note.Plain
 				if err := yamlNodeToNote(s, &c); err != nil {
 					return err
 				}
@@ -87,21 +87,21 @@ func yamlNodeToNote(src *yaml.Node, dst *note.PlainNote) error {
 		}
 	case yaml.ScalarNode:
 		if src.LongTag() != "tag:yaml.org,2002:str" {
-			dst.ValueType = &note.PlainNote{ID: note.ID(src.ShortTag())}
+			dst.ValueType = &note.Plain{ID: note.ID(src.ShortTag())}
 		}
 		dst.ValueString = src.Value
 	case yaml.MappingNode:
 		if len(src.Content) >= 1 {
 			typ := src.Content[0]
-			dst.Types = append(dst.Types, &note.PlainNote{ID: note.ID(typ.Value)})
+			dst.Types = append(dst.Types, &note.Plain{ID: note.ID(typ.Value)})
 		}
 		if len(src.Content) >= 2 {
 			yamlNodeToNote(src.Content[1], dst)
 		}
 		for i := 2; i < len(src.Content); i += 2 {
 			key, val := src.Content[i], src.Content[i+1]
-			c := &note.PlainNote{
-				Types: []*note.PlainNote{&note.PlainNote{ID: note.ID(key.Value)}},
+			c := &note.Plain{
+				Types: []*note.Plain{&note.Plain{ID: note.ID(key.Value)}},
 			}
 			if err := yamlNodeToNote(val, c); err != nil {
 				return err

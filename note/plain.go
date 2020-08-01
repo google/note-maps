@@ -14,30 +14,30 @@
 
 package note
 
-// PlainNote is a "plain old Go object" representation of a note that uses
-// pointers to refer directly to related notes in memory.
+// Plain is a "plain old Go object" representation of a note that uses pointers
+// to refer directly to related notes in memory.
 //
 // Most of package notes is designed for working with entire note maps which
-// may not fit in memory. PlainNote is better suited for working with limited
+// may not fit in memory. Plain is better suited for working with limited
 // subgraphs, for example when decoding subgraphs that are to be merged into a
 // note map.
-type PlainNote struct {
+type Plain struct {
 	ID          ID
 	ValueString string
-	ValueType   *PlainNote
-	Contents    []*PlainNote
-	Types       []*PlainNote
+	ValueType   *Plain
+	Contents    []*Plain
+	Types       []*Plain
 }
 
 // GraphNote returns a proxy to x that implements the GraphNote interface.
-func (x *PlainNote) GraphNote() GraphNote {
-	return graphPlainNote{x}
+func (x *Plain) GraphNote() GraphNote {
+	return graphPlain{x}
 }
 
-type graphPlainNote struct{ *PlainNote }
+type graphPlain struct{ *Plain }
 
-func (x graphPlainNote) GetID() ID { return x.ID }
-func (x graphPlainNote) GetValue() (string, GraphNote, error) {
+func (x graphPlain) GetID() ID { return x.ID }
+func (x graphPlain) GetValue() (string, GraphNote, error) {
 	var vt GraphNote
 	if x.ValueType == nil {
 		vt = EmptyNote(EmptyID)
@@ -46,14 +46,14 @@ func (x graphPlainNote) GetValue() (string, GraphNote, error) {
 	}
 	return x.ValueString, vt, nil
 }
-func (x graphPlainNote) GetContents() ([]GraphNote, error) {
+func (x graphPlain) GetContents() ([]GraphNote, error) {
 	return nmslice(x.Contents)
 }
-func (x graphPlainNote) GetTypes() ([]GraphNote, error) {
+func (x graphPlain) GetTypes() ([]GraphNote, error) {
 	return nmslice(x.Types)
 }
 
-func nmslice(ps []*PlainNote) ([]GraphNote, error) {
+func nmslice(ps []*Plain) ([]GraphNote, error) {
 	gs := make([]GraphNote, len(ps))
 	for i, p := range ps {
 		gs[i] = p.GraphNote()

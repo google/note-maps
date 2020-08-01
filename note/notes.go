@@ -194,15 +194,15 @@ type FindLoadPatcher interface {
 	Patcher
 }
 
-// IsolatedReader provides isolated read operations over a note map.
-type IsolatedReader interface {
+// DatabaseReader provides isolated read operations over a note map.
+type DatabaseReader interface {
 	// IsolatedRead invokes f with a FindLoader that will read from an
 	// unchanging version of the note map.
 	IsolatedRead(f func(r FindLoader) error) error
 }
 
-// IsolatedWriter provides atomic isolated write operations over a note map.
-type IsolatedWriter interface {
+// DatabaseWriter provides atomic isolated write operations over a note map.
+type DatabaseWriter interface {
 	// IsolatedWrite invokes f with an isolated FindLoadPatcher that can read and
 	// change a note map.
 	//
@@ -211,13 +211,11 @@ type IsolatedWriter interface {
 	IsolatedWrite(f func(rw FindLoadPatcher) error) error
 }
 
-// IsolatedReadWriteCloser provides atomic isolated read and write operations
-// over a note map.
+// Database provides atomic isolated read and write operations over a note map.
 //
-// An instance of IsolatedReadWriteCloser should be closed when it is no longer
-// needed.
-type IsolatedReadWriteCloser interface {
-	IsolatedReader
-	IsolatedWriter
+// An instance of Database should be closed when it is no longer needed.
+type Database interface {
+	DatabaseReader
+	DatabaseWriter
 	io.Closer
 }

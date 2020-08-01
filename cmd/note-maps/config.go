@@ -29,7 +29,7 @@ import (
 
 type Config struct {
 	Db         string
-	overrideDb note.IsolatedReadWriteCloser
+	overrideDb note.Database
 	input      io.Reader
 	output     io.Writer
 	dataHome   string
@@ -37,12 +37,12 @@ type Config struct {
 }
 
 type addCloser struct {
-	note.IsolatedReadWriteCloser
+	note.Database
 	closer func() error
 }
 
 func (c addCloser) Close() error {
-	e0 := c.IsolatedReadWriteCloser.Close()
+	e0 := c.Database.Close()
 	e1 := c.closer()
 	if e0 != nil {
 		return e0
@@ -50,7 +50,7 @@ func (c addCloser) Close() error {
 	return e1
 }
 
-func (c *Config) open() (note.IsolatedReadWriteCloser, error) {
+func (c *Config) open() (note.Database, error) {
 	if c.overrideDb != nil {
 		return c.overrideDb, nil
 	}

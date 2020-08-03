@@ -1,3 +1,6 @@
+# Note Maps specific
+**/ios/Frameworks/Mobileapi.framework
+
 # Miscellaneous
 *.class
 *.log

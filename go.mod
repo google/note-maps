@@ -14,8 +14,10 @@ require (
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20200627165143-92b8a710ab6c // indirect
 	github.com/textileio/go-threads v0.1.23
+	golang.org/x/mobile v0.0.0-20200801112145-973feb4309de // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae // indirect
+	golang.org/x/tools v0.0.0-20200731060945-b5fad4ed8dd6 // indirect
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )

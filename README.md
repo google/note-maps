@@ -109,6 +109,18 @@ Code paths:
 This repository comes with a Git pre-commit hook in `./githooks`. Install it:
 `cp ./githooks/pre-commit .git/hooks/pre-commit`.
 
+### Build the Mobile App
+
+First, you'll need a build environment:
+
+*   Install [Flutter](https://flutter.dev/docs/get-started/install).
+*   Install [gomobile](https://golang.org/x/mobile/cmd/gomobile).
+
+Then, generate the intermediate binaries from the `tmaps/mobileapi` package:
+
+    go generate -tags android ./tmaps/mobileapi
+    go generate -tags ios ./tmaps/mobileapi
+
 ### Source Code Headers
 
 Every file containing source code must include copyright and license

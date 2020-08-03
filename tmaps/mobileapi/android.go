@@ -12,13 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package pb defines protocol buffer message types intended for use in tmaps
-// APIs.
-//
-// These message types are different and independent from those used in
-// storage.
-package pb
+// +build android
 
-//go:generate protoc --go_out=$GOPATH/src pb.proto
+package mobileapi
 
-//go:generate protoc --dart_out=../../note_maps/lib/mobileapi/store/pb pb.proto
+//go:generate gomobile bind -target=android -o ../../note_maps/android/mobileapi/mobileapi.aar github.com/google/note-maps/tmaps/mobileapi

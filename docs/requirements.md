@@ -125,11 +125,11 @@ should include the following, in order:
    interpreted as the name or identifier of another note.
 1. The value of the note, but only if it already has a value.  If included, and
    its data type is...
-  * ...`org.note-maps.text.plain` then editing it should be like editing within
-    a multi-line text box.
-  * ...`org.note-maps.text.iso8601` then editing it should be like selecting a
-    date, date and time, date range, or any of the other values [ISO 8601][]
-    allows.
+   * ...`org.note-maps.text.plain` then editing it should be like editing
+     within a multi-line text box.
+   * ...`org.note-maps.text.iso8601` then editing it should be like selecting a
+     date, date and time, date range, or any of the other values [ISO 8601][]
+     allows.
 
 If a child note is not an association, it should be rendered a paragraph that
 includes:
@@ -196,11 +196,11 @@ rendered this way.
 1. A delimiter, `..`, even if the local role type is empty.
 1. The association's name or identifier according to UR1.
 1. An indented list of the remote roles, where each role is rendered as:
-  1. A delimiter, `..`.
-  1. The remote role type, rendered by name or identifier according to UR1.
-  1. The same delimiter that is used to separate type from value in child notes
-     that are not associations (above).
-  1. The name or identifier of the remote role player, according to UR1.
+   1. A delimiter, `..`.
+   1. The remote role type, rendered by name or identifier according to UR1.
+   1. The same delimiter that is used to separate type from value in child notes
+      that are not associations (above).
+   1. The name or identifier of the remote role player, according to UR1.
 
 In either case, as with child notes that are not associations, this may be
 followed by the content of the association.

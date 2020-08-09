@@ -100,10 +100,10 @@ make the app itself a peer, with other connectivity options in the future.
 1. Refactor or rewrite existing Flutter UI around Zefyr.
 1. Refactor or rewrite existing Flutter plugin to share information about
    ThreadsDB: connection status, presence of local data, etc.
-  * Use code generation where possible.
-  * Show this information in the Flutter UI.
+   * Use code generation where possible.
+   * Show this information in the Flutter UI.
 1. Refactor or rewrite existing Flutter plugin to read and write in terms of
    diffs.
-  * Use code generation where possible.
+   * Use code generation where possible.
 1. Do the main work of implementing UR2 and the FRs to produce a useful app.
 1. Share widely for feedback.

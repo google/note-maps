@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC
+// Copyright 2019-2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@ syntax = "proto3";
 
 package notemaps.tmaps.pb;
 
-option go_package = ".;pb";
+option go_package = "github.com/google/note-maps/tmaps/pb";
 
 message Library { repeated uint64 topic_map_ids = 1; }
 

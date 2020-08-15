@@ -3,5 +3,5 @@
 .idea
 .packages
 .pub/
-
 build/
+ios/Frameworks/

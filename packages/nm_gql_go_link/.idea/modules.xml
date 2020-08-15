@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/nm_gql_go_link.iml" filepath="$PROJECT_DIR$/nm_gql_go_link.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/nm_gql_go_link_android.iml" filepath="$PROJECT_DIR$/android/nm_gql_go_link_android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/example/android/nm_gql_go_link_example_android.iml" filepath="$PROJECT_DIR$/example/android/nm_gql_go_link_example_android.iml" />
+    </modules>
+  </component>
+</project>

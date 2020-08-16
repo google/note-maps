@@ -10,12 +10,20 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  gql_link: ^0.3.0
+  gql_link: ^0.2.3
   gql_exec: 
+  #artemis: '>=5.0.0 <6.0.0' # only if you're using ArtemisClient!
+  #json_serializable: ^3.0.0
+  #equatable: ^0.6.1
+  #meta: '>=1.0.0 <2.0.0' # only if you have non nullable fields
+  #gql: '>=0.7.3 <1.0.0'
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  artemis: '>=5.0.0 <6.0.0'
+  build_runner: ^1.5.0
+  json_serializable: ^3.0.0
 
 flutter:
   plugin:

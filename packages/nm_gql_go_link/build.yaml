@@ -1,0 +1,13 @@
+targets:
+  nm_gql_go_link:
+    sources:
+      - lib/**
+      - graphql/**
+      - $package$
+    builders:
+      artemis:
+        options:
+          schema_mapping:
+            - output: lib/note_graphql.dart
+              schema: graphql/note.graphqls
+              queries_glob: graphql/note.*.query.graphql

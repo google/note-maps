@@ -87,7 +87,7 @@ packages:
       name: gql_link
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.3.0"
+    version: "0.2.3"
   matcher:
     dependency: transitive
     description:

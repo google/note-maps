@@ -1,0 +1,3 @@
+query note_simple_query() {
+  todos
+}

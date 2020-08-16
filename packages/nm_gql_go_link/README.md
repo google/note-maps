@@ -13,4 +13,9 @@ This is not an officially supported Google product.
 1.  Compile the Go code for your target platform: `go generate -tags android`
     or `go generate -tags ios`.
 
+After GraphQL schema changes,
+
+1.  `cd nm_gql_go_link`
+1.  `flutter pub run build_runner build`
+
 [Go]: https://golang.org

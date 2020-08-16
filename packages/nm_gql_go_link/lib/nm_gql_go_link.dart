@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import 'dart:async';
-//import 'dart:typed_data' show Uint8List;
+import 'dart:convert';
+import 'dart:typed_data' show Uint8List;
 
 import 'package:flutter/services.dart';
 import 'package:gql_exec/gql_exec.dart';
@@ -37,10 +38,10 @@ class NmGqlGoLink extends Link {
     Request request, [
     NextLink forward,
   ]) async* {
-    //final Uint8List rawRequest = request.writeToBuffer();
-    //final Uint8List rawResponse = await channel.invokeMethod(method, {
-    //  "request": rawRequest,
-    //});
-    throw UnimplementedError('request() has not been implemented.');
+    final Uint8List rawRequest = utf8.encode(jsonEncode(request));
+    final Uint8List rawResponse = await _channel.invokeMethod("request", {
+      "request": rawRequest,
+    });
+    yield jsonDecode(utf8.decode(rawResponse));
   }
 }

@@ -15,13 +15,73 @@
 package nmgql
 
 import (
+	"context"
+	"encoding/json"
 	"runtime"
+
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/99designs/gqlgen/graphql/executor"
+	"github.com/google/note-maps/note/graph"
+	"github.com/google/note-maps/note/graph/generated"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 func GetGoVersion() string {
 	return runtime.Version()
 }
 
-func Request([]byte) ([]byte, error) {
-	return nil, nil
+func WarmUp()                           { defaultServer.WarmUp(context.Background()) }
+func Request(bs []byte) ([]byte, error) { return defaultServer.Request(context.Background(), bs) }
+func CoolDown()                         { defaultServer.CoolDown(context.Background()) }
+
+var (
+	defaultServer server
+)
+
+type server struct {
+	exec *executor.Executor
 }
+
+func (s *server) WarmUp(ctx context.Context) {
+	if s.exec == nil {
+		// TODO: initialize database/network/etc.
+		s.exec = executor.New(generated.NewExecutableSchema(generated.Config{
+			Resolvers: &graph.Resolver{},
+		}))
+	}
+}
+
+func (s *server) CoolDown(ctx context.Context) {
+	// TODO: shut down database/network/etc.
+}
+
+func (s *server) Request(ctx context.Context, in []byte) (out []byte, err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			gqlerr := s.exec.PresentRecoveredError(ctx, p)
+			out, err = json.Marshal(&graphql.Response{Errors: []*gqlerror.Error{gqlerr}})
+		}
+	}()
+
+	var r graphql.RawParams
+	if err := json.Unmarshal(in, &r); err != nil {
+		return nil, wrap(err, "request could not be decoded")
+	}
+
+	op, gqlerr := s.exec.CreateOperationContext(ctx, &r)
+	if gqlerr != nil {
+		return json.Marshal(s.exec.DispatchError(graphql.WithOperationContext(ctx, op), gqlerr))
+	}
+
+	ctx = graphql.WithOperationContext(ctx, op)
+	h, ctx := s.exec.DispatchOperation(ctx, op)
+	return json.Marshal(h(ctx))
+}
+
+type wrapped struct {
+	m string
+	e error
+}
+
+func (w wrapped) Error() string        { return w.m + ": " + w.e.Error() }
+func wrap(err error, msg string) error { return wrapped{msg, err} }

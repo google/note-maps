@@ -35,7 +35,7 @@ public class NmGqlGoLinkPlugin implements FlutterPlugin, MethodCallHandler {
       } catch (Exception e) {
         result.error(e.getMessage(), e.getLocalizedMessage(), null);
       }
-    } else if (call.method.equals("request")) {
+    } else if (call.method.equals("gqlRequest")) {
       try {
         byte[] response = Nmgql.request(call.<byte[]>argument("request"));
         if (response == null) {

@@ -8,46 +8,66 @@ import 'package:gql/ast.dart';
 part 'note_graphql.graphql.g.dart';
 
 @JsonSerializable(explicitToJson: true)
-class NoteSimpleQuery$Query with EquatableMixin {
-  NoteSimpleQuery$Query();
+class NoteStatus$Query$Status with EquatableMixin {
+  NoteStatus$Query$Status();
 
-  factory NoteSimpleQuery$Query.fromJson(Map<String, dynamic> json) =>
-      _$NoteSimpleQuery$QueryFromJson(json);
+  factory NoteStatus$Query$Status.fromJson(Map<String, dynamic> json) =>
+      _$NoteStatus$Query$StatusFromJson(json);
 
-  List<NoteSimpleQuery$Query$Todo> todos;
+  String summary;
 
   @override
-  List<Object> get props => [todos];
-  Map<String, dynamic> toJson() => _$NoteSimpleQuery$QueryToJson(this);
+  List<Object> get props => [summary];
+  Map<String, dynamic> toJson() => _$NoteStatus$Query$StatusToJson(this);
 }
 
-class NoteSimpleQueryQuery
-    extends GraphQLQuery<NoteSimpleQuery$Query, JsonSerializable> {
-  NoteSimpleQueryQuery();
+@JsonSerializable(explicitToJson: true)
+class NoteStatus$Query with EquatableMixin {
+  NoteStatus$Query();
+
+  factory NoteStatus$Query.fromJson(Map<String, dynamic> json) =>
+      _$NoteStatus$QueryFromJson(json);
+
+  NoteStatus$Query$Status status;
+
+  @override
+  List<Object> get props => [status];
+  Map<String, dynamic> toJson() => _$NoteStatus$QueryToJson(this);
+}
+
+class NoteStatusQuery extends GraphQLQuery<NoteStatus$Query, JsonSerializable> {
+  NoteStatusQuery();
 
   @override
   final DocumentNode document = DocumentNode(definitions: [
     OperationDefinitionNode(
         type: OperationType.query,
-        name: NameNode(value: 'note_simple_query'),
+        name: NameNode(value: 'note_status'),
         variableDefinitions: [],
         directives: [],
         selectionSet: SelectionSetNode(selections: [
           FieldNode(
-              name: NameNode(value: 'todos'),
+              name: NameNode(value: 'status'),
               alias: null,
               arguments: [],
               directives: [],
-              selectionSet: null)
+              selectionSet: SelectionSetNode(selections: [
+                FieldNode(
+                    name: NameNode(value: 'summary'),
+                    alias: null,
+                    arguments: [],
+                    directives: [],
+                    selectionSet: null)
+              ]))
         ]))
   ]);
 
   @override
-  final String operationName = 'note_simple_query';
+  final String operationName = 'note_status';
 
   @override
   List<Object> get props => [document, operationName];
   @override
-  NoteSimpleQuery$Query parse(Map<String, dynamic> json) =>
-      NoteSimpleQuery$Query.fromJson(json);
+  NoteStatus$Query parse(Map<String, dynamic> json) =>
+      NoteStatus$Query.fromJson(json);
 }

@@ -1,0 +1,5 @@
+query note_status {
+  status {
+    summary
+  }
+}

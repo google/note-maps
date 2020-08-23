@@ -14,7 +14,7 @@ require (
 	github.com/google/subcommands v1.2.0
 	github.com/textileio/go-threads v0.1.23
 	github.com/vektah/gqlparser/v2 v2.0.1
-	golang.org/x/mobile v0.0.0-20200801112145-973feb4309de // indirect
+	golang.org/x/mobile v0.0.0-20200801112145-973feb4309de
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae // indirect
 	golang.org/x/tools v0.0.0-20200731060945-b5fad4ed8dd6 // indirect

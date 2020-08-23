@@ -14,9 +14,14 @@ A new flutter plugin project.
   s.author           = { 'Your Company' => 'email@example.com' }
   s.source           = { :path => '.' }
   s.source_files     = 'Classes/**/*'
+  s.public_header_files = 'Classes/**/*.h'
   s.dependency 'FlutterMacOS'
 
   s.platform = :osx, '10.11'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   s.swift_version = '5.0'
+
+  s.macos.vendored_frameworks = 'Frameworks/GoNmgql.framework'
+  s.preserve_paths = 'Frameworks/**/*'
+  s.static_framework = true
 end

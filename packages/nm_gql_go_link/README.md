@@ -10,8 +10,10 @@ This is not an officially supported Google product.
 
 1.  Install [Go][].
 1.  `cd nm_gql_go_link`.
-1.  Compile the Go code for your target platform: `go generate -tags android`
-    or `go generate -tags ios`.
+1.  Compile the Go code for your target platform. Any combination of:
+    *   `go generate -tags android`
+    *   `go generate -tags ios`.
+    *   `go generate -tags macos`.
 
 After GraphQL schema changes,
 

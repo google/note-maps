@@ -1,0 +1,11 @@
+.DS_Store
+.dart_tool/
+.idea
+.packages
+.pub/
+build/
+ios/Frameworks/
+tmp
+macos/Frameworks/GoNmgql.framework/**/*.objc.h
+macos/Frameworks/GoNmgql.framework/**/ref.h
+macos/Frameworks/GoNmgql.framework/**/GoNmgql

@@ -1,0 +1,8 @@
+framework module "GoNmgql" {
+    header "ref.h"
+    header "GoNmgql.objc.h"
+    header "Universe.objc.h"
+    header "GoNmgql.h"
+
+    export *
+}

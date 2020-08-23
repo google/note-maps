@@ -2,20 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e7c6488d-694b-4592-8b55-d3015c2bfbfd" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/android/src/main/java/com/example/nm_gql_go_link/NmGqlGoLinkPlugin.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/nm_gql_android.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/nm_gql_ios.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/src/main/kotlin/com/example/nm_gql_go_link/NmGqlGoLinkPlugin.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/example/android/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/example/android/app/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/example/android/app/src/main/kotlin/com/example/nm_gql_go_link_example/MainActivity.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/example/android/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/example/android/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/example/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/example/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Classes/NmGqlGoLinkPlugin.m" beforeDir="false" afterPath="$PROJECT_DIR$/ios/Classes/NmGqlGoLinkPlugin.m" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/nm_gql_go_link.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/nm_gql_go_link.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/macos/Classes/NmGqlGoLinkPlugin.m" beforeDir="false" afterPath="$PROJECT_DIR$/macos/Classes/NmGqlGoLinkPlugin.m" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nm_gql.go" beforeDir="false" afterPath="$PROJECT_DIR$/nm_gql.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nm_gql_go_link.iml" beforeDir="false" afterPath="$PROJECT_DIR$/nm_gql_go_link.iml" afterDir="false" />
     </list>
@@ -42,6 +32,7 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="dart.analysis.tool.window.force.activate" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="show.migrate.to.gradle.popup" value="false" />
@@ -58,5 +49,11 @@
       <updated>1597497875817</updated>
     </task>
     <servers />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="100" y="123" width="1240" height="677" key="com.android.tools.idea.avdmanager.AvdListDialog" timestamp="1598219573929">
+      <screen x="0" y="23" width="1440" height="877" />
+    </state>
+    <state x="100" y="123" width="1240" height="677" key="com.android.tools.idea.avdmanager.AvdListDialog/0.23.1440.877@0.23.1440.877" timestamp="1598219573929" />
   </component>
 </project>

@@ -56,6 +56,9 @@ func (s *server) CoolDown(ctx context.Context) {
 }
 
 func (s *server) Request(ctx context.Context, in []byte) (out []byte, err error) {
+	ctx = graphql.StartOperationTrace(ctx)
+	s.WarmUp(ctx)
+
 	defer func() {
 		if p := recover(); p != nil {
 			gqlerr := s.exec.PresentRecoveredError(ctx, p)
@@ -63,9 +66,14 @@ func (s *server) Request(ctx context.Context, in []byte) (out []byte, err error)
 		}
 	}()
 
+	start := graphql.Now()
 	var r graphql.RawParams
 	if err := json.Unmarshal(in, &r); err != nil {
 		return nil, wrap(err, "request could not be decoded")
+	}
+	r.ReadTime = graphql.TraceTiming{
+		Start: start,
+		End:   graphql.Now(),
 	}
 
 	op, gqlerr := s.exec.CreateOperationContext(ctx, &r)

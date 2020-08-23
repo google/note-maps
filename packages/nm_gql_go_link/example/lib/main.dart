@@ -43,7 +43,6 @@ class _MyAppState extends State<MyApp> {
     } on PlatformException {
       goVersion = 'Failed to get Go version.';
     }
-    /*
     try {
       ArtemisClient client = ArtemisClient.fromLink(_goLink);
       final statusQuery = NoteStatusQuery();
@@ -53,7 +52,6 @@ class _MyAppState extends State<MyApp> {
     } on PlatformException {
       goLinkStatus = 'Failed to get GraphQL link status.';
     }
-    */
 
     // If the widget was removed from the tree while the asynchronous platform
     // message was in flight, we want to discard the reply rather than calling

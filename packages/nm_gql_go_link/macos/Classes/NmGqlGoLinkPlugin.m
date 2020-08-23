@@ -36,13 +36,9 @@
         NSString* response = GoNmgqlGetGoVersion();
         result(response);
     } else if ([@"gqlRequest" isEqualToString:call.method]) {
-        result([FlutterError errorWithCode:@"UNAVAILABLE"
-                             message:@"objc: GQL not implemented for MacOS yet"
-                             details:nil]);
-        /*
         FlutterStandardTypedData* request = call.arguments[@"request"];
         NSError* error = NULL;
-        NSData* response = GoMobileNmgqlRequest(request.data, &error);
+        NSData* response = GoNmgqlRequest(request.data, &error);
         if (error != NULL) {
             result([FlutterError errorWithCode:@"UNAVAILABLE"
                                  message:[error localizedDescription]
@@ -50,7 +46,6 @@
         } else {
             result(response);
         }
-        */
     } else {
         result(FlutterMethodNotImplemented);
     }

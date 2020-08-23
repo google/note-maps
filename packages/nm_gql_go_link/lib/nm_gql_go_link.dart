@@ -43,6 +43,7 @@ class NmGqlGoLink extends Link {
     final Uint8List rawResponse = await _channel.invokeMethod("gqlRequest", {
       "request": rawRequest,
     });
-    yield jsonDecode(utf8.decode(rawResponse));
+    final parser = ResponseParser();
+    yield parser.parseResponse(jsonDecode(utf8.decode(rawResponse)));
   }
 }

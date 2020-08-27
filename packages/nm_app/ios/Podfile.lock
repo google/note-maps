@@ -1,0 +1,28 @@
+PODS:
+  - Flutter (1.0.0)
+  - nm_gql_go_link (0.0.1):
+    - Flutter
+  - webview_flutter (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - nm_gql_go_link (from `.symlinks/plugins/nm_gql_go_link/ios`)
+  - webview_flutter (from `.symlinks/plugins/webview_flutter/ios`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  nm_gql_go_link:
+    :path: ".symlinks/plugins/nm_gql_go_link/ios"
+  webview_flutter:
+    :path: ".symlinks/plugins/webview_flutter/ios"
+
+SPEC CHECKSUMS:
+  Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
+  nm_gql_go_link: f44ecd6dee9c6715b38ea7380664f74fd01e2edf
+  webview_flutter: d2b4d6c66968ad042ad94cbb791f5b72b4678a96
+
+PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
+
+COCOAPODS: 1.9.3

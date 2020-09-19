@@ -109,6 +109,19 @@ Code paths:
 This repository comes with a Git pre-commit hook in `./githooks`. Install it:
 `cp ./githooks/pre-commit .git/hooks/pre-commit`.
 
+### Manage Git Subtrees
+
+Add subtrees:
+
+    git remote add third_party/zefyr https://github.com/memspace/zefyr.git
+    git fetch third_party/zefyr
+    git subtree add --prefix third_party/zefyr third_party/zefyr master --squash
+
+Update subtrees:
+
+    git fetch third_party/zefyr master
+    git subtree pull --prefix third_party/zefyr third_party/zefyr master --squash
+
 ### Build the Mobile App
 
 First, you'll need a build environment:

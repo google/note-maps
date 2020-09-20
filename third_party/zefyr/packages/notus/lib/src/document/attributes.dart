@@ -36,7 +36,7 @@ abstract class NotusAttributeKey<T> {
 ///   * [BlockAttributeBuilder]
 ///   * [HeadingAttributeBuilder]
 abstract class NotusAttributeBuilder<T> implements NotusAttributeKey<T> {
-  const NotusAttributeBuilder._(this.key, this.scope);
+  const NotusAttributeBuilder(this.key, this.scope);
 
   @override
   final String key;
@@ -71,7 +71,7 @@ abstract class NotusAttributeBuilder<T> implements NotusAttributeKey<T> {
 ///   * [NotusAttribute.heading]
 ///   * [NotusAttribute.block]
 class NotusAttribute<T> implements NotusAttributeBuilder<T> {
-  static final Map<String, NotusAttributeBuilder> _registry = {
+  static Map<String, NotusAttributeBuilder> _registry = {
     NotusAttribute.bold.key: NotusAttribute.bold,
     NotusAttribute.italic.key: NotusAttribute.italic,
     NotusAttribute.link.key: NotusAttribute.link,
@@ -126,6 +126,18 @@ class NotusAttribute<T> implements NotusAttributeBuilder<T> {
   /// Embed style attribute.
   // ignore: const_eval_throws_exception
   static const embed = EmbedAttributeBuilder._();
+
+  /// Register a custom attribute builder.
+  static void register(NotusAttributeBuilder builder) {
+    if (_registry.containsKey(builder.key)) {
+      if (_registry[builder.key] != builder) {
+        throw ArgumentError.value(builder.key,
+            'Attribute with key "$builder.key" already registered.');
+      }
+    } else {
+      _registry[builder.key] = builder;
+    }
+  }
 
   static NotusAttribute _fromKeyValue(String key, dynamic value) {
     if (!_registry.containsKey(key)) {
@@ -291,7 +303,7 @@ class NotusStyle {
 
   /// Removes [attributes] from this style and returns new instance of
   /// [NotusStyle] containing result.
-  NotusStyle removeAll(Iterable<NotusAttribute> attributes) {
+  NotusStyle removeAll(Iterable<NotusAttributeKey> attributes) {
     final merged = Map<String, NotusAttribute>.from(_data);
     attributes.map((item) => item.key).forEach(merged.remove);
     return NotusStyle._(merged);
@@ -338,7 +350,7 @@ class _ItalicAttribute extends NotusAttribute<bool> {
 /// [NotusAttribute.link] instead.
 class LinkAttributeBuilder extends NotusAttributeBuilder<String> {
   static const _kLink = 'a';
-  const LinkAttributeBuilder._() : super._(_kLink, NotusAttributeScope.inline);
+  const LinkAttributeBuilder._() : super(_kLink, NotusAttributeScope.inline);
 
   /// Creates a link attribute with specified link [value].
   NotusAttribute<String> fromString(String value) =>
@@ -352,7 +364,7 @@ class LinkAttributeBuilder extends NotusAttributeBuilder<String> {
 class HeadingAttributeBuilder extends NotusAttributeBuilder<int> {
   static const _kHeading = 'heading';
   const HeadingAttributeBuilder._()
-      : super._(_kHeading, NotusAttributeScope.line);
+      : super(_kHeading, NotusAttributeScope.line);
 
   /// Level 1 heading, equivalent of `H1` in HTML.
   NotusAttribute<int> get level1 => NotusAttribute<int>._(key, scope, 1);
@@ -370,7 +382,7 @@ class HeadingAttributeBuilder extends NotusAttributeBuilder<int> {
 /// [NotusAttribute.block] instead.
 class BlockAttributeBuilder extends NotusAttributeBuilder<String> {
   static const _kBlock = 'block';
-  const BlockAttributeBuilder._() : super._(_kBlock, NotusAttributeScope.line);
+  const BlockAttributeBuilder._() : super(_kBlock, NotusAttributeScope.line);
 
   /// Formats a block of lines as a bullet list.
   NotusAttribute<String> get bulletList =>
@@ -392,7 +404,7 @@ class BlockAttributeBuilder extends NotusAttributeBuilder<String> {
 class EmbedAttributeBuilder
     extends NotusAttributeBuilder<Map<String, dynamic>> {
   const EmbedAttributeBuilder._()
-      : super._(EmbedAttribute._kEmbed, NotusAttributeScope.inline);
+      : super(EmbedAttribute._kEmbed, NotusAttributeScope.inline);
 
   NotusAttribute<Map<String, dynamic>> get horizontalRule =>
       EmbedAttribute.horizontalRule();

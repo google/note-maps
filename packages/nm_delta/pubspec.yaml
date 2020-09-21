@@ -1,0 +1,16 @@
+name: nm_delta
+description: Deltas
+# version: 1.0.0
+homepage: https://github.com/google/note-maps
+
+environment:
+  sdk: '>=2.8.1 <3.0.0'
+
+dependencies:
+  quill_delta: ^1.0.0
+  notus:
+    path: ../../third_party/zefyr/packages/notus
+
+dev_dependencies:
+  pedantic: ^1.9.0
+  test: ^1.14.4

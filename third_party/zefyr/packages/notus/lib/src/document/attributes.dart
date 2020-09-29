@@ -128,15 +128,8 @@ class NotusAttribute<T> implements NotusAttributeBuilder<T> {
   static const embed = EmbedAttributeBuilder._();
 
   /// Register a custom attribute builder.
-  static void register(NotusAttributeBuilder builder) {
-    if (_registry.containsKey(builder.key)) {
-      if (_registry[builder.key] != builder) {
-        throw ArgumentError.value(builder.key,
-            'Attribute with key "$builder.key" already registered.');
-      }
-    } else {
-      _registry[builder.key] = builder;
-    }
+  static NotusAttributeBuilder register(NotusAttributeBuilder builder) {
+    return _registry.putIfAbsent(builder.key,()=>builder);
   }
 
   static NotusAttribute _fromKeyValue(String key, dynamic value) {

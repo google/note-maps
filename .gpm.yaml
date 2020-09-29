@@ -1,0 +1,3 @@
+packages:
+- path: packages/nm_delta
+- path: packages/nm_delta_notus

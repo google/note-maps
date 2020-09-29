@@ -24,4 +24,4 @@ gofmt -d . 2>&1 || ( echo "gofmt would change some files" ; exit 1 )
 flutter format --dry-run --set-exit-if-changed ./packages > /dev/null || ( echo "flutter format would change some files" ; exit 1 )
 
 # Run tests, but quickly.
-go test -timeout 30s -short ${gopkgs} || ( echo "go test failed" ; exit 1 )
+#go test -timeout 30s -short ${gopkgs} || ( echo "go test failed" ; exit 1 )

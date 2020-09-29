@@ -1,4 +1,4 @@
-# Copyright 2019 Google LLC
+# Copyright 2019-2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-language: go
-go:
-  - 1.x
-before_install:
-  - go get github.com/mattn/goveralls
-script:
-  - ./githooks/pre-commit
-  - go test -cpu 1,4 -race -v ./...
-  - ./build/ci/travis-coverage
+matrix:
+  include:
+  - language: go
+    go:
+    - 1.x
+    - 1.14
+    before_install:
+    - go get github.com/mattn/goveralls
+    script:
+    - ./githooks/pre-commit
+    - go test -cpu 1,4 -race -v ./...
+    - ./build/ci/travis-coverage
+  - language: dart
+    dart:
+    - stable
+    - dev
+    cache:
+      directories:
+      - $HOME/.pub-cache
+    jobs:
+      include:
+        - stage: Install GPM
+          script:
+            - pub global activate gpm ^0.2.1
+        - stage: Get dependencies (gpm get)
+          script:
+            - pub global run gpm get
+        - stage: Test (gpm test --platform=vm)
+          script:
+            - pub global run gpm test --platform=vm

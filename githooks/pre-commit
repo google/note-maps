@@ -20,8 +20,8 @@ gopkgs="$(go list ./... | grep -v 'vendor|third_party')"
 dartpkgs="$(ls -d ./packages/* )"
 
 # Fail if automatic formatting would change anything
-gofmt -d . 2>&1 || ( echo "gofmt would change some files" ; exit 1 )
-flutter format --dry-run --set-exit-if-changed ./packages > /dev/null || ( echo "flutter format would change some files" ; exit 1 )
+[[ "$(type -P gofmt)" ]] && gofmt -d . 2>&1 || ( echo "gofmt would change some files" ; exit 1 )
+[[ "$(type -P flutter)" ]] && flutter format --dry-run --set-exit-if-changed ./packages > /dev/null || ( echo "flutter format would change some files" ; exit 1 )
 
 # Run tests, but quickly.
 #go test -timeout 30s -short ${gopkgs} || ( echo "go test failed" ; exit 1 )

@@ -1,15 +1,13 @@
 name: nm_delta
-description: Deltas
-# version: 1.0.0
+description: Generic data models for the Note Maps project.
 homepage: https://github.com/google/note-maps
+publish_to: 'none'
 
 environment:
   sdk: '>=2.8.1 <3.0.0'
 
 dependencies:
   quill_delta: ^1.0.0
-  notus:
-    path: ../../third_party/zefyr/packages/notus
 
 dev_dependencies:
   pedantic: ^1.9.0

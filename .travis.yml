@@ -31,14 +31,7 @@ matrix:
     cache:
       directories:
       - $HOME/.pub-cache
-    jobs:
-      include:
-        - stage: Install GPM
-          script:
-            - pub global activate gpm ^0.2.1
-        - stage: Get dependencies (gpm get)
-          script:
-            - pub global run gpm get
-        - stage: Test (gpm test --platform=vm)
-          script:
-            - pub global run gpm test --platform=vm
+    script:
+    - pub global activate gpm ^0.2.1
+    - pub global run gpm get
+    - pub global run gpm test --platform=vm

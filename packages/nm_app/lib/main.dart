@@ -21,6 +21,8 @@ import 'package:nm_gql_go_link/nm_gql_go_link.dart';
 import 'package:nm_gql_go_link/note_graphql.dart';
 import 'package:quilljs_webview/quilljs_webview.dart';
 
+import 'src/editor_page.dart';
+
 void main() {
   runApp(NmApp());
 }
@@ -37,7 +39,7 @@ class NmApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => NmHomePage(title: 'Note Maps'),
-        '/editor': (context) => NmEditor(),
+        '/editor': (context) => EditorPage(),
       },
     );
   }
@@ -113,18 +115,6 @@ class _NmHomePageState extends State<NmHomePage> {
         tooltip: 'Create Note',
         child: Icon(Icons.add),
       ),
-    );
-  }
-}
-
-class NmEditor extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Editor'),
-      ),
-      body: QuillJSWebView(),
     );
   }
 }

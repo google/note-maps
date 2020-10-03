@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   nm_gql_go_link
+  url_launcher_linux
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

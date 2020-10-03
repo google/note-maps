@@ -1,0 +1,11 @@
+packages:
+- path: packages/nm_delta
+  test:
+    steps:
+    - run: dart test --coverage=coverage
+    - run: format_coverage --in=coverage --packages=.packages --report-on=lib --lcov --out=coverage.lcov
+- path: packages/nm_delta_notus
+  test:
+    steps:
+    - run: dart test --coverage=coverage
+    - run: format_coverage --in=coverage --packages=.packages --report-on=lib --lcov --out=coverage.lcov

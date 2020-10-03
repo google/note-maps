@@ -12,11 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// Support for doing something awesome.
+/// Represent note maps as deltas.
 ///
-/// More dartdocs go here.
+/// A delta, or diff-like, representation of a note map can be useful in the
+/// implementation of any app that wants to describe a potentially complex set
+/// of changes. This can be useful in representing changes made by a user, or
+/// changes received from a concurrently modified branch, or peer, of the same
+/// note map.
 library nm_delta;
 
-export 'src/note.dart';
-export 'src/note_map.dart';
-export 'src/convert.dart';
+export 'src/item_op.dart';
+export 'src/sequence_delta.dart';
+export 'src/string_delta.dart';
+export 'src/note_delta.dart';
+export 'src/note_map_delta.dart';
+export 'src/note_map_buffer.dart';

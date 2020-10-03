@@ -39,7 +39,8 @@ class NmGqlGoLink extends Link {
     NextLink forward,
   ]) async* {
     final serializer = RequestSerializer();
-    final Uint8List rawRequest = utf8.encode(jsonEncode(serializer.serializeRequest(request)));
+    final Uint8List rawRequest =
+        utf8.encode(jsonEncode(serializer.serializeRequest(request)));
     final Uint8List rawResponse = await _channel.invokeMethod("gqlRequest", {
       "request": rawRequest,
     });

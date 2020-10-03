@@ -1,0 +1,6 @@
+#!/bin/bash
+
+find packages -name coverage.lcov | while read filename ; do
+  sed -e 's/^SF:.*\/packages\//SF:packages\//' < "${filename}" > "${filename}.relative"
+done
+find packages -name coverage.lcov.relative -exec echo -a {} \; | xargs lcov -o dart-coverage.lcov

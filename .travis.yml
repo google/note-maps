@@ -12,6 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+os:
+- linux
+
+addons:
+  apt:
+    packages:
+    - lcov
+
 matrix:
   include:
   - language: go
@@ -32,6 +40,10 @@ matrix:
       directories:
       - $HOME/.pub-cache
     script:
+    - pub global activate coverage
+    - pub global activate coveralls
     - pub global activate gpm ^0.2.1
     - pub global run gpm get
     - pub global run gpm test --platform=vm
+    - ./build/ci/collect-dart-coverage-lcov
+    - pub global run coveralls dart-coverage.lcov

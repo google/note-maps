@@ -25,5 +25,6 @@ export 'src/item_op.dart';
 export 'src/sequence_delta.dart';
 export 'src/string_delta.dart';
 export 'src/note_delta.dart';
+export 'src/note_map_change.dart';
 export 'src/note_map_delta.dart';
 export 'src/note_map_buffer.dart';

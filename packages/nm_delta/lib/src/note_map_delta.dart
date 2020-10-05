@@ -20,7 +20,7 @@ class NoteMapDelta {
   final Map<String, NoteDelta> _notes;
   final bool _modifiable;
 
-  NoteMapDelta()
+  NoteMapDelta({modifiable = true})
       : _notes = <String, NoteDelta>{},
         _modifiable = true;
 

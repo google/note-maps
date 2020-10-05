@@ -12,51 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'dart:async';
-
 import 'note_map_delta.dart';
+import 'note_map_change.dart';
 
-enum NoteMapChangeSource {
-  /// Local changes are triggered by user actions.
-  local,
-
-  /// Remote changes are changes known to be saved, whether authored locally or
-  /// remotely.
-  remote,
-}
-
-class NoteMapChange {
-  final NoteMapDelta before;
-  final NoteMapDelta change;
-  final NoteMapChangeSource source;
-  NoteMapChange({this.before, this.change, this.source}) {
-    if (before == null) {
-      throw ArgumentError.notNull('before');
-    }
-    if (change == null) {
-      throw ArgumentError.notNull('change');
-    }
-    if (source == null) {
-      throw ArgumentError.notNull('source');
-    }
-  }
-}
-
+/// Translates [NoteMapDelta] objects into [NoteMapChange] objects by
+/// accumulating each received delta into a base against to which the next delta
+/// can be applied.
 class NoteMapBuffer {
-  NoteMapDelta _local;
-  final StreamController<NoteMapChange> _changes;
+  NoteMapDelta _base;
 
-  NoteMapBuffer()
-      : _local = NoteMapDelta.unmodifiable({}),
-        _changes = StreamController<NoteMapChange>();
+  NoteMapBuffer() : _base = NoteMapDelta.unmodifiable({});
 
-  NoteMapDelta get local => _local;
-  Stream<NoteMapChange> get changes => _changes.stream;
+  /// The accumulation of all deltas applied so far.
+  NoteMapDelta get base => _base;
 
-  void apply(NoteMapDelta delta, NoteMapChangeSource source) {
-    final next = _local.apply(delta);
-    final change = NoteMapChange(before: _local, change: delta, source: source);
-    _local = next;
-    _changes.add(change);
+  /// Translates [delta] into a [NoteMapChange] from [source], and updates [base].
+  NoteMapChange apply(NoteMapDelta delta, String source) {
+    final next = _base.apply(delta);
+    final change = NoteMapChange(base: _base, delta: delta, source: source);
+    _base = next;
+    return change;
   }
 }

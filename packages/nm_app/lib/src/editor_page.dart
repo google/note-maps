@@ -15,6 +15,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:nm_delta/nm_delta.dart';
 import 'package:nm_delta_notus/nm_delta_notus.dart';
@@ -27,16 +28,34 @@ class EditorPage extends StatefulWidget {
 }
 
 class EditorPageState extends State<EditorPage> {
-  ZefyrController _controller;
   FocusNode _focusNode;
-  NoteMapNotusDocument _noteMapNotusDocument;
+  NotusDocument _document;
+  ZefyrController _controller;
+  NoteMapNotusTranslator _noteMapNotusTranslator;
 
   @override
   void initState() {
     super.initState();
+    final logger = Logger();
     _focusNode = FocusNode();
-    _noteMapNotusDocument = NoteMapNotusDocument('prototype-root-node-id');
-    _controller = ZefyrController(_noteMapNotusDocument.notusDocument);
+    _document = NotusDocument();
+    _controller = ZefyrController(_document);
+    _noteMapNotusTranslator = NoteMapNotusTranslator('prototype-root-node-id');
+    _document.changes.listen((change) {
+      if (change.source == ChangeSource.local) {
+        logger.d(jsonEncode(change.change));
+        final result = _noteMapNotusTranslator.onNotusChange(change);
+        if (result.hasNotus) {
+          // Respond to [change] by automatically fixing the document
+          logger.d(jsonEncode(result.notus));
+          _document.compose(result.notus, ChangeSource.remote);
+        }
+        if (result.hasNoteMap) {
+          // TODO: do something with NoteMapDelta result.noteMap.
+          logger.d(jsonEncode(result.noteMap));
+        }
+      }
+    });
   }
 
   @override

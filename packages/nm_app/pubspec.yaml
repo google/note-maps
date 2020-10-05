@@ -41,6 +41,7 @@ dependencies:
     path: ../nm_delta_notus
   nm_delta:
     path: ../nm_delta
+  logger: ^0.9.4
 
 dev_dependencies:
   flutter_test:

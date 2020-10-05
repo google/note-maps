@@ -5,4 +5,4 @@ library nm_delta_notus;
 
 export 'src/custom_attributes.dart';
 export 'src/quill_document_codec.dart';
-export 'src/note_map_notus_document.dart';
+export 'src/note_map_notus_translator.dart';

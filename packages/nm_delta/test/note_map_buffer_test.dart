@@ -19,15 +19,36 @@ void main() {
   group('NoteMapBuffer', () {
     test('toJson() reports some basic note deltas', () {
       final buffer = NoteMapBuffer();
-      buffer.apply(
+      final change = buffer.apply(
           NoteMapDelta.from({
             'root': NoteDelta(contentIDs: NoteIDs.insert(['name0'])),
             'name0': NoteDelta(
                 value: NoteValue.insertString('Root Note'),
                 typeIDs: NoteIDs.insert(['name'])),
           }),
-          NoteMapChangeSource.local);
-      expect(buffer.local.toJson(), {
+          'local');
+      expect(change.base.toJson(), {});
+      expect(change.source, 'local');
+      expect(change.delta.toJson(), {
+        'root': {
+          'cs': [
+            {
+              'i': ['name0']
+            }
+          ],
+        },
+        'name0': {
+          'v': [
+            {'i': 'Root Note'}
+          ],
+          'ts': [
+            {
+              'i': ['name']
+            }
+          ],
+        },
+      });
+      expect(buffer.base.toJson(), {
         'root': {
           'cs': [
             {

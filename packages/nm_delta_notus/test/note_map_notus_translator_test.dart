@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:async/async.dart' show StreamQueue;
 import 'package:nm_delta/nm_delta.dart';
 import 'package:nm_delta_notus/nm_delta_notus.dart';
 import 'package:quill_delta/quill_delta.dart';
+import 'package:notus/notus.dart';
 import 'package:test/test.dart';
 
 dynamic notusToJson(Delta delta) {
@@ -23,31 +23,42 @@ dynamic notusToJson(Delta delta) {
 }
 
 void main() {
-  group('NoteMapNotusDocument', () {
-    test('NoteMapNotusDocument() intial note map is empty', () {
-      final bridge = NoteMapNotusDocument('test-id');
-      expect(bridge.noteMap.local.toJson(), NoteMapDelta().toJson());
-      expect(bridge.notusDocument.toPlainText(), '\n');
-      expect(notusToJson(bridge.notusDocument.toDelta()),
-          notusToJson(Delta()..insert('\n')));
+  group('NoteMapNotusTranslator', () {
+    NotusDocument document;
+    NoteMapNotusTranslator translator;
+    Delta notusBefore;
+
+    setUp(() {
+      document = NotusDocument();
+      notusBefore = document.toDelta();
+      var nextId = 0;
+      translator =
+          NoteMapNotusTranslator('test-id', newId: () => 'new${nextId++}');
     });
+
+    NoteMapNotusDelta translate(Delta delta,
+        {ChangeSource source = ChangeSource.local}) {
+      final change =
+          translator.onNotusChange(NotusChange(notusBefore, delta, source));
+      notusBefore = document.toDelta();
+      return change;
+    }
 
     test(
         'document.insert() a few words into an empty document creates a content note',
         () async {
-      var nextId = 0;
-      final bridge =
-          NoteMapNotusDocument('test-id', newId: () => 'new${nextId++}');
-      bridge.notusDocument.insert(0, 'a few words');
-      await bridge.changes.first;
+      final actual = translate(document.insert(0, 'a few words'));
       expect(
-          bridge.noteMap.local.toJson(),
+          actual.noteMap.toJson(),
           NoteMapDelta.from({
             'test-id': NoteDelta(contentIDs: NoteIDs.insert(['new0'])),
             'new0': NoteDelta(value: NoteValue.insertString('a few words')),
           }).toJson());
+      expect(notusToJson(actual.notus),
+          notusToJson(Delta()..retain(11)..retain(1, {'nm_line_id': 'new0'})));
+      document.compose(actual.notus, ChangeSource.local);
       expect(
-          notusToJson(bridge.notusDocument.toDelta()),
+          notusToJson(document.toDelta()),
           notusToJson(Delta()
             ..insert('a few words')
             ..insert('\n', {'nm_line_id': 'new0'})));
@@ -55,26 +66,21 @@ void main() {
 
     test('document.insert() a word in the middle of an existing note',
         () async {
-      var nextId = 0;
-      final bridge =
-          NoteMapNotusDocument('test-id', newId: () => 'new${nextId++}');
-      var changes = StreamQueue(bridge.changes);
-      bridge.notusDocument.insert(0, 'a few words');
-      await changes.next;
-      bridge.notusDocument.insert(5, ' more');
-      await changes.next;
+      document.compose(translate(document.insert(0, 'a few words')).notus,
+          ChangeSource.local);
+      notusBefore = document.toDelta();
+      final actual = translate(document.insert(5, ' more'));
       expect(
-          bridge.noteMap.local.toJson(),
-          NoteMapDelta.from({
-            'test-id': NoteDelta(contentIDs: NoteIDs.insert(['new0'])),
-            'new0':
-                NoteDelta(value: NoteValue.insertString('a few more words')),
-          }).toJson());
-      expect(
-          notusToJson(bridge.notusDocument.toDelta()),
+          notusToJson(document.toDelta()),
           notusToJson(Delta()
             ..insert('a few more words')
             ..insert('\n', {'nm_line_id': 'new0'})));
+      expect(
+          actual.noteMap.toJson(),
+          NoteMapDelta.from({
+            'new0':
+                NoteDelta(value: NoteValue.retain(5)..insertString(' more')),
+          }).toJson());
     });
   });
 }

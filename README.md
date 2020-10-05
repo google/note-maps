@@ -49,7 +49,7 @@ Code paths:
 
 ### Screenshots
 
-![screenshot of library page](https://github.com/google/note-maps/raw/master/docs/library.png) ![screenshot of topic page with speed-dial actinos](https://github.com/google/note-maps/raw/master/docs/fab.png) ![screenshot of topic editing page](https://github.com/google/note-maps/raw/master/docs/topic-edit.png) ![screenshot of browsing page](https://github.com/google/note-maps/raw/master/docs/browse.png)
+![screenshot of library page](https://github.com/google/note-maps/raw/main/docs/library.png) ![screenshot of topic page with speed-dial actinos](https://github.com/google/note-maps/raw/main/docs/fab.png) ![screenshot of topic editing page](https://github.com/google/note-maps/raw/main/docs/topic-edit.png) ![screenshot of browsing page](https://github.com/google/note-maps/raw/main/docs/browse.png)
 
 ### Roadmap to v0.1
 

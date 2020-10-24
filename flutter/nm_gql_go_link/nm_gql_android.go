@@ -17,4 +17,4 @@
 package nmgql
 
 //go:generate mkdir -p ./android/libs
-//go:generate gomobile bind -target=android -o ./android/libs/gomobilenmgql.aar github.com/google/note-maps/packages/nm_gql_go_link
+//go:generate gomobile bind -target=android -o ./android/libs/gomobilenmgql.aar github.com/google/note-maps/flutter/nm_gql_go_link

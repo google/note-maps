@@ -19,7 +19,6 @@ import 'package:artemis/artemis.dart';
 import 'package:flutter/services.dart';
 import 'package:nm_gql_go_link/nm_gql_go_link.dart';
 import 'package:nm_gql_go_link/note_graphql.dart';
-import 'package:quilljs_webview/quilljs_webview.dart';
 
 import 'src/editor_page.dart';
 

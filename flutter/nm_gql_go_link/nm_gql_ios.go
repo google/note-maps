@@ -17,4 +17,4 @@
 package nmgql
 
 //go:generate mkdir -p ./ios/Frameworks
-//go:generate gomobile bind -target=ios -prefix=GoMobile -o ./ios/Frameworks/GoMobileNmgql.framework github.com/google/note-maps/packages/nm_gql_go_link
+//go:generate gomobile bind -target=ios -prefix=GoMobile -o ./ios/Frameworks/GoMobileNmgql.framework github.com/google/note-maps/flutter/nm_gql_go_link

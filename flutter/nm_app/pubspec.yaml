@@ -31,16 +31,14 @@ dependencies:
   artemis:
   nm_gql_go_link:
     path: ../nm_gql_go_link
-  quilljs_webview:
-    path: ../quilljs_webview
   zefyr:
     path: ../../third_party/zefyr/packages/zefyr
   notus:
     path: ../../third_party/zefyr/packages/notus
   nm_delta_notus:
-    path: ../nm_delta_notus
+    path: ../../dart/nm_delta_notus
   nm_delta:
-    path: ../nm_delta
+    path: ../../dart/nm_delta
   logger: ^0.9.4
 
 dev_dependencies:

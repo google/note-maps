@@ -24,7 +24,7 @@ package nmgql
 // environement is OSX (this should be fine since OSX is the only supported
 // build environment for OSX applications anyway.)
 
-//go:generate gobind -lang=go,objc -outdir=./tmp/macos/ -tags=macos -prefix=Go github.com/google/note-maps/packages/nm_gql_go_link
+//go:generate gobind -lang=go,objc -outdir=./tmp/macos/ -tags=macos -prefix=Go github.com/google/note-maps/flutter/nm_gql_go_link
 //go:generate go build -tags macos -v -x -work -buildmode=c-archive -o ./tmp/macos/GoNmgql-amd64.a ./tmp/macos/src/gobind
 //go:generate mkdir -p ./macos/Frameworks/GoNmgql.framework/Versions/A/Headers
 //go:generate xcrun lipo -create -arch x86_64 ./tmp/macos/GoNmgql-amd64.a -o ./macos/Frameworks/GoNmgql.framework/Versions/A/GoNmgql

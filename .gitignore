@@ -2,3 +2,7 @@
 *.aar
 # Ignore Java archives (JAR)
 *.jar
+# Ignore Nix stuff that devs may want to customize for their own environment.
+/.direnv
+/.envrc
+/shell.nix

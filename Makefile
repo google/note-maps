@@ -22,7 +22,7 @@ DEBUG = 1
 COVERAGE = 1
 CC = clang
 OUTDIR = $(PWD)/out
-FLUTTER_PLATFORMS = android
+FLUTTER_PLATFORMS = web
 
 # Set the default target, which is the first defined target.
 #

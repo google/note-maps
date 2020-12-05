@@ -55,6 +55,11 @@ $(FLUTTER_DIR)/.mk.flutter.tested: $(FLUTTER_DIR)/.mk.flutter.pubgot $(FLUTTER_S
 	touch $@
 TEST_TARGETS += $(FLUTTER_DIR)/.mk.flutter.tested
 
+.PHONY: $(FLUTTER_DIR).mk.flutter.clean
+$(FLUTTER_DIR).mk.flutter.clean:
+	cd $(FLUTTER_DIR) ; flutter clean
+CLEAN_TARGETS += $(FLUTTER_DIR).mk.flutter.clean
+
 .PHONY: $(FLUTTER_DIR)/.mk.flutter.run
 $(FLUTTER_DIR)/.mk.flutter.run: $(FLUTTER_DIR)/.mk.flutter.built
 	cd $(FLUTTER_DIR) ; flutter run --no-pub --no-build

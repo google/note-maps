@@ -30,7 +30,7 @@ FLUTTER_PLATFORMS = android
 # other files.
 #
 .PHONY: default
-default: lint build
+default: build
 
 # Initialize variables that will accumulate names of targets defined in other
 # files.
@@ -40,6 +40,7 @@ LINT_TARGETS :=
 BUILD_TARGETS :=
 TEST_TARGETS :=
 CLEAN_TARGETS :=
+RUN_TARGETS :=
 
 include build/make/version_globals.mk
 include build/make/cc_globals.mk
@@ -49,6 +50,7 @@ include cmd/note-maps/build.mk
 include dart/nm_delta/build.mk
 include dart/nm_delta_notus/build.mk
 include flutter/nm_gql_go_link/build.mk
+include flutter/nm_app/build.mk
 
 .PHONY: clean test real-all
 format: $(FORMAT_TARGETS)
@@ -56,3 +58,4 @@ lint: $(LINT_TARGETS)
 build: $(BUILD_TARGETS)
 clean: $(CLEAN_TARGETS)
 test: $(TEST_TARGETS)
+run: $(RUN_TARGETS)

@@ -12,19 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.PHONY: ios-plugin android-plugin
-
 GO_DIR := flutter/nm_gql_go_link
+FLUTTER_DIR := flutter/nm_gql_go_link
 
 include build/make/go.mk
+#include build/make/flutter.mk
 
-$(GO_DIR)/.mk.go.generate.ios: .gomobile $(GO_DIR)/.mk.go.built
+$(GO_DIR)/.mk.go.generate.ios: $(GOMOBILE) $(GOBIND) $(GO_DIR)/.mk.go.built
 	go generate -tags ios ./$(GO_DIR)
+	touch $@
 
-$(GO_DIR)/.mk.go.generate.android: .gomobile $(GO_DIR)/.mk.go.built
+$(GO_DIR)/.mk.go.generate.android: $(GOMOBILE) $(GOBIND) $(GO_DIR)/.mk.go.built
 	go generate -tags android ./$(GO_DIR)
+	touch $@
 
-$(GO_DIR)/.mk.go.generate.macos: .gomobile $(GO_DIR)/.mk.go.built
+$(GO_DIR)/.mk.go.generate.macos: $(GOMOBILE) $(GOBIND) $(GO_DIR)/.mk.go.built
 	go generate -tags macos ./$(GO_DIR)
+	touch $@
 
 BUILD_TARGETS += $(patsubst %,$(GO_DIR)/.mk.go.generate.%, $(FLUTTER_PLATFORMS))

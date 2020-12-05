@@ -18,22 +18,22 @@
 
 DART_SRCS := $(shell find $(DART_DIR) -name '*.dart')
 
-$(DART_DIR)/.pubgot: $(DART_DIR)/pubspec.yaml
+$(DART_DIR)/.mk.dart.pubgot: $(DART_DIR)/pubspec.yaml
 	cd $(DART_DIR) ; dart pub get
 	touch $@
 
-$(DART_DIR)/.analyzed: $(DART_DIR)/.pubgot $(DART_SRCS)
+$(DART_DIR)/.mk.dart.analyzed: $(DART_DIR)/.mk.dart.pubgot $(DART_SRCS)
 	cd $(DART_DIR) ; dart analyze
 	touch $@
 
-$(DART_DIR)/.formatted: $(DART_SRCS)
+$(DART_DIR)/.mk.dart.formatted: $(DART_SRCS)
 	dart format $?
 	touch $@
 
-$(DART_DIR)/.tested: $(DART_DIR)/.pubgot $(DART_SRCS)
+$(DART_DIR)/.mk.dart.tested: $(DART_DIR)/.mk.dart.pubgot $(DART_SRCS)
 	cd $(DART_DIR) ; dart test
 	touch $@
 
-FORMAT_TARGETS += $(DART_DIR)/.formatted
-LINT_TARGETS   += $(DART_DIR)/.analyzed
-TEST_TARGETS   += $(DART_DIR)/.tested
+FORMAT_TARGETS += $(DART_DIR)/.mk.dart.formatted
+LINT_TARGETS   += $(DART_DIR)/.mk.dart.analyzed
+TEST_TARGETS   += $(DART_DIR)/.mk.dart.tested

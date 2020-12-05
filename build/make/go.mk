@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-GO_PKGS := $(shell go list ./$(GO_DIR) ./$(GO_DIR)/... | grep -v vendor )
-GO_SRCS := $(shell find $(GO_DIR) -name '*.go' | grep -v vendor )
+GO_PKGS := $(shell go list ./$(GO_DIR) ./$(GO_DIR)/... | grep -v 'vendor\|tmp' )
+GO_SRCS := $(shell find $(GO_DIR) -name '*.go' | grep -v 'vendor\|tmp' )
 
 $(GO_DIR)/.mk.go.formatted: $(GO_SRCS)
 	go fmt ./$(GO_DIR)

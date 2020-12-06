@@ -12,23 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-{ sources ? import ./sources.nix
-}:
-let
-  pkgs = import sources.nixpkgs {
-    overlays = [
-      (import ./overlays/dart/overlay.nix)
-    ];
-  };
-in
-{
-  inherit pkgs;
+VERSION := $(shell git describe --tags --abbrev=0 | sed -e 's/^v#' )
 
-  devTools = {
-    inherit (pkgs) bazel;
-    inherit (pkgs) dart;
-    inherit (pkgs) gnumake;
-    inherit (pkgs) go;
-    inherit (pkgs) niv;
-  };
-}
+MAJOR_VERSION := $(shell echo ${VERSION} | cut -d '.' -f 1)
+MINOR_VERSION := $(shell echo ${VERSION} | cut -d '.' -f 2)
+PATCH_VERSION := $(shell echo ${VERSION} | cut -d '.' -f 3)
+ifeq (${PATCH_VERSION},)
+PATCH_VERSION := 0
+endif
+
+VERSION_INFO := '$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1), branch \"$(shell git describe --tags --always --all | sed s:heads/::)\")'

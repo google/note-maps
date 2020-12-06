@@ -17,7 +17,7 @@ package main
 import "C"
 
 import (
-	"github.com/google/note-maps/packages/nm_gql_go_link"
+	"github.com/google/note-maps/flutter/nm_gql_go_link"
 )
 
 //export GetGoVersion

@@ -12,23 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-{ sources ? import ./sources.nix
-}:
-let
-  pkgs = import sources.nixpkgs {
-    overlays = [
-      (import ./overlays/dart/overlay.nix)
-    ];
-  };
-in
-{
-  inherit pkgs;
+ifdef DEBUG
+CFLAGS ?= -g
+else
+CFLAGS ?= -O3
+endif
 
-  devTools = {
-    inherit (pkgs) bazel;
-    inherit (pkgs) dart;
-    inherit (pkgs) gnumake;
-    inherit (pkgs) go;
-    inherit (pkgs) niv;
-  };
-}
+NM_CFLAGS  = $(CFLAGS) -std=c11
+NM_CFLAGS += -Wall
+NM_CFLAGS += -Wpedantic
+NM_CFLAGS += -Werror
+NM_CFLAGS += -Iinclude
+
+NM_CPPFLAGS  = -DNM_VERSION=\"${NM_VERSION}\"
+NM_CPPFLAGS += -DMAJOR_VERSION=${MAJOR_VERSION}
+NM_CPPFLAGS += -DMINOR_VERSION=${MINOR_VERSION}
+NM_CPPFLAGS += -DPATCH_VERSION=${PATCH_VERSION}
+
+NM_LIBS = -Llib

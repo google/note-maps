@@ -12,23 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-{ sources ? import ./sources.nix
-}:
-let
-  pkgs = import sources.nixpkgs {
-    overlays = [
-      (import ./overlays/dart/overlay.nix)
-    ];
-  };
-in
-{
-  inherit pkgs;
+DART_DIR := dart/nm_delta_notus
 
-  devTools = {
-    inherit (pkgs) bazel;
-    inherit (pkgs) dart;
-    inherit (pkgs) gnumake;
-    inherit (pkgs) go;
-    inherit (pkgs) niv;
-  };
-}
+include build/make/dart.mk

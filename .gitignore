@@ -6,3 +6,6 @@
 /.direnv
 /.envrc
 /shell.nix
+# Ignore temporary files produced by Makefile
+.mk.*
+/out

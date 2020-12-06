@@ -12,23 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-{ sources ? import ./sources.nix
-}:
-let
-  pkgs = import sources.nixpkgs {
-    overlays = [
-      (import ./overlays/dart/overlay.nix)
-    ];
-  };
-in
-{
-  inherit pkgs;
+TMPDIR = $(OUTDIR)/tmp
+TMPBINDIR = $(TMPDIR)/bin
+export PATH := $(TMPBINDIR):$(PATH)
 
-  devTools = {
-    inherit (pkgs) bazel;
-    inherit (pkgs) dart;
-    inherit (pkgs) gnumake;
-    inherit (pkgs) go;
-    inherit (pkgs) niv;
-  };
-}
+GOMOBILE = $(TMPBINDIR)/gomobile
+$(GOMOBILE):
+	@[ -d "$(@D)" ] || mkdir -p "$(@D)"
+	go build -o $@ golang.org/x/mobile/cmd/gomobile
+
+GOBIND = $(TMPBINDIR)/gobind
+$(GOBIND):
+	@[ -d "$(@D)" ] || mkdir -p "$(@D)"
+	go build -o $@ golang.org/x/mobile/cmd/gobind
+
+.PHONY: .gomobile
+.gomobile: $(GOMOBILE) $(GOBIND)
+

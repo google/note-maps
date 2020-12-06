@@ -12,23 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-{ sources ? import ./sources.nix
-}:
-let
-  pkgs = import sources.nixpkgs {
-    overlays = [
-      (import ./overlays/dart/overlay.nix)
-    ];
-  };
-in
-{
-  inherit pkgs;
+.PHONY: ios-plugin android-plugin
 
-  devTools = {
-    inherit (pkgs) bazel;
-    inherit (pkgs) dart;
-    inherit (pkgs) gnumake;
-    inherit (pkgs) go;
-    inherit (pkgs) niv;
-  };
-}
+GOMOBILE_DIR := tmaps/mobileapi
+GOMOBILE_DIR := flutter/nm_gql_go_link
+
+$(GOMOBILE_DIR)/.mk.ios-plugin: .gomobile $(GO_DIR)/.mk.go.built
+	go generate -tags ios ./$(GOMOBILE_DIR)
+
+$(GOMOBILE_DIR)/.mk.android-plugin: .gomobile $(GO_DIR)/.mk.go.built
+	go generate -tags android ./$(GOMOBILE_DIR)

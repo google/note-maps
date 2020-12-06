@@ -104,6 +104,29 @@ Code paths:
 
 ## Development
 
+### Use [Nix][] (Optional)
+
+This is just a neat way to get a consistent set of build tools for reproducible
+builds.
+
+1. [Install Nix][].
+1. In the root of this repository, run `cp nix/shell.nix .`.
+1. In the root of this repository, run `nix-shell` to launch a shell that
+   includes all build dependencies.
+
+You can use [direnv][] to make this easier:
+
+1. [install direnv][].
+1. In the root of this repository, run `cp nix/envrc .envrc` and `direnv
+   allow`.
+1. Optionally install [nix-direnv][] to cache the `nix-shell` environment.
+
+[Nix]: https://nixos.org/
+[Install Nix]: https://nixos.org/guides/install-nix.html
+[direnv]: https://direnv.net/
+[install direnv]: https://direnv.net/docs/installation.html
+[nix-direnv]: https://github.com/nix-community/nix-direnv
+
 ### Install Git Hooks
 
 This repository comes with a Git pre-commit hook in `./githooks`. Install it:

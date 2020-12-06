@@ -1,9 +1,9 @@
 // Copyright (c) 2018, the Zefyr project authors.  Please see the AUTHORS file
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
-import 'package:test/test.dart';
-import 'package:quill_delta/quill_delta.dart';
 import 'package:notus/notus.dart';
+import 'package:quill_delta/quill_delta.dart';
+import 'package:test/test.dart';
 
 final ul = NotusAttribute.ul.toJson();
 final bold = NotusAttribute.bold.toJson();
@@ -112,7 +112,8 @@ void main() {
   group('$AutoExitBlockRule', () {
     final rule = AutoExitBlockRule();
 
-    test('applies when line-break is inserted on empty line in a block', () {
+    test('applies when newline is inserted on the last empty line in a block',
+        () {
       final ul = NotusAttribute.ul.toJson();
       final doc = Delta()
         ..insert('Item 1')
@@ -145,8 +146,15 @@ void main() {
 
     test('ignores non-empty line at the beginning of a document', () {
       final ul = NotusAttribute.ul.toJson();
-      final doc = Delta()..insert('Text\n', ul);
+      final doc = Delta()..insert('Text')..insert('\n', ul);
       final actual = rule.apply(doc, 0, '\n');
+      expect(actual, isNull);
+    });
+
+    test('ignores empty lines in the middle of a block', () {
+      final ul = NotusAttribute.ul.toJson();
+      final doc = Delta()..insert('Line1')..insert('\n\n\n\n', ul);
+      final actual = rule.apply(doc, 7, '\n');
       expect(actual, isNull);
     });
   });
@@ -211,8 +219,8 @@ void main() {
     });
   });
 
-  group('$PreserveBlockStyleOnPasteRule', () {
-    final rule = PreserveBlockStyleOnPasteRule();
+  group('$PreserveBlockStyleOnInsertRule', () {
+    final rule = PreserveBlockStyleOnInsertRule();
 
     test('applies in a block', () {
       final doc = Delta()
@@ -225,6 +233,121 @@ void main() {
         ..retain(8)
         ..insert('also ')
         ..insert('\n', ul);
+      expect(actual, isNotNull);
+      expect(actual, expected);
+    });
+
+    test('applies for single newline insert', () {
+      final doc = Delta()
+        ..insert('One and two')
+        ..insert('\n\n', ul)
+        ..insert('Three')
+        ..insert('\n', ul);
+      final actual = rule.apply(doc, 12, '\n');
+      final expected = Delta()
+        ..retain(12)
+        ..insert('\n', ul);
+      expect(actual, expected);
+    });
+
+    test('applies for multi line insert', () {
+      final doc = Delta()
+        ..insert('One and two')
+        ..insert('\n\n', ul)
+        ..insert('Three')
+        ..insert('\n', ul);
+      final actual = rule.apply(doc, 8, '111\n222\n333');
+      final expected = Delta()
+        ..retain(8)
+        ..insert('111')
+        ..insert('\n', ul)
+        ..insert('222')
+        ..insert('\n', ul)
+        ..insert('333');
+      expect(actual, expected);
+    });
+
+    test('preserves heading style of the original line', () {
+      final quote = NotusAttribute.block.quote.toJson();
+      final h1_unset = NotusAttribute.heading.unset.toJson();
+      final quote_h1 = NotusAttribute.block.quote.toJson();
+      quote_h1.addAll(NotusAttribute.heading.level1.toJson());
+      final doc = Delta()
+        ..insert('One and two')
+        ..insert('\n', quote_h1)
+        ..insert('Three')
+        ..insert('\n', quote);
+      final actual = rule.apply(doc, 8, '111\n');
+      final expected = Delta()
+        ..retain(8)
+        ..insert('111')
+        ..insert('\n', quote_h1)
+        ..retain(3)
+        ..retain(1, h1_unset);
+      expect(actual, expected);
+    });
+  });
+
+  group('$InsertEmbedsRule', () {
+    final rule = InsertEmbedsRule();
+
+    test('insert on an empty line', () {
+      final doc = Delta()
+        ..insert('One and two')
+        ..insert('\n')
+        ..insert('\n')
+        ..insert('Three')
+        ..insert('\n');
+      final actual = rule.apply(doc, 12, BlockEmbed.horizontalRule);
+      final expected = Delta()
+        ..retain(12)
+        ..insert(BlockEmbed.horizontalRule);
+      expect(actual, isNotNull);
+      expect(actual, expected);
+    });
+
+    test('insert in the beginning of a line', () {
+      final doc = Delta()
+        ..insert('One and two\n')
+        ..insert('embed here\n')
+        ..insert('Three')
+        ..insert('\n');
+      final actual = rule.apply(doc, 12, BlockEmbed.horizontalRule);
+      final expected = Delta()
+        ..retain(12)
+        ..insert(BlockEmbed.horizontalRule)
+        ..insert('\n');
+      expect(actual, isNotNull);
+      expect(actual, expected);
+    });
+
+    test('insert in the end of a line', () {
+      final doc = Delta()
+        ..insert('One and two\n')
+        ..insert('embed here\n')
+        ..insert('Three')
+        ..insert('\n');
+      final actual = rule.apply(doc, 11, BlockEmbed.horizontalRule);
+      final expected = Delta()
+        ..retain(11)
+        ..insert('\n')
+        ..insert(BlockEmbed.horizontalRule);
+      expect(actual, isNotNull);
+      expect(actual, expected);
+    });
+
+    test('insert in the middle of a line', () {
+      final doc = Delta()
+        ..insert('One and two\n')
+        ..insert('embed here\n')
+        ..insert('Three')
+        ..insert('\n');
+      final actual = rule.apply(doc, 17, BlockEmbed.horizontalRule);
+      final expected = Delta()
+        ..retain(17)
+        ..insert('\n')
+        ..insert(BlockEmbed.horizontalRule)
+        ..insert('\n');
       expect(actual, isNotNull);
       expect(actual, expected);
     });

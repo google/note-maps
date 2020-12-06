@@ -1,0 +1,4 @@
+# Example envrc. Copy this and shell.nix to the parent directory to use direnv
+# and Nix to manage the development environment for this project.
+
+use nix

@@ -1,5 +1,6 @@
 name: nm_delta_notus
 description: Notus integration for Note Maps.
+version: 0.0.6
 homepage: https://github.com/google/note-maps
 publish_to: 'none'
 

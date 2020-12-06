@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.6] - 2020-12-06
+
 ### Added
 
 - New Dart packages under `dart/...` and Flutter packages under `flutter/...`.

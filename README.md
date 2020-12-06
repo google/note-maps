@@ -65,17 +65,6 @@ v0.next+1;
 - [ ] Notes can have one or more "types", where each type is a note.
 - [ ] Notes can have "scope", where a scope is a set of notes.
 
-## Progressive Web App
-
-**DEPRECATED.**
-
-Emphasis on presenting and editing a subgraph of a note map as a structured
-document using QuillJS.
-
-Code paths:
-
-- `./js`
-
 ## Command Line Interface
 
 Emphasis on plain text representations of notes, plausible integration with

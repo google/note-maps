@@ -25,17 +25,16 @@ imported from or exported to standard data formats including XTM ([ISO/IEC
 [ISO/IEC 13250-3:2013]: https://www.iso.org/standard/59303.html
 [JTM 1.1]: http://cerny-online.com/jtm/1.1/
 
-A handful of mostly independent implementations are mixed together in this repository. Each focuses on different parts of the problem.
+Status: **Exploratory.** Note Maps is in an experimental stage and is not yet
+useful for taking notes. Many design and implementation options are being
+explored.
 
-1. [A mobile app](#mobile-app)
-2. [A progressive web app](#progressive-web-app)
-3. [A command line interface](#command-line-interface)
+This is not an officially supported Google product.
 
 ## Mobile App
 
 The mobile app is a [Flutter][] front end with a UI focused on entering and
-organizing notes.  Notes are stored through a [Go][] backend in a [Badger][]
-database on local storage, where they can be included in system backups.
+organizing notes.
 
 [Badger]: https://github.com/dgraph-io/badger
 [Flutter]: https://flutter.dev
@@ -43,40 +42,28 @@ database on local storage, where they can be included in system backups.
 
 Code paths:
 
-- `./kv`
-- `./note-maps`
-- `./tmaps`
+- `flutter/nm_app`
 
-### Screenshots
+Deprecated code paths:
 
-![screenshot of library page](https://github.com/google/note-maps/raw/master/docs/library.png) ![screenshot of topic page with speed-dial actinos](https://github.com/google/note-maps/raw/master/docs/fab.png) ![screenshot of topic editing page](https://github.com/google/note-maps/raw/master/docs/topic-edit.png) ![screenshot of browsing page](https://github.com/google/note-maps/raw/master/docs/browse.png)
+- `note_maps`
 
-### Roadmap to v0.1
+### Roadmap
 
-- [x] Partial Go implementation of deserialization from CTM
-- [x] Partial Go implementation of data storage for topic maps
-- [x] Flutter native channel for communication with data storage
-- [x] Minimal Flutter front-end that uses native channel to communicate with Go
-- [x] Minimal UX research, recorded in this repository at [docs/ux.md](docs/ux.md)
-- [x] Wireframe Flutter front-end with navigation
-- [x] Topic maps can be created
-- [x] Names can be created and edited
-- [x] Notes can be created and edited
-- [x] Topics added to a topic map can be reviewed
-- [ ] Deletion of topic maps works correctly in the UI
-- [ ] Adding, editing, and deleting names and notes works consistently
-- [ ] UI includes warnings about data storage, especially deletion
+v0.next:
 
-### Roadmap to v0.2
+- [ ] Notes are stored in a structure that might become isomorphic with topic
+  maps, initially supporting at least "occurrences" and "names".
+- [ ] Notes can be edited through a rich-text editor.
+- [ ] Notes can be deleted.
+- [ ] All existing notes can be found.
+- [ ] UI includes warnings about the fragility of local data storage.
 
-- [ ] Associations and roles can be entered
-- [ ] Associations involving a topic can be found from the topic page
-- [ ] Browsing a topic map supports viewing all data entered in that topic map
+v0.next+1;
 
-### Roadmap beyond
-
-- [ ] Topic maps can be exported and imported
-- [ ] Data entry is reasonably easy
+- [ ] Notes can represent "associations" with "roles".
+- [ ] Notes can have one or more "types", where each type is a note.
+- [ ] Notes can have "scope", where a scope is a set of notes.
 
 ## Progressive Web App
 
@@ -99,22 +86,42 @@ Code paths:
 - `./cmd`
 - `./notes`
 
-### Roadmap to v0.1
+### Roadmap
 
 - [x] Use [Textilio's ThreadsDB](https://docs.textile.io/threads/) for storage.
 - [ ] Support a minimal [Zettelkasten](https://zettelkasten.de/) workflow.
 
 ## Development
 
-### Use [Nix][] (Optional)
+### Install Git Hooks
 
-This is just a neat way to get a consistent set of build tools for reproducible
-builds.
+This repository comes with a Git pre-commit hook in `./githooks`. Install it:
+`cp ./githooks/pre-commit .git/hooks/pre-commit`.
+
+### Manage Git Subtrees
+
+Vendored code goes in the `third_party` directory, preferably using `git
+subtree`. For example:
+
+    git remote add third_party/zefyr https://github.com/memspace/zefyr.git
+    git fetch third_party/zefyr
+    git subtree add --prefix third_party/zefyr third_party/zefyr master --squash
+
+How to update a subtree:
+
+    git fetch third_party/zefyr master
+    git subtree pull --prefix third_party/zefyr third_party/zefyr master --squash
+
+### Development Environment
+
+[Nix][] is a neat way to get a consistent set of build tools for reproducible
+builds:
 
 1. [Install Nix][].
-1. In the root of this repository, run `cp nix/shell.nix .`.
+1. Copy `nix/shell.nix` to the root of this repository.
 1. In the root of this repository, run `nix-shell` to launch a shell that
-   includes all build dependencies.
+   includes all build dependencies. The first time this is done, it will take a
+   few minutes.
 
 You can use [direnv][] to make this easier:
 
@@ -128,36 +135,29 @@ You can use [direnv][] to make this easier:
 [direnv]: https://direnv.net/
 [install direnv]: https://direnv.net/docs/installation.html
 [nix-direnv]: https://github.com/nix-community/nix-direnv
+[Install Flutter]: https://flutter.dev/docs/get-started/install
 
-### Install Git Hooks
+Until we can get Flutter through Nix, you'll also have to install it yourself:
 
-This repository comes with a Git pre-commit hook in `./githooks`. Install it:
-`cp ./githooks/pre-commit .git/hooks/pre-commit`.
+*   [Install Flutter][]
 
-### Manage Git Subtrees
+Nix is not required: you can also install the other dependencies manually.
 
-Add subtrees:
+### Building
 
-    git remote add third_party/zefyr https://github.com/memspace/zefyr.git
-    git fetch third_party/zefyr
-    git subtree add --prefix third_party/zefyr third_party/zefyr master --squash
+Most tasks are automated through a [GNU Make][] makefile in the root of this
+repository:
 
-Update subtrees:
+    make format lint test build
 
-    git fetch third_party/zefyr master
-    git subtree pull --prefix third_party/zefyr third_party/zefyr master --squash
+[GNU Make]: https://www.gnu.org/software/make/
 
-### Build the Mobile App
+Installing and running the Flutter app is best done directly through the
+`flutter` command.
 
-First, you'll need a build environment:
-
-*   Install [Flutter](https://flutter.dev/docs/get-started/install).
-*   Install [gomobile](https://golang.org/x/mobile/cmd/gomobile).
-
-Then, generate the intermediate binaries from the `tmaps/mobileapi` package:
-
-    go generate -tags android ./tmaps/mobileapi
-    go generate -tags ios ./tmaps/mobileapi
+    cd flutter
+    cd nm_app
+    flutter run
 
 ### Source Code Headers
 
@@ -182,4 +182,3 @@ Apache header:
     See the License for the specific language governing permissions and
     limitations under the License.
 
-This is not an officially supported Google product.

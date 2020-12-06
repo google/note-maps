@@ -1,5 +1,8 @@
 # Note Maps JavaScript
 
+**DEPRECATED. Efforts to implement Note Maps using JavaScript are indefinitely
+shelved.**
+
 Note maps can be treated like a set of structured documents, where topic names
 become headings, and where occurrences and associations become list items under
 those headings.  If the type of each occurrence and role are included, and the

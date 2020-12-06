@@ -80,6 +80,8 @@ Code paths:
 
 ## Progressive Web App
 
+**DEPRECATED.**
+
 Emphasis on presenting and editing a subgraph of a note map as a structured
 document using QuillJS.
 

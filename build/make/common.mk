@@ -12,22 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DIR := flutter/nm_gql_go_link
+# Requires:
+#
+# DIR := 'relative/directory'
 
-include build/make/common.mk
-include build/make/go.mk
-#include build/make/flutter.mk
-
-$(GO_DIR)/.mk.go.generate.ios: $(GOMOBILE) $(GOBIND) $(GO_DIR)/.mk.go.built
-	go generate -tags ios ./$(GO_DIR)
-	touch $@
-
-$(GO_DIR)/.mk.go.generate.android: $(GOMOBILE) $(GOBIND) $(GO_DIR)/.mk.go.built
-	go generate -tags android ./$(GO_DIR)
-	touch $@
-
-$(GO_DIR)/.mk.go.generate.macos: $(GOMOBILE) $(GOBIND) $(GO_DIR)/.mk.go.built
-	go generate -tags macos ./$(GO_DIR)
-	touch $@
-
-BUILD_TARGETS += $(patsubst %,$(GO_DIR)/.mk.go.generate.%, $(FLUTTER_PLATFORMS))
+.PHONY: $(DIR).mk.common.clean
+$(DIR).mk.flutter.clean: $(DIR)/.mk.*
+	rm $?
+CLEAN_TARGETS += $(DIR).mk.flutter.clean

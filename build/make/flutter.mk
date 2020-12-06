@@ -14,53 +14,53 @@
 
 # Requires:
 #
-# FLUTTER_DIR := 'directory/containing/pubspec'
+# DIR := 'directory/containing/pubspec'
 
-FLUTTER_SRCS := $(shell find $(FLUTTER_DIR) -name '*.dart') $(FLUTTER_DIR)/pubspec.yaml
+SRCS := $(shell find $(DIR) -name '*.dart') $(DIR)/pubspec.yaml
 
-$(FLUTTER_DIR)/.mk.flutter.pubgot: $(FLUTTER_DIR)/pubspec.yaml
-	cd $(FLUTTER_DIR) ; flutter pub get
+$(DIR)/.mk.flutter.pubgot: $(DIR)/pubspec.yaml
+	cd $(DIR) ; flutter pub get
 	touch $@
 
 # FORMAT: flutter format
-$(FLUTTER_DIR)/.mk.flutter.formatted: $(FLUTTER_SRCS)
+$(DIR)/.mk.flutter.formatted: $(SRCS)
 	flutter format $?
 	touch $@
-FORMAT_TARGETS += $(FLUTTER_DIR)/.mk.flutter.formatted
+FORMAT_TARGETS += $(DIR)/.mk.flutter.formatted
 
 # LINT: flutter analyze
-$(FLUTTER_DIR)/.mk.flutter.analyzed: $(FLUTTER_DIR)/.mk.flutter.pubgot $(FLUTTER_SRCS)
-	cd $(FLUTTER_DIR) ; flutter analyze
+$(DIR)/.mk.flutter.analyzed: $(DIR)/.mk.flutter.pubgot $(SRCS)
+	cd $(DIR) ; flutter analyze
 	touch $@
-LINT_TARGETS += $(FLUTTER_DIR)/.mk.flutter.analyzed
+LINT_TARGETS += $(DIR)/.mk.flutter.analyzed
 
 # BUILD: flutter build $(FLUTTER_PLATFORMS)
-$(FLUTTER_DIR)/.mk.flutter.built.android: $(FLUTTER_DIR)/.mk.flutter.pubgot $(FLUTTER_SRCS)
-	cd $(FLUTTER_DIR) ; flutter build appbundle
+$(DIR)/.mk.flutter.built.android: $(DIR)/.mk.flutter.pubgot $(SRCS)
+	cd $(DIR) ; flutter build appbundle
 	touch $@
-$(FLUTTER_DIR)/.mk.flutter.built.ios: $(FLUTTER_DIR)/.mk.flutter.pubgot $(FLUTTER_SRCS)
-	cd $(FLUTTER_DIR) ; flutter build ios
+$(DIR)/.mk.flutter.built.ios: $(DIR)/.mk.flutter.pubgot $(SRCS)
+	cd $(DIR) ; flutter build ios
 	touch $@
-$(FLUTTER_DIR)/.mk.flutter.built.macos: $(FLUTTER_DIR)/.mk.flutter.pubgot $(FLUTTER_SRCS)
-	cd $(FLUTTER_DIR) ; flutter build macos
+$(DIR)/.mk.flutter.built.macos: $(DIR)/.mk.flutter.pubgot $(SRCS)
+	cd $(DIR) ; flutter build macos
 	touch $@
-$(FLUTTER_DIR)/.mk.flutter.built.web: $(FLUTTER_DIR)/.mk.flutter.pubgot $(FLUTTER_SRCS)
-	cd $(FLUTTER_DIR) ; flutter build web
+$(DIR)/.mk.flutter.built.web: $(DIR)/.mk.flutter.pubgot $(SRCS)
+	cd $(DIR) ; flutter build web
 	touch $@
-$(FLUTTER_DIR)/.mk.flutter.built: $(patsubst %,$(GO_DIR)/.mk.flutter.built.%, $(FLUTTER_PLATFORMS))
-BUILD_TARGETS += $(FLUTTER_DIR)/.mk.flutter.built
+$(DIR)/.mk.flutter.built: $(patsubst %,$(GO_DIR)/.mk.flutter.built.%, $(FLUTTER_PLATFORMS))
+BUILD_TARGETS += $(DIR)/.mk.flutter.built
 
-$(FLUTTER_DIR)/.mk.flutter.tested: $(FLUTTER_DIR)/.mk.flutter.pubgot $(FLUTTER_SRCS)
-	cd $(FLUTTER_DIR) ; flutter --no-pub test
+$(DIR)/.mk.flutter.tested: $(DIR)/.mk.flutter.pubgot $(SRCS)
+	cd $(DIR) ; flutter --no-pub test
 	touch $@
-TEST_TARGETS += $(FLUTTER_DIR)/.mk.flutter.tested
+TEST_TARGETS += $(DIR)/.mk.flutter.tested
 
-.PHONY: $(FLUTTER_DIR).mk.flutter.clean
-$(FLUTTER_DIR).mk.flutter.clean:
-	cd $(FLUTTER_DIR) ; flutter clean
-CLEAN_TARGETS += $(FLUTTER_DIR).mk.flutter.clean
+.PHONY: $(DIR).mk.flutter.clean
+$(DIR).mk.flutter.clean:
+	cd $(DIR) ; flutter clean
+CLEAN_TARGETS += $(DIR).mk.flutter.clean
 
-.PHONY: $(FLUTTER_DIR)/.mk.flutter.run
-$(FLUTTER_DIR)/.mk.flutter.run: $(FLUTTER_DIR)/.mk.flutter.built
-	cd $(FLUTTER_DIR) ; flutter run --no-pub --no-build
-RUN_TARGETS += $(FLUTTER_DIR)/.mk.flutter.run
+.PHONY: $(DIR)/.mk.flutter.run
+$(DIR)/.mk.flutter.run: $(DIR)/.mk.flutter.built
+	cd $(DIR) ; flutter run --no-pub --no-build
+RUN_TARGETS += $(DIR)/.mk.flutter.run

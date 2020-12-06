@@ -14,26 +14,26 @@
 
 # Requires:
 #
-# DART_DIR := 'directory/containing/pubspec'
+# DIR := 'directory/containing/pubspec'
 
-DART_SRCS := $(shell find $(DART_DIR) -name '*.dart')
+SRCS := $(shell find $(DIR) -name '*.dart')
 
-$(DART_DIR)/.mk.dart.pubgot: $(DART_DIR)/pubspec.yaml
-	cd $(DART_DIR) ; dart pub get
+$(DIR)/.mk.dart.pubgot: $(DIR)/pubspec.yaml
+	cd $(DIR) ; dart pub get
 	touch $@
 
-$(DART_DIR)/.mk.dart.analyzed: $(DART_DIR)/.mk.dart.pubgot $(DART_SRCS)
-	cd $(DART_DIR) ; dart analyze
+$(DIR)/.mk.dart.analyzed: $(DIR)/.mk.dart.pubgot $(SRCS)
+	cd $(DIR) ; dart analyze
 	touch $@
 
-$(DART_DIR)/.mk.dart.formatted: $(DART_SRCS)
+$(DIR)/.mk.dart.formatted: $(SRCS)
 	dart format $?
 	touch $@
 
-$(DART_DIR)/.mk.dart.tested: $(DART_DIR)/.mk.dart.pubgot $(DART_SRCS)
-	cd $(DART_DIR) ; dart test
+$(DIR)/.mk.dart.tested: $(DIR)/.mk.dart.pubgot $(SRCS)
+	cd $(DIR) ; dart test
 	touch $@
 
-FORMAT_TARGETS += $(DART_DIR)/.mk.dart.formatted
-LINT_TARGETS   += $(DART_DIR)/.mk.dart.analyzed
-TEST_TARGETS   += $(DART_DIR)/.mk.dart.tested
+FORMAT_TARGETS += $(DIR)/.mk.dart.formatted
+LINT_TARGETS   += $(DIR)/.mk.dart.analyzed
+TEST_TARGETS   += $(DIR)/.mk.dart.tested

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DART_DIR := dart/nm_delta_notus
+DIR := dart/nm_delta_notus
 
+include build/make/common.mk
 include build/make/dart.mk

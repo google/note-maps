@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FLUTTER_DIR := flutter/nm_app
+DIR := flutter/nm_app
 
+include build/make/common.mk
 include build/make/flutter.mk

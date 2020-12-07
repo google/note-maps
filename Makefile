@@ -56,7 +56,8 @@ include build/make/flutter.mk
 include cmd/note-maps/build.mk
 include dart/nm_delta/build.mk
 include dart/nm_delta_notus/build.mk
-include flutter/nm_gql_go_link/build.mk
+# TODO: resolve build problems with nm_gql_go_link
+#include flutter/nm_gql_go_link/build.mk
 include flutter/nm_app/build.mk
 
 .PHONY: clean test real-all

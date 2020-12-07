@@ -15,10 +15,12 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:artemis/artemis.dart';
+// TODO: resolve build problems with nm_gql_go_link
+//import 'package:artemis/artemis.dart';
 import 'package:flutter/services.dart';
-import 'package:nm_gql_go_link/nm_gql_go_link.dart';
-import 'package:nm_gql_go_link/note_graphql.dart';
+// TODO: resolve build problems with nm_gql_go_link
+//import 'package:nm_gql_go_link/nm_gql_go_link.dart';
+//import 'package:nm_gql_go_link/note_graphql.dart';
 
 import 'src/editor_page.dart';
 
@@ -55,7 +57,8 @@ class NmHomePage extends StatefulWidget {
 
 class _NmHomePageState extends State<NmHomePage> {
   String _goLinkStatus = 'Unknown';
-  NmGqlGoLink _goLink = NmGqlGoLink();
+  // TODO: resolve build problems with nm_gql_go_link
+  //NmGqlGoLink _goLink = NmGqlGoLink();
 
   @override
   void initState() {
@@ -64,7 +67,8 @@ class _NmHomePageState extends State<NmHomePage> {
   }
 
   void _reloadStatus() async {
-    String goLinkStatus;
+    String goLinkStatus = 'uninitialized';
+    /* TODO: resolve build problems with nm_gql_go_link
     try {
       ArtemisClient client = ArtemisClient.fromLink(_goLink);
       final statusQuery = NoteStatusQuery();
@@ -74,6 +78,7 @@ class _NmHomePageState extends State<NmHomePage> {
     } on PlatformException {
       goLinkStatus = 'Failed to get GraphQL link status.';
     }
+    */
 
     // If the widget was removed from the tree while the asynchronous platform
     // message was in flight, we want to discard the reply rather than calling

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - All JavaScript implementations under `js`.
+- The original Flutter implementation under `note_maps`.
 
 ## [0.0.6] - 2020-12-06
 

@@ -44,10 +44,6 @@ Code paths:
 
 - `flutter/nm_app`
 
-Deprecated code paths:
-
-- `note_maps`
-
 ### Roadmap
 
 v0.next:

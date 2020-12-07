@@ -29,9 +29,8 @@ $(DART_NM_DELTA_NOTUS)/.mk.dart.test: $(DART_NM_DELTA_NOTUS)/.mk.dart.pub.get $(
 
 .PHONY: $(DART_NM_DELTA_NOTUS)/.mk.dart.clean
 $(DART_NM_DELTA_NOTUS)/.mk.dart.clean:
-	ce $(DART_NM_DELTA_NOTUS) && dart clean
+	$(call common_clean)
 
 FORMAT_TARGETS += $(DART_NM_DELTA_NOTUS)/.mk.dart.format
 LINT_TARGETS   += $(DART_NM_DELTA_NOTUS)/.mk.dart.analyze
 TEST_TARGETS   += $(DART_NM_DELTA_NOTUS)/.mk.dart.test
-CLEAN_TARGETS  += $(DART_NM_DELTA_NOTUS)/.mk.dart.clean

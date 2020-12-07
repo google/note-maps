@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-flutter_find_srcs = $(shell find $(1) -name '*.dart') $(1)/pubspec.yaml
+flutter_find_srcs = $(shell find $(1) -name '*.dart')
 
 define flutter_pub_get =
 	cd $(dir $@) && flutter pub get
@@ -20,7 +20,7 @@ define flutter_pub_get =
 endef
 
 define flutter_format =
-	cd $(dir $@) && flutter format $?
+	flutter format $?
 	touch $@
 endef
 

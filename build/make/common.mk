@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Requires:
-#
-# DIR := 'relative/directory'
-
-.PHONY: $(DIR)/mk.common.clean
-$(DIR).mk.common.clean: $(DIR)/.mk.*
-	rm -f $?
-CLEAN_TARGETS += $(DIR)/mk.common.clean
+define common_clean =
+	rm -f $(dir $@).mk.*
+endef

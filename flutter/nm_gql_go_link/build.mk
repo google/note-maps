@@ -40,9 +40,10 @@ $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.test: $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutte
 .PHONY: $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.clean
 $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.clean:
 	cd $(FLUTTER_NM_GQL_GO_LINK) ; flutter clean
+	$(call common_clean)
 
 FORMAT_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.format
 LINT_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.analyze
 BUILD_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.build
 TEST_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.test
-CLEAN_TARGETS += $(FLUTTER_NM_GQL_GO_LINK).mk.flutter.clean
+CLEAN_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.clean

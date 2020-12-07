@@ -18,7 +18,7 @@ FLUTTER_NM_APP_SRCS := $(call flutter_find_srcs,$(FLUTTER_NM_APP))
 $(FLUTTER_NM_APP)/.mk.flutter.pub.get: $(FLUTTER_NM_APP)/pubspec.yaml
 	$(call flutter_pub_get $(FLUTTER_NM_APP))
 
-$(FLUTTER_NM_APP)/.mk.flutter.format: $(FLUTTER_NM_APP)/.mk.flutter.pub.get $(FLUTTER_NM_APP_SRCS)
+$(FLUTTER_NM_APP)/.mk.flutter.format: $(FLUTTER_NM_APP_SRCS)
 	$(call flutter_format $(FLUTTER_NM_APP))
 
 $(FLUTTER_NM_APP)/.mk.flutter.analyze: $(FLUTTER_NM_APP)/.mk.flutter.pub.get $(FLUTTER_NM_APP_SRCS)
@@ -53,5 +53,5 @@ FORMAT_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.format
 LINT_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.analyze
 BUILD_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.build
 TEST_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.test
-CLEAN_TARGETS += $(FLUTTER_NM_APP).mk.flutter.clean
+CLEAN_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.clean
 RUN_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.run

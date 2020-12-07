@@ -31,7 +31,11 @@ $(CMD_NOTE_MAPS)/.mk.go.build: $(CMD_NOTE_MAPS_SRCS)
 $(CMD_NOTE_MAPS)/.mk.go.test:
 	$(call go_test $(CMD_NOTE_MAPS))
 
+$(CMD_NOTE_MAPS)/.mk.go.clean:
+	$(call common_clean)
+
 FORMAT_TARGETS += $(CMD_NOTE_MAPS)/.mk.go.format
 LINT_TARGETS   += $(CMD_NOTE_MAPS)/.mk.go.vet
 BUILD_TARGETS  += $(CMD_NOTE_MAPS)/.mk.go.build
 TEST_TARGETS   += $(CMD_NOTE_MAPS)/.mk.go.test
+CLEAN_TARGETS  += $(CMD_NOTE_MAPS)/.mk.go.clean

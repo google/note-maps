@@ -48,6 +48,7 @@ include build/make/version_globals.mk
 include build/make/cc_globals.mk
 include build/make/gomobile_globals.mk
 
+include build/make/common.mk
 include build/make/go.mk
 include build/make/dart.mk
 include build/make/flutter.mk

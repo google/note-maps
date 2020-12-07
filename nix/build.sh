@@ -29,9 +29,8 @@ export SRCDIR=$TMP/src
 mkdir -p $SRCDIR
 cp -rf $src/* $SRCDIR/
 chmod +w -R $SRCDIR
-echo SRCDIR=$SRCDIR
 touch $SRCDIR/mk.touch
-cd $SRCDIR && ls -l && ls -l "$SRCDIR" && make -e OUT=$TMP lint test build
+cd $SRCDIR && make -e OUT=$TMP lint test build
 
 mkdir -p $out/bin
 cp $TMP/go/bin/note-maps $out/bin/note-maps

@@ -35,6 +35,6 @@ define flutter_build =
 endef
 
 define flutter_test =
-	cd $(dir $@) && flutter --no-pub test
+	cd $(dir $@) && flutter test
 	touch $@
 endef

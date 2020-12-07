@@ -29,6 +29,6 @@ define dart_lint =
 endef
 
 define dart_test =
-	cd $(dir $@) ; dart --no-pub test)
+	cd $(dir $@) ; dart test
 	touch $@
 endef

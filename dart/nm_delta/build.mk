@@ -16,16 +16,16 @@ DART_NM_DELTA := dart/nm_delta
 DART_NM_DELTA_SRCS := $(shell find $(DART_NM_DELTA) -name '*.dart')
 
 $(DART_NM_DELTA)/.mk.dart.pub.get: $(DART_NM_DELTA)/pubspec.yaml
-	$(call dart_pub_get $(DART_NM_DELTA))
+	$(call dart_pub_get)
 
 $(DART_NM_DELTA)/.mk.dart.analyze: $(DART_NM_DELTA)/.mk.dart.pub.get $(DART_NM_DELTA_SRCS)
-	$(call dart_lint $(DART_NM_DELTA))
+	$(call dart_lint)
 
 $(DART_NM_DELTA)/.mk.dart.format: $(DART_NM_DELTA_SRCS)
-	$(call dart_format $(DART_NM_DELTA))
+	$(call dart_format)
 
 $(DART_NM_DELTA)/.mk.dart.test: $(DART_NM_DELTA)/.mk.dart.pub.get $(DART_NM_DELTA_SRCS)
-	$(call dart_test $(DART_NM_DELTA))
+	$(call dart_test)
 
 .PHONY: $(DART_NM_DELTA)/.mk.dart.clean
 $(DART_NM_DELTA)/.mk.dart.clean:

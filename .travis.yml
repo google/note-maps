@@ -20,6 +20,19 @@ addons:
     packages:
     - lcov
 
+cache:
+  directories:
+  - $HOME/nix.store
+
+before_install:
+- sudo mkdir -p /etc/nix
+- echo "substituters = https://cache.nixos.org/ file://$HOME/nix.store" | sudo tee -a /etc/nix/nix.conf > /dev/null
+- echo 'require-sigs = false' | sudo tee -a /etc/nix/nix.conf > /dev/null
+
+before_cache:
+- mkdir -p $HOME/nix.store
+- nix copy --to file://$HOME/nix.store -f default.nix buildInputs nativeBuildInputs
+
 matrix:
   include:
   - language: go
@@ -49,6 +62,3 @@ matrix:
     - pub global run coveralls dart-coverage.lcov
   - language: nix
     nix: 2.3.9
-    script:
-    - nix-shell --run 'make -j lint test'
-    - nix-shell --run 'make build'

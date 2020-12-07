@@ -12,25 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-go_pkgs = $(shell go list ./$($(1))/... | grep -v 'vendor\|tmp' )
-go_srcs = $(shell find ./$($(1)) -name '*.go' | grep -v 'vendor\|tmp' )
-
-define go_fmt =
-	go fmt ./$(dir $@)...
-	touch $@
-endef
-
-define go_vet =
-	go vet ./$(dir $@)...
-	touch $@
-endef
-
-define go_build =
-	go install ./$(dir $@)...
-	touch $@
-endef
-
-define go_test =
-	go test ./$(dir $@)...
-	touch $@
-endef
+{ project ? import ./nix { }
+, pkgs ? project.pkgs
+, stdenv ? pkgs.stdenv
+, bash ? pkgs.bash
+}:
+stdenv.mkDerivation {
+  name = "note_maps-0.1.0";
+  src = builtins.path { path = ./.; name = "note_maps"; };
+  nativeBuildInputs = builtins.attrValues project.runtimeDeps;
+  buildInputs = builtins.attrValues project.ciTools;
+  builder = "${bash}/bin/bash";
+  args = [ ./nix/build.sh ];
+}

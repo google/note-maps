@@ -2,8 +2,10 @@
 *.aar
 # Ignore Java archives (JAR)
 *.jar
-# Ignore Nix stuff that devs may want to customize for their own environment.
+# Ignore Nix stuff
 /.direnv
+/result
+# Ignore configs that devs may want to customize for their own environment.
 /.envrc
 /shell.nix
 # Ignore temporary files produced by Makefile

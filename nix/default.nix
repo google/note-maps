@@ -20,15 +20,37 @@ let
       (import ./overlays/dart/overlay.nix)
     ];
   };
-in
+in rec
 {
   inherit pkgs;
 
-  devTools = {
-    inherit (pkgs) bazel;
+  # Runtime dependencies, may include some build tools.
+  runtimeDeps = {
+    inherit (pkgs) dart;
+    inherit (pkgs) go;
+  };
+
+  # Minimum tools required to build Note Maps.
+  buildTools = {
+    inherit (pkgs) clang;
     inherit (pkgs) dart;
     inherit (pkgs) gnumake;
     inherit (pkgs) go;
+  };
+
+  # Additional tools required to build Note Maps in a more controlled
+  # environment.
+  ciTools = buildTools // {
+    inherit (pkgs) coreutils;
+    inherit (pkgs) findutils;
+    inherit (pkgs) moreutils;
+    inherit (pkgs) git;
+    inherit (pkgs) gnugrep;
+    inherit (pkgs) gnused;
+  };
+
+  # Additional tools useful for code work and repository maintenance.
+  devTools = runtimeDeps // buildTools // {
     inherit (pkgs) niv;
   };
 }

@@ -47,3 +47,8 @@ matrix:
     - pub global run gpm test --platform=vm
     - ./build/ci/collect-dart-coverage-lcov
     - pub global run coveralls dart-coverage.lcov
+  - language: nix
+    nix: 2.3.9
+    script:
+    - nix-shell --run 'make -j lint test'
+    - nix-shell --run 'make build'

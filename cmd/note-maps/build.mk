@@ -24,7 +24,6 @@ $(CMD_NOTE_MAPS)/.mk.go.vet: $(CMD_NOTE_MAPS_SRCS)
 
 # `go build` has its own caching built in.
 $(CMD_NOTE_MAPS)/.mk.go.build: $(CMD_NOTE_MAPS_SRCS)
-	echo CMD_NOTE_MAPS=$(CMD_NOTE_MAPS)
 	$(call go_build $(CMD_NOTE_MAPS))
 
 # `go test` has its own caching built in.

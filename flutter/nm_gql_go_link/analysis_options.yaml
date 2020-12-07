@@ -12,29 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-flutter_find_srcs = $(shell find $(1) -name '*.dart') $(1)/pubspec.yaml
+include: package:pedantic/analysis_options.yaml
 
-define flutter_pub_get =
-	cd $(dir $@) && flutter pub get
-	touch $@
-endef
-
-define flutter_format =
-	cd $(dir $@) && flutter format $?
-	touch $@
-endef
-
-define flutter_lint =
-	cd $(dir $@) && flutter analyze --no-fatal-infos
-	touch $@
-endef
-
-define flutter_build =
-	cd $(dir $@) ; flutter build $(subst .,,$(suffix $@))
-	touch $@
-endef
-
-define flutter_test =
-	cd $(dir $@) && flutter --no-pub test
-	touch $@
-endef
+analyzer:
+  exclude:
+    - lib/note_graphql.graphql.dart

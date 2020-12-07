@@ -23,7 +23,6 @@ $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.pub.get: $(FLUTTER_NM_GQL_GO_LINK)/pubspec
 $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.format: $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.pub.get $(FLUTTER_NM_GQL_GO_LINK_SRCS)
 	$(call flutter_format $(FLUTTER_NM_GQL_GO_LINK))
 
-
 $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.analyze: $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.pub.get $(FLUTTER_NM_GQL_GO_LINK_SRCS)
 	$(call flutter_lint $(FLUTTER_NM_GQL_GO_LINK))
 

@@ -184,18 +184,19 @@ List<_SituatedNote> _toSituatedNotes(
       noteId = op.attributes == null
           ? null
           : op.attributes[NoteMapNotusAttribute.lineId.key];
-      if (!(op.data is String)) {
+      var data = op.data;
+      if (!(data is String)) {
         throw UnimplementedError();
-      } else if (op.data is String && op.data.contains('\n')) {
-        final ni = op.data.indexOf('\n');
-        content += op.data.substring(0, ni);
-        op = ni + 1 == op.data.length
+      } else if (data is String && data.contains('\n')) {
+        final ni = data.indexOf('\n');
+        content += data.substring(0, ni);
+        op = ni + 1 == data.length
             ? null
-            : quill.Operation.insert(op.data.substring(ni + 1), op.attributes);
+            : quill.Operation.insert(data.substring(ni + 1), op.attributes);
         i += ni + 1;
         break;
       } else {
-        content += op.data;
+        content += data;
         i += op.length;
         op = null;
       }

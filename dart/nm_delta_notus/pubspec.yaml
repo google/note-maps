@@ -10,7 +10,7 @@ environment:
 dependencies:
   nm_delta:
     path: ../nm_delta
-  quill_delta: ^1.0.0
+  quill_delta: ^2.0.0
   notus:
     path: ../../third_party/zefyr/packages/notus
   uuid: ^2.2.2

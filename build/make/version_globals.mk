@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-VERSION := $(shell git describe --tags --abbrev=0 | sed -e 's/^v#' )
+VERSION := $(shell git describe --tags --abbrev=0 | sed -e 's/^v//' )
 
 MAJOR_VERSION := $(shell echo ${VERSION} | cut -d '.' -f 1)
 MINOR_VERSION := $(shell echo ${VERSION} | cut -d '.' -f 2)

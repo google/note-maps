@@ -22,7 +22,9 @@ DEBUG = 1
 COVERAGE = 1
 CC = clang
 OUTDIR = $(PWD)/out
-FLUTTER_PLATFORMS = web
+FLUTTER_BUILD = bundle appbundle
+FLUTTER_DEVICE = web-server
+GOMOBILE_TAGS = android ios macos
 
 # Set the default target, which is the first defined target.
 #
@@ -45,6 +47,10 @@ RUN_TARGETS :=
 include build/make/version_globals.mk
 include build/make/cc_globals.mk
 include build/make/gomobile_globals.mk
+
+include build/make/go.mk
+include build/make/dart.mk
+include build/make/flutter.mk
 
 include cmd/note-maps/build.mk
 include dart/nm_delta/build.mk

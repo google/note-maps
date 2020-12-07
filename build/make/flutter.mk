@@ -12,55 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Requires:
-#
-# DIR := 'directory/containing/pubspec'
+flutter_find_srcs = $(shell find $(1) -name '*.dart') $(1)/pubspec.yaml
 
-SRCS := $(shell find $(DIR) -name '*.dart') $(DIR)/pubspec.yaml
+define flutter_pub_get =
+	cd $(dir $@) && flutter pub get
+	touch $@
+endef
 
-$(DIR)/.mk.flutter.pubgot: $(DIR)/pubspec.yaml
-	cd $(DIR) ; flutter pub get
+define flutter_format =
+	cd $(dir $@) && flutter format $?
 	touch $@
+endef
 
-# FORMAT: flutter format
-$(DIR)/.mk.flutter.formatted: $(SRCS)
-	flutter format $?
+define flutter_lint =
+	cd $(dir $@) && flutter analyze
 	touch $@
-FORMAT_TARGETS += $(DIR)/.mk.flutter.formatted
+endef
 
-# LINT: flutter analyze
-$(DIR)/.mk.flutter.analyzed: $(DIR)/.mk.flutter.pubgot $(SRCS)
-	cd $(DIR) ; flutter analyze
+define flutter_build =
+	cd $(dir $@) ; flutter build $(subst .,,$(suffix $@))
 	touch $@
-LINT_TARGETS += $(DIR)/.mk.flutter.analyzed
+endef
 
-# BUILD: flutter build $(FLUTTER_PLATFORMS)
-$(DIR)/.mk.flutter.built.android: $(DIR)/.mk.flutter.pubgot $(SRCS)
-	cd $(DIR) ; flutter build appbundle
+define flutter_test =
+	cd $(dir $@) && flutter --no-pub test
 	touch $@
-$(DIR)/.mk.flutter.built.ios: $(DIR)/.mk.flutter.pubgot $(SRCS)
-	cd $(DIR) ; flutter build ios
-	touch $@
-$(DIR)/.mk.flutter.built.macos: $(DIR)/.mk.flutter.pubgot $(SRCS)
-	cd $(DIR) ; flutter build macos
-	touch $@
-$(DIR)/.mk.flutter.built.web: $(DIR)/.mk.flutter.pubgot $(SRCS)
-	cd $(DIR) ; flutter build web
-	touch $@
-$(DIR)/.mk.flutter.built: $(patsubst %,$(GO_DIR)/.mk.flutter.built.%, $(FLUTTER_PLATFORMS))
-BUILD_TARGETS += $(DIR)/.mk.flutter.built
-
-$(DIR)/.mk.flutter.tested: $(DIR)/.mk.flutter.pubgot $(SRCS)
-	cd $(DIR) ; flutter --no-pub test
-	touch $@
-TEST_TARGETS += $(DIR)/.mk.flutter.tested
-
-.PHONY: $(DIR).mk.flutter.clean
-$(DIR).mk.flutter.clean:
-	cd $(DIR) ; flutter clean
-CLEAN_TARGETS += $(DIR).mk.flutter.clean
-
-.PHONY: $(DIR)/.mk.flutter.run
-$(DIR)/.mk.flutter.run: $(DIR)/.mk.flutter.built
-	cd $(DIR) ; flutter run --no-pub --no-build
-RUN_TARGETS += $(DIR)/.mk.flutter.run
+endef

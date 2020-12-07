@@ -12,7 +12,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DIR := flutter/nm_app
+FLUTTER_NM_APP := flutter/nm_app
+FLUTTER_NM_APP_SRCS := $(call flutter_find_srcs,$(FLUTTER_NM_APP))
 
-include build/make/common.mk
-include build/make/flutter.mk
+$(FLUTTER_NM_APP)/.mk.flutter.pub.get: $(FLUTTER_NM_APP)/pubspec.yaml
+	$(call flutter_pub_get $(FLUTTER_NM_APP))
+
+$(FLUTTER_NM_APP)/.mk.flutter.format: $(FLUTTER_NM_APP)/.mk.flutter.pub.get $(FLUTTER_NM_APP_SRCS)
+	$(call flutter_format $(FLUTTER_NM_APP))
+
+$(FLUTTER_NM_APP)/.mk.flutter.analyze: $(FLUTTER_NM_APP)/.mk.flutter.pub.get $(FLUTTER_NM_APP_SRCS)
+	$(call flutter_lint $(FLUTTER_NM_APP))
+
+$(FLUTTER_NM_APP)/.mk.flutter.build.appbundle: $(FLUTTER_NM_APP)/.mk.flutter.pub.get $(FLUTTER_NM_APP_SRCS)
+	$(call flutter_build $(FLUTTER_NM_APP) appbundle)
+
+$(FLUTTER_NM_APP)/.mk.flutter.build.ios: $(FLUTTER_NM_APP)/.mk.flutter.pub.get $(FLUTTER_NM_APP_SRCS)
+	$(call flutter_build $(FLUTTER_NM_APP) ios)
+
+$(FLUTTER_NM_APP)/.mk.flutter.build.macos: $(FLUTTER_NM_APP)/.mk.flutter.pub.get $(FLUTTER_NM_APP_SRCS)
+	$(call flutter_build $(FLUTTER_NM_APP) macos)
+
+$(FLUTTER_NM_APP)/.mk.flutter.build.bundle: $(FLUTTER_NM_APP)/.mk.flutter.pub.get $(FLUTTER_NM_APP_SRCS)
+	$(call flutter_build $(FLUTTER_NM_APP) bundle)
+
+$(FLUTTER_NM_APP)/.mk.flutter.build: $(patsubst %,$(FLUTTER_NM_APP)/.mk.flutter.build.%, $(FLUTTER_BUILD))
+
+$(FLUTTER_NM_APP)/.mk.flutter.test: $(FLUTTER_NM_APP)/.mk.flutter.pub.get $(FLUTTER_NM_APP_SRCS)
+	$(call flutter_test $(1))
+
+.PHONY: $(FLUTTER_NM_APP)/.mk.flutter.clean
+$(FLUTTER_NM_APP)/.mk.flutter.clean:
+	cd $(FLUTTER_NM_APP) ; flutter clean
+
+.PHONY: $(FLUTTER_NM_APP)/.mk.flutter.run
+$(FLUTTER_NM_APP)/.mk.flutter.run: $(FLUTTER_NM_APP)/.mk.flutter.build
+	cd $(FLUTTER_NM_APP) ; flutter run --no-pub --no-build $(FLUTTER_DEVICE)
+
+FORMAT_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.format
+LINT_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.analyze
+BUILD_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.build
+TEST_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.test
+CLEAN_TARGETS += $(FLUTTER_NM_APP).mk.flutter.clean
+RUN_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.run

@@ -16,7 +16,7 @@
 #
 # DIR := 'relative/directory'
 
-.PHONY: $(DIR).mk.common.clean
-$(DIR).mk.flutter.clean: $(DIR)/.mk.*
-	rm $?
-CLEAN_TARGETS += $(DIR).mk.flutter.clean
+.PHONY: $(DIR)/mk.common.clean
+$(DIR).mk.common.clean: $(DIR)/.mk.*
+	rm -f $?
+CLEAN_TARGETS += $(DIR)/mk.common.clean

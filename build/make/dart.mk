@@ -12,28 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Requires:
-#
-# DIR := 'directory/containing/pubspec'
-
-SRCS := $(shell find $(DIR) -name '*.dart')
-
-$(DIR)/.mk.dart.pubgot: $(DIR)/pubspec.yaml
-	cd $(DIR) ; dart pub get
+dart_find_srcs = $(shell find $(1) -name '*.dart') $(1)/pubspec.yaml
+define dart_pub_get =
+	cd $(dir $@) ; dart pub get
 	touch $@
+endef
 
-$(DIR)/.mk.dart.analyzed: $(DIR)/.mk.dart.pubgot $(SRCS)
-	cd $(DIR) ; dart analyze
+define dart_format =
+	cd $(dir $@) ; dart format $?
 	touch $@
+endef
 
-$(DIR)/.mk.dart.formatted: $(SRCS)
-	dart format $?
+define dart_lint =
+	cd $(dir $@) ; dart analyze
 	touch $@
+endef
 
-$(DIR)/.mk.dart.tested: $(DIR)/.mk.dart.pubgot $(SRCS)
-	cd $(DIR) ; dart test
+define dart_test =
+	cd $(dir $@) ; dart --no-pub test)
 	touch $@
-
-FORMAT_TARGETS += $(DIR)/.mk.dart.formatted
-LINT_TARGETS   += $(DIR)/.mk.dart.analyzed
-TEST_TARGETS   += $(DIR)/.mk.dart.tested
+endef

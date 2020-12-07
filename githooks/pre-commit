@@ -15,12 +15,15 @@ exec 1>&2
 # If there are whitespace errors, print the offending file names and fail.
 git diff-index --check --cached $against -- || ( echo "found whitespace errors" ; exit 1 )
 
+make --dry-run --always-make lint format test build run > /dev/null || ( echo "commit blocked: Makefile is incoherent" ; false )
+make -j lint > /dev/null || ( echo "commit blocked: 'make lint' failed" ; false )
+
 # Find relevant packages.
-gopkgs="$(go list ./... | grep -v 'vendor|third_party')"
-dartpkgs="$(ls -d ./packages/* )"
+#gopkgs="$(go list ./... | grep -v 'vendor|third_party')"
+#dartpkgs="$(ls -d ./dart/* )"
 
 # Fail if automatic formatting would change anything
-[[ "$(type -P gofmt)" ]] && gofmt -d . 2>&1 || ( echo "gofmt would change some files" ; exit 1 )
+#[[ "$(type -P gofmt)" ]] && gofmt -d . 2>&1 || ( echo "gofmt would change some files" ; exit 1 )
 #[[ "$(type -P flutter)" ]] && flutter format --dry-run --set-exit-if-changed ./packages > /dev/null || ( echo "flutter format would change some files" ; exit 1 )
 
 # Run tests, but quickly.

@@ -12,31 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-GO_PKGS := $(shell go list ./$(GO_DIR) ./$(GO_DIR)/... | grep -v 'vendor\|tmp' )
-GO_SRCS := $(shell find $(GO_DIR) -name '*.go' | grep -v 'vendor\|tmp' )
+go_pkgs = $(shell go list ./$($(1))/... | grep -v 'vendor\|tmp' )
+go_srcs = $(shell find ./$($(1)) -name '*.go' | grep -v 'vendor\|tmp' )
 
-$(GO_DIR)/.mk.go.formatted: $(GO_SRCS)
-	go fmt ./$(GO_DIR)
+define go_fmt =
+	go fmt ./$(dir $@)...
 	touch $@
+endef
 
-$(GO_DIR)/.mk.go.vetted: $(GO_SRCS)
-	go vet $(GO_PKGS)
+define go_vet =
+	go vet ./$(dir $@)...
 	touch $@
+endef
 
-# `go build` has its own caching built in.
-$(GO_DIR)/.mk.go.built: $(GO_SRCS)
-	go build $(GO_PKGS)
+define go_build =
+	go build ./$(dir $@)...
 	touch $@
+endef
 
-# `go test` has its own caching built in.
-$(GO_DIR)/.mk.go.tested:
-	go test $(GO_PKGS)
+define go_test =
+	go test ./$(dir $@)...
 	touch $@
-
-FORMAT_TARGETS += $(GO_DIR)/.mk.go.formatted
-LINT_TARGETS   += $(GO_DIR)/.mk.go.vetted
-BUILD_TARGETS  += $(GO_DIR)/.mk.go.built
-TEST_TARGETS   += $(GO_DIR)/.mk.go.tested
-
-#undefine GO_PKGS
-#undefine GO_SRCS
+endef

@@ -12,7 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DIR := dart/nm_delta_notus
+DART_NM_DELTA_NOTUS := dart/nm_delta_notus
+DART_NM_DELTA_NOTUS_SRCS := $(shell find $(DART_NM_DELTA_NOTUS) -name '*.dart')
 
-include build/make/common.mk
-include build/make/dart.mk
+$(DART_NM_DELTA_NOTUS)/.mk.dart.pub.get: $(DART_NM_DELTA_NOTUS)/pubspec.yaml
+	$(call dart_pub_get $(DART_NM_DELTA_NOTUS))
+
+$(DART_NM_DELTA_NOTUS)/.mk.dart.analyze: $(DART_NM_DELTA_NOTUS)/.mk.dart.pub.get $(DART_NM_DELTA_NOTUS_SRCS)
+	$(call dart_lint $(DART_NM_DELTA_NOTUS))
+
+$(DART_NM_DELTA_NOTUS)/.mk.dart.format: $(DART_NM_DELTA_NOTUS_SRCS)
+	$(call dart_format $(DART_NM_DELTA_NOTUS))
+
+$(DART_NM_DELTA_NOTUS)/.mk.dart.test: $(DART_NM_DELTA_NOTUS)/.mk.dart.pub.get $(DART_NM_DELTA_NOTUS_SRCS)
+	$(call dart_test $(DART_NM_DELTA_NOTUS))
+
+.PHONY: $(DART_NM_DELTA_NOTUS)/.mk.dart.clean
+$(DART_NM_DELTA_NOTUS)/.mk.dart.clean:
+	ce $(DART_NM_DELTA_NOTUS) && dart clean
+
+FORMAT_TARGETS += $(DART_NM_DELTA_NOTUS)/.mk.dart.format
+LINT_TARGETS   += $(DART_NM_DELTA_NOTUS)/.mk.dart.analyze
+TEST_TARGETS   += $(DART_NM_DELTA_NOTUS)/.mk.dart.test
+CLEAN_TARGETS  += $(DART_NM_DELTA_NOTUS)/.mk.dart.clean

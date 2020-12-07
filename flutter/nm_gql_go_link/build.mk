@@ -12,22 +12,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DIR := flutter/nm_gql_go_link
+FLUTTER_NM_GQL_GO_LINK := flutter/nm_gql_go_link
+FLUTTER_NM_GQL_GO_LINK_SRCS := $(call flutter_find_srcs,$(FLUTTER_NM_GQL_GO_LINK))
 
-include build/make/common.mk
-include build/make/go.mk
-#include build/make/flutter.mk
+gomobile = $(shell go generate -tags $(2) ./$(1))
 
-$(GO_DIR)/.mk.go.generate.ios: $(GOMOBILE) $(GOBIND) $(GO_DIR)/.mk.go.built
-	go generate -tags ios ./$(GO_DIR)
-	touch $@
+$(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.pub.get: $(FLUTTER_NM_GQL_GO_LINK)/pubspec.yaml
+	$(call flutter_pub_get $(FLUTTER_NM_GQL_GO_LINK))
 
-$(GO_DIR)/.mk.go.generate.android: $(GOMOBILE) $(GOBIND) $(GO_DIR)/.mk.go.built
-	go generate -tags android ./$(GO_DIR)
-	touch $@
+$(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.format: $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.pub.get $(FLUTTER_NM_GQL_GO_LINK_SRCS)
+	$(call flutter_format $(FLUTTER_NM_GQL_GO_LINK))
 
-$(GO_DIR)/.mk.go.generate.macos: $(GOMOBILE) $(GOBIND) $(GO_DIR)/.mk.go.built
-	go generate -tags macos ./$(GO_DIR)
-	touch $@
 
-BUILD_TARGETS += $(patsubst %,$(GO_DIR)/.mk.go.generate.%, $(FLUTTER_PLATFORMS))
+$(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.analyze: $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.pub.get $(FLUTTER_NM_GQL_GO_LINK_SRCS)
+	$(call flutter_lint $(FLUTTER_NM_GQL_GO_LINK))
+
+$(FLUTTER_NM_GQL_GO_LINK)/.mk.go.generate.ios: $(GOMOBILE) $(GOBIND)
+	$(call gomobile $(FLUTTER_NM_GQL_GO_LINK) ios)
+$(FLUTTER_NM_GQL_GO_LINK)/.mk.go.generate.android: $(GOMOBILE) $(GOBIND)
+	$(call gomobile $(FLUTTER_NM_GQL_GO_LINK) android)
+$(FLUTTER_NM_GQL_GO_LINK)/.mk.go.generate.macos: $(GOMOBILE) $(GOBIND)
+	$(call gomobile $(FLUTTER_NM_GQL_GO_LINK) macos)
+$(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.build: $(patsubst %,$(FLUTTER_NM_GQL_GO_LINK)/.mk.go.generate.%, $(FLUTTER_PLATFORMS))
+
+$(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.test: $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.pub.get $(FLUTTER_NM_GQL_GO_LINK_SRCS)
+	$(call flutter_test $(1))
+
+.PHONY: $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.clean
+$(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.clean:
+	cd $(FLUTTER_NM_GQL_GO_LINK) ; flutter clean
+
+FORMAT_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.format
+LINT_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.analyze
+BUILD_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.build
+TEST_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.test
+CLEAN_TARGETS += $(FLUTTER_NM_GQL_GO_LINK).mk.flutter.clean

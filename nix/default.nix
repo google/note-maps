@@ -20,14 +20,14 @@ let
       (import ./overlays/dart/overlay.nix)
     ];
   };
+  gitignoreSource = (import sources."gitignore.nix" { inherit (pkgs) lib; }).gitignoreSource;
+  src = gitignoreSource ./..;
 in rec
 {
-  inherit pkgs;
+  inherit pkgs src;
 
-  # Runtime dependencies, may include some build tools.
+  # Runtime dependencies.
   runtimeDeps = {
-    inherit (pkgs) dart;
-    inherit (pkgs) go;
   };
 
   # Minimum tools required to build Note Maps.

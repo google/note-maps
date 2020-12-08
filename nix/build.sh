@@ -33,7 +33,7 @@ export GOMODCACHE=$SRCDIR/tmp/go/mod
 export PUBCACHE=$SRCDIR/tmp/pub/cache
 
 echo "*** attempting build in SRCDIR=$SRCDIR"
-cd $SRCDIR && make -e OUT=$TMP lint #test build
+cd $SRCDIR && make -ej OUT=$TMP lint #test build
 
 echo "*** attempting release to out=$out"
 mkdir -p $out/bin

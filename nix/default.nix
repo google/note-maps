@@ -20,6 +20,7 @@ let
       (import ./overlays/dart/overlay.nix)
     ];
   };
+  unstable = import sources.unstable { };
   gitignoreSource = (import sources."gitignore.nix" { inherit (pkgs) lib; }).gitignoreSource;
   src = gitignoreSource ./..;
   lib = pkgs.lib;
@@ -44,7 +45,7 @@ in rec
   # on MacOS will have to provide their own flutter from outside the Nix
   # environment.
   linuxBuildTools = {
-    inherit (pkgs) flutter;
+    inherit (unstable) flutter;
   };
 
   # Additional tools required to build Note Maps in a more controlled

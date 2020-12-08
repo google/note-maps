@@ -16,5 +16,4 @@
 }:
 project.pkgs.mkShell {
   buildInputs = project.shellInputs;
-  FLUTTER = "flutter-dev";
 }

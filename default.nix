@@ -24,5 +24,4 @@ stdenv.mkDerivation {
   buildInputs = project.buildInputs;
   builder = "${bash}/bin/bash";
   args = [ ./nix/build.sh ];
-  FLUTTER = "flutter-dev";
 }

@@ -66,5 +66,5 @@ in rec
 
   nativeBuildInputs = builtins.attrValues runtimeDeps;
   buildInputs = builtins.attrValues ciTools ++ lib.optionals (stdenv.buildPlatform.isLinux) (builtins.attrValues linuxBuildTools);
-  shellInputs = builtins.attrValues devTools ++ lib.optional stdenv.buildPlatform.isLinux (builtins.attrValues linuxBuildTools);
+  shellInputs = builtins.attrValues devTools ++ lib.optional (stdenv.buildPlatform.isLinux) (builtins.attrValues linuxBuildTools);
 }

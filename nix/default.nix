@@ -38,6 +38,13 @@ in rec
     inherit (pkgs) go;
   };
 
+  # Temporary work-around until there is a flutter package for Darwin. Builds
+  # on MacOS will have to provide their own flutter from outside the Nix
+  # environment.
+  linuxBuildTools = {
+    inherit (pkgs) flutter;
+  };
+
   # Additional tools required to build Note Maps in a more controlled
   # environment.
   ciTools = buildTools // {

@@ -31,7 +31,11 @@ cp -rf $src/* $SRCDIR/
 chmod +w -R $SRCDIR
 export GOMODCACHE=$SRCDIR/tmp/go/mod
 export PUBCACHE=$SRCDIR/tmp/pub/cache
-cd $SRCDIR && make -e OUT=$TMP lint test build
 
+echo "*** attempting build in SRCDIR=$SRCDIR"
+cd $SRCDIR && make -e OUT=$TMP lint #test build
+
+echo "*** attempting release to out=$out"
 mkdir -p $out/bin
-cp $TMP/go/bin/note-maps $out/bin/note-maps
+#cp $TMP/go/bin/note-maps $out/bin/note-maps
+cp $SRCDIR/VERSION* $out/

@@ -37,7 +37,7 @@ before_install:
 - mkdir -p $PUBCACHE
 
 install:
-- nix-shell --run 'make download'
+- export GOCACHE GOMODCACHE PUBCACHE ; nix-shell --run 'make download'
 
 before_cache:
 - mkdir -p $HOME/nix.store

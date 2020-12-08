@@ -19,8 +19,7 @@ language: nix
 nix: 2.3.9
 
 env:
-- GOMODCACHE: "${TRAVIS_BUILD_DIR}/tmp/go/mod"
-- PUBCACHE: "${TRAVIS_BUILD_DIR}/tmp/pub/cache"
+- GOMODCACHE="${TRAVIS_BUILD_DIR}/tmp/go/mod" PUBCACHE="${TRAVIS_BUILD_DIR}/tmp/pub/cache"
 
 cache:
   directories:

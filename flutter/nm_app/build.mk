@@ -44,6 +44,7 @@ $(FLUTTER_NM_APP)/.mk.flutter.test: $(FLUTTER_NM_APP)/.mk.flutter.pub.get $(FLUT
 .PHONY: $(FLUTTER_NM_APP)/.mk.flutter.clean
 $(FLUTTER_NM_APP)/.mk.flutter.clean:
 	cd $(FLUTTER_NM_APP) ; flutter clean
+	rm $(FLUTTER_NM_APP)/.mk.*
 
 .PHONY: $(FLUTTER_NM_APP)/.mk.flutter.run
 $(FLUTTER_NM_APP)/.mk.flutter.run: $(FLUTTER_NM_APP)/.mk.flutter.build

@@ -35,6 +35,7 @@ before_install:
 - mkdir -p $GOCACHE
 - mkdir -p $GOMODCACHE
 - mkdir -p $PUBCACHE
+- mkdir -p out/tmp
 
 install:
 - export GOCACHE GOMODCACHE PUBCACHE ; nix-shell --run 'make download'

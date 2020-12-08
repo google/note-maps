@@ -14,13 +14,9 @@
 
 os:
 - linux
-
 dist: xenial
-
-addons:
-  apt:
-    packages:
-    - lcov
+language: nix
+nix: 2.3.9
 
 env:
 - GOMODCACHE: "${TRAVIS_BUILD_DIR}/tmp/go/mod"
@@ -38,33 +34,3 @@ before_install:
 before_cache:
 - mkdir -p $HOME/nix.store
 - nix copy --to file://$HOME/nix.store -f default.nix buildInputs nativeBuildInputs
-
-jobs:
-  include:
-  - language: go
-    go:
-    - 1.x
-    - 1.14
-    before_install:
-    - go get github.com/mattn/goveralls
-    script:
-    - ./githooks/pre-commit
-    - go test -cpu 1,4 -race -v ./...
-    - ./build/ci/travis-coverage
-  - language: dart
-    dart:
-    - stable
-    - dev
-    cache:
-      directories:
-      - $HOME/.pub-cache
-    script:
-    - pub global activate coverage
-    - pub global activate coveralls
-    - pub global activate gpm ^0.2.1
-    - pub global run gpm get
-    - pub global run gpm test --platform=vm
-    - ./build/ci/collect-dart-coverage-lcov
-    - pub global run coveralls dart-coverage.lcov
-  - language: nix
-    nix: 2.3.9

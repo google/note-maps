@@ -15,14 +15,13 @@
 { project ? import ./nix { }
 , pkgs ? project.pkgs
 , bash ? pkgs.bash
-, lib ? pkgs.lib
 , stdenv ? pkgs.stdenv
 }:
 stdenv.mkDerivation {
   name = "note_maps-0.1.0";
   src = builtins.path { path = ./.; name = "note_maps"; };
-  nativeBuildInputs = builtins.attrValues project.runtimeDeps;
-  buildInputs = builtins.attrValues project.ciTools ++ lib.optionals (stdenv.buildPlatform.isLinux) project.linuxBuildTools;
+  nativeBuildInputs = project.nativeBuildInputs;
+  buildInputs = project.buildInputs;
   builder = "${bash}/bin/bash";
   args = [ ./nix/build.sh ];
 }

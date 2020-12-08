@@ -22,6 +22,8 @@ let
   };
   gitignoreSource = (import sources."gitignore.nix" { inherit (pkgs) lib; }).gitignoreSource;
   src = gitignoreSource ./..;
+  lib = pkgs.lib;
+  stdenv = pkgs.stdenv;
 in rec
 {
   inherit pkgs src;
@@ -60,4 +62,8 @@ in rec
   devTools = runtimeDeps // buildTools // {
     inherit (pkgs) niv;
   };
+
+  nativeBuildInputs = builtins.attrValues runtimeDeps;
+  buildInputs = builtins.attrValues ciTools ++ lib.optionals (stdenv.buildPlatform.isLinux) (builtins.attrValues linuxBuildTools);
+  shellInputs = builtins.attrValues devTools ++ lib.optional stdenv.buildPlatform.isLinux (builtins.attrValues linuxBuildTools);
 }

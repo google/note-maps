@@ -13,10 +13,7 @@
 # limitations under the License.
 
 { project ? import ./nix { }
-, pkgs ? project.pkgs
-, lib ? pkgs.lib
-, stdenv ? pkgs.stdenv
 }:
 project.pkgs.mkShell {
-  buildInputs = builtins.attrValues project.devTools ++ lib.optionals (stdenv.buildPlatform.isLinux) project.linuxBuildTools;
+  buildInputs = project.shellInputs;
 }

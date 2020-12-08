@@ -19,7 +19,7 @@ language: nix
 nix: 2.3.9
 
 env:
-- GOMODCACHE="${TRAVIS_BUILD_DIR}/tmp/go/mod" PUBCACHE="${TRAVIS_BUILD_DIR}/tmp/pub/cache"
+- GOMODCACHE="$TRAVIS_BUILD_DIR/tmp/go/mod" PUBCACHE="$TRAVIS_BUILD_DIR/tmp/pub/cache"
 
 cache:
   directories:
@@ -29,6 +29,8 @@ before_install:
 - sudo mkdir -p /etc/nix
 - echo "substituters = https://cache.nixos.org/ file://$HOME/nix.store" | sudo tee -a /etc/nix/nix.conf > /dev/null
 - echo 'require-sigs = false' | sudo tee -a /etc/nix/nix.conf > /dev/null
+- mkdir -p $GOMODCACHE
+- mkdir -p $PUBCACHE
 
 install:
 - nix-shell --run 'make download'

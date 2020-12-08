@@ -45,7 +45,7 @@ in rec
   # on MacOS will have to provide their own flutter from outside the Nix
   # environment.
   linuxBuildTools = {
-    inherit (unstable) flutter;
+    inherit (unstable) flutter-dev;
   };
 
   # Additional tools required to build Note Maps in a more controlled

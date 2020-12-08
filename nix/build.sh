@@ -29,7 +29,7 @@ export SRCDIR=$TMP/src
 mkdir -p $SRCDIR
 cp -rf $src/* $SRCDIR/
 chmod +w -R $SRCDIR
-touch $SRCDIR/mk.touch
+export GOMODCACHE=$SRCDIR/tmp/go/mod
 cd $SRCDIR && make -e OUT=$TMP lint test build
 
 mkdir -p $out/bin

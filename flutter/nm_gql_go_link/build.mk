@@ -42,6 +42,7 @@ $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.clean:
 	cd $(FLUTTER_NM_GQL_GO_LINK) ; flutter clean
 	$(call common_clean)
 
+DOWNLOAD_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.pub.get
 FORMAT_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.format
 LINT_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.analyze
 BUILD_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.build

@@ -31,6 +31,7 @@ $(DART_NM_DELTA_NOTUS)/.mk.dart.test: $(DART_NM_DELTA_NOTUS)/.mk.dart.pub.get $(
 $(DART_NM_DELTA_NOTUS)/.mk.dart.clean:
 	$(call common_clean)
 
-FORMAT_TARGETS += $(DART_NM_DELTA_NOTUS)/.mk.dart.format
-LINT_TARGETS   += $(DART_NM_DELTA_NOTUS)/.mk.dart.analyze
-TEST_TARGETS   += $(DART_NM_DELTA_NOTUS)/.mk.dart.test
+DOWNLOAD_TARGETS += $(DART_NM_DELTA_NOTUS)/.mk.dart.pub.get
+FORMAT_TARGETS   += $(DART_NM_DELTA_NOTUS)/.mk.dart.format
+LINT_TARGETS     += $(DART_NM_DELTA_NOTUS)/.mk.dart.analyze
+TEST_TARGETS     += $(DART_NM_DELTA_NOTUS)/.mk.dart.test

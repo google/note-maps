@@ -37,6 +37,7 @@ default: build
 # Initialize variables that will accumulate names of targets defined in other
 # files.
 #
+DOWNLOAD_TARGETS :=
 FORMAT_TARGETS :=
 LINT_TARGETS :=
 BUILD_TARGETS :=
@@ -61,6 +62,7 @@ include dart/nm_delta_notus/build.mk
 include flutter/nm_app/build.mk
 
 .PHONY: clean test real-all
+download: $(DOWNLOAD_TARGETS)
 format: $(FORMAT_TARGETS)
 lint: $(LINT_TARGETS)
 build: $(BUILD_TARGETS)

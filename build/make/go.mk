@@ -34,3 +34,9 @@ define go_test =
 	go test ./$(dir $@)...
 	touch $@
 endef
+
+.mk.download.go: go.mod go.sum
+	go mod download
+	touch $@
+
+DOWNLOAD_TARGETS += .mk.download.go

@@ -30,6 +30,7 @@ mkdir -p $SRCDIR
 cp -rf $src/* $SRCDIR/
 chmod +w -R $SRCDIR
 export GOMODCACHE=$SRCDIR/tmp/go/mod
+export PUBCACHE=$SRCDIR/tmp/pub/cache
 cd $SRCDIR && make -e OUT=$TMP lint test build
 
 mkdir -p $out/bin

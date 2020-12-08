@@ -20,6 +20,7 @@ nix: 2.3.9
 
 env:
 - GOMODCACHE: "${TRAVIS_BUILD_DIR}/tmp/go/mod"
+- PUBCACHE: "${TRAVIS_BUILD_DIR}/tmp/pub/cache"
 
 cache:
   directories:
@@ -31,7 +32,7 @@ before_install:
 - echo 'require-sigs = false' | sudo tee -a /etc/nix/nix.conf > /dev/null
 
 install:
-- nix-shell --run 'go mod download'
+- nix-shell --run 'make download'
 
 before_cache:
 - mkdir -p $HOME/nix.store

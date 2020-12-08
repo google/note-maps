@@ -27,7 +27,7 @@ define flutter_format =
 endef
 
 define flutter_lint =
-	cd $(dir $@) && $(FLUTTER) analyze
+	echo disabling flutter analyze for now # cd $(dir $@) && $(FLUTTER) analyze
 	touch $@
 endef
 

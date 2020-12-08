@@ -22,9 +22,9 @@ DEBUG = 1
 COVERAGE = 1
 CC = clang
 OUTDIR = $(PWD)/out
-FLUTTER_BUILD = bundle appbundle
-FLUTTER_DEVICE = web-server
-GOMOBILE_TAGS = android ios macos
+FLUTTER_BUILD = #bundle appbundle
+FLUTTER_DEVICE = #web-server
+GOMOBILE_TAGS = #android ios macos
 
 # Set the default target, which is the first defined target.
 #

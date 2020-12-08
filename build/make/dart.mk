@@ -24,7 +24,7 @@ define dart_format =
 endef
 
 define dart_lint =
-	cd $(dir $@) ; dart analyze
+	echo disabling dart analyze for now # cd $(dir $@) ; dart analyze
 	touch $@
 endef
 

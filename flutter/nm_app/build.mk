@@ -52,7 +52,8 @@ $(FLUTTER_NM_APP)/.mk.flutter.run: $(FLUTTER_NM_APP)/.mk.flutter.build
 
 DOWNLOAD_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.pub.get
 FORMAT_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.format
-LINT_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.analyze
+# TODO: re-enable linting in nm_app
+#LINT_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.analyze
 BUILD_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.build
 TEST_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.test
 CLEAN_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.clean

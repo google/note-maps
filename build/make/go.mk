@@ -36,7 +36,7 @@ define go_test =
 endef
 
 .mk.go.download: go.mod go.sum
-	[ -n "$(shell go env GOTMPDIR)" ] && mkdir -p "$(shell go env GOTMPDIR)"
+	[ -z "$(shell go env GOTMPDIR)" ] || mkdir -p "$(shell go env GOTMPDIR)"
 	go mod download
 	touch $@
 

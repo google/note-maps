@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.PHONY: VERSION
 VERSION:
 	echo $(shell git describe --tags --abbrev=0 | sed -e 's/^v//' ) > $@
 
-.PHONY: VERSION_INFO
 VERSION_INFO:
 	echo '$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1), $(shell git describe --tags --always --all | sed s:heads/::))' > $@
 
+.mk.version.clean:
+	rm -f VERSION VERSION_INFO
+
 DOWNLOAD_TARGETS += VERSION VERSION_INFO
+CLEAN_TARGETS    += .mk.version.clean

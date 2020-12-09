@@ -31,6 +31,8 @@ endef
 
 define flutter_build =
 	cd $(dir $@) ; flutter build $(subst .,,$(suffix $@))
+	mkdir -p $(OUTDIR)/$(dir $@)
+	mv $(dir $@)/build/app/outputs/* $(OUTDIR)/$(dir $@)
 	touch $@
 endef
 

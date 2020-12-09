@@ -16,15 +16,21 @@
 #
 # Example:
 #
-#   make OUTDIR=$( mktemp -d )
+#   make OUTDIR="$( mktemp -d )" TMPDIR="$( mktemp -d )"
 #
 DEBUG = 1
 COVERAGE = 1
 CC = clang
 OUTDIR = $(PWD)/out
-FLUTTER_BUILD = bundle appbundle
+TMPDIR = $(PWD)/tmp
+FLUTTER_BUILD = appbundle
 FLUTTER_DEVICE = web-server
 GOMOBILE_TAGS = android ios macos
+TMPBINDIR := $(TMPDIR)/bin
+
+# Make it easy to build temporary binaries that can be found on $PATH during
+# later build steps. Required for `gomobile` to be able to find `gobind`.
+export PATH := $(TMPBINDIR):$(PATH)
 
 # Set the default target, which is the first defined target.
 #

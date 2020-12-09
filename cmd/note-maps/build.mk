@@ -17,18 +17,17 @@ CMD_NOTE_MAPS := cmd/note-maps
 CMD_NOTE_MAPS_SRCS := $(call go_srcs CMD_NOTE_MAPS)
 
 $(CMD_NOTE_MAPS)/.mk.go.format: $(CMD_NOTE_MAPS_SRCS)
-	$(call go_fmt $(CMD_NOTE_MAPS))
+	$(call go_fmt)
 
 $(CMD_NOTE_MAPS)/.mk.go.vet: $(CMD_NOTE_MAPS_SRCS)
-	$(call go_vet $(CMD_NOTE_MAPS))
+	$(call go_vet)
 
-# `go build` has its own caching built in.
 $(CMD_NOTE_MAPS)/.mk.go.build: $(CMD_NOTE_MAPS_SRCS)
-	$(call go_build $(CMD_NOTE_MAPS))
+	$(call go_build)
 
 # `go test` has its own caching built in.
 $(CMD_NOTE_MAPS)/.mk.go.test:
-	$(call go_test $(CMD_NOTE_MAPS))
+	$(call go_test)
 
 $(CMD_NOTE_MAPS)/.mk.go.clean:
 	$(call common_clean)

@@ -18,12 +18,6 @@ dist: xenial
 language: nix
 nix: 2.3.9
 
-env:
-  global:
-  - GOCACHE="$TRAVIS_BUILD_DIR/tmp/go/cache"
-  - GOMODCACHE="$TRAVIS_BUILD_DIR/tmp/go/mod"
-  - PUB_CACHE="$TRAVIS_BUILD_DIR/tmp/pub/cache"
-
 cache:
   directories:
   - $HOME/nix.store
@@ -32,13 +26,9 @@ before_install:
 - sudo mkdir -p /etc/nix
 - echo "substituters = https://cache.nixos.org/ file://$HOME/nix.store" | sudo tee -a /etc/nix/nix.conf > /dev/null
 - echo 'require-sigs = false' | sudo tee -a /etc/nix/nix.conf > /dev/null
-- mkdir -p $GOCACHE
-- mkdir -p $GOMODCACHE
-- mkdir -p $PUB_CACHE
-- mkdir -p out/tmp
 
 install:
-- export GOCACHE GOMODCACHE PUB_CACHE ; nix-shell --run 'make -j download'
+- nix-shell --run 'make -j download'
 
 script:
 - nix-shell --run 'make -j lint test'

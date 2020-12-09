@@ -29,12 +29,12 @@ before_install:
 - mkdir -p out/tmp # TODO: find out why this is necessary
 
 install:
-- nix-shell --run 'make download'
+- unset GOROOT ; nix-shell --run 'make download'
 
 script:
-- nix-shell --run 'make lint'
-- nix-shell --run 'make test'
-- nix-shell --run 'make build'
+- unset GOROOT ; nix-shell --run 'make lint'
+- unset GOROOT ; nix-shell --run 'make test'
+- unset GOROOT ; nix-shell --run 'make build'
 
 before_cache:
 - mkdir -p $HOME/nix.store

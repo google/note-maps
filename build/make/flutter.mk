@@ -13,6 +13,11 @@
 # limitations under the License.
 
 FLUTTER = flutter
+ifdef DEBUG
+	FLUTTER_BUILD_FLAGS += --debug
+else
+	FLUTTER_BUILD_FLAGS += --release
+endif
 
 flutter_find_srcs = $(shell find $(1) -name '*.dart')
 
@@ -27,15 +32,14 @@ define flutter_format =
 endef
 
 define flutter_lint =
-	echo disabling flutter analyze for now # cd $(dir $@) && $(FLUTTER) analyze
+	@echo disabling flutter analyze for now # cd $(dir $@) && $(FLUTTER) analyze
 	touch $@
 endef
 
 define flutter_build =
-	cd $(dir $@) ; $(FLUTTER) build $(subst .,,$(suffix $@))
+	cd $(dir $@) ; $(FLUTTER) build $(subst .,,$(suffix $@)) $(FLUTTER_BUILD_FLAGS)
 	mkdir -p $(OUTDIR)/$(dir $@)
 	mv $(dir $@)/build/app/outputs/* $(OUTDIR)/$(dir $@)
-	touch $@
 endef
 
 define flutter_test =

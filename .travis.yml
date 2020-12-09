@@ -32,9 +32,9 @@ install:
 - nix-shell --run 'make download'
 
 script:
-- nix-shell --run 'make -j lint'
-- nix-shell --run 'make -j test'
-- nix-shell --run 'make -j build'
+- nix-shell --run 'make lint'
+- nix-shell --run 'make test'
+- nix-shell --run 'make build'
 
 before_cache:
 - mkdir -p $HOME/nix.store

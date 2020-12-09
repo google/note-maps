@@ -32,7 +32,8 @@ install:
 - nix-shell --run 'make download'
 
 script:
-- nix-shell --run 'make -j lint test'
+- nix-shell --run 'make -j lint'
+- nix-shell --run 'make -j test'
 - nix-shell --run 'make -j build'
 
 before_cache:

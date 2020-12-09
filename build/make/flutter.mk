@@ -12,29 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+FLUTTER = flutter
+
 flutter_find_srcs = $(shell find $(1) -name '*.dart')
 
 define flutter_pub_get =
-	cd $(dir $@) && flutter pub get
+	cd $(dir $@) && $(FLUTTER) pub get
 	touch $@
 endef
 
 define flutter_format =
-	flutter format $?
+	$(FLUTTER) format $?
 	touch $@
 endef
 
 define flutter_lint =
-	cd $(dir $@) && flutter analyze --no-fatal-infos
+	echo disabling flutter analyze for now # cd $(dir $@) && $(FLUTTER) analyze
 	touch $@
 endef
 
 define flutter_build =
-	cd $(dir $@) ; flutter build $(subst .,,$(suffix $@))
+	cd $(dir $@) ; $(FLUTTER) build $(subst .,,$(suffix $@))
+	mkdir -p $(OUTDIR)/$(dir $@)
+	mv $(dir $@)/build/app/outputs/* $(OUTDIR)/$(dir $@)
 	touch $@
 endef
 
 define flutter_test =
-	cd $(dir $@) && flutter test
+	cd $(dir $@) && $(FLUTTER) test
 	touch $@
 endef

@@ -11,3 +11,5 @@
 # Ignore temporary files produced by Makefile
 .mk.*
 /out
+/VERSION
+/VERSION_INFO

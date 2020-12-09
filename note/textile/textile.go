@@ -151,7 +151,7 @@ func Open(ctx context.Context, n app.Net, opts ...Option) (*Database, error) {
 	}
 	path := filepath.Join(o.BaseDirectory, o.Thread)
 	d, err := db.NewDB(context.Background(), n, tid,
-		db.WithNewThreadKey(key), db.WithNewRepoPath(path))
+		db.WithNewKey(key), db.WithNewRepoPath(path))
 	if err != nil {
 		return nil, wrapError("connecting to database", err)
 	}

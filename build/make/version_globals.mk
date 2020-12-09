@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-VERSION := $(shell git describe --tags --abbrev=0 | sed -e 's/^v//' )
+VERSION:
+	echo $(shell git describe --tags --abbrev=0 | sed -e 's/^v//' ) > $@
 
-MAJOR_VERSION := $(shell echo ${VERSION} | cut -d '.' -f 1)
-MINOR_VERSION := $(shell echo ${VERSION} | cut -d '.' -f 2)
-PATCH_VERSION := $(shell echo ${VERSION} | cut -d '.' -f 3)
-ifeq (${PATCH_VERSION},)
-PATCH_VERSION := 0
-endif
+VERSION_INFO:
+	echo '$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1), $(shell git describe --tags --always --all | sed s:heads/::))' > $@
 
-VERSION_INFO := '$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1), branch \"$(shell git describe --tags --always --all | sed s:heads/::)\")'
+.mk.version.clean:
+	rm -f VERSION VERSION_INFO
+
+DOWNLOAD_TARGETS += VERSION VERSION_INFO
+CLEAN_TARGETS    += .mk.version.clean

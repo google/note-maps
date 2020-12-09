@@ -15,7 +15,10 @@
 FLUTTER_NM_GQL_GO_LINK := flutter/nm_gql_go_link
 FLUTTER_NM_GQL_GO_LINK_SRCS := $(call flutter_find_srcs,$(FLUTTER_NM_GQL_GO_LINK))
 
-gomobile = $(shell go generate -tags $(2) ./$(1))
+define gomobile =
+	go generate -tags $(shell echo $@ | cut -d. -f5 ) ./$@
+	touch $@
+endef
 
 $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.pub.get: $(FLUTTER_NM_GQL_GO_LINK)/pubspec.yaml
 	$(call flutter_pub_get $(FLUTTER_NM_GQL_GO_LINK))
@@ -42,6 +45,7 @@ $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.clean:
 	cd $(FLUTTER_NM_GQL_GO_LINK) ; flutter clean
 	$(call common_clean)
 
+DOWNLOAD_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.pub.get
 FORMAT_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.format
 LINT_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.analyze
 BUILD_TARGETS += $(FLUTTER_NM_GQL_GO_LINK)/.mk.flutter.build

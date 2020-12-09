@@ -32,7 +32,7 @@ GOMOBILE_TAGS = #android ios macos
 # other files.
 #
 .PHONY: default
-default: build
+default: download lint test build
 
 # Initialize variables that will accumulate names of targets defined in other
 # files.

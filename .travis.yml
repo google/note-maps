@@ -16,6 +16,8 @@ os:
 - linux
 - osx
 dist: xenial
+osx_image: xcode12.2
+
 language: nix
 nix: 2.3.9
 
@@ -29,6 +31,7 @@ before_install:
 - echo "substituters = https://cache.nixos.org/ file://$HOME/nix.store" | sudo tee -a /etc/nix/nix.conf > /dev/null
 - echo 'require-sigs = false' | sudo tee -a /etc/nix/nix.conf > /dev/null
 - mkdir -p out/tmp # TODO: find out why this is necessary
+- if [ "$TRAVIS_OS_NAME" = "osx" ]; then git clone https://github.com/flutter/flutter.git -b dev --depth 1 ; fi
 
 install:
 - unset GOROOT ; nix-shell --run 'make download'

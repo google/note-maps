@@ -12,35 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-os:
-- linux
-- osx
-dist: xenial
-osx_image: xcode12.2
-
-language: nix
-nix: 2.3.9
-
-cache:
-  directories:
-  - $HOME/nix.store
-  - $HOME/.cache
-
-before_install:
-- sudo mkdir -p /etc/nix
-- echo "substituters = https://cache.nixos.org/ file://$HOME/nix.store" | sudo tee -a /etc/nix/nix.conf > /dev/null
-- echo 'require-sigs = false' | sudo tee -a /etc/nix/nix.conf > /dev/null
-- mkdir -p out/tmp # TODO: find out why this is necessary
-- if [ "$TRAVIS_OS_NAME" = "osx" ]; then git clone https://github.com/flutter/flutter.git -b dev --depth 1 ; fi
-
-install:
-- unset GOROOT ; nix-shell --run 'make download'
-
-script:
-- unset GOROOT ; nix-shell --run 'make lint'
-- unset GOROOT ; nix-shell --run 'make test'
-- unset GOROOT ; nix-shell --run 'make build'
-
-before_cache:
-- mkdir -p $HOME/nix.store
-- nix copy --to file://$HOME/nix.store -f default.nix buildInputs nativeBuildInputs
+# Until travis-ci.org supports Nix on MacOS, we have to use separte jobs:
+jobs:
+  include:
+  - os: linux
+    dist: xenial
+    language: nix
+    nix: 2.3.9
+    cache:
+      directories:
+      - $HOME/nix.store
+      - $HOME/.cache
+    before_install:
+    - sudo mkdir -p /etc/nix
+    - echo "substituters = https://cache.nixos.org/ file://$HOME/nix.store" | sudo tee -a /etc/nix/nix.conf > /dev/null
+    - echo 'require-sigs = false' | sudo tee -a /etc/nix/nix.conf > /dev/null
+    - mkdir -p out/tmp
+    install:
+    - unset GOROOT ; nix-shell --run 'make download'
+    script:
+    - unset GOROOT ; nix-shell --run 'make lint test build'
+    before_cache:
+    - mkdir -p $HOME/nix.store
+    - nix copy --to file://$HOME/nix.store -f default.nix buildInputs nativeBuildInputs
+  - os: osx
+    osx_image: xcode12.2
+    language: generic
+    env: FLUTTER=$PWD/flutter/bin/flutter DART=$PWD/flutter/bin/dart
+    before_install:
+    - git clone https://github.com/flutter/flutter.git -b 1.24.0-6.0.pre --depth 1
+    install:
+    - make download
+    script:
+    - make lint test build OUT=./result

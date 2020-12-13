@@ -36,6 +36,11 @@ TMPBINDIR := $(TMPDIR)/bin
 .PHONY: default
 default: download lint test build
 
+$(OUTDIR):
+	mkdir -p $@
+$(TMPDIR):
+	mkdir -p $@
+
 # Make it easy to build temporary binaries that can be found on $PATH during
 # later build steps. Required for `gomobile` to be able to find `gobind`.
 export PATH := $(TMPBINDIR):$(PATH)
@@ -68,7 +73,7 @@ include dart/nm_delta_notus/build.mk
 include flutter/nm_app/build.mk
 
 .PHONY: clean test real-all
-download: $(DOWNLOAD_TARGETS)
+download: $(OUTDIR) $(TMPDIR) $(DOWNLOAD_TARGETS)
 format: $(FORMAT_TARGETS)
 lint: $(LINT_TARGETS)
 build: $(BUILD_TARGETS)

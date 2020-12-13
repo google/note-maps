@@ -19,6 +19,7 @@ jobs:
     dist: xenial
     language: nix
     nix: 2.3.9
+    env: FLUTTER_BUILD=appbundle
     cache:
       directories:
       - $HOME/nix.store
@@ -38,7 +39,7 @@ jobs:
   - os: osx
     osx_image: xcode12.2
     language: generic
-    env: FLUTTER=$HOME/flutter/bin/flutter DART=$HOME/flutter/bin/dart
+    env: FLUTTER_BUILD=ios FLUTTER=$HOME/flutter/bin/flutter DART=$HOME/flutter/bin/dart
     before_install:
     - git clone -b 1.24.0-6.0.pre --depth 1 https://github.com/flutter/flutter.git $HOME/flutter
     install:

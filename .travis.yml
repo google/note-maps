@@ -38,9 +38,9 @@ jobs:
   - os: osx
     osx_image: xcode12.2
     language: generic
-    env: FLUTTER=$PWD/flutter/bin/flutter DART=$PWD/flutter/bin/dart
+    env: FLUTTER=$HOME/flutter/bin/flutter DART=$HOME/flutter/bin/dart
     before_install:
-    - git clone https://github.com/flutter/flutter.git -b 1.24.0-6.0.pre --depth 1
+    - git clone -b 1.24.0-6.0.pre --depth 1 https://github.com/flutter/flutter.git $HOME/flutter
     install:
     - make download
     script:

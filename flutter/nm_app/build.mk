@@ -36,7 +36,7 @@ $(FLUTTER_NM_APP)/.mk.flutter.build.macos: $(FLUTTER_NM_APP)/.mk.flutter.pub.get
 $(FLUTTER_NM_APP)/.mk.flutter.build.bundle: $(FLUTTER_NM_APP)/.mk.flutter.pub.get $(FLUTTER_NM_APP_SRCS)
 	$(call flutter_build $(FLUTTER_NM_APP) bundle)
 
-$(FLUTTER_NM_APP)/.mk.flutter.build: $(FLUTTER_NM_APP)/.mk.flutter.analyze $(FLUTTER_NM_APP)/.mk.flutter.analyze $(FLUTTER_NM_APP)/.mk.flutter.analyze $(patsubst %,$(FLUTTER_NM_APP)/.mk.flutter.build.%, $(FLUTTER_BUILD))
+$(FLUTTER_NM_APP)/.mk.flutter.build: $(FLUTTER_NM_APP)/.mk.flutter.analyze $(patsubst %,$(FLUTTER_NM_APP)/.mk.flutter.build.%,$(FLUTTER_BUILD))
 
 $(FLUTTER_NM_APP)/.mk.flutter.test: $(FLUTTER_NM_APP)/.mk.flutter.pub.get $(FLUTTER_NM_APP_SRCS)
 	$(call flutter_test $(1))

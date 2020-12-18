@@ -36,6 +36,9 @@ TMPBINDIR := $(TMPDIR)/bin
 .PHONY: default
 default: download lint test build
 
+# Clear out the default rules:
+.SUFFIXES:
+
 $(OUTDIR):
 	mkdir -p $@
 $(TMPDIR):

@@ -46,3 +46,7 @@ jobs:
     - make -e download
     script:
     - make -e lint test build OUT=./result
+
+# Try to save build outputs somewhere:
+addons:
+  artifacts: true

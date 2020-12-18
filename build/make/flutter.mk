@@ -19,6 +19,12 @@ else
 	FLUTTER_BUILD_FLAGS += --release
 endif
 
+.mk.flutter.config: $(patsubst %,.mk.flutter.config.%,$(FLUTTER_BUILD))
+.mk.flutter.config.linux: ; $(FLUTTER) config --enable-linux-desktop && touch $@
+.mk.flutter.config.macos: ; $(FLUTTER) config --enable-macos-desktop && touch $@
+.mk.flutter.config.windows: ; $(FLUTTER) config --enable-windows-desktop && touch $@
+.mk.flutter.config.%: ; @touch $@
+
 flutter_find_srcs = $(shell find $(1) -name '*.dart')
 
 define flutter_pub_get =

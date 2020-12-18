@@ -13,10 +13,21 @@
 # limitations under the License.
 
 FLUTTER = flutter
+FLUTTER_VERSION = 1.24.0-6.0.pre
+FLUTTER_INSTALLED = $(shell which "$(FLUTTER)")
+
+ifeq ($(FLUTTER_INSTALLED),)
+.mk.flutter.download:
+	[ -x "$(TMPDIR)/flutter" ] || git clone -b $(FLUTTER_VERSION) --depth 1 https://github.com/flutter/flutter.git $(TMPDIR)/flutter
+DOWNLOAD_TARGETS += .mk.flutter.download
+FLUTTER = $(TMPDIR)/flutter/bin/flutter
+DART = $(TMPDIR)/flutter/bin/dart
+endif
+
 ifdef DEBUG
-	FLUTTER_BUILD_FLAGS += --debug
+FLUTTER_BUILD_FLAGS += --debug
 else
-	FLUTTER_BUILD_FLAGS += --release
+FLUTTER_BUILD_FLAGS += --release
 endif
 
 .mk.flutter.config: $(patsubst %,.mk.flutter.config.%,$(FLUTTER_BUILD))

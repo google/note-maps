@@ -57,7 +57,6 @@ LINT_TARGETS :=
 BUILD_TARGETS :=
 TEST_TARGETS :=
 CLEAN_TARGETS :=
-RUN_TARGETS :=
 
 include build/make/version_globals.mk
 include build/make/cc_globals.mk
@@ -82,4 +81,3 @@ lint: $(LINT_TARGETS)
 build: $(BUILD_TARGETS)
 clean: $(CLEAN_TARGETS)
 test: $(TEST_TARGETS)
-run: $(RUN_TARGETS)

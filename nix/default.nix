@@ -17,14 +17,14 @@
 let
   unstable = import sources.unstable {
     overlays = [ (
-      _: pkgs: rec
-        { flutterPackages = ( pkgs.callPackage ../third_party/github.com/NixOS/nixpkgs/development/compilers/flutter
-            { inherit (pkgs) callPackage
-            ; inherit (pkgs) dart
-            ; inherit (pkgs) stdenv
-            ; inherit (pkgs) lib
-            ; } )
-        ; flutter-dev = flutterPackages.dev; } ) ];
+      _: pkgs: rec {
+          flutterPackages =
+            pkgs.callPackage
+            ../third_party/github.com/NixOS/nixpkgs/development/compilers/flutter {
+              inherit (pkgs) callPackage dart lib stdenv ;
+            };
+          flutter-dev = flutterPackages.dev;
+        } ) ];
   };
   pkgs = import sources.nixpkgs {
     config.android_sdk.accept_license = true;

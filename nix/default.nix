@@ -15,12 +15,24 @@
 { sources ? import ./sources.nix
 }:
 let
+  unstable = import sources.unstable {
+    overlays = [ (
+      _: pkgs: rec
+        { flutterPackages = ( pkgs.callPackage ../third_party/github.com/NixOS/nixpkgs/development/compilers/flutter
+            { inherit (pkgs) callPackage
+            ; inherit (pkgs) dart
+            ; inherit (pkgs) stdenv
+            ; inherit (pkgs) lib
+            ; } )
+        ; flutter-dev = flutterPackages.dev; } ) ];
+  };
   pkgs = import sources.nixpkgs {
     overlays = [
-      (import ./overlays/dart/overlay.nix)
+      (_: pkgs:
+	{ inherit (unstable) flutter-dev;
+	})
     ];
   };
-  unstable = import sources.unstable { };
   gitignoreSource = (import sources."gitignore.nix" { inherit (pkgs) lib; }).gitignoreSource;
   src = gitignoreSource ./..;
   lib = pkgs.lib;
@@ -36,16 +48,10 @@ in rec
   # Minimum tools required to build Note Maps.
   buildTools = {
     inherit (pkgs) clang;
-    inherit (pkgs) dart;
+    inherit (pkgs) flutter-dev;
+    inherit (pkgs) git; # required by flutter!
     inherit (pkgs) gnumake;
     inherit (pkgs) go;
-  };
-
-  # Temporary work-around until there is a flutter package for Darwin. Builds
-  # on MacOS will have to provide their own flutter from outside the Nix
-  # environment.
-  linuxBuildTools = {
-    inherit (unstable) flutter-dev;
   };
 
   # Additional tools required to build Note Maps in a more controlled
@@ -65,6 +71,6 @@ in rec
   };
 
   nativeBuildInputs = builtins.attrValues runtimeDeps;
-  buildInputs = builtins.attrValues ciTools ++ lib.optionals (stdenv.buildPlatform.isLinux) (builtins.attrValues linuxBuildTools);
-  shellInputs = builtins.attrValues devTools ++ lib.optional (stdenv.buildPlatform.isLinux) (builtins.attrValues linuxBuildTools);
+  buildInputs = builtins.attrValues ciTools;
+  shellInputs = builtins.attrValues devTools;
 }

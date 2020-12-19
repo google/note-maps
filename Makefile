@@ -67,7 +67,8 @@ include build/make/go.mk
 include build/make/dart.mk
 include build/make/flutter.mk
 
-include cmd/note-maps/build.mk
+# TODO: resolve build problems with keychain module on OSX
+#include cmd/note-maps/build.mk
 include dart/nm_delta/build.mk
 include dart/nm_delta_notus/build.mk
 # TODO: resolve build problems with nm_gql_go_link

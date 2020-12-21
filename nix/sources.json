@@ -41,10 +41,22 @@
         "homepage": "",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "00941cd747e9bc1c3326d1362dbc7e9cfe18cf53",
-        "sha256": "12mjfar2ir561jxa1xvw6b1whbqs1rq59byc87icql399zal5z4a",
+        "rev": "9cb4d2f4903c1403c098393bf49207ad43f58d58",
+        "sha256": "1byj1vcaldj7ij9rry4cfdcnf2piascn6hpb8s3fwgz1xxnqq2dr",
         "type": "tarball",
-        "url": "https://github.com/NixOS/nixpkgs/archive/00941cd747e9bc1c3326d1362dbc7e9cfe18cf53.tar.gz",
+        "url": "https://github.com/NixOS/nixpkgs/archive/9cb4d2f4903c1403c098393bf49207ad43f58d58.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "unstable-fix-autopatchelfhook": {
+        "branch": "fix-autopatchelfhook",
+        "description": "Nix Packages collection",
+        "homepage": null,
+        "owner": "DavHau",
+        "repo": "nixpkgs",
+        "rev": "e815bf181117612752edfffd101778ef984cbb5e",
+        "sha256": "0vwc4nfkf950q89f9rsimpm3xbzgbqzy6yldxklg6n93k3d1vxvp",
+        "type": "tarball",
+        "url": "https://github.com/DavHau/nixpkgs/archive/e815bf181117612752edfffd101778ef984cbb5e.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     }
 }

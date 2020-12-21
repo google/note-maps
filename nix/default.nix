@@ -13,6 +13,7 @@
 # limitations under the License.
 
 { sources ? import ./sources.nix
+, includeFlutter ? false
 , targetAndroid ? false
 , targetIos ? false
 , targetDesktop ? false
@@ -58,7 +59,7 @@ let
     }).androidsdk;
   };
 
-  pkgsx = import sources.nixpkgs {
+  pkgs = import sources.nixpkgs {
     inherit config;
     overlays = [
       unstable_patched_overlay
@@ -69,27 +70,29 @@ let
   };
 
   gitignoreSource =
-    (import sources."gitignore.nix" { inherit (pkgsx) lib; }).gitignoreSource;
+    (import sources."gitignore.nix" { inherit (pkgs) lib; }).gitignoreSource;
   src = gitignoreSource ./..;
-in rec
-{
-  inherit pkgsx src;
-  pkgs = pkgsx;
+
   lib = pkgs.lib;
   stdenv = pkgs.stdenv;
 
-  flutterTools = { inherit (pkgs) flutter-dev git; };
+  flutterTools =
+    lib.optionalAttrs (includeFlutter) { inherit (pkgs) flutter-dev git; };
 
   flutterAndroidTools = { inherit (pkgs) androidsdk jdk; };
 
   flutterIosTools = { }
-    // lib.optionalAttrs(stdenv.isDarwin) { inherit (pkgs) cocoapods; };
+    lib.optionalAttrs(stdenv.isDarwin) { inherit (pkgs) cocoapods; };
 
   # Flutter only builds desktop apps for the host platform, so all tools
   # required specifically for this target are platform-specific.
   flutterDesktopTools = { }
     // lib.optionalAttrs(stdenv.isLinux) { inherit (pkgs) clang cmake ninja; }
     // lib.optionalAttrs(stdenv.isDarwin) { inherit (pkgs) cocoapods; };
+
+in rec
+{
+  inherit pkgs src;
 
   # Minimum tools required to build Note Maps.
   buildTools = {

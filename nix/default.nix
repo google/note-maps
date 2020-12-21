@@ -13,6 +13,11 @@
 # limitations under the License.
 
 { sources ? import ./sources.nix
+, targetAndroid ? false
+, targetIos ? false
+, targetDesktop ? false
+, targetWeb ? false
+, fixAutoPatchelfHook ? false
 }:
 let
   config = { android_sdk.accept_license = true; };
@@ -23,11 +28,15 @@ let
     import sources.unstable-fix-autopatchelfhook {
       inherit config;
     };
-  unstable_patched_overlay = _: pkgs: { inherit (unstable_patched) androidenv; };
+  unstable_patched_overlay = _: pkgs:
+    pkgs.lib.optionalAttrs (fixAutoPatchelfHook) {
+      inherit (unstable_patched) androidenv;
+    };
+
   unstable = import sources.unstable {
     inherit config;
   };
-  unstable_overlay = _: pkgs: { inherit (unstable) jdk; };
+  unstable_overlay = _: pkgs: { inherit (unstable) cocoapods jdk; };
 
   flutter_overlay = _: pkgs: rec {
     flutterPackages =
@@ -38,44 +47,57 @@ let
     flutter-dev = flutterPackages.dev;
   };
 
-  pkgs = import sources.nixpkgs {
+  android_overlay = _: pkgs: pkgs.lib.optionalAttrs (targetAndroid) {
+    androidsdk = (pkgs.androidenv.composeAndroidPackages {
+      buildToolsVersions = [ "28.0.3" ];
+      platformVersions = [ "29" ];
+      platformToolsVersion = "29.0.6";
+      includeNDK = true;
+      ndkVersion = "21.0.6113669";
+      abiVersions = [ "x86-64" ];
+    }).androidsdk;
+  };
+
+  pkgsx = import sources.nixpkgs {
     inherit config;
     overlays = [
       unstable_patched_overlay
       unstable_overlay
+      android_overlay
       flutter_overlay
     ];
   };
 
-  gitignoreSource = (import sources."gitignore.nix" { inherit (pkgs) lib; }).gitignoreSource;
+  gitignoreSource =
+    (import sources."gitignore.nix" { inherit (pkgsx) lib; }).gitignoreSource;
   src = gitignoreSource ./..;
-  lib = pkgs.lib;
-  stdenv = pkgs.stdenv;
-  androidsdk = (pkgs.androidenv.composeAndroidPackages {
-    buildToolsVersions = [ "28.0.3" ];
-    platformVersions = [ "29" ];
-    platformToolsVersion = "29.0.6";
-    includeNDK = true;
-    ndkVersion = "21.0.6113669";
-    abiVersions = [ "x86-64" ];
-  }).androidsdk;
 in rec
 {
-  inherit pkgs src;
+  inherit pkgsx src;
+  pkgs = pkgsx;
+  lib = pkgs.lib;
+  stdenv = pkgs.stdenv;
 
-  # Runtime dependencies.
-  runtimeDeps = {
-  };
+  flutterTools = { inherit (pkgs) flutter-dev git; };
+
+  flutterAndroidTools = { inherit (pkgs) androidsdk jdk; };
+
+  flutterIosTools = { }
+    // lib.optionalAttrs(stdenv.isDarwin) { inherit (pkgs) cocoapods; };
+
+  # Flutter only builds desktop apps for the host platform, so all tools
+  # required specifically for this target are platform-specific.
+  flutterDesktopTools = { }
+    // lib.optionalAttrs(stdenv.isLinux) { inherit (pkgs) clang cmake ninja; }
+    // lib.optionalAttrs(stdenv.isDarwin) { inherit (pkgs) cocoapods; };
 
   # Minimum tools required to build Note Maps.
   buildTools = {
-    inherit (pkgs) flutter-dev git go gnumake jdk;
-    inherit androidsdk;
-  } // lib.optionalAttrs(stdenv.isLinux) {
-    inherit (pkgs) clang cmake ninja;
-  } // lib.optionalAttrs(stdenv.isDarwin) {
-    inherit (pkgs) clang;
-  };
+    inherit (pkgs) go gnumake;
+  } // flutterTools
+    // lib.optionalAttrs(targetAndroid) flutterAndroidTools
+    // lib.optionalAttrs(targetIos) flutterIosTools
+    // lib.optionalAttrs(targetDesktop) flutterDesktopTools;
 
   # Additional tools required to build Note Maps in a more controlled
   # environment.
@@ -85,15 +107,14 @@ in rec
   };
 
   # Additional tools useful for code work and repository maintenance.
-  devTools = runtimeDeps // buildTools // {
+  devTools = buildTools // {
     inherit (pkgs) niv;
   };
 
-  nativeBuildInputs = builtins.attrValues runtimeDeps;
   buildInputs = builtins.attrValues ciTools;
   shellInputs = builtins.attrValues devTools;
-  shellHook = ''
-    export ANDROID_HOME="${androidsdk}/libexec/android-sdk"
+  shellHook = lib.optionalString (targetAndroid) ''
+    export ANDROID_HOME="${pkgs.androidsdk}/libexec/android-sdk"
     export JAVA_HOME="${pkgs.jdk}"
   '';
 }

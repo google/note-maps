@@ -24,16 +24,11 @@ FLUTTER = $(TMPDIR)/flutter/bin/flutter
 DART = $(TMPDIR)/flutter/bin/dart
 endif
 
-ifdef DEBUG
-FLUTTER_BUILD_FLAGS += --debug
-else
-FLUTTER_BUILD_FLAGS += --release
-endif
-
 .mk.flutter.config: $(patsubst %,.mk.flutter.config.%,$(FLUTTER_BUILD))
 .mk.flutter.config.linux: ; $(FLUTTER) config --enable-linux-desktop && touch $@
 .mk.flutter.config.macos: ; $(FLUTTER) config --enable-macos-desktop && touch $@
 .mk.flutter.config.windows: ; $(FLUTTER) config --enable-windows-desktop && touch $@
+.mk.flutter.config.web: ; $(FLUTTER) config --enable-web && touch $@
 .mk.flutter.config.%: ; @touch $@
 
 flutter_find_srcs = $(shell find $(1) -name '*.dart')
@@ -53,10 +48,18 @@ define flutter_lint =
 	touch $@
 endef
 
+
+ifdef DEBUG
+.mk.flutter.build = $(1) \
+	$(if $(findstring $(1),android ios),--debug) \
+	$(if $(findstring $(1),web),--profile)
+else
+.mk.flutter.build = $(1)
+endif
 define flutter_build =
-	cd $(dir $@) ; $(FLUTTER) build $(subst .,,$(suffix $@)) $(FLUTTER_BUILD_FLAGS)
+	cd $(dir $@) ; $(FLUTTER) build $(call .mk.flutter.build,$(subst .,,$(suffix $@)))
 	mkdir -p $(OUTDIR)/$(dir $@)
-	mv $(dir $@)/build/app/outputs/* $(OUTDIR)/$(dir $@)
+	mv $(dir $@)/build/* $(OUTDIR)/$(dir $@)
 endef
 
 define flutter_test =

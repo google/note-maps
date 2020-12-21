@@ -32,7 +32,7 @@ $(FLUTTER_NM_APP)/.mk.flutter.test: $(FLUTTER_NM_APP)/.mk.flutter.pub.get $(FLUT
 
 .PHONY: $(FLUTTER_NM_APP)/.mk.flutter.clean
 $(FLUTTER_NM_APP)/.mk.flutter.clean:
-	cd $(FLUTTER_NM_APP) ; flutter clean
+	cd $(FLUTTER_NM_APP) ; $(FLUTTER) clean
 	rm $(FLUTTER_NM_APP)/.mk.*
 
 DOWNLOAD_TARGETS += $(FLUTTER_NM_APP)/.mk.flutter.pub.get

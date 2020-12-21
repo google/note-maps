@@ -15,6 +15,7 @@
 { sources ? import ./sources.nix
 }:
 let
+  config = { android_sdk.accept_license = true; };
 
   # Some packages from unstable need the fix in
   # https://github.com/NixOS/nixpkgs/pull/106830

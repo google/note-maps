@@ -13,7 +13,7 @@
 # limitations under the License.
 
 FLUTTER = flutter
-FLUTTER_VERSION = 1.24.0-6.0.pre
+FLUTTER_VERSION = 1.26.0-1.0.pre
 FLUTTER_INSTALLED = $(shell which "$(FLUTTER)")
 
 ifeq ($(FLUTTER_INSTALLED),)

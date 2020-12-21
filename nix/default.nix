@@ -15,7 +15,12 @@
 { sources ? import ./sources.nix
 }:
 let
+  config = {
+    #allowUnfree = true; # for android-studio
+    android_sdk.accept_license = true;
+  };
   unstable = import sources.unstable {
+    inherit config;
     overlays = [ (
       _: pkgs: rec {
           flutterPackages =
@@ -27,7 +32,7 @@ let
         } ) ];
   };
   pkgs = import sources.nixpkgs {
-    config.android_sdk.accept_license = true;
+    inherit config;
     overlays = [
       (_: pkgs:
 	{ inherit (unstable) flutter-dev;

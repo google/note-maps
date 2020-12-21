@@ -16,4 +16,5 @@
 }:
 project.pkgs.mkShell {
   buildInputs = project.shellInputs;
+  inherit (project) shellHook;
 }

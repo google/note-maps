@@ -91,4 +91,8 @@ in rec
   nativeBuildInputs = builtins.attrValues runtimeDeps;
   buildInputs = builtins.attrValues ciTools;
   shellInputs = builtins.attrValues devTools;
+  shellHook = ''
+    export ANDROID_HOME="${androidsdk}/libexec/android-sdk"
+    export JAVA_HOME="${pkgs.jdk}"
+  '';
 }

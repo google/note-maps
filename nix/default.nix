@@ -15,30 +15,37 @@
 { sources ? import ./sources.nix
 }:
 let
-  config = {
-    #allowUnfree = true; # for android-studio
-    android_sdk.accept_license = true;
-  };
+
+  # Some packages from unstable need the fix in
+  # https://github.com/NixOS/nixpkgs/pull/106830
+  unstable_patched =
+    import sources.unstable-fix-autopatchelfhook {
+      inherit config;
+    };
+  unstable_patched_overlay = _: pkgs: { inherit (unstable_patched) androidenv; };
   unstable = import sources.unstable {
     inherit config;
-    overlays = [ (
-      _: pkgs: rec {
-          flutterPackages =
-            pkgs.callPackage
-            ../third_party/github.com/NixOS/nixpkgs/development/compilers/flutter {
-              inherit (pkgs) callPackage dart lib stdenv ;
-            };
-          flutter-dev = flutterPackages.dev;
-        } ) ];
   };
+  unstable_overlay = _: pkgs: { inherit (unstable) jdk; };
+
+  flutter_overlay = _: pkgs: rec {
+    flutterPackages =
+      unstable.callPackage
+      ../third_party/github.com/NixOS/nixpkgs/development/compilers/flutter {
+        inherit (unstable) callPackage dart lib stdenv ;
+      };
+    flutter-dev = flutterPackages.dev;
+  };
+
   pkgs = import sources.nixpkgs {
     inherit config;
     overlays = [
-      (_: pkgs:
-	{ inherit (unstable) flutter-dev;
-	})
+      unstable_patched_overlay
+      unstable_overlay
+      flutter_overlay
     ];
   };
+
   gitignoreSource = (import sources."gitignore.nix" { inherit (pkgs) lib; }).gitignoreSource;
   src = gitignoreSource ./..;
   lib = pkgs.lib;
@@ -61,23 +68,19 @@ in rec
 
   # Minimum tools required to build Note Maps.
   buildTools = {
+    inherit (pkgs) flutter-dev git go gnumake jdk;
+    inherit androidsdk;
+  } // lib.optionalAttrs(stdenv.isLinux) {
+    inherit (pkgs) clang cmake ninja;
+  } // lib.optionalAttrs(stdenv.isDarwin) {
     inherit (pkgs) clang;
-    inherit (pkgs) flutter-dev;
-    inherit (pkgs) git; # required by flutter!
-    inherit (pkgs) gnumake;
-    inherit (pkgs) go;
-    inherit (androidComposition) androidsdk;
   };
 
   # Additional tools required to build Note Maps in a more controlled
   # environment.
   ciTools = buildTools // {
-    inherit (pkgs) coreutils;
-    inherit (pkgs) findutils;
-    inherit (pkgs) moreutils;
-    inherit (pkgs) git;
-    inherit (pkgs) gnugrep;
-    inherit (pkgs) gnused;
+    inherit (pkgs) coreutils findutils moreutils;
+    inherit (pkgs) git gnugrep gnused;
   };
 
   # Additional tools useful for code work and repository maintenance.

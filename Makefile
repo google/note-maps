@@ -12,21 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Default configuration, can be customized on the command line.
+# Default configuration, can be customized on the command line or in config.mk.
 #
-# Example:
+# Example using the command line:
 #
 #   make OUTDIR="$( mktemp -d )" TMPDIR="$( mktemp -d )"
 #
+# Example using config.mk:
+#
+#   echo 'FLUTTER_BUILD := web android' >> config.mk
+#   echo 'FLUTTER_ROOT := ~/flutter' >> config.mk
+#   make
+#
 DEBUG = 1
 COVERAGE = 1
-CC = clang
 OUTDIR = $(PWD)/out
 TMPDIR = $(PWD)/tmp
-FLUTTER_BUILD = #appbundle
+FLUTTER_BUILD = web # appbundle ios linux macos windows ...?
 FLUTTER_DEVICE = #web-server
+FLUTTER_ROOT = $(TMPDIR)/flutter
 GOMOBILE_TAGS = #android ios macos
 TMPBINDIR := $(TMPDIR)/bin
+
+ifneq ($(realpath config.mk),)
+include config.mk
+endif
 
 # Set the default target, which is the first defined target.
 #
@@ -35,6 +45,14 @@ TMPBINDIR := $(TMPDIR)/bin
 #
 .PHONY: default
 default: download lint test build
+
+# Clear out the default rules:
+.SUFFIXES:
+
+$(OUTDIR):
+	mkdir -p $@
+$(TMPDIR):
+	mkdir -p $@
 
 # Make it easy to build temporary binaries that can be found on $PATH during
 # later build steps. Required for `gomobile` to be able to find `gobind`.
@@ -49,7 +67,6 @@ LINT_TARGETS :=
 BUILD_TARGETS :=
 TEST_TARGETS :=
 CLEAN_TARGETS :=
-RUN_TARGETS :=
 
 include build/make/version_globals.mk
 include build/make/cc_globals.mk
@@ -60,7 +77,8 @@ include build/make/go.mk
 include build/make/dart.mk
 include build/make/flutter.mk
 
-include cmd/note-maps/build.mk
+# TODO: resolve build problems with keychain module on OSX
+#include cmd/note-maps/build.mk
 include dart/nm_delta/build.mk
 include dart/nm_delta_notus/build.mk
 # TODO: resolve build problems with nm_gql_go_link
@@ -68,10 +86,10 @@ include dart/nm_delta_notus/build.mk
 include flutter/nm_app/build.mk
 
 .PHONY: clean test real-all
-download: $(DOWNLOAD_TARGETS)
+download: $(OUTDIR) $(TMPDIR) $(DOWNLOAD_TARGETS)
 format: $(FORMAT_TARGETS)
 lint: $(LINT_TARGETS)
 build: $(BUILD_TARGETS)
 clean: $(CLEAN_TARGETS)
+	rm -rf $(OUTDIR)
 test: $(TEST_TARGETS)
-run: $(RUN_TARGETS)

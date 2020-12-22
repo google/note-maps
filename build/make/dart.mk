@@ -12,23 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+DART = dart
+
 dart_find_srcs = $(shell find $(1) -name '*.dart') $(1)/pubspec.yaml
+
 define dart_pub_get =
-	cd $(dir $@) ; dart pub get
+	cd $(dir $@) ; $(DART) pub get
 	touch $@
 endef
 
 define dart_format =
-	cd $(dir $@) ; dart format $?
+	cd $(dir $@) ; $(DART) format $?
 	touch $@
 endef
 
 define dart_lint =
-	echo disabling dart analyze for now # cd $(dir $@) ; dart analyze
+	@echo disabling $(DART) analyze for now # cd $(dir $@) ; $(DART) analyze
 	touch $@
 endef
 
 define dart_test =
-	cd $(dir $@) ; dart test
+	cd $(dir $@) ; $(DART) test
 	touch $@
 endef

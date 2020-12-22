@@ -13,58 +13,82 @@
 # limitations under the License.
 
 { sources ? import ./sources.nix
+, includeFlutter ? false
+, targetAndroid ? false
+, targetIos ? false
+, targetDesktop ? false
+, targetWeb ? false
 }:
 let
+  config = { android_sdk.accept_license = true; };
+
+  android_overlay = _: pkgs: pkgs.lib.optionalAttrs (targetAndroid) {
+    androidsdk = (pkgs.androidenv.composeAndroidPackages {
+      buildToolsVersions = [ "28.0.3" ];
+      platformVersions = [ "29" ];
+      platformToolsVersion = "29.0.6";
+      includeNDK = true;
+      ndkVersion = "21.0.6113669";
+      abiVersions = [ "x86-64" ];
+    }).androidsdk;
+  };
+
   pkgs = import sources.nixpkgs {
+    inherit config;
     overlays = [
-      (import ./overlays/dart/overlay.nix)
+      android_overlay
     ];
   };
-  unstable = import sources.unstable { };
-  gitignoreSource = (import sources."gitignore.nix" { inherit (pkgs) lib; }).gitignoreSource;
+
+  gitignoreSource =
+    (import sources."gitignore.nix" { inherit (pkgs) lib; }).gitignoreSource;
   src = gitignoreSource ./..;
+
   lib = pkgs.lib;
   stdenv = pkgs.stdenv;
+
+  flutterTools =
+    lib.optionalAttrs (includeFlutter) { inherit (pkgs) flutter-dev git; };
+
+  flutterAndroidTools = { inherit (pkgs) androidsdk jdk; };
+
+  flutterIosTools = { }
+    lib.optionalAttrs(stdenv.isDarwin) { inherit (pkgs) cocoapods; };
+
+  # Flutter only builds desktop apps for the host platform, so all tools
+  # required specifically for this target are platform-specific.
+  flutterDesktopTools = { }
+    // lib.optionalAttrs(stdenv.isLinux) { inherit (pkgs) clang cmake ninja; }
+    // lib.optionalAttrs(stdenv.isDarwin) { inherit (pkgs) cocoapods; };
+
 in rec
 {
   inherit pkgs src;
 
-  # Runtime dependencies.
-  runtimeDeps = {
-  };
-
   # Minimum tools required to build Note Maps.
   buildTools = {
-    inherit (pkgs) clang;
-    inherit (pkgs) dart;
-    inherit (pkgs) gnumake;
-    inherit (pkgs) go;
-  };
-
-  # Temporary work-around until there is a flutter package for Darwin. Builds
-  # on MacOS will have to provide their own flutter from outside the Nix
-  # environment.
-  linuxBuildTools = {
-    inherit (unstable) flutter-dev;
-  };
+    inherit (pkgs) go gnumake;
+  } // flutterTools
+    // lib.optionalAttrs(targetAndroid) flutterAndroidTools
+    // lib.optionalAttrs(targetIos) flutterIosTools
+    // lib.optionalAttrs(targetDesktop) flutterDesktopTools;
 
   # Additional tools required to build Note Maps in a more controlled
   # environment.
   ciTools = buildTools // {
-    inherit (pkgs) coreutils;
-    inherit (pkgs) findutils;
-    inherit (pkgs) moreutils;
-    inherit (pkgs) git;
-    inherit (pkgs) gnugrep;
-    inherit (pkgs) gnused;
+    inherit (pkgs) coreutils findutils moreutils;
+    inherit (pkgs) git gnugrep gnused;
   };
 
   # Additional tools useful for code work and repository maintenance.
-  devTools = runtimeDeps // buildTools // {
+  devTools = buildTools // {
     inherit (pkgs) niv;
   };
 
-  nativeBuildInputs = builtins.attrValues runtimeDeps;
-  buildInputs = builtins.attrValues ciTools ++ lib.optionals (stdenv.buildPlatform.isLinux) (builtins.attrValues linuxBuildTools);
-  shellInputs = builtins.attrValues devTools ++ lib.optional (stdenv.buildPlatform.isLinux) (builtins.attrValues linuxBuildTools);
+  buildInputs = builtins.attrValues ciTools;
+  shellInputs = builtins.attrValues devTools;
+  shellHook = lib.optionalString (targetAndroid) ''
+    export ANDROID_HOME="${pkgs.androidsdk}/libexec/android-sdk"
+    export JAVA_HOME="${pkgs.jdk}"
+  '';
 }

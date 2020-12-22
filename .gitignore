@@ -5,9 +5,11 @@
 # Ignore Nix stuff
 /.direnv
 /result
-# Ignore configs that devs may want to customize for their own environment.
+# Ignore configs that any developer may want to customize for their own
+# environment.
 /.envrc
 /shell.nix
+/config.mk
 # Ignore temporary files produced by Makefile
 .mk.*
 /out

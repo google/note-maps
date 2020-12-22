@@ -1,28 +1,22 @@
 PODS:
   - Flutter (1.0.0)
-  - nm_gql_go_link (0.0.1):
-    - Flutter
   - url_launcher (0.0.1):
     - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - nm_gql_go_link (from `.symlinks/plugins/nm_gql_go_link/ios`)
   - url_launcher (from `.symlinks/plugins/url_launcher/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  nm_gql_go_link:
-    :path: ".symlinks/plugins/nm_gql_go_link/ios"
   url_launcher:
     :path: ".symlinks/plugins/url_launcher/ios"
 
 SPEC CHECKSUMS:
-  Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
-  nm_gql_go_link: f44ecd6dee9c6715b38ea7380664f74fd01e2edf
+  Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
   url_launcher: 6fef411d543ceb26efce54b05a0a40bfd74cbbef
 
 PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
 
-COCOAPODS: 1.9.3
+COCOAPODS: 1.10.0

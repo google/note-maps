@@ -1,1 +1,0 @@
-../../../third_party/github.com/NixOS/nixpkgs/development/interpreters/dart/default.nix

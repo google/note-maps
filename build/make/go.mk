@@ -50,7 +50,10 @@ define go_test =
 	touch $@
 endef
 
-.mk.go.download: go.mod go.sum
+$(GOTMPDIR):
+	mkdir -p $@
+
+.mk.go.download: $(GOTMPDIR) go.mod go.sum
 	$(call go_tmpdir)
 	go mod download
 	touch $@

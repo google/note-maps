@@ -63,7 +63,7 @@ define flutter_lint =
 endef
 
 
-ifdef DEBUG
+ifneq ($(DEBUG),)
 .mk.flutter.build = $(1) \
 	$(if $(findstring $(1),android ios),--debug) \
 	$(if $(findstring $(1),web),--profile)

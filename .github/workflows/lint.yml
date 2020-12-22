@@ -1,0 +1,9 @@
+name: Lint
+on: push
+jobs:
+  makefile:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Dry run with GNU Make
+      run: make --dry-run --always-make download lint format test build

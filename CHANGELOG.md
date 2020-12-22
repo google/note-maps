@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nix to help make builds more reproducible.
 - GitHub Actions to help with CI.
 
+### Removed
+
+- Travis CI config.
+
 ## [0.1.0] - 2012-12-06
 
 ### Removed

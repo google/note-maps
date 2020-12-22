@@ -1,6 +1,6 @@
 name: nm_gql_go_link
 description: A new flutter plugin project.
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/google/note-maps/blob/main/packages/nm_gql_go_link
 publish_to: 'none'
 

@@ -1,7 +1,8 @@
-name: Nix
+name: publish
 on:
-  pull_request:
+  release:
   push:
+    branches: [main]
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -14,9 +15,9 @@ jobs:
       with:
         name: note-maps
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: nix-shell --run "make download"
-    - run: nix-shell --run "make lint"
-    - run: nix-shell --run "make test"
+    - run: nix-shell --run "make download DEBUG="
+    - run: nix-shell --run "make lint DEBUG="
+    - run: nix-shell --run "make test DEBUG="
   build:
     runs-on: ubuntu-latest
     steps:
@@ -28,7 +29,7 @@ jobs:
       with:
         name: note-maps
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: nix-shell --run "make download"
+    - run: nix-shell --run "make download DEBUG="
     - run: nix-shell --run "make build DEBUG="
     - uses: actions/upload-artifact@v2
       with:
@@ -48,7 +49,7 @@ jobs:
     - name: Deploy to Firebase
       uses: w9jds/firebase-action@master
       with:
-        args: hosting:channel:deploy "$GITHUB_SHA"
+        args: hosting:channel:deploy live
       env:
         FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         PROJECT_ID: note-maps

@@ -4,7 +4,6 @@ on:
   push:
 jobs:
   test:
-    needs: download
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2.3.4

@@ -1,6 +1,6 @@
 name: nm_delta
 description: Generic data models for the Note Maps project.
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/google/note-maps
 publish_to: 'none'
 

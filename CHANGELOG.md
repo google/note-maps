@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2020-12-22
+
 ### Added
 
 - Makefile to help with builds.
@@ -109,8 +111,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Go library `tmaps` for working with Topic Maps, using `kv`.
 - Flutter app `note_maps`, using `tmaps`.
 
-[Unreleased]: https://github.com/google/note-maps/compare/v0.1.0...HEAD
-[0.0.6]: https://github.com/google/note-maps/compare/v0.0.6...v0.1.0
+[Unreleased]: https://github.com/google/note-maps/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/google/note-maps/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/google/note-maps/compare/v0.0.6...v0.1.0
 [0.0.6]: https://github.com/google/note-maps/compare/v0.0.5...v0.0.6
 [0.0.5]: https://github.com/google/note-maps/compare/v0.0.4...v0.0.5
 [0.0.4]: https://github.com/google/note-maps/compare/v0.0.3...v0.0.4

@@ -120,14 +120,14 @@ packages:
       path: "../../dart/nm_delta"
       relative: true
     source: path
-    version: "0.1.0"
+    version: "0.1.1"
   nm_delta_notus:
     dependency: "direct main"
     description:
       path: "../../dart/nm_delta_notus"
       relative: true
     source: path
-    version: "0.1.0"
+    version: "0.1.1"
   notus:
     dependency: "direct main"
     description:

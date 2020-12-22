@@ -18,6 +18,7 @@ jobs:
   include:
   - os: linux
     dist: xenial
+    env: MAKE=make
   - os: osx
     osx_image: xcode12.2
     language: generic
@@ -25,8 +26,9 @@ jobs:
       homebrew:
         packages:
         - gnumake
+    env: MAKE=gnumake
 
 install:
-- gnumake -e download
+- $MAKE -e download
 script:
-- gnumake -e lint test build
+- $MAKE -e lint test build

@@ -20,7 +20,7 @@ jobs:
         path: ./out/
   deploy-preview:
     needs:
-    - build
+    - build-preview
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master

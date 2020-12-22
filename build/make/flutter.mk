@@ -13,7 +13,6 @@
 # limitations under the License.
 
 FLUTTER_VERSION = 1.26.0-1.0.pre
-FLUTTER_ROOT = $(TMPDIR)/flutter
 FLUTTER = "$(FLUTTER_ROOT)/bin/flutter"
 DART = "$(FLUTTER_ROOT)/bin/dart"
 

@@ -12,21 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Default configuration, can be customized on the command line.
+# Default configuration, can be customized on the command line or in config.mk.
 #
-# Example:
+# Example using the command line:
 #
 #   make OUTDIR="$( mktemp -d )" TMPDIR="$( mktemp -d )"
 #
+# Example using config.mk:
+#
+#   echo 'FLUTTER_BUILD := web android' >> config.mk
+#   echo 'FLUTTER_ROOT := ~/flutter' >> config.mk
+#   make
+#
 DEBUG = 1
 COVERAGE = 1
-CC = clang
 OUTDIR = $(PWD)/out
 TMPDIR = $(PWD)/tmp
 FLUTTER_BUILD = web # appbundle ios linux macos windows ...?
 FLUTTER_DEVICE = #web-server
+FLUTTER_ROOT = $(TMPDIR)/flutter
 GOMOBILE_TAGS = #android ios macos
 TMPBINDIR := $(TMPDIR)/bin
+
+ifneq ($(realpath config.mk),)
+include config.mk
+endif
 
 # Set the default target, which is the first defined target.
 #

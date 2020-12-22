@@ -18,10 +18,6 @@ jobs:
   include:
   - os: linux
     dist: xenial
-    addons:
-      snaps:
-      - go
-    env: make
   - os: osx
     osx_image: xcode12.2
     language: generic
@@ -32,6 +28,7 @@ jobs:
     env: PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
 
 install:
+- travis_install_go_dependencies 1.15.2
 - make -e download
 script:
 - make -e lint test build

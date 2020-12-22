@@ -24,7 +24,7 @@
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nixpkgs": {
-        "branch": "20.09",
+        "branch": "unstable",
         "description": "Nix Packages collection",
         "homepage": "",
         "owner": "NixOS",
@@ -33,30 +33,6 @@
         "sha256": "1wg61h4gndm3vcprdcg7rc4s1v3jkm5xd7lw8r2f67w502y94gcy",
         "type": "tarball",
         "url": "https://github.com/NixOS/nixpkgs/archive/cd63096d6d887d689543a0b97743d28995bc9bc3.tar.gz",
-        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
-    },
-    "unstable": {
-        "branch": "nixpkgs-unstable",
-        "description": "Nix Packages collection",
-        "homepage": "",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "9cb4d2f4903c1403c098393bf49207ad43f58d58",
-        "sha256": "1byj1vcaldj7ij9rry4cfdcnf2piascn6hpb8s3fwgz1xxnqq2dr",
-        "type": "tarball",
-        "url": "https://github.com/NixOS/nixpkgs/archive/9cb4d2f4903c1403c098393bf49207ad43f58d58.tar.gz",
-        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
-    },
-    "unstable-fix-autopatchelfhook": {
-        "branch": "fix-autopatchelfhook",
-        "description": "Nix Packages collection",
-        "homepage": null,
-        "owner": "DavHau",
-        "repo": "nixpkgs",
-        "rev": "e815bf181117612752edfffd101778ef984cbb5e",
-        "sha256": "0vwc4nfkf950q89f9rsimpm3xbzgbqzy6yldxklg6n93k3d1vxvp",
-        "type": "tarball",
-        "url": "https://github.com/DavHau/nixpkgs/archive/e815bf181117612752edfffd101778ef984cbb5e.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     }
 }

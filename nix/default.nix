@@ -18,26 +18,9 @@
 , targetIos ? false
 , targetDesktop ? false
 , targetWeb ? false
-, fixAutoPatchelfHook ? false
 }:
 let
   config = { android_sdk.accept_license = true; };
-
-  # Some packages from unstable need the fix in
-  # https://github.com/NixOS/nixpkgs/pull/106830
-  unstable_patched =
-    import sources.unstable-fix-autopatchelfhook {
-      inherit config;
-    };
-  unstable_patched_overlay = _: pkgs:
-    pkgs.lib.optionalAttrs (fixAutoPatchelfHook) {
-      inherit (unstable_patched) androidenv;
-    };
-
-  unstable = import sources.unstable {
-    inherit config;
-  };
-  unstable_overlay = _: pkgs: { inherit (unstable) cocoapods jdk; };
 
   android_overlay = _: pkgs: pkgs.lib.optionalAttrs (targetAndroid) {
     androidsdk = (pkgs.androidenv.composeAndroidPackages {
@@ -53,8 +36,6 @@ let
   pkgs = import sources.nixpkgs {
     inherit config;
     overlays = [
-      unstable_patched_overlay
-      unstable_overlay
       android_overlay
     ];
   };

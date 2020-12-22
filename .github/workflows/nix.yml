@@ -30,3 +30,25 @@ jobs:
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
     - run: nix-shell --run "make download"
     - run: nix-shell --run "make build"
+    - uses: actions/upload-artifact@v2
+      with:
+        name: result
+        path: out/
+  deploy:
+    needs:
+    - build # produces the artifact
+    - test  # but don't bother deploying if tests failed
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: actions/download-artifact@master
+      with:
+        name: result
+        path: out/
+    - name: Deploy to Firebase
+      uses: w9jds/firebase-action@master
+      with:
+        args: hosting:channel:deploy "$GITHUB_SHA"
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        PROJECT_ID: note-maps

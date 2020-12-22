@@ -33,7 +33,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: result
-        path: out/
+        path: ./out/
   deploy:
     needs:
     - build # produces the artifact
@@ -44,7 +44,7 @@ jobs:
     - uses: actions/download-artifact@master
       with:
         name: result
-        path: out/
+        path: ./out/
     - name: Deploy to Firebase
       uses: w9jds/firebase-action@master
       with:
@@ -52,3 +52,4 @@ jobs:
       env:
         FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         PROJECT_ID: note-maps
+        PROJECT_PATH: ./build/firebase/

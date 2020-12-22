@@ -39,15 +39,6 @@ let
   };
   unstable_overlay = _: pkgs: { inherit (unstable) cocoapods jdk; };
 
-  flutter_overlay = _: pkgs: rec {
-    flutterPackages =
-      unstable.callPackage
-      ../third_party/github.com/NixOS/nixpkgs/development/compilers/flutter {
-        inherit (unstable) callPackage dart lib stdenv ;
-      };
-    flutter-dev = flutterPackages.dev;
-  };
-
   android_overlay = _: pkgs: pkgs.lib.optionalAttrs (targetAndroid) {
     androidsdk = (pkgs.androidenv.composeAndroidPackages {
       buildToolsVersions = [ "28.0.3" ];
@@ -65,7 +56,6 @@ let
       unstable_patched_overlay
       unstable_overlay
       android_overlay
-      flutter_overlay
     ];
   };
 

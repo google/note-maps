@@ -22,6 +22,14 @@
 let
   config = { android_sdk.accept_license = true; };
 
+  make-extra-builtins = import sources.nix-fetchers."make-extra-builtins.nix" {};
+  extra-builtins = make-extra-builtins { fetchers = import sources.nix-fetchers."extra-builtins.nix" {}; };
+  exec' = builtins.exec or
+    (throw "Tests require the allow-unsafe-native-code-during-evaluation Nix setting to be true");
+  all-fetchers = import "${extra-builtins}/extra-builtins.nix" {
+    exec = exec';
+  };
+
   android_overlay = _: pkgs: pkgs.lib.optionalAttrs (targetAndroid) {
     androidsdk = (pkgs.androidenv.composeAndroidPackages {
       buildToolsVersions = [ "28.0.3" ];
@@ -60,7 +68,6 @@ let
   flutterDesktopTools = { }
     // lib.optionalAttrs(stdenv.isLinux) { inherit (pkgs) clang cmake ninja; }
     // lib.optionalAttrs(stdenv.isDarwin) { inherit (pkgs) cocoapods; };
-
 in rec
 {
   inherit pkgs src;

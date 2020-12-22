@@ -23,6 +23,18 @@
         "url": "https://github.com/nmattia/niv/archive/ba57d5a29b4e0f2085917010380ef3ddc3cf380f.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
+    "nix-fetchers": {
+        "branch": "master",
+        "description": "A set of morally pure fetching builtins for Nix.",
+        "homepage": "",
+        "owner": "target",
+        "repo": "nix-fetchers",
+        "rev": "b7cc311fd5ea4e56f05e31be3d14e0712831f5d5",
+        "sha256": "1lk8qn02k4m5w476jk811gi4293m22nmxfxm3qsp921x60rdf2yl",
+        "type": "tarball",
+        "url": "https://github.com/target/nix-fetchers/archive/b7cc311fd5ea4e56f05e31be3d14e0712831f5d5.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "nixpkgs": {
         "branch": "unstable",
         "description": "Nix Packages collection",

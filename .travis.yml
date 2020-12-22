@@ -18,6 +18,9 @@ jobs:
   include:
   - os: linux
     dist: xenial
+    addons:
+      snaps:
+      - go
     env: make
   - os: osx
     osx_image: xcode12.2

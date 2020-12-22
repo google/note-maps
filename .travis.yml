@@ -19,7 +19,6 @@ jobs:
     dist: xenial
     language: nix
     nix: 2.3.9
-    env: FLUTTER_BUILD=appbundle
     cache:
       directories:
       - $HOME/nix.store
@@ -39,7 +38,6 @@ jobs:
   - os: osx
     osx_image: xcode12.2
     language: generic
-    env: FLUTTER_BUILD=ios
     install:
     - make -e download
     script:

@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: [ 'dart/nm_delta' 'dart/nm_delta_notus' ]
+        package: ['dart/nm_delta', 'dart/nm_delta_notus']
     steps:
     - uses: actions/checkout@v2
     - uses: subosito/flutter-action@v1

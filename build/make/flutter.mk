@@ -73,7 +73,7 @@ endif
 define flutter_build =
 	cd $(dir $@) ; $(FLUTTER) build $(call .mk.flutter.build,$(subst .,,$(suffix $@)))
 	mkdir -p $(OUTDIR)/$(dir $@)
-	rm -r $(subst $(dir $@)/build/,$(OUTDIR)/$(dir $@),$(wildcard $(dir $@)/build/*))
+	rm -rf $(subst $(dir $@)/build/,$(OUTDIR)/$(dir $@),$(wildcard $(dir $@)/build/*))
 	cp -r $(dir $@)build/* $(OUTDIR)/$(dir $@)
 endef
 

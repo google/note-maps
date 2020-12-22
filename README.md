@@ -99,8 +99,19 @@ How to update a subtree:
 
 ### Development Environment
 
-[Nix][] is a neat way to get a consistent set of build tools for reproducible
-builds:
+Requirements:
+
+*   GNU Make
+
+Optional:
+
+*   Flutter. To re-use an existing Flutter installation, create a `config.mk`
+    file in the root of this repository and set `FLUTTER_ROOT` to the location
+    of your Flutter installation. However, note the current version of Flutter
+    in `FLUTTER_ROOT` will be modified by `make download`.
+
+If you've got the time and the disk space, [Nix][] is a neat way to get a
+consistent set of build tools for reproducible builds:
 
 1. [Install Nix][].
 1. Copy `nix/shell.nix` to the root of this repository.
@@ -122,18 +133,12 @@ You can use [direnv][] to make this easier:
 [nix-direnv]: https://github.com/nix-community/nix-direnv
 [Install Flutter]: https://flutter.dev/docs/get-started/install
 
-Until we can get Flutter through Nix, you'll also have to install it yourself:
-
-*   [Install Flutter][]
-
-Nix is not required: you can also install the other dependencies manually.
-
 ### Building
 
 Most tasks are automated through a [GNU Make][] makefile in the root of this
 repository:
 
-    make format lint test build
+    gnumake format lint test build
 
 [GNU Make]: https://www.gnu.org/software/make/
 

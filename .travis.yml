@@ -18,17 +18,17 @@ jobs:
   include:
   - os: linux
     dist: xenial
-    env: MAKE=make
+    env: make
   - os: osx
     osx_image: xcode12.2
     language: generic
     addons:
       homebrew:
         packages:
-        - gnumake
-    env: MAKE=gnumake
+        - make
+    env: PATH="/usr/local/opt/make/libexec/gnubin:$PATH"
 
 install:
-- $MAKE -e download
+- make -e download
 script:
-- $MAKE -e lint test build
+- make -e lint test build

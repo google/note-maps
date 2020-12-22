@@ -14,7 +14,7 @@ jobs:
       with:
         name: note-maps
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-    - run: nix-shell --run 'echo "nix-shell: OK"'
+    - run: nix-shell --run 'echo nix-shell: OK'
     - run: nix-shell --run 'make download'
     - run: nix-shell --run 'make lint'
     - run: nix-shell --run 'make test'
@@ -31,7 +31,6 @@ jobs:
       with:
         name: note-maps
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-    - run: nix-shell --run 'echo "nix-shell: OK"'
     - run: nix-shell --run 'make lint'
   test:
     needs: download
@@ -45,7 +44,6 @@ jobs:
       with:
         name: note-maps
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-    - run: nix-shell --run 'echo "nix-shell: OK"'
     - run: nix-shell --run 'make test'
   build:
     needs: download
@@ -59,5 +57,4 @@ jobs:
       with:
         name: note-maps
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-    - run: nix-shell --run 'echo "nix-shell: OK"'
     - run: nix-shell --run 'make build'

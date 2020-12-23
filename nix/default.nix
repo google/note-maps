@@ -69,7 +69,7 @@ let
   flutterTools =
     lib.optionalAttrs (includeFlutter) { inherit (pkgs) flutter git; };
 
-  flutterAndroidTools = { inherit (pkgs) android-studio androidsdk jdk; };
+  flutterAndroidTools = { inherit (pkgs) android-studio; };
 
   flutterIosTools = { }
     lib.optionalAttrs(stdenv.isDarwin) { inherit (pkgs) cocoapods; };
@@ -106,8 +106,9 @@ in rec
   buildInputs = builtins.attrValues ciTools;
   shellInputs = builtins.attrValues devTools;
   shellHook = lib.optionalString (targetAndroid) ''
-    export ANDROID_HOME="${pkgs.androidsdk}/libexec/android-sdk"
-    export JAVA_HOME="${pkgs.jdk}"
-    flutter config --android-sdk "$ANDROID_HOME"
+    echo "Configuring Flutter with path to Android Studio..."
+    ${pkgs.flutter}/bin/flutter config --android-studio-dir "${pkgs.android-studio.unwrapped}" --android-sdk=
+    echo "Accepting Android licenses..."
+    yes | ${pkgs.flutter}/bin/flutter doctor --android-licenses
   '';
 }

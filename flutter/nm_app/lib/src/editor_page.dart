@@ -22,6 +22,8 @@ import 'package:nm_delta_notus/nm_delta_notus.dart';
 import 'package:quill_delta/quill_delta.dart';
 import 'package:zefyr/zefyr.dart';
 
+import './drawer.dart';
+
 class EditorPage extends StatefulWidget {
   @override
   EditorPageState createState() => EditorPageState();
@@ -80,6 +82,7 @@ class EditorPageState extends State<EditorPage> {
           )
         ],
       ),
+      drawer: NmDrawer(),
       body: body,
     );
   }

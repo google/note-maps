@@ -38,47 +38,10 @@ class NmApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      initialRoute: '/',
+      initialRoute: '/editor',
       routes: {
-        '/': (context) => NmHomePage(title: 'Note Maps'),
         '/editor': (context) => EditorPage(),
       },
-    );
-  }
-}
-
-class NmHomePage extends StatelessWidget {
-  NmHomePage({Key key, this.title}) : super(key: key);
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            AboutNoteMapsListTile(),
-          ],
-        ),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            RaisedButton(
-              child: Text('Launch Editor'),
-              onPressed: () {
-                Navigator.pushNamed(context, '/editor');
-              },
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -34,6 +35,7 @@ class EditorPageState extends State<EditorPage> {
   NotusDocument _document;
   ZefyrController _controller;
   NoteMapNotusTranslator _noteMapNotusTranslator;
+  StreamController<NoteMapDelta> _noteMapDeltas = StreamController<NoteMapDelta>();
 
   @override
   void initState() {
@@ -55,6 +57,7 @@ class EditorPageState extends State<EditorPage> {
         if (result.hasNoteMap) {
           // TODO: do something with NoteMapDelta result.noteMap.
           logger.d(jsonEncode(result.noteMap));
+          _noteMapDeltas.add(result.noteMap);
         }
       }
     });
@@ -64,11 +67,20 @@ class EditorPageState extends State<EditorPage> {
   Widget build(BuildContext context) {
     final body = (_controller == null)
         ? Center(child: CircularProgressIndicator())
-        : ZefyrField(
-            padding: EdgeInsets.all(16),
-            controller: _controller,
-            focusNode: _focusNode,
-          );
+        : Column(children: <Widget>[
+            ZefyrField(
+              padding: EdgeInsets.all(16),
+              controller: _controller,
+              focusNode: _focusNode,
+            ),
+            StreamBuilder<NoteMapDelta>(
+              stream: _noteMapDeltas.stream,
+              builder: (BuildContext context, AsyncSnapshot<NoteMapDelta> snapshot) {
+                return NoteMapDeltaInspector(snapshot);
+              },
+            ),
+          ],
+        );
 
     return Scaffold(
       appBar: AppBar(
@@ -97,5 +109,38 @@ class EditorPageState extends State<EditorPage> {
     file.writeAsString(contents).then((_) {
       Scaffold.of(context).showSnackBar(SnackBar(content: Text('Saved.')));
     });
+  }
+}
+
+class NoteMapDeltaInspector extends StatelessWidget {
+  final AsyncSnapshot<NoteMapDelta> noteMapDelta;
+  NoteMapDeltaInspector(this.noteMapDelta);
+
+  @override
+  Widget build(BuildContext context) {
+    Widget child;
+    if (noteMapDelta.hasError) {
+      child = Text('(error: ${noteMapDelta.error})');
+    } else {
+      switch (noteMapDelta.connectionState) {
+      case ConnectionState.none:
+        child = Text('(none)');
+        break;
+      case ConnectionState.waiting:
+        child = Text('(waiting)');
+        break;
+      case ConnectionState.active:
+        child = Text('${jsonEncode(noteMapDelta.data)}');
+        break;
+      case ConnectionState.done:
+        child = Text('(done)');
+        break;
+      }
+    }
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[child],
+    );
   }
 }

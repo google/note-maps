@@ -14,7 +14,7 @@
 
 { sources ? import ./sources.nix
 , includeFlutter ? false
-, targetAndroid ? false
+, targetAndroid ? true
 , targetIos ? false
 , targetDesktop ? false
 , targetWeb ? false

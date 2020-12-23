@@ -40,11 +40,22 @@ let
       abiVersions = [ "x86-64" ];
     }).androidsdk;
   };
+  fix-autopatchelfhook = import sources.fix-autopatchelfhook {
+    inherit config;
+    overlays = [
+      android_overlay
+    ];
+  };
+
+  flutter_overlay = _: pkgs: pkgs.lib.optionalAttrs (includeFlutter) {
+    flutter = pkgs.flutterPackages.dev;
+  };
 
   pkgs = import sources.nixpkgs {
     inherit config;
     overlays = [
-      android_overlay
+      (_: pkgs: { inherit (fix-autopatchelfhook) androidsdk; })
+      flutter_overlay
     ];
   };
 
@@ -56,7 +67,7 @@ let
   stdenv = pkgs.stdenv;
 
   flutterTools =
-    lib.optionalAttrs (includeFlutter) { inherit (pkgs) flutter-dev git; };
+    lib.optionalAttrs (includeFlutter) { inherit (pkgs) flutter git; };
 
   flutterAndroidTools = { inherit (pkgs) androidsdk jdk; };
 

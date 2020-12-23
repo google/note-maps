@@ -47,7 +47,7 @@
         "url": "https://github.com/NixOS/nixpkgs/archive/2ae527c50e049570dd25132f9325527aa2320e32.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
-    "unstable-fix-autopatchelfhook": {
+    "fix-autopatchelfhook": {
          "branch": "fix-autopatchelfhook",
          "description": "Nix Packages collection",
          "homepage": null,

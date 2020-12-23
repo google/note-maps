@@ -66,12 +66,20 @@ let
     + lib.optionalString (!target-desktop) " --no-enable-linux-desktop --no-enable-macos-desktop"
     ;
 
+  fdroid = pkgs.writeShellScriptBin "fdroid" ''
+    docker run --rm \
+      -u $(id -u):$(id -g) \
+      -v $(pwd):/repo \
+      registry.gitlab.com/fdroid/docker-executable-fdroidserver:master \
+      "$@"
+  '';
+
 in rec
 {
   inherit pkgs src;
 
   # Minimum tools required to build Note Maps.
-  buildTools = { inherit (pkgs) go stdenv; } // flutterTools;
+  buildTools = { inherit (pkgs) go stdenv; inherit fdroid; } // flutterTools;
 
   # Additional tools required to build Note Maps in a more controlled
   # environment.

@@ -66,14 +66,19 @@ endef
 
 
 ifneq ($(DEBUG),)
-.mk.flutter.build = $(1) \
-	$(if $(findstring $(1),android ios),--debug) \
+.mk.flutter.debug = \
+	$(if $(findstring $(1),apk appbundle ios),--debug) \
 	$(if $(findstring $(1),web),--profile)
 else
-.mk.flutter.build = $(1)
+.mk.flutter.debug =
 endif
+
+.mk.flutter.build = build $(1) \
+	$(call .mk.flutter.debug,$(1)) \
+	$(if $(findstring $(1),apk),--split-per-abi)
+
 define flutter_build =
-	cd $(dir $@) ; $(FLUTTER) build $(call .mk.flutter.build,$(subst .,,$(suffix $@)))
+	cd $(dir $@) ; $(FLUTTER) $(call .mk.flutter.build,$(subst .,,$(suffix $@)))
 	mkdir -p $(OUTDIR)/$(dir $@)
 	rm -rf $(subst $(dir $@)/build/,$(OUTDIR)/$(dir $@),$(wildcard $(dir $@)/build/*))
 	cp -r $(dir $@)build/* $(OUTDIR)/$(dir $@)

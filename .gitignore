@@ -2,6 +2,8 @@
 *.aar
 # Ignore Java archives (JAR)
 *.jar
+# Ignore Gradle temporary files
+.gradle
 # Ignore Nix stuff
 /.direnv
 /result

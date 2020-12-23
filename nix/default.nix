@@ -13,11 +13,6 @@
 # limitations under the License.
 
 { sources ? import ./sources.nix
-, includeFlutter ? true
-, targetAndroid ? true
-, targetIos ? false
-, targetDesktop ? false
-, targetWeb ? false
 }:
 let
   make-extra-builtins = import sources.nix-fetchers."make-extra-builtins.nix" {};
@@ -28,29 +23,12 @@ let
     exec = exec';
   };
 
-  android_overlay = _: pkgs: pkgs.lib.optionalAttrs (targetAndroid) {
-    androidsdk = (pkgs.androidenv.composeAndroidPackages {
-      buildToolsVersions = [ "28.0.3" ];
-      platformVersions = [ "29" ];
-      platformToolsVersion = "29.0.6";
-      includeNDK = true;
-      ndkVersion = "21.0.6113669";
-      abiVersions = [ "x86-64" ];
-    }).androidsdk;
-  };
-  fix-autopatchelfhook = import sources.fix-autopatchelfhook {
-    overlays = [
-      android_overlay
-    ];
-  };
-
-  flutter_overlay = _: pkgs: pkgs.lib.optionalAttrs (includeFlutter) {
+  flutter_overlay = _: pkgs: {
     flutter = pkgs.flutterPackages.dev;
   };
 
   pkgs = import sources.nixpkgs {
     overlays = [
-      (_: pkgs: { inherit (fix-autopatchelfhook) androidsdk; })
       flutter_overlay
     ];
   };
@@ -62,30 +40,38 @@ let
   lib = pkgs.lib;
   stdenv = pkgs.stdenv;
 
-  flutterTools =
-    lib.optionalAttrs (includeFlutter) { inherit (pkgs) flutter git; };
+  # TODO: figure out how to use Nix mkOption correctly instead of doing this.
+  target-android   = true;
+  target-ios       = stdenv.isDarwin;
+  target-web       = true;
+  target-desktop   = true;
 
-  flutterAndroidTools = { inherit (pkgs) android-studio; };
+  flutterTools = { inherit (pkgs) flutter git; }
+    // lib.optionalAttrs (target-android) { inherit (pkgs) android-studio; }
+    // lib.optionalAttrs (target-ios)     { inherit (pkgs) cocoapods; }
+    // lib.optionalAttrs (target-web)     { inherit (pkgs) google-chrome; }
+    // lib.optionalAttrs (target-desktop && stdenv.isLinux) { inherit (pkgs) clang cmake ninja; }
+    // lib.optionalAttrs (target-desktop && stdenv.isDarwin) { inherit (pkgs) cocoapods; }
+    ;
 
-  flutterIosTools = { }
-    lib.optionalAttrs(stdenv.isDarwin) { inherit (pkgs) cocoapods; };
+  flutterConfig = "${pkgs.flutter}/bin/flutter config --android-sdk="
+    + lib.optionalString (target-android)  " --android-studio-dir=${pkgs.android-studio.unwrapped} --enable-android"
+    + lib.optionalString (!target-android) " --android-studio-dir= --no-enable-android"
+    + lib.optionalString (target-ios)      " --enable-ios"
+    + lib.optionalString (!target-ios)     " --no-enable-ios"
+    + lib.optionalString (target-web)      " --enable-web"
+    + lib.optionalString (!target-web)     " --no-enable-web"
+    + lib.optionalString (target-desktop && stdenv.isLinux) " --enable-linux-desktop"
+    + lib.optionalString (target-desktop && stdenv.isDarwin) " --enable-macos-desktop"
+    + lib.optionalString (!target-desktop) " --no-enable-linux-desktop --no-enable-macos-desktop"
+    ;
 
-  # Flutter only builds desktop apps for the host platform, so all tools
-  # required specifically for this target are platform-specific.
-  flutterDesktopTools = { }
-    // lib.optionalAttrs(stdenv.isLinux) { inherit (pkgs) clang cmake ninja; }
-    // lib.optionalAttrs(stdenv.isDarwin) { inherit (pkgs) cocoapods; };
 in rec
 {
   inherit pkgs src;
 
   # Minimum tools required to build Note Maps.
-  buildTools = {
-    inherit (pkgs) go gnumake;
-  } // flutterTools
-    // lib.optionalAttrs(targetAndroid) flutterAndroidTools
-    // lib.optionalAttrs(targetIos) flutterIosTools
-    // lib.optionalAttrs(targetDesktop) flutterDesktopTools;
+  buildTools = { inherit (pkgs) go stdenv; } // flutterTools;
 
   # Additional tools required to build Note Maps in a more controlled
   # environment.
@@ -101,9 +87,10 @@ in rec
 
   buildInputs = builtins.attrValues ciTools;
   shellInputs = builtins.attrValues devTools;
-  shellHook = lib.optionalString (targetAndroid) ''
-    echo "Configuring Flutter with path to Android Studio..."
-    ${pkgs.flutter}/bin/flutter config --android-studio-dir "${pkgs.android-studio.unwrapped}" --android-sdk=
+  shellHook = ''
+    export FLUTTER_SDK_ROOT=${pkgs.flutter.unwrapped}
+    echo "Configuring Flutter..."
+    ${flutterConfig}
     echo "Accepting Android licenses..."
     yes | ${pkgs.flutter}/bin/flutter doctor --android-licenses
   '';

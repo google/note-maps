@@ -12,18 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:flutter/material.dart';
 import 'dart:async';
-
-// TODO: resolve build problems with nm_gql_go_link
-//import 'package:artemis/artemis.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// TODO: resolve build problems with nm_gql_go_link
-//import 'package:nm_gql_go_link/nm_gql_go_link.dart';
-//import 'package:nm_gql_go_link/note_graphql.dart';
 
 import 'src/editor_page.dart';
-import 'src/about_note_maps_list_tile.dart';
 
 void main() {
   runApp(NmApp());

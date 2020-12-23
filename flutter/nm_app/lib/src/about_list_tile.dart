@@ -16,14 +16,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class AboutNoteMapsListTile extends StatefulWidget {
-  AboutNoteMapsListTile({Key key}) : super(key: key);
+class NmAboutListTile extends StatefulWidget {
+  NmAboutListTile({Key key}) : super(key: key);
 
   @override
-  _AboutNoteMapsListTileState createState() => _AboutNoteMapsListTileState();
+  _NmAboutListTileState createState() => _NmAboutListTileState();
 }
 
-class _AboutNoteMapsListTileState extends State<AboutNoteMapsListTile> {
+class _NmAboutListTileState extends State<NmAboutListTile> {
   String _goLinkStatus = 'Unknown';
   String _appVersion = 'Unknown';
 

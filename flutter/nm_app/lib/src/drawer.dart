@@ -14,7 +14,7 @@
 
 import 'package:flutter/material.dart';
 
-import './about_note_maps_list_tile.dart';
+import './about_list_tile.dart';
 
 class NmDrawer extends StatelessWidget {
   @override
@@ -23,7 +23,7 @@ class NmDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          AboutNoteMapsListTile(),
+          NmAboutListTile(),
         ],
       ),
     );

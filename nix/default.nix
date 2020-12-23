@@ -20,8 +20,6 @@
 , targetWeb ? false
 }:
 let
-  config = { android_sdk.accept_license = true; };
-
   make-extra-builtins = import sources.nix-fetchers."make-extra-builtins.nix" {};
   extra-builtins = make-extra-builtins { fetchers = import sources.nix-fetchers."extra-builtins.nix" {}; };
   exec' = builtins.exec or
@@ -41,7 +39,6 @@ let
     }).androidsdk;
   };
   fix-autopatchelfhook = import sources.fix-autopatchelfhook {
-    inherit config;
     overlays = [
       android_overlay
     ];
@@ -52,7 +49,6 @@ let
   };
 
   pkgs = import sources.nixpkgs {
-    inherit config;
     overlays = [
       (_: pkgs: { inherit (fix-autopatchelfhook) androidsdk; })
       flutter_overlay

@@ -23,6 +23,7 @@ import 'package:flutter/services.dart';
 //import 'package:nm_gql_go_link/note_graphql.dart';
 
 import 'src/editor_page.dart';
+import 'src/about_page.dart';
 
 void main() {
   runApp(NmApp());
@@ -41,83 +42,41 @@ class NmApp extends StatelessWidget {
       routes: {
         '/': (context) => NmHomePage(title: 'Note Maps'),
         '/editor': (context) => EditorPage(),
+        '/about': (context) => AboutPage(),
       },
     );
   }
 }
 
-class NmHomePage extends StatefulWidget {
+class NmHomePage extends StatelessWidget {
   NmHomePage({Key key, this.title}) : super(key: key);
 
   final String title;
 
   @override
-  _NmHomePageState createState() => _NmHomePageState();
-}
-
-class _NmHomePageState extends State<NmHomePage> {
-  String _goLinkStatus = 'Unknown';
-  // TODO: resolve build problems with nm_gql_go_link
-  //NmGqlGoLink _goLink = NmGqlGoLink();
-
-  @override
-  void initState() {
-    super.initState();
-    _reloadStatus();
-  }
-
-  void _reloadStatus() async {
-    String goLinkStatus = 'uninitialized';
-    /* TODO: resolve build problems with nm_gql_go_link
-    try {
-      ArtemisClient client = ArtemisClient.fromLink(_goLink);
-      final statusQuery = NoteStatusQuery();
-      final statusResponse = await client.execute(statusQuery);
-      goLinkStatus = statusResponse.data.status.summary;
-      client.dispose();
-    } on PlatformException {
-      goLinkStatus = 'Failed to get GraphQL link status.';
-    }
-    */
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _goLinkStatus = goLinkStatus;
-    });
-  }
-
-  void _openEditor() {
-    Navigator.pushNamed(context, '/editor');
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(title),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              'Storage system: $_goLinkStatus',
-            ),
             RaisedButton(
               child: Text('Launch Editor'),
-              onPressed: _openEditor,
+              onPressed: () {
+                Navigator.pushNamed(context, '/editor');
+              },
+            ),
+            RaisedButton(
+              child: Text('About'),
+              onPressed: () {
+                Navigator.pushNamed(context, '/about');
+              },
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openEditor,
-        tooltip: 'Create Note',
-        child: Icon(Icons.add),
       ),
     );
   }

@@ -15,3 +15,5 @@
 /out
 /VERSION
 /VERSION_INFO
+# Ignore cryptography keys
+/fdroid/keystore.*

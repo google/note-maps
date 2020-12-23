@@ -13,7 +13,7 @@
 # limitations under the License.
 
 { sources ? import ./sources.nix
-, includeFlutter ? false
+, includeFlutter ? true
 , targetAndroid ? true
 , targetIos ? false
 , targetDesktop ? false
@@ -69,7 +69,7 @@ let
   flutterTools =
     lib.optionalAttrs (includeFlutter) { inherit (pkgs) flutter git; };
 
-  flutterAndroidTools = { inherit (pkgs) androidsdk jdk; };
+  flutterAndroidTools = { inherit (pkgs) android-studio androidsdk jdk; };
 
   flutterIosTools = { }
     lib.optionalAttrs(stdenv.isDarwin) { inherit (pkgs) cocoapods; };
@@ -108,5 +108,6 @@ in rec
   shellHook = lib.optionalString (targetAndroid) ''
     export ANDROID_HOME="${pkgs.androidsdk}/libexec/android-sdk"
     export JAVA_HOME="${pkgs.jdk}"
+    flutter config --android-sdk "$ANDROID_HOME"
   '';
 }

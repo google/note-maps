@@ -14,6 +14,11 @@
 
 # Default configuration, can be customized on the command line or in config.mk.
 #
+# Example using environemnt variables:
+#
+#   export FLUTTER_SDK_ROOT := $(dirname $(which flutter))
+#   make -e
+#
 # Example using the command line:
 #
 #   make OUTDIR="$( mktemp -d )" TMPDIR="$( mktemp -d )"
@@ -21,7 +26,7 @@
 # Example using config.mk:
 #
 #   echo 'FLUTTER_BUILD := web android' >> config.mk
-#   echo 'FLUTTER_ROOT := ~/flutter' >> config.mk
+#   echo 'FLUTTER_SDK_ROOT := ~/flutter' >> config.mk
 #   make
 #
 DEBUG = 1
@@ -30,7 +35,7 @@ OUTDIR = $(PWD)/out
 TMPDIR = $(PWD)/tmp
 FLUTTER_BUILD = web # appbundle ios linux macos windows ...?
 FLUTTER_DEVICE = #web-server
-FLUTTER_ROOT = $(TMPDIR)/flutter
+FLUTTER_SDK_ROOT = $(TMPDIR)/flutter 
 GOMOBILE_TAGS = #android ios macos
 TMPBINDIR := $(TMPDIR)/bin
 

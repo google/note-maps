@@ -12,26 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FLUTTER_VERSION = 1.26.0-1.0.pre
-FLUTTER = "$(FLUTTER_ROOT)/bin/flutter"
-DART = "$(FLUTTER_ROOT)/bin/dart"
+FLUTTER_VERSION = 1.23.0-7.0.pre
+FLUTTER = "$(FLUTTER_SDK_ROOT)/bin/flutter"
+DART = "$(FLUTTER_SDK_ROOT)/bin/dart"
 
 https://github.com/flutter/flutter/archive/1.26.0-1.0.pre.tar.gz
 
-$(FLUTTER_ROOT):
-	git clone https://github.com/flutter/flutter.git $(FLUTTER_ROOT)
+$(FLUTTER_SDK_ROOT):
+	git clone https://github.com/flutter/flutter.git $(FLUTTER_SDK_ROOT)
 
 .PHONY: .mk.flutter.download
-.mk.flutter.download: $(FLUTTER_ROOT)
+.mk.flutter.download: $(FLUTTER_SDK_ROOT)
 	@echo '*** Using flutter $(FLUTTER_VERSION) ...'
-	cd "$(FLUTTER_ROOT)" ; git checkout $(FLUTTER_VERSION) || ( git fetch && git checkout $(FLUTTER_VERSION) )
+ifneq ($(shell cd "$(FLUTTER_SDK_ROOT)" ; git describe --tags),$(FLUTTER_VERSION))
+	cd "$(FLUTTER_SDK_ROOT)" ; git checkout $(FLUTTER_VERSION) || ( git fetch && git checkout $(FLUTTER_VERSION) )
+endif
 	"$(FLUTTER)" precache
 ifneq ($(shell which flutter),$(FLUTTER))
 	@echo '*** Using:'
 	@echo '***   flutter at $(FLUTTER)'
 	@echo '***   dart at $(DART)'
 	@echo '*** To use the same versions outside of make, either:'
-	@echo '***   export PATH=$$PATH:$(FLUTTER_ROOT)/bin'
+	@echo '***   export PATH=$$PATH:$(FLUTTER_SDK_ROOT)/bin'
 	@echo '*** or'
 	@echo '***   alias flutter=$(FLUTTER)'
 	@echo '***   alias dart=$(DART)'

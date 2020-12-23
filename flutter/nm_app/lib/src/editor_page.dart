@@ -140,7 +140,10 @@ class NoteMapDeltaInspector extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
-      children: <Widget>[child],
+      children: <Widget>[
+        Text('Note Map delta corresponding to last Zefyr input event:'),
+        child,
+      ],
     );
   }
 }

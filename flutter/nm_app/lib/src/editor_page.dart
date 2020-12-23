@@ -84,7 +84,7 @@ class EditorPageState extends State<EditorPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Note Maps'),
+        title: Text('Note Maps (early development version)'),
         actions: <Widget>[
           Builder(
             builder: (context) => IconButton(

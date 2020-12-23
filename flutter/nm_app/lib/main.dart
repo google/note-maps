@@ -23,7 +23,7 @@ import 'package:flutter/services.dart';
 //import 'package:nm_gql_go_link/note_graphql.dart';
 
 import 'src/editor_page.dart';
-import 'src/about_page.dart';
+import 'src/about_note_maps_list_tile.dart';
 
 void main() {
   runApp(NmApp());
@@ -42,7 +42,6 @@ class NmApp extends StatelessWidget {
       routes: {
         '/': (context) => NmHomePage(title: 'Note Maps'),
         '/editor': (context) => EditorPage(),
-        '/about': (context) => AboutPage(),
       },
     );
   }
@@ -59,6 +58,14 @@ class NmHomePage extends StatelessWidget {
       appBar: AppBar(
         title: Text(title),
       ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            AboutNoteMapsListTile(),
+          ],
+        ),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -67,12 +74,6 @@ class NmHomePage extends StatelessWidget {
               child: Text('Launch Editor'),
               onPressed: () {
                 Navigator.pushNamed(context, '/editor');
-              },
-            ),
-            RaisedButton(
-              child: Text('About'),
-              onPressed: () {
-                Navigator.pushNamed(context, '/about');
               },
             ),
           ],

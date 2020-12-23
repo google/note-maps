@@ -16,21 +16,20 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class AboutPage extends StatefulWidget {
-  AboutPage({Key key}) : super(key: key);
+class AboutNoteMapsListTile extends StatefulWidget {
+  AboutNoteMapsListTile({Key key}) : super(key: key);
 
   @override
-  _AboutPageState createState() => _AboutPageState();
+  _AboutNoteMapsListTileState createState() => _AboutNoteMapsListTileState();
 }
 
-class _AboutPageState extends State<AboutPage> {
+class _AboutNoteMapsListTileState extends State<AboutNoteMapsListTile> {
   String _goLinkStatus = 'Unknown';
   String _appVersion = 'Unknown';
 
   @override
   void initState() {
     super.initState();
-    _reloadStatus();
     rootBundle.loadString('assets/version.txt').then((String version) {
       if (!mounted) return;
       setState(() {
@@ -39,33 +38,14 @@ class _AboutPageState extends State<AboutPage> {
     });
   }
 
-  void _reloadStatus() async {
-    String goLinkStatus = 'uninitialized';
-    if (!mounted) return;
-    setState(() {
-      _goLinkStatus = goLinkStatus;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('About'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'Note Maps $_appVersion',
-            ),
-            Text(
-              'Storage system: $_goLinkStatus',
-            ),
-          ],
-        ),
-      ),
+    return AboutListTile(
+      icon: Icon(Icons.info),
+      applicationIcon: FlutterLogo(),
+      applicationName: 'Note Maps',
+      applicationVersion: _appVersion,
+      applicationLegalese: 'Apache License 2.0',
     );
   }
 }

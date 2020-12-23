@@ -44,7 +44,7 @@ class EditorPageState extends State<EditorPage> {
     _focusNode = FocusNode();
     _document = NotusDocument();
     _controller = ZefyrController(_document);
-    _noteMapNotusTranslator = NoteMapNotusTranslator('prototype-root-node-id');
+    _noteMapNotusTranslator = NoteMapNotusTranslator('00000000-0000-0000-0000-000000000000');
     _document.changes.listen((change) {
       if (change.source == ChangeSource.local) {
         logger.d(jsonEncode(change.change));

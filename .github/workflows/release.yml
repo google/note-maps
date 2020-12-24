@@ -16,9 +16,7 @@ jobs:
       with:
         name: note-maps
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: nix-shell --run "make -e download DEBUG=1"
-    - run: nix-shell --run "make -e lint DEBUG=1"
-    - run: nix-shell --run "make -e test DEBUG=1"
+    - run: nix-shell --run "make -e download lint test DEBUG=1"
   build-apk:
     runs-on: ubuntu-20.04
     steps:
@@ -28,8 +26,7 @@ jobs:
       with:
         name: note-maps
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: nix-shell --run "make -e download DEBUG="
-    - run: nix-shell --run "make -e build DEBUG= FLUTTER_BUILD=apk"
+    - run: nix-shell --run "make -e download build DEBUG= FLUTTER_BULD=apk"
     - uses: actions/upload-artifact@v2
       with:
         name: apk
@@ -65,8 +62,7 @@ jobs:
       with:
         name: note-maps
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: nix-shell --run "make -e download DEBUG="
-    - run: nix-shell --run "make -e build DEBUG= FLUTTER_BUILD=web"
+    - run: nix-shell --run "make -e download build DEBUG= FLUTTER_BUILD=web"
     - uses: actions/upload-artifact@v2
       with:
         name: web

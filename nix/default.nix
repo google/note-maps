@@ -115,4 +115,12 @@ in rec
       yes | ${flutter} doctor --android-licenses
     )
   '';
+
+  buildImage = pkgs.dockerTools.buildImage {
+    name = "note-maps-builder";
+    contents = buildInputs;
+    config = {
+      Entrypoint = [ "${pkgs.bash}" ];
+    };
+  };
 }

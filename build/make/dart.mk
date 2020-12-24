@@ -14,6 +14,14 @@
 
 DART = dart
 
+ifdef NO_HOME
+export PUB_CACHE=$(abspath $(TMPDIR)/pub-cache)
+else
+# Flutter as wrapped for Nix sometimes tries to write to a read-only path. This
+# is a work-around to make it write to the default Linux/OSX location.
+export PUB_CACHE=$(abspath $(HOME)/.pub-cache)
+endif
+
 dart_find_srcs = $(shell find $(1) -name '*.dart') $(1)/pubspec.yaml
 
 define dart_pub_get =

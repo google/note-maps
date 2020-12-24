@@ -17,6 +17,7 @@
 /out
 /VERSION
 /VERSION_INFO
+make-download.t*
 # Ignore F-Droid data that's not meant to be versioned
 /fdroid/keystore.*
 /fdroid/tmp

@@ -16,26 +16,32 @@ go_pkgs = $(shell go list ./$($(1))/... | grep -v 'vendor\|tmp' )
 go_srcs = $(shell find ./$($(1)) -name '*.go' | grep -v 'vendor\|tmp' )
 
 # Export some variables to the environment
-export GOTMPDIR = $(TMPDIR)/go
+ifdef NO_HOME
+export GOTMPDIR=$(abspath $(TMPDIR)/gotmp)
+export GOCACHE=$(abspath $(TMPDIR)/gocache)
+export GOMODCACHE=$(abspath $(TMPDIR)/gomodcache)
+endif
 
-define go_tmpdir =
-	@[ -d "$$GOTMPDIR" ] || mkdir -p "$$GOTMPDIR"
+define go_dirs =
+	[ -d "$$GOTMPDIR" ] || mkdir -p "$$GOTMPDIR"
+	[ -d "$$GOCACHE" ] || mkdir -p "$$GOCACHE"
+	[ -d "$$GOMODCACHE" ] || mkdir -p "$$GOMODCACHE"
 endef
 
 define go_fmt =
-	$(call go_tmpdir)
+	$(call go_dirs)
 	go fmt ./$(dir $@)...
 	touch $@
 endef
 
 define go_vet =
-	$(call go_tmpdir)
+	$(call go_dirs)
 	go vet ./$(dir $@)...
 	touch $@
 endef
 
 define go_build =
-	$(call go_tmpdir)
+	$(call go_dirs)
 	mkdir -p "$$GOTMPDIR"
 	go env
 	go build -o "$(TMPDIR)/bin/$(shell basename $(shell go list ./$(dir $@)))" ./$(dir $@)
@@ -45,7 +51,7 @@ define go_build =
 endef
 
 define go_test =
-	$(call go_tmpdir)
+	$(call go_dirs)
 	go test ./$(dir $@)...
 	touch $@
 endef
@@ -54,7 +60,7 @@ $(GOTMPDIR):
 	mkdir -p $@
 
 .mk.go.download: $(GOTMPDIR) go.mod go.sum
-	$(call go_tmpdir)
+	$(call go_dirs)
 	go mod download
 	touch $@
 

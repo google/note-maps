@@ -17,5 +17,8 @@
 /out
 /VERSION
 /VERSION_INFO
-# Ignore cryptography keys
+# Ignore F-Droid data that's not meant to be versioned
 /fdroid/keystore.*
+/fdroid/tmp
+/fdroid/repo
+/fdroid/archive

@@ -12,8 +12,8 @@ jobs:
       with:
         name: note-maps
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: nix-shell --run "make download DEBUG="
-    - run: nix-shell --run "make build DEBUG="
+    - run: nix-shell --run "make -e download DEBUG="
+    - run: nix-shell --run "make -e build DEBUG="
     - uses: actions/upload-artifact@v2
       with:
         name: result

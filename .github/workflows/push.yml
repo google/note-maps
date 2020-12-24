@@ -12,7 +12,6 @@ jobs:
       with:
         name: note-maps
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: nix-shell --run "make download"
-    - run: nix-shell --run "make lint"
-    - run: nix-shell --run "make build"
-    - run: nix-shell --run "make test"
+    - run: nix-shell --run "make -e download"
+    - run: nix-shell --run "make -e -j lint test"
+    - run: nix-shell --run "make -e build"

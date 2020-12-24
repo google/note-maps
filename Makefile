@@ -31,8 +31,8 @@
 #
 DEBUG = 1
 COVERAGE = 1
-OUTDIR = $(PWD)/out
-TMPDIR = $(PWD)/tmp
+OUTDIR = out
+TMPDIR = tmp
 FLUTTER_BUILD = web # appbundle ios linux macos windows ...?
 FLUTTER_DEVICE = #web-server
 FLUTTER_SDK_ROOT = $(TMPDIR)/flutter 
@@ -98,3 +98,14 @@ build: $(BUILD_TARGETS)
 clean: $(CLEAN_TARGETS)
 	rm -rf $(OUTDIR)
 test: $(TEST_TARGETS)
+
+.PHONY: fdroid
+fdroid: $(OUTDIR)/fdroid/fdroid/repo/index.xml
+$(OUTDIR)/fdroid/fdroid/repo/index.xml: $(OUTDIR)/flutter/nm_app/app/outputs/apk/release/*.apk
+	mkdir -p fdroid/repo
+	cp $^ fdroid/repo/
+	cd fdroid ; fdroid update
+	rm -rf $(OUTDIR)/fdroid
+	mkdir -p $(OUTDIR)/fdroid/fdroid
+	mv fdroid/repo $(OUTDIR)/fdroid/fdroid/repo
+	mv fdroid/archive $(OUTDIR)/fdroid/archive

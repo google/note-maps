@@ -24,7 +24,7 @@ $(FLUTTER_SDK_ROOT):
 .PHONY: .mk.flutter.download
 .mk.flutter.download: $(FLUTTER_SDK_ROOT)
 	@echo '*** Using flutter $(FLUTTER_VERSION) ...'
-ifneq ($(shell cd "$(FLUTTER_SDK_ROOT)" ; git describe --tags),$(FLUTTER_VERSION))
+ifneq ($(shell [ -d "$(FLUTTER_SDK_ROOT)" ] && cd "$(FLUTTER_SDK_ROOT)" && git describe --tags),$(FLUTTER_VERSION))
 	cd "$(FLUTTER_SDK_ROOT)" ; git checkout $(FLUTTER_VERSION) || ( git fetch && git checkout $(FLUTTER_VERSION) )
 endif
 	"$(FLUTTER)" precache

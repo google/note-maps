@@ -46,7 +46,7 @@
 # The same policy is applied to the archive repo, if there is one.
 # repo_maxage: 0
 
-repo_url: https://note-maps-fdroid.web.app/fdroid/repo
+repo_url: https://note-maps.web.app/fdroid/repo
 repo_name: Note Maps F-Droid Repo
 repo_icon: fdroid-icon.png
 repo_description: >-
@@ -60,7 +60,7 @@ repo_description: >-
 # older ones going to the archive. Set it to 0, and there will be no archive
 # repository, and no need to define the other archive_ values.
 archive_older: 3
-archive_url: https://note-maps-fdroid.web.app/archive
+archive_url: https://note-maps.web.app/archive
 archive_name: Note Maps F-Droid Archive
 archive_icon: fdroid-icon.png
 archive_description: >-

@@ -117,3 +117,14 @@ $(OUTDIR)/fdroid/fdroid/repo/index.xml: $(OUTDIR)/flutter/nm_app/app/outputs/apk
 	mkdir -p $(OUTDIR)/fdroid/fdroid
 	mv fdroid/repo $(OUTDIR)/fdroid/fdroid/repo
 	mv fdroid/archive $(OUTDIR)/fdroid/archive
+
+.PHONY: docker-push
+docker-push:
+	docker load < $(shell nix-build -A docker-flutter-tools)
+	docker load < $(shell nix-build -A docker-android-tools)
+	docker push notemaps/flutter-tools:latest
+	docker push notemaps/android-tools:latest
+
+make-download.tar: download
+	rm -f result make-download.t*
+	git check-ignore **/* | tar --no-derefernce --files-from /dev/stdin --autocompress --create --file "$@"

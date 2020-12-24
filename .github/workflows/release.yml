@@ -36,6 +36,8 @@ jobs:
         path: ./out/flutter/nm_app/app/outputs/apk/release/*
   build-fdroid:
     runs-on: ubuntu-20.04
+    needs:
+    - build-apk
     steps:
     - uses: actions/download-artifact@master
       with:
@@ -66,7 +68,7 @@ jobs:
   publish-to-firebase:
     needs:
     - test
-    - build-apk
+    - build-fdroid
     - build-web
     runs-on: ubuntu-20.04
     steps:

@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     tags:
+env:
+  NIXPKGS_ALLOW_UNFREE: 1
 jobs:
   test:
     runs-on: ubuntu-20.04

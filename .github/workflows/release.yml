@@ -48,7 +48,7 @@ jobs:
     - uses: actions/download-artifact@master
       with:
         name: apk
-        path: ./out/publish-to-firebase
+        path: ./out/flutter/nm_app/app/outputs/apk/release/
     - run: nix-shell --run "make -e fdroid DEBUG="
       env:
         FIREBASE_TOKEN: ${{ secrets.FDROID_SECRET }}

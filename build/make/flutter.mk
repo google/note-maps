@@ -13,10 +13,8 @@
 # limitations under the License.
 
 FLUTTER_VERSION = 1.23.0-7.0.pre
-FLUTTER = "$(FLUTTER_SDK_ROOT)/bin/flutter"
-DART = "$(FLUTTER_SDK_ROOT)/bin/dart"
-
-https://github.com/flutter/flutter/archive/1.26.0-1.0.pre.tar.gz
+FLUTTER = "$(abspath $(FLUTTER_SDK_ROOT)/bin/flutter)"
+DART = "$(abspath $(FLUTTER_SDK_ROOT)/bin/dart)"
 
 $(FLUTTER_SDK_ROOT):
 	git clone https://github.com/flutter/flutter.git $(FLUTTER_SDK_ROOT)

@@ -41,20 +41,32 @@ let
   stdenv = pkgs.stdenv;
 
   # TODO: figure out how to use Nix mkOption correctly instead of doing this.
-  target-android   = true;
+  install-flutter  = !stdenv.isDarwin;
+  target-android   = stdenv.isLinux;
   target-ios       = stdenv.isDarwin;
   target-web       = true;
   target-desktop   = true;
 
-  flutterTools = { inherit (pkgs) flutter git; }
+  # TODO: make Nix support installing Flutter on OSX.
+  # TODO: make Nix support installing Chrome on OSX.
+  flutterTools = lib.optionalAttrs (install-flutter) { inherit (pkgs) flutter; }
     // lib.optionalAttrs (target-android) { inherit (pkgs) android-studio; }
     // lib.optionalAttrs (target-ios)     { inherit (pkgs) cocoapods; }
-    // lib.optionalAttrs (target-web)     { inherit (pkgs) google-chrome; }
-    // lib.optionalAttrs (target-desktop && stdenv.isLinux) { inherit (pkgs) clang cmake ninja; }
+    // lib.optionalAttrs (target-web && !stdenv.isDarwin)    { inherit (pkgs) google-chrome; }
+    // lib.optionalAttrs (target-desktop && stdenv.isLinux)  { inherit (pkgs) clang cmake ninja; }
     // lib.optionalAttrs (target-desktop && stdenv.isDarwin) { inherit (pkgs) cocoapods; }
     ;
 
-  flutterConfig = "${pkgs.flutter}/bin/flutter config --android-sdk="
+  # TODO: make Nix support installing Flutter on OSX.
+  flutter = ""
+    + lib.optionalString (install-flutter)  "${pkgs.flutter}/bin/flutter"
+    + lib.optionalString (!install-flutter) "flutter"
+    ;
+  flutterEnv = lib.optionalString (install-flutter) ''
+    export FLUTTER_SDK_ROOT=${pkgs.flutter.unwrapped}
+  '';
+
+  flutterConfig = "${flutter} config --android-sdk="
     + lib.optionalString (target-android)  " --android-studio-dir=${pkgs.android-studio.unwrapped} --enable-android"
     + lib.optionalString (!target-android) " --android-studio-dir= --no-enable-android"
     + lib.optionalString (target-ios)      " --enable-ios"
@@ -95,11 +107,12 @@ in rec
 
   buildInputs = builtins.attrValues ciTools;
   shellInputs = builtins.attrValues devTools;
-  shellHook = ''
-    export FLUTTER_SDK_ROOT=${pkgs.flutter.unwrapped}
+  shellHook = flutterEnv + ''
     echo "Configuring Flutter..."
     ${flutterConfig}
-    echo "Accepting Android licenses..."
-    yes | ${pkgs.flutter}/bin/flutter doctor --android-licenses
+    [ "$CI" -eq "true" ] && (
+      echo "Accepting Android licenses..."
+      yes | ${flutter} doctor --android-licenses
+    )
   '';
 }

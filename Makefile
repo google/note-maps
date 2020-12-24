@@ -63,6 +63,14 @@ $(TMPDIR):
 # later build steps. Required for `gomobile` to be able to find `gobind`.
 export PATH := $(TMPBINDIR):$(PATH)
 
+# Flutter as wrapped for Nix sometimes tries to write to a read-only path. This
+# is a work-around to make it write to the default Linux/OSX location.
+ifeq ($(shell [ -w $HOME ] && echo home),home)
+export PUB_CACHE := $(HOME)/.pub-cache
+else
+export PUB_CACHE := $(TMPDIR)/.pub-cache
+endif
+
 # Initialize variables that will accumulate names of targets defined in other
 # files.
 #

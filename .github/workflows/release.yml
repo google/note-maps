@@ -3,49 +3,83 @@ on:
   release:
   push:
     branches: [main]
+    tags:
+env:
+  NIXPKGS_ALLOW_UNFREE: 1
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2.3.4
     - uses: cachix/install-nix-action@v12
-      with:
-        nix_path: nixpkgs=channel:nixos-stable
     - uses: cachix/cachix-action@v8
       with:
         name: note-maps
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: nix-shell --run "make download DEBUG="
-    - run: nix-shell --run "make lint DEBUG="
-    - run: nix-shell --run "make test DEBUG="
-  build:
-    runs-on: ubuntu-latest
+    - run: nix-shell --run "make -e download DEBUG=1"
+    - run: nix-shell --run "make -e lint DEBUG=1"
+    - run: nix-shell --run "make -e test DEBUG=1"
+  build-apk:
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2.3.4
     - uses: cachix/install-nix-action@v12
-      with:
-        nix_path: nixpkgs=channel:nixos-stable
     - uses: cachix/cachix-action@v8
       with:
         name: note-maps
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: nix-shell --run "make download DEBUG="
-    - run: nix-shell --run "make build DEBUG="
+    - run: nix-shell --run "make -e download DEBUG="
+    - run: nix-shell --run "make -e build DEBUG= FLUTTER_BUILD=apk"
     - uses: actions/upload-artifact@v2
       with:
-        name: result
-        path: ./out/
-  deploy:
+        name: apk
+        path: ./out/flutter/nm_app/app/outputs/apk/release/*
+  build-fdroid:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/download-artifact@master
+      with:
+        name: apk
+        path: ./out/publish-to-firebase
+    - run: nix-shell --run "make -e fdroid DEBUG="
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FDROID_SECRET }}
+    - uses: actions/upload-artifact@v2
+      with:
+        name: fdroid
+        path: ./out/fdroid/*
+  build-web:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2.3.4
+    - uses: cachix/install-nix-action@v12
+    - uses: cachix/cachix-action@v8
+      with:
+        name: note-maps
+        authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+    - run: nix-shell --run "make -e download DEBUG="
+    - run: nix-shell --run "make -e build DEBUG= FLUTTER_BUILD=web"
+    - uses: actions/upload-artifact@v2
+      with:
+        name: web
+        path: ./out/flutter/nm_app/web/
+  publish-to-firebase:
     needs:
-    - build # produces the artifact
-    - test  # but don't bother deploying if tests failed
-    runs-on: ubuntu-latest
+    - test
+    - build-apk
+    - build-web
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@master
     - uses: actions/download-artifact@master
       with:
-        name: result
-        path: ./out/
+        name: fdroid
+        path: ./out/firebase
+    - uses: actions/download-artifact@master
+      with:
+        name: web
+        path: ./out/firebase
+    - run: cd build/firebase ; ln -s ../../out/firebase
     - name: Deploy to Firebase
       uses: w9jds/firebase-action@master
       with:

@@ -15,6 +15,6 @@
 { project ? import ./nix { }
 }:
 project.pkgs.mkShell {
-  buildInputs = project.shellInputs;
+  nativeBuildInputs = project.shellInputs;
   inherit (project) shellHook;
 }

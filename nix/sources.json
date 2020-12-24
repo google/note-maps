@@ -23,16 +23,40 @@
         "url": "https://github.com/nmattia/niv/archive/ba57d5a29b4e0f2085917010380ef3ddc3cf380f.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
+    "nix-fetchers": {
+        "branch": "master",
+        "description": "A set of morally pure fetching builtins for Nix.",
+        "homepage": "",
+        "owner": "target",
+        "repo": "nix-fetchers",
+        "rev": "b7cc311fd5ea4e56f05e31be3d14e0712831f5d5",
+        "sha256": "1lk8qn02k4m5w476jk811gi4293m22nmxfxm3qsp921x60rdf2yl",
+        "type": "tarball",
+        "url": "https://github.com/target/nix-fetchers/archive/b7cc311fd5ea4e56f05e31be3d14e0712831f5d5.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "nixpkgs": {
-        "branch": "unstable",
+        "branch": "nixpkgs-unstable",
         "description": "Nix Packages collection",
         "homepage": "",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "cd63096d6d887d689543a0b97743d28995bc9bc3",
-        "sha256": "1wg61h4gndm3vcprdcg7rc4s1v3jkm5xd7lw8r2f67w502y94gcy",
+        "rev": "2ae527c50e049570dd25132f9325527aa2320e32",
+        "sha256": "0rggj7d5j6mmn5l4p72pj0bdxcsid0wxyjqfivdhmfvlsmh8hadn",
         "type": "tarball",
-        "url": "https://github.com/NixOS/nixpkgs/archive/cd63096d6d887d689543a0b97743d28995bc9bc3.tar.gz",
+        "url": "https://github.com/NixOS/nixpkgs/archive/2ae527c50e049570dd25132f9325527aa2320e32.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
-    }
+    },
+    "fix-autopatchelfhook": {
+         "branch": "fix-autopatchelfhook",
+         "description": "Nix Packages collection",
+         "homepage": null,
+         "owner": "DavHau",
+         "repo": "nixpkgs",
+         "rev": "e815bf181117612752edfffd101778ef984cbb5e",
+         "sha256": "0vwc4nfkf950q89f9rsimpm3xbzgbqzy6yldxklg6n93k3d1vxvp",
+         "type": "tarball",
+         "url": "https://github.com/DavHau/nixpkgs/archive/e815bf181117612752edfffd101778ef984cbb5e.tar.gz",
+         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+     }
 }

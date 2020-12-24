@@ -2,6 +2,8 @@
 *.aar
 # Ignore Java archives (JAR)
 *.jar
+# Ignore Gradle temporary files
+.gradle
 # Ignore Nix stuff
 /.direnv
 /result
@@ -15,3 +17,8 @@
 /out
 /VERSION
 /VERSION_INFO
+# Ignore F-Droid data that's not meant to be versioned
+/fdroid/keystore.*
+/fdroid/tmp
+/fdroid/repo
+/fdroid/archive

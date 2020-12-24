@@ -14,6 +14,11 @@
 
 # Default configuration, can be customized on the command line or in config.mk.
 #
+# Example using environemnt variables:
+#
+#   export FLUTTER_SDK_ROOT := $(dirname $(which flutter))
+#   make -e
+#
 # Example using the command line:
 #
 #   make OUTDIR="$( mktemp -d )" TMPDIR="$( mktemp -d )"
@@ -21,16 +26,16 @@
 # Example using config.mk:
 #
 #   echo 'FLUTTER_BUILD := web android' >> config.mk
-#   echo 'FLUTTER_ROOT := ~/flutter' >> config.mk
+#   echo 'FLUTTER_SDK_ROOT := ~/flutter' >> config.mk
 #   make
 #
 DEBUG = 1
 COVERAGE = 1
-OUTDIR = $(PWD)/out
-TMPDIR = $(PWD)/tmp
+OUTDIR = out
+TMPDIR = tmp
 FLUTTER_BUILD = web # appbundle ios linux macos windows ...?
 FLUTTER_DEVICE = #web-server
-FLUTTER_ROOT = $(TMPDIR)/flutter
+FLUTTER_SDK_ROOT = $(TMPDIR)/flutter
 GOMOBILE_TAGS = #android ios macos
 TMPBINDIR := $(TMPDIR)/bin
 
@@ -57,6 +62,14 @@ $(TMPDIR):
 # Make it easy to build temporary binaries that can be found on $PATH during
 # later build steps. Required for `gomobile` to be able to find `gobind`.
 export PATH := $(TMPBINDIR):$(PATH)
+
+# Flutter as wrapped for Nix sometimes tries to write to a read-only path. This
+# is a work-around to make it write to the default Linux/OSX location.
+ifeq ($(shell [ -w $HOME ] && echo home),home)
+export PUB_CACHE := $(HOME)/.pub-cache
+else
+export PUB_CACHE := $(TMPDIR)/.pub-cache
+endif
 
 # Initialize variables that will accumulate names of targets defined in other
 # files.
@@ -93,3 +106,14 @@ build: $(BUILD_TARGETS)
 clean: $(CLEAN_TARGETS)
 	rm -rf $(OUTDIR)
 test: $(TEST_TARGETS)
+
+.PHONY: fdroid
+fdroid: $(OUTDIR)/fdroid/fdroid/repo/index.xml
+$(OUTDIR)/fdroid/fdroid/repo/index.xml: $(OUTDIR)/flutter/nm_app/app/outputs/apk/release/*.apk
+	mkdir -p fdroid/repo
+	cp $^ fdroid/repo/
+	cd fdroid ; fdroid update
+	rm -rf $(OUTDIR)/fdroid
+	mkdir -p $(OUTDIR)/fdroid/fdroid
+	mv fdroid/repo $(OUTDIR)/fdroid/fdroid/repo
+	mv fdroid/archive $(OUTDIR)/fdroid/archive

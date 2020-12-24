@@ -35,7 +35,7 @@ OUTDIR = out
 TMPDIR = tmp
 FLUTTER_BUILD = web # appbundle ios linux macos windows ...?
 FLUTTER_DEVICE = #web-server
-FLUTTER_SDK_ROOT = $(TMPDIR)/flutter 
+FLUTTER_SDK_ROOT = $(TMPDIR)/flutter
 GOMOBILE_TAGS = #android ios macos
 TMPBINDIR := $(TMPDIR)/bin
 

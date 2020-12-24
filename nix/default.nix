@@ -47,10 +47,17 @@ let
   target-web       = true;
   target-desktop   = true;
 
+  stdTools = {
+    inherit (pkgs) coreutils findutils moreutils;
+    inherit (pkgs) git gnugrep gnused;
+  };
+
   # TODO: make Nix support installing Flutter on OSX.
   # TODO: make Nix support installing Chrome on OSX.
-  flutterTools = lib.optionalAttrs (install-flutter) { inherit (pkgs) flutter; }
-    // lib.optionalAttrs (target-android) { inherit (pkgs) android-studio; }
+  flutterBaseTools = { inherit (pkgs) flutter git; };
+  flutterAndroidTools = { inherit (pkgs) android-studio; };
+  flutterTools = lib.optionalAttrs (install-flutter) flutterBaseTools
+    // lib.optionalAttrs (target-android) flutterAndroidTools
     // lib.optionalAttrs (target-ios)     { inherit (pkgs) cocoapods; }
     // lib.optionalAttrs (target-web && !stdenv.isDarwin)    { inherit (pkgs) google-chrome; }
     // lib.optionalAttrs (target-desktop && stdenv.isLinux)  { inherit (pkgs) clang cmake ninja; }
@@ -62,9 +69,6 @@ let
     + lib.optionalString (install-flutter)  "${pkgs.flutter}/bin/flutter"
     + lib.optionalString (!install-flutter) "flutter"
     ;
-  flutterEnv = lib.optionalString (install-flutter) ''
-    export FLUTTER_SDK_ROOT=${pkgs.flutter.unwrapped}
-  '';
 
   flutterConfig = "${flutter} config --android-sdk="
     + lib.optionalString (target-android)  " --android-studio-dir=${pkgs.android-studio.unwrapped} --enable-android"
@@ -76,6 +80,10 @@ let
     + lib.optionalString (target-desktop && stdenv.isLinux) " --enable-linux-desktop"
     + lib.optionalString (target-desktop && stdenv.isDarwin) " --enable-macos-desktop"
     + lib.optionalString (!target-desktop) " --no-enable-linux-desktop --no-enable-macos-desktop"
+    ;
+
+  flutterEnv = []
+    ++ lib.optional (install-flutter) "FLUTTER_SDK_ROOT=${pkgs.flutter.unwrapped}"
     ;
 
   fdroid = pkgs.writeShellScriptBin "fdroid" ''
@@ -95,10 +103,7 @@ in rec
 
   # Additional tools required to build Note Maps in a more controlled
   # environment.
-  ciTools = buildTools // {
-    inherit (pkgs) coreutils findutils moreutils;
-    inherit (pkgs) git gnugrep gnused;
-  };
+  ciTools = stdTools // buildTools;
 
   # Additional tools useful for code work and repository maintenance.
   devTools = buildTools // {
@@ -107,20 +112,36 @@ in rec
 
   buildInputs = builtins.attrValues ciTools;
   shellInputs = builtins.attrValues devTools;
-  shellHook = flutterEnv + ''
-    echo "Configuring Flutter..."
-    ${flutterConfig}
-    [ "$CI" -eq "true" ] && (
-      echo "Accepting Android licenses..."
-      yes | ${flutter} doctor --android-licenses
-    )
-  '';
+  shellHook = ("export " + lib.concatStringsSep " " flutterEnv)
+    + ''
+        ; echo "Configuring Flutter..."
+        ${flutterConfig}
+        [ "$CI" -eq "true" ] && (
+          echo "Accepting Android licenses..."
+          yes | ${flutter} doctor --android-licenses
+        )
+      '';
 
-  buildImage = pkgs.dockerTools.buildImage {
-    name = "note-maps-builder";
-    contents = buildInputs;
+  docker-std-tools = pkgs.dockerTools.buildImage {
+    name = "notemaps/std-tools";
+    tag = "latest";
+    contents = builtins.attrValues stdTools;
+  };
+
+  docker-flutter-tools = pkgs.dockerTools.buildImage {
+    name = "notemaps/flutter-tools";
+    tag = "latest";
+    fromImage = docker-std-tools;
+    contents = builtins.attrValues flutterBaseTools;
     config = {
-      Entrypoint = [ "${pkgs.bash}" ];
+      Env = flutterEnv;
     };
+  };
+
+  docker-android-tools = pkgs.dockerTools.buildImage {
+    name = "notemaps/android-tools";
+    tag = "latest";
+    fromImage = docker-flutter-tools;
+    contents = builtins.attrValues flutterAndroidTools;
   };
 }

@@ -49,7 +49,7 @@ let
   };
 
   gitignoreSource =
-    (import sources."gitignore.nix" { inherit (pkgs) lib; }).gitignoreSource;
+    (import sources.gitignore { inherit (pkgs) lib; }).gitignoreSource;
   src = gitignoreSource ./..;
 
   lib = pkgs.lib;
@@ -101,6 +101,8 @@ let
       "$@"
   '';
 
+  dart2nix = pkgs.writeShellScriptBin "dart2nix" (lib.strings.fileContents ./dart2nix.sh);
+
 in rec
 {
   inherit pkgs src;
@@ -118,6 +120,7 @@ in rec
   # Additional tools useful for code work and repository maintenance.
   devTools = buildTools // {
     inherit (pkgs) niv;
+    inherit dart2nix;
   };
 
   buildInputs = builtins.attrValues ciTools;

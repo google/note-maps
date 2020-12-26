@@ -23,12 +23,27 @@ let
     exec = exec';
   };
 
+  third_party_overlays = [
+    (self: super: {
+      dart = self.callPackage ../third_party/nixpkgs/dart {
+        inherit (super) stdenv fetchurl unzip;
+      };
+    })
+    (self: super: {
+      flutterPackages =
+        self.recurseIntoAttrs (self.callPackage ../third_party/nixpkgs/flutter {
+          dart = super.dart;
+          inherit (super) callPackage;
+        });
+    })
+  ];
+
   flutter_overlay = _: pkgs: {
     flutter = pkgs.flutterPackages.dev;
   };
 
   pkgs = import sources.nixpkgs {
-    overlays = [
+    overlays = third_party_overlays ++ [
       flutter_overlay
     ];
   };

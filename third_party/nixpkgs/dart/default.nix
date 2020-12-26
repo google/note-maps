@@ -6,6 +6,7 @@ let
 
     base = "https://storage.googleapis.com/dart-archive/channels";
     stable_version = "stable";
+    beta_version = "beta";
     dev_version = "dev";
     x86_64 = "x64";
     i686 = "ia32";
@@ -75,6 +76,21 @@ let
     "2.11.0-161.0.dev-x86_64-linux" = fetchurl {
       url = "${base}/${dev_version}/release/${version}/sdk/dartsdk-linux-${x86_64}-release.zip";
       sha256 = "05difz4w2fyh2yq5p5pkrqk59jqljlxhc1i6lmy5kihh6z69r12i";
+    };
+    #"2.10.4-x86_64-darwin" = fetchurl { } # TODO
+    "2.10.4-x86_64-linux" = fetchurl {
+      url = "${base}/${stable_version}/release/${version}/sdk/dartsdk-linux-${x86_64}-release.zip";
+      sha256 = "0pjqj2bsliq13q8b2mk2v07w4vzjqcmr984ygnwv5kx0dp5md7vq";
+    };
+    #"2.12.0-133.2.beta-x86_64-darwin" = fetchurl { } # TODO
+    "2.12.0-133.2.beta-x86_64-linux" = fetchurl {
+      url = "${base}/${beta_version}/release/${version}/sdk/dartsdk-linux-${x86_64}-release.zip";
+      sha256 = "1nq17p6g96xwc9nbnq54b4z22kn7cgzi5l408nxs33m7iinz0fgq";
+    };
+    #"2.12.0-141.0.dev-x86_64-darwin" = fetchurl { } # TODO
+    "2.12.0-141.0.dev-x86_64-linux" = fetchurl {
+      url = "https://storage.googleapis.com/flutter_infra/flutter/4797b066524201e86d6bc5c110104c390899f264/dart-sdk-linux-${x86_64}.zip";
+      sha256 = "1skh3vgz3x5ny75sn6l9kfp42i6r8g2qgwb6viry92qwy77pva45";
     };
   };
 

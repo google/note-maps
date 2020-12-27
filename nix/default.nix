@@ -103,6 +103,8 @@ let
 
   dart2nix = pkgs.writeShellScriptBin "dart2nix" (lib.strings.fileContents ./dart2nix.sh);
 
+  pubCache = pkgs.flutter.mkPubCache { dartPackages = import ../flutter/nm_app/deps.nix; };
+
 in rec
 {
   inherit pkgs src;
@@ -133,4 +135,31 @@ in rec
       yes | ${flutter} doctor --android-licenses
     )
   '';
+
+  app = {
+    apk = stdenv.mkDerivation {
+      inherit src;
+      name = "note-maps-apk";
+      buildPhase = ''
+	export PUB_CACHE="${pubCache}/libexec/pubcache"
+        cd flutter/nm_app
+	${pkgs.flutter}/bin/flutter build apk --split-per-abi
+      '';
+      installPhase = ''
+	cp -r flutter/nm_app/build/app/outputs/apk/release/* $out/
+      '';
+    };
+    web = stdenv.mkDerivation {
+      inherit src;
+      name = "note-maps-web";
+      buildPhase = ''
+	export PUB_CACHE="${pubCache}/libexec/pubcache"
+        cd flutter/nm_app
+	${pkgs.flutter}/bin/flutter build web
+      '';
+      installPhase = ''
+	cp -r flutter/nm_app/build/app/web/* $out/
+      '';
+    };
+  };
 }

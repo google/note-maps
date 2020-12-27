@@ -39,6 +39,11 @@
     if (@available(macOS 10.15, iOS 13.0, tvOS 13.0, *)) {
         // This measures how long it takes to launch your application.
         [self measureWithMetrics:@[[[XCTApplicationLaunchMetric alloc] init]] block:^{
+            XCUIApplication *app = [[XCUIApplication alloc] init];
+            [app.staticTexts[@"About Note Maps"] tap];
+            [app.buttons[@"CLOSE"] tap];
+            [app.staticTexts[@"Dismiss"] tap];
+            [[[[app.windows childrenMatchingType:XCUIElementTypeOther].element childrenMatchingType:XCUIElementTypeOther].element childrenMatchingType:XCUIElementTypeOther].element tap];
             [[[XCUIApplication alloc] init] launch];
         }];
     }

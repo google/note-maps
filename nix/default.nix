@@ -121,7 +121,7 @@ in rec
 
   # Additional tools useful for code work and repository maintenance.
   devTools = buildTools // {
-    inherit (pkgs) niv;
+    inherit (pkgs) fastlane niv;
     inherit dart2nix;
   };
 

@@ -128,6 +128,8 @@ in rec
   buildInputs = builtins.attrValues ciTools;
   shellInputs = builtins.attrValues devTools;
   shellHook = flutterEnv + ''
+    export LC_ALL=en_US.UTF-8
+    export LANG=en_US.UTF-8
     echo "Configuring Flutter..."
     ${flutterConfig}
     [ "$CI" -eq "true" ] && (

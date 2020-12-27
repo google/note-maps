@@ -41,6 +41,8 @@ let
       HOME=../.. # required for pub upgrade --offline, ~/.pub-cache
                  # path is relative otherwise it's replaced by /build/flutter
       export PUB_CACHE="${pub_cache}/libexec/pubcache"
+      mkdir -p $DART_SDK_PATH
+      cp -r ${dart}/* $DART_SDK_PATH
 
       (cd "$FLUTTER_TOOLS_DIR" && "$PUB" upgrade --offline)
 

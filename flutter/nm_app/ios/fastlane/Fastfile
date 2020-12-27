@@ -21,3 +21,7 @@ platform :ios do
     # add actions here: https://docs.fastlane.tools/actions
   end
 end
+
+lane :beta do
+  build_app(scheme: "Runner")
+end

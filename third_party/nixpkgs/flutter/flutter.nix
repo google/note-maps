@@ -1,9 +1,11 @@
 { channel, pname, version, sha256Hash, patches, dart
+, dartPackages ? []
 , filename ? "flutter_linux_${version}-${channel}.tar.xz"}:
 
 { bash, buildFHSUserEnv, cacert, coreutils, git, makeWrapper, runCommand, stdenv
 , fetchurl, alsaLib, dbus, expat, libpulseaudio, libuuid, libX11, libxcb
-, libXcomposite, libXcursor, libXdamage, libXfixes, libGL, nspr, nss, systemd }:
+, libXcomposite, libXcursor, libXdamage, libXfixes, libGL, nspr, nss
+, symlinkJoin, systemd,tree }:
 
 let
   drvName = "flutter-${channel}-${version}";
@@ -16,7 +18,7 @@ let
       sha256 = sha256Hash;
     };
 
-    buildInputs = [ makeWrapper git ];
+    buildInputs = [ makeWrapper git pub_cache ];
 
     inherit patches;
 
@@ -38,6 +40,7 @@ let
 
       HOME=../.. # required for pub upgrade --offline, ~/.pub-cache
                  # path is relative otherwise it's replaced by /build/flutter
+      export PUB_CACHE="${pub_cache}/libexec/pubcache"
 
       (cd "$FLUTTER_TOOLS_DIR" && "$PUB" upgrade --offline)
 
@@ -99,6 +102,38 @@ let
         systemd
       ];
   };
+
+  # Create a Dart package for use with PUB_CACHE=$nix_profile/libexec/pubcache.
+  dartPackage = { src, name ? "${src.name}", pubpath ? "hosted/pub.dartlang.org" }:
+  stdenv.mkDerivation {
+    inherit src name;
+    preUnpack = ''
+      mkdir $name
+      cd $name
+      sourceRoot=.
+    '';
+    installPhase = ''
+      PUB_CACHE=$out/libexec/pubcache
+      mkdir -p $PUB_CACHE/${pubpath}/${name}
+      cp -r . $PUB_CACHE/${pubpath}/${name}
+    '';
+    #dontBuild = true;
+  };
+
+  # Create a Dart package from pub.dev
+  fetchDartPackage = { name, version, sha256, pubpath ? "hosted/pub.dartlang.org", url ? "https://storage.googleapis.com/pub-packages/packages/${name}-${version}.tar.gz" }:
+  dartPackage {
+    src = fetchurl {
+      name = baseNameOf (toString url); # TODO: hey, shouldn't this be the default or something? maybe it already is!
+      inherit sha256 url;
+    };
+    name = "${name}-${version}";
+  };
+
+  mkPubCache = { dartPackages }:
+    symlinkJoin { name="pub-cache"; paths=dartPackages; };
+
+  pub_cache = mkPubCache { dartPackages = builtins.map fetchDartPackage dartPackages; };
 
 in runCommand drvName {
   startScript = ''

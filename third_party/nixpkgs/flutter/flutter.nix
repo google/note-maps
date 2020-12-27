@@ -135,9 +135,9 @@ let
   };
 
   mkPubCache = { dartPackages }:
-    symlinkJoin { name="pub-cache"; paths=dartPackages; };
+    symlinkJoin { name="pub-cache"; paths=(builtins.map fetchDartPackage dartPackages); };
 
-  pub_cache = mkPubCache { dartPackages = builtins.map fetchDartPackage dartPackages; };
+  pub_cache = mkPubCache { inherit dartPackages; };
 
 in runCommand drvName {
   startScript = ''
@@ -148,7 +148,7 @@ in runCommand drvName {
   '';
   preferLocalBuild = true;
   allowSubstitutes = false;
-  passthru = { unwrapped = flutter; };
+  passthru = { unwrapped = flutter; inherit mkPubCache; };
   meta = with stdenv.lib; {
     description = "Flutter is Google's SDK for building mobile, web and desktop with Dart";
     longDescription = ''

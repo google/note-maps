@@ -25,6 +25,8 @@ let
     postPatch = ''
       patchShebangs --build ./bin/
       find ./bin/ -executable -type f -exec patchelf --set-interpreter $(cat $NIX_CC/nix-support/dynamic-linker) {} \;
+      mkdir -p ./bin/cache/pkg/sky_engine
+      echo -e "name: sky_engine\nversion: 0.0.99\nauthor: Flutter Authors <flutter-dev@googlegroups.com>\ndescription: Dart SDK extensions for dart:ui\nhomepage: http://flutter.io\nenvironment:\n  sdk: '>=1.11.0 <3.0.0'\n" > ./bin/cache/pkg/sky_engine/pubspec.yaml
     '';
 
     buildPhase = ''

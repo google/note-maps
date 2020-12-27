@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FLUTTER_VERSION = 1.23.0-7.0.pre
+FLUTTER_VERSION = 1.26.0-1.0.pre
 FLUTTER = "$(abspath $(FLUTTER_SDK_ROOT)/bin/flutter)"
 DART = "$(abspath $(FLUTTER_SDK_ROOT)/bin/dart)"
 

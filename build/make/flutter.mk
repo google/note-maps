@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FLUTTER_VERSION = 1.23.0-7.0.pre
+FLUTTER_VERSION = 1.26.0-1.0.pre
 FLUTTER = "$(abspath $(FLUTTER_SDK_ROOT)/bin/flutter)"
 DART = "$(abspath $(FLUTTER_SDK_ROOT)/bin/dart)"
 
@@ -23,7 +23,7 @@ $(FLUTTER_SDK_ROOT):
 .mk.flutter.download: $(FLUTTER_SDK_ROOT)
 	@echo '*** Using flutter $(FLUTTER_VERSION) ...'
 ifneq ($(shell [ -d "$(FLUTTER_SDK_ROOT)" ] && cd "$(FLUTTER_SDK_ROOT)" && git describe --tags),$(FLUTTER_VERSION))
-	cd "$(FLUTTER_SDK_ROOT)" ; git checkout $(FLUTTER_VERSION) || ( git fetch && git checkout $(FLUTTER_VERSION) )
+	[ ! -w "$(FLUTTER_SDK_ROOT)" ] || ( cd "$(FLUTTER_SDK_ROOT)" ; git checkout $(FLUTTER_VERSION) || ( git fetch && git checkout $(FLUTTER_VERSION) ) )
 endif
 	"$(FLUTTER)" precache
 ifneq ($(shell which flutter),$(FLUTTER))

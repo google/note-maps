@@ -23,18 +23,33 @@ let
     exec = exec';
   };
 
+  third_party_overlays = [
+    (self: super: {
+      dart = self.callPackage ../third_party/nixpkgs/dart {
+        inherit (super) stdenv fetchurl unzip;
+      };
+    })
+    (self: super: {
+      flutterPackages =
+        self.recurseIntoAttrs (self.callPackage ../third_party/nixpkgs/flutter {
+          dart = super.dart;
+          inherit (super) callPackage;
+        });
+    })
+  ];
+
   flutter_overlay = _: pkgs: {
     flutter = pkgs.flutterPackages.dev;
   };
 
   pkgs = import sources.nixpkgs {
-    overlays = [
+    overlays = third_party_overlays ++ [
       flutter_overlay
     ];
   };
 
   gitignoreSource =
-    (import sources."gitignore.nix" { inherit (pkgs) lib; }).gitignoreSource;
+    (import sources.gitignore { inherit (pkgs) lib; }).gitignoreSource;
   src = gitignoreSource ./..;
 
   lib = pkgs.lib;
@@ -86,6 +101,10 @@ let
       "$@"
   '';
 
+  dart2nix = pkgs.writeShellScriptBin "dart2nix" (lib.strings.fileContents ./dart2nix.sh);
+
+  pubCache = pkgs.flutter.mkPubCache { dartPackages = import ../flutter/nm_app/deps.nix; };
+
 in rec
 {
   inherit pkgs src;
@@ -103,6 +122,7 @@ in rec
   # Additional tools useful for code work and repository maintenance.
   devTools = buildTools // {
     inherit (pkgs) niv;
+    inherit dart2nix;
   };
 
   buildInputs = builtins.attrValues ciTools;
@@ -115,4 +135,31 @@ in rec
       yes | ${flutter} doctor --android-licenses
     )
   '';
+
+  app = {
+    apk = stdenv.mkDerivation {
+      inherit src;
+      name = "note-maps-apk";
+      buildPhase = ''
+	export PUB_CACHE="${pubCache}/libexec/pubcache"
+        cd flutter/nm_app
+	${pkgs.flutter}/bin/flutter build apk --split-per-abi
+      '';
+      installPhase = ''
+	cp -r flutter/nm_app/build/app/outputs/apk/release/* $out/
+      '';
+    };
+    web = stdenv.mkDerivation {
+      inherit src;
+      name = "note-maps-web";
+      buildPhase = ''
+	export PUB_CACHE="${pubCache}/libexec/pubcache"
+        cd flutter/nm_app
+	${pkgs.flutter}/bin/flutter build web
+      '';
+      installPhase = ''
+	cp -r flutter/nm_app/build/app/web/* $out/
+      '';
+    };
+  };
 }

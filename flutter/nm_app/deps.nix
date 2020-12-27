@@ -1,0 +1,37 @@
+[
+  { name = "async"; version = "2.5.0-nullsafety.3"; sha256 = "0h2vyxzsz2wss0hdjd69cxqz7d4hgvzddifjw70qh8nric6fqg88"; }
+  { name = "boolean_selector"; version = "2.1.0-nullsafety.3"; sha256 = "02281slh678vaa15yqzvd0vlwngaab5aq6bj4dd914k0wffdmpw6"; }
+  { name = "characters"; version = "1.1.0-nullsafety.5"; sha256 = "1mndfrcg5pbp3s33nb4q32hs4hwr3pblg8xzq2pwvaji73g79zhv"; }
+  { name = "charcode"; version = "1.2.0-nullsafety.3"; sha256 = "00zlmxgsza9v3g0g091ygh8mr9cfwry2bwgv09myishrx3bd9323"; }
+  { name = "clock"; version = "1.1.0-nullsafety.3"; sha256 = "0r14yac286pks91xlg051063czlimxk93473k172c8fd3y4m2za7"; }
+  { name = "collection"; version = "1.15.0-nullsafety.5"; sha256 = "1qq01nnp0yqr4x72xckybxay460m2glj3pp4j9m91sfhyg7mmjhl"; }
+  { name = "convert"; version = "2.1.1"; sha256 = "1zff9lifka6y4zm4ybsvyp6y6j3xfh1schs4h5aisvz22z23pa1z"; }
+  { name = "crypto"; version = "2.1.5"; sha256 = "1s77x3n71kajbszqgiahr1czllmgll6b5nr4qpk4n557qvrjiriw"; }
+  { name = "cupertino_icons"; version = "0.1.3"; sha256 = "1rnfgmsyxxmrnb2pya7ys22wlr6fdjyy642dxff772b9016dldx9"; }
+  { name = "fake_async"; version = "1.2.0-nullsafety.3"; sha256 = "0fpqm42cg81zsbylvwj7cxnfa3da15xyd80hn001c1lzpp36wz9r"; }
+  { name = "js"; version = "0.6.3-nullsafety.3"; sha256 = "153vwfv6zhgyf05l8kgv2hmndwzdvlhdp1xmx7wqbmb7gm0mkdfz"; }
+  { name = "logger"; version = "0.9.4"; sha256 = "168qh129gpspc6k9871rd0f5xkssmj1slwir7va1xxik4jlxy304"; }
+  { name = "matcher"; version = "0.12.10-nullsafety.3"; sha256 = "1da10q4mrb8wwg4larvqiwcigjnc3ljyfa4rbrv8g3b4l421dr77"; }
+  { name = "meta"; version = "1.3.0-nullsafety.6"; sha256 = "0sr31zd13y34sxsxlkrxrgr86sn0xk8w3qkbzaz4cplf2mcd135f"; }
+  { name = "path"; version = "1.8.0-nullsafety.3"; sha256 = "06d1z0r01kz0x6an7d63779jhqilil43s5ylvwscjrhgql7qfi2m"; }
+  { name = "platform_detect"; version = "1.4.0"; sha256 = "04sjwc7xxflqx8gp29xy2fym5g1swdjg7l62pw5kr0mg347dvcda"; }
+  { name = "plugin_platform_interface"; version = "1.0.2"; sha256 = "1wa6dzmadbfampwrk7wzl1mbc99grlblb6mppsw8hwrg0781fg9w"; }
+  { name = "pub_semver"; version = "1.4.4"; sha256 = "0715yyj0da92chbf2r3cb3d56g0y1v31cj42zsn5rf6cmq5fql9w"; }
+  { name = "quill_delta"; version = "2.0.0"; sha256 = "0pw92h597ljgxrwv8mq340mjk5k1ax6dh7y1in2q9h8v8ix1ynbz"; }
+  { name = "quiver_hashcode"; version = "2.0.0"; sha256 = "1b3n87ki7248zk80k4wsfxpdn3ghqipmaksjkw303yh8qd9ld3q1"; }
+  { name = "source_span"; version = "1.8.0-nullsafety.4"; sha256 = "0f05izncanjsj832r2f417f1lknghamf40xk27aadn7x212jhpcq"; }
+  { name = "stack_trace"; version = "1.10.0-nullsafety.6"; sha256 = "0qjfg85f1113fs1agf7idifji3g44s01w64yasvzi9bmjgksz650"; }
+  { name = "stream_channel"; version = "2.1.0-nullsafety.3"; sha256 = "0flya8yk46ijp8hd1yzz93fpj86h0zd24fk0m8x8cb67l587amnb"; }
+  { name = "string_scanner"; version = "1.1.0-nullsafety.3"; sha256 = "189f5biw9iajdpwvfnwfh5738hx1pr1z8wisnlm555qy82g2lvf3"; }
+  { name = "term_glyph"; version = "1.2.0-nullsafety.3"; sha256 = "0383sx9b9w8rz4mwva62wnp0nffv8a8pqdvgkmlz7m5h3vlgpz94"; }
+  { name = "test_api"; version = "0.2.19-nullsafety.6"; sha256 = "1nnp11l0504x6ymgbdij9g0hgrhcdy9gnq8bjbcnfwvj6p4vy05f"; }
+  { name = "typed_data"; version = "1.3.0-nullsafety.5"; sha256 = "07ag7yfcndmrykn42pgnia80cys15b7rf599145qk12s5zbhvhaf"; }
+  { name = "url_launcher"; version = "5.6.0"; sha256 = "16r85i7gvn5ifc5igw0lqsgsj1wmq8xbzvp2g603jjajxl3iqzar"; }
+  { name = "url_launcher_linux"; version = "0.0.1+1"; sha256 = "1xdq10s1c3asbqcq6rv9bc0dlxlfmyxy4pn3ic40ql7r3n6iwag9"; }
+  { name = "url_launcher_macos"; version = "0.0.1+8"; sha256 = "05lii6dslmm930h4sja524h3qym1sdfs99338xdhmpyy0bzccgah"; }
+  { name = "url_launcher_platform_interface"; version = "1.0.8"; sha256 = "0w33xw9h7qnd51a285fxmnr6f1n3jijswynqlx1xxs6h6asrpz4p"; }
+  { name = "url_launcher_web"; version = "0.1.3+2"; sha256 = "0v81ff4ikxxs7vncmx9gqlacjpnfazn3jz636725da926g54hywd"; }
+  { name = "url_launcher_windows"; version = "0.0.1+1"; sha256 = "1hjgbal5ak6c9nyp0accd3g6qf7xwhnwky2hlgjvjyx90izblq49"; }
+  { name = "uuid"; version = "2.2.2"; sha256 = "1c41dm6aw2q0a9qjyjvgm5a367lxy9g77ycrqv548yw0dvcab5mx"; }
+  { name = "vector_math"; version = "2.1.0-nullsafety.5"; sha256 = "17y5ah0cb5xx49lvhpiy1vkibl86vll4yn64v600w30zlbsfcp2w"; }
+]

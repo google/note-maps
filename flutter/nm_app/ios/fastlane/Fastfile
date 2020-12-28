@@ -24,4 +24,5 @@ end
 
 lane :beta do
   build_app(scheme: "Runner")
+  upload_to_testflight
 end

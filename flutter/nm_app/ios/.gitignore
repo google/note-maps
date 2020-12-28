@@ -25,6 +25,7 @@ Flutter/flutter_export_environment.sh
 ServiceDefinitions.json
 Runner/GeneratedPluginRegistrant.*
 screenshots
+fastlane
 
 # Exceptions to above rules.
 !default.mode1v3

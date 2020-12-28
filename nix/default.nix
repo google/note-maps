@@ -28,6 +28,9 @@ let
       dart = self.callPackage ../third_party/nixpkgs/dart {
         inherit (super) stdenv fetchurl unzip;
       };
+      fastlane = self.callPackage ../third_party/nixpkgs/fastlane {
+        inherit (super) stdenv bundlerEnv ruby bundlerUpdateScript makeWrapper;
+      };
     })
     (self: super: {
       flutterPackages =

@@ -56,7 +56,7 @@ jobs:
       with:
         name: web
         path: ./out/firebase
-    - run: cd build/firebase ; ln -s ../../out/firebase
+    - run: cd build/firebase ; rm -f web ; ln -s ../../out/firebase web
     - name: Deploy to Firebase
       uses: w9jds/firebase-action@master
       with:

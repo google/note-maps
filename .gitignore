@@ -22,3 +22,5 @@
 /fdroid/tmp
 /fdroid/repo
 /fdroid/archive
+# Ignore authentication credentials and private keys
+/secret

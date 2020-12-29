@@ -28,6 +28,9 @@ let
       dart = self.callPackage ../third_party/nixpkgs/dart {
         inherit (super) stdenv fetchurl unzip;
       };
+      fastlane = self.callPackage ../third_party/nixpkgs/fastlane {
+        inherit (super) stdenv bundlerEnv ruby bundlerUpdateScript makeWrapper;
+      };
     })
     (self: super: {
       flutterPackages =
@@ -121,13 +124,15 @@ in rec
 
   # Additional tools useful for code work and repository maintenance.
   devTools = buildTools // {
-    inherit (pkgs) niv;
+    inherit (pkgs) fastlane niv;
     inherit dart2nix;
   };
 
   buildInputs = builtins.attrValues ciTools;
   shellInputs = builtins.attrValues devTools;
   shellHook = flutterEnv + ''
+    export LC_ALL=en_US.UTF-8
+    export LANG=en_US.UTF-8
     echo "Configuring Flutter..."
     ${flutterConfig}
     [ "$CI" -eq "true" ] && (

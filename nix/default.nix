@@ -139,19 +139,15 @@ let
       inherit sw_vers;
     });
     PUB_CACHE = "${pubCache}/libexec/pubcache";
+    FLUTTER_BUILD = "${build}";
+    FLUTTER_SDK_ROOT = "${pkgs.flutter.unwrapped}";
     buildPhase = ''
       export src2=$TMP/mutable-src
       cp --recursive $src $src2
       chmod -R u+wX $src2
-
-      export HOME="$src2"
       export XDG_CONFIG_HOME=$src2/.config
       export XDG_CACHE_HOME=$src2/.cache
-
-      cd $src2/flutter/nm_app
-      ${flutterConfig} --build-dir=$( realpath --relative-to=. $out )
-      ${pkgs.flutter}/bin/flutter pub get --offline
-      ${pkgs.flutter}/bin/flutter build ${build} --no-pub
+      make -e OUTDIR=$out DEBUG= build
     '';
     installPhase = ''
       cd $out

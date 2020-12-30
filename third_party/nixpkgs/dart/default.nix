@@ -93,7 +93,7 @@ let
     };
     "2.12.0-133.0.dev-x86_64-linux" = fetchurl {
       url = "https://storage.googleapis.com/flutter_infra/flutter/4797b066524201e86d6bc5c110104c390899f264/dart-sdk-linux-${x86_64}.zip";
-      sha256 = "0000000000000000000000000000000000000000000000000000";
+      sha256 = "1skh3vgz3x5ny75sn6l9kfp42i6r8g2qgwb6viry92qwy77pva45";
     };
   };
 

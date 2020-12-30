@@ -40,7 +40,7 @@ in {
     channel = "dev";
     version = "1.25.0-8.0.pre";
     sha256Hash
-      = lib.optionalString (stdenvNoCC.isLinux) "0000000000000000000000000000000000000000000000000000"
+      = lib.optionalString (stdenvNoCC.isLinux) "0psgrirska7l5z50yxwf4mz9k9y16fj4xbcpmb2v5dqhdcpa1pvf"
       + lib.optionalString (stdenvNoCC.isDarwin) "0aay3ynfrfajgmqmjzrgvvf3nv36q5dl5073flpjnvprl1h890z4"
       ;
     patches = getPatches ./patches/dev;

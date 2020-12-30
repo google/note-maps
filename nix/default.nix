@@ -160,6 +160,10 @@ in with builtins ; rec
 {
   inherit pkgs src buildTools;
 
+  # So that it can be built and cached on its own with
+  # `nix-build ./nix -A pubCache | cachix push ...`
+  inherit pubCache;
+
   # Additional tools required to build Note Maps in a more controlled
   # environment.
   ciTools = buildTools // {

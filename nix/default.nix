@@ -101,7 +101,13 @@ let
       "$@"
   '';
 
-  dart2nix = pkgs.writeShellScriptBin "dart2nix" (lib.strings.fileContents ./dart2nix.sh);
+  dart2nix = pkgs.runCommandLocal "dart2nix" {
+    script = ./dart2nix.sh;
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+  } ''
+    makeWrapper $script $out/bin/dart2nix.sh \
+      --prefix PATH : ${lib.makeBinPath (with pkgs; [ jq yq mustache-go ])}
+  '';
 
   pubCache = pkgs.flutter.mkPubCache { dartPackages = import ../flutter/nm_app/deps.nix; };
 

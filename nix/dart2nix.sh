@@ -24,26 +24,20 @@ pubspec2nix() {
   local url_template='https://storage.googleapis.com/pub-packages/packages/{{description.name}}-{{version}}.tar.gz'
   local grep_template='  { name = .{{lock.description.name}}.; version = .{{lock.version}}.; sha256 = '
   local pkg_template='  { name = "{{lock.description.name}}"; version = "{{lock.version}}"; sha256 = "{{sha256}}"; }'
-  local PATH="$PATH:/nix/store/s8jfiwj2p6hn3ycj840naf2jkac4azx6-jq-1.6-bin/bin" # 'yq' doesn't work unless jq is in $PATH
-  local yq="/nix/store/0l1wva10sr2yyqj78pf4nbqkq1al61qr-python3.8-yq-2.11.1/bin/yq"
-  local mustache="/nix/store/q1lllkgf81rzpsf9lyhw1660q55zn3l7-mustache-go-1.2.0/bin/mustache"
   [ -f "$nix_out" ] || echo '[' > "$nix_out"
-  $yq -c '.packages[]' "$pubspec_in" | while read dep ; do
-    match="$( echo '{"lock":'$dep'}' | $mustache <(echo "$grep_template") )"
+  yq -c '.packages[]' "$pubspec_in" | while read dep ; do
+    match="$( echo '{"lock":'$dep'}' | mustache <(echo "$grep_template") )"
     if grep "$match" "$nix_out" ; then
-      #echo "already got this one, moving on: $dep"
-      #elif true; then
-      #echo "would download this one: $match"
       true
     else
       url="$(
         echo "$dep" \
-        | $mustache <(echo "$url_template")
+        | mustache <(echo "$url_template")
       )"
       sha256="$(
-        /nix/store/ckl9rqyajn45crcyw3b743bcaqx1j2w1-nix-2.3.10/bin/nix-hash --flat --base32 --type sha256 <(curl -L "$url")
+        nix-hash --flat --base32 --type sha256 <(curl -L "$url")
       )"
-      echo '{"sha256":"'$sha256'","lock":'$dep'}' | $mustache <(echo "$pkg_template") >> "$nix_out"
+      echo '{"sha256":"'$sha256'","lock":'$dep'}' | mustache <(echo "$pkg_template") >> "$nix_out"
     fi
   done
   echo ']' >> "$nix_out"

@@ -56,7 +56,7 @@ let
   stdenv = pkgs.stdenv;
 
   # TODO: figure out how to use Nix mkOption correctly instead of doing this.
-  install-flutter  = !stdenv.isDarwin;
+  install-flutter  = true;
   target-android   = stdenv.isLinux;
   target-ios       = stdenv.isDarwin;
   target-web       = true;
@@ -101,6 +101,12 @@ let
       "$@"
   '';
 
+  sw_vers = pkgs.writeShellScriptBin "sw_vers" ''
+    echo "ProductName:	macOS"
+    echo "ProductVersion:	11.1"
+    echo "BuildVersion:	20C69"
+  '';
+
   dart2nix = pkgs.runCommandLocal "dart2nix" {
     script = ./dart2nix.sh;
     nativeBuildInputs = [ pkgs.makeWrapper ];
@@ -111,18 +117,53 @@ let
 
   pubCache = pkgs.flutter.mkPubCache { dartPackages = import ../flutter/nm_app/deps.nix; };
 
+  # Minimum tools required to build Note Maps.
+  buildTools = { inherit (pkgs) git go stdenv; inherit fdroid; } // flutterTools;
+
+  # Build a Flutter app! It's not a pure deriviation though: it requires the
+  # following commands (or something similar) to be run in the root of this
+  # repo:
+  #   HOME=$pwd XDG_CACHE_HOME=$pwd/.cache nix-shell --run 'flutter precache'
+  # This is wrapped up in ./nix.mk.
+  mkFlutterApp =
+  { build # 'appbundle', 'ios', 'web', etc.
+  , name ? "note-maps-${build}"
+  }: stdenv.mkDerivation {
+    inherit name src;
+    buildInputs = builtins.attrValues (buildTools // {
+      inherit (pkgs) coreutils findutils moreutils;
+      inherit (pkgs) stdenvNoCC;
+      inherit (pkgs) which unzip;
+      inherit sw_vers;
+    });
+    buildPhase = ''
+      export PUB_CACHE="${pubCache}/libexec/pubcache"
+      export HOME="$TMP"
+      mkdir -p $HOME/.config/flutter
+      export XDG_CACHE_HOME="$TMP/.cache"
+      mkdir -p $XDG_CACHE_HOME/flutter
+      ln -s $src/.cache/flutter/* $XDG_CACHE_HOME/flutter/
+      rm $XDG_CACHE_HOME/flutter/lockfile
+      ${flutterConfig}
+      cp --recursive --symbolic-link $src $HOME/mutable-src
+      cd $HOME/mutable-src/flutter/nm_app
+      ${pkgs.flutter}/bin/flutter build ${build} --no-pub
+    '';
+    installPhase = ''
+      cd $HOME/mutable-src/flutter/nm_app/build/app
+      cp -r * $out/
+    '';
+  };
+
 in rec
 {
-  inherit pkgs src;
-
-  # Minimum tools required to build Note Maps.
-  buildTools = { inherit (pkgs) go stdenv; inherit fdroid; } // flutterTools;
+  inherit pkgs src buildTools;
 
   # Additional tools required to build Note Maps in a more controlled
   # environment.
   ciTools = buildTools // {
     inherit (pkgs) coreutils findutils moreutils;
-    inherit (pkgs) git gnugrep gnused;
+    inherit (pkgs) gnugrep gnused;
   };
 
   # Additional tools useful for code work and repository maintenance.
@@ -136,29 +177,7 @@ in rec
   shellHook = flutterEnv;
 
   app = {
-    apk = stdenv.mkDerivation {
-      inherit src;
-      name = "note-maps-apk";
-      buildPhase = ''
-	export PUB_CACHE="${pubCache}/libexec/pubcache"
-        cd flutter/nm_app
-	${pkgs.flutter}/bin/flutter build apk --split-per-abi
-      '';
-      installPhase = ''
-	cp -r flutter/nm_app/build/app/outputs/apk/release/* $out/
-      '';
-    };
-    web = stdenv.mkDerivation {
-      inherit src;
-      name = "note-maps-web";
-      buildPhase = ''
-	export PUB_CACHE="${pubCache}/libexec/pubcache"
-        cd flutter/nm_app
-	${pkgs.flutter}/bin/flutter build web
-      '';
-      installPhase = ''
-	cp -r flutter/nm_app/build/app/web/* $out/
-      '';
-    };
+    appbundle = mkFlutterApp { build = "appbundle"; };
+    web = mkFlutterApp { build = "web"; };
   };
 }

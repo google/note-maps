@@ -68,6 +68,7 @@ let
     #// lib.optionalAttrs (target-android) { inherit (pkgs) android-studio; }
     // lib.optionalAttrs (target-ios)     { inherit (pkgs) cocoapods; }
     // lib.optionalAttrs (target-desktop && stdenv.isLinux)  { inherit (pkgs) clang cmake ninja; }
+    // lib.optionalAttrs (stdenv.isDarwin) { inherit (pkgs) xcodebuild; }
     // lib.optionalAttrs (target-desktop && stdenv.isDarwin) { inherit (pkgs) cocoapods; }
     ;
 
@@ -137,27 +138,19 @@ let
       inherit (pkgs) which unzip;
       inherit sw_vers;
     });
+    PUB_CACHE = "${pubCache}/libexec/pubcache";
     buildPhase = ''
-      export PUB_CACHE="${pubCache}/libexec/pubcache"
-      echo "\$PUB_CACHE=$PUB_CACHE"
-
       export src2=$TMP/mutable-src
       cp --recursive $src $src2
       chmod -R u+wX $src2
 
       export HOME="$src2"
-      echo "\$HOME=$HOME"
       export XDG_CONFIG_HOME=$src2/.config
       export XDG_CACHE_HOME=$src2/.cache
 
-      echo "\$XDG_CONFIG_HOME/flutter:"
-      ${pkgs.tree}/bin/tree -L 3 $XDG_CONFIG_HOME/flutter
-      echo "\$XDG_CACHE_HOME/flutter:"
-      ${pkgs.tree}/bin/tree -L 3 $XDG_CACHE_HOME/flutter
-
-      #${flutterConfig}
       cd $src2/flutter/nm_app
-      ${pkgs.flutter}/bin/flutter config --build-dir=$( realpath --relative-to=. $out )
+      ${flutterConfig} --build-dir=$( realpath --relative-to=. $out )
+      ${pkgs.flutter}/bin/flutter pub get --offline
       ${pkgs.flutter}/bin/flutter build ${build} --no-pub
     '';
     installPhase = ''

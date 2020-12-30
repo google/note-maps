@@ -28,4 +28,7 @@ jobs:
     - run: nix-shell --run "make -e -j lint test"
     - run: nix-build -A web
   test:
+    runs-on: ubuntu-20.04
     needs: [test-linux, test-osx]
+    steps:
+    - run: true

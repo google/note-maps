@@ -188,10 +188,15 @@ in rec
   shellHook = flutterEnv;
 
   app = {
+  } // lib.optionalAttrs (target-android) {
     appbundle = mkFlutterApp { build = "appbundle"; };
-    ios       = mkFlutterApp { build = "ios"; };
-    web       = mkFlutterApp { build = "web"; };
-    macos     = mkFlutterApp { build = "macos"; };
-    linux     = mkFlutterApp { build = "linux"; };
+  } // lib.optionalAttrs (target-ios) {
+    ios = mkFlutterApp { build = "ios"; };
+  } // lib.optionalAttrs (target-web) {
+    web = mkFlutterApp { build = "web"; };
+  } // lib.optionalAttrs (target-desktop && stdenv.isDarwin) {
+    macos = mkFlutterApp { build = "macos"; };
+  } // lib.optionalAttrs (target-desktop && stdenv.isLinux) {
+    linux = mkFlutterApp { build = "linux"; };
   };
 }

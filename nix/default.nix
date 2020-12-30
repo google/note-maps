@@ -127,14 +127,7 @@ in rec
 
   buildInputs = builtins.attrValues ciTools;
   shellInputs = builtins.attrValues devTools;
-  shellHook = flutterEnv + ''
-    echo "Configuring Flutter..."
-    ${flutterConfig}
-    [ "$CI" -eq "true" ] && (
-      echo "Accepting Android licenses..."
-      yes | ${flutter} doctor --android-licenses
-    )
-  '';
+  shellHook = flutterEnv;
 
   app = {
     apk = stdenv.mkDerivation {

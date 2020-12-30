@@ -178,6 +178,9 @@ in rec
 
   app = {
     appbundle = mkFlutterApp { build = "appbundle"; };
-    web = mkFlutterApp { build = "web"; };
+    ios       = mkFlutterApp { build = "ios"; };
+    web       = mkFlutterApp { build = "web"; };
+    macos     = mkFlutterApp { build = "macos"; };
+    linux     = mkFlutterApp { build = "linux"; };
   };
 }

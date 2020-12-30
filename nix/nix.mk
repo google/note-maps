@@ -22,20 +22,29 @@
 .PHONY:
 default:
 	@echo "Usage:"
-	@echo "  make -f nix/nix.mk precache  # once after any significant change"
-	@echo "  make -f nix/nix.mk appbundle"
-	@echo "  make -f nix/nix.mk ios"
-	@echo "  make -f nix/nix.mk web"
-	@echo "  make -f nix/nix.mk clean precache appbundle ios web"
+	@echo "  make -f nix/nix.mk precache  # after each significant change"
+	@echo "  make -f nix/nix.mk app.apk"
+	@echo "  make -f nix/nix.mk app.appbundle"
+	@echo "  make -f nix/nix.mk app.ios"
+	@echo "  make -f nix/nix.mk app.linux"
+	@echo "  make -f nix/nix.mk app.macos"
+	@echo "  make -f nix/nix.mk app.web"
+	@echo "  make -f nix/nix.mk clean precache app.web"
 
-precache:
+all: clean precache apk appbundle ios linux macos web
+
+precache: .precache.mk
+.precache.mk:
 	HOME=$(abspath .) XDG_CACHE_HOME=$(abspath .cache) nix-shell --run "flutter precache"
 	touch $@
 
-web:       .precache.mk ; nix-build -A app.$@ -o $@
-appbundle: .precache.mk ; nix-build -A app.$@ -o $@
-ios:       .precache.mk ; nix-build -A app.$@ -o $@
+apk:       ; nix-build -A app.$@ -o $@
+appbundle: ; nix-build -A app.$@ -o $@
+ios:       ; nix-build -A app.$@ -o $@
+linux:     ; nix-build -A app.$@ -o $@
+macos:     ; nix-build -A app.$@ -o $@
+web:       ; nix-build -A app.$@ -o $@
 
 .PHONY:
 clean:
-	rm -f .*.mk
+	rm -f .*.mk apk appbundle ios linux macos web

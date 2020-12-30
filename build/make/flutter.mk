@@ -76,10 +76,8 @@ endif
 	$(if $(findstring $(1),apk),--split-per-abi)
 
 define flutter_build =
+	$(FLUTTER) config --build-dir=$(shell realpath --relative-to=$(dir $@) $(OUTDIR))
 	cd $(dir $@) ; $(FLUTTER) $(call .mk.flutter.build,$(subst .,,$(suffix $@)))
-	mkdir -p $(OUTDIR)/$(dir $@)
-	rm -rf $(subst $(dir $@)/build/,$(OUTDIR)/$(dir $@),$(wildcard $(dir $@)/build/*))
-	cp -r $(dir $@)build/* $(OUTDIR)/$(dir $@)
 endef
 
 define flutter_test =

@@ -47,8 +47,12 @@ DOWNLOAD_TARGETS += .mk.flutter.download
 
 flutter_find_srcs = $(shell find $(1) -name '*.dart')
 
+ifdef IN_NIX_SHELL
+FLUTTER_PUB_GET_FLAGS=--offline
+endif
+
 define flutter_pub_get =
-	cd $(dir $@) && $(FLUTTER) pub get
+	cd $(dir $@) && $(FLUTTER) pub get $(FLUTTER_PUB_GET_FLAGS)
 	touch $@
 endef
 

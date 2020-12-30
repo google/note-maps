@@ -95,8 +95,9 @@ include build/make/flutter.mk
 
 # TODO: resolve build problems with keychain module on OSX
 #include cmd/note-maps/build.mk
-include dart/nm_delta/build.mk
-include dart/nm_delta_notus/build.mk
+# TODO: resolve "download" problems with Dart when run through Nix
+#include dart/nm_delta/build.mk
+#include dart/nm_delta_notus/build.mk
 # TODO: resolve build problems with nm_gql_go_link
 #include flutter/nm_gql_go_link/build.mk
 include flutter/nm_app/build.mk

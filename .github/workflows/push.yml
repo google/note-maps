@@ -3,7 +3,7 @@ on: push
 env:
   NIXPKGS_ALLOW_UNFREE: 1
 jobs:
-  test:
+  test-linux:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2.3.4
@@ -15,6 +15,7 @@ jobs:
     - run: nix-shell --run "make -e download"
     - run: nix-shell --run "make -e -j lint test"
     - run: nix-build -A web
+  test-osx:
     runs-on: macos-11.0
     steps:
     - uses: actions/checkout@v2.3.4
@@ -26,3 +27,5 @@ jobs:
     - run: nix-shell --run "make -e download"
     - run: nix-shell --run "make -e -j lint test"
     - run: nix-build -A web
+  test:
+    needs: [test-linux, test-osx]

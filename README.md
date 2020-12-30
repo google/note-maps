@@ -97,57 +97,47 @@ How to update a subtree:
     git fetch third_party/zefyr master
     git subtree pull --prefix third_party/zefyr third_party/zefyr master --squash
 
-### Development Environment
+### With Nix
 
-Requirements:
+Dependencies:
 
-*   GNU Make
+*  Use Linux or MacOS.
+*  [Nix][].
 
-Optional:
+Test or build following the instructions for "without Nix", but run each
+command through `nix-shell`. For example, `nix-shell --run "cd flutter/nm_app;
+flutter run"`.
 
-*   Flutter. To re-use an existing Flutter installation, create a `config.mk`
-    file in the root of this repository and set `FLUTTER_ROOT` to the location
-    of your Flutter installation. However, note the current version of Flutter
-    in `FLUTTER_ROOT` will be modified by `make download`.
+To build a final release,
 
-If you've got the time and the disk space, [Nix][] is a neat way to get a
-consistent set of build tools for reproducible builds:
+1. `nix-shell --run "make -e download"`
+1. `nix-build -A web` (or `-A appbundle`, `-A ios`, etc.)
+1. Copy outputs from `./result`.
 
-1. [Install Nix][].
-1. Copy `nix/shell.nix` to the root of this repository.
-1. In the root of this repository, run `nix-shell` to launch a shell that
-   includes all build dependencies. The first time this is done, it will take a
-   few minutes.
+### Without Nix
 
-You can use [direnv][] to make this easier:
+Dependencies:
 
-1. [install direnv][].
-1. In the root of this repository, run `cp nix/envrc .envrc` and `direnv
-   allow`.
-1. Optionally install [nix-direnv][] to cache the `nix-shell` environment.
+*   Flutter
+*   [GNU Make][] (note for OSX: not `brew install gnumake`, not `brew install
+    make`)
 
-[Nix]: https://nixos.org/
-[Install Nix]: https://nixos.org/guides/install-nix.html
-[direnv]: https://direnv.net/
-[install direnv]: https://direnv.net/docs/installation.html
-[nix-direnv]: https://github.com/nix-community/nix-direnv
-[Install Flutter]: https://flutter.dev/docs/get-started/install
-
-### Building
-
-Most tasks are automated through a [GNU Make][] makefile in the root of this
-repository:
-
-    gnumake format lint test build
-
+[Nix]: https://nixos.org/guides/install-nix.html
 [GNU Make]: https://www.gnu.org/software/make/
 
-Installing and running the Flutter app is best done directly through the
-`flutter` command.
+There are a few useful make targets. For starters, this should cover most cases
+during development: `make -e download format lint test`.
 
-    cd flutter
-    cd nm_app
-    flutter run
+You can run the app from its directory, `./flutter/nm_app`, as you would any
+Flutter app: `cd flutter/nm_app ; flutter run`.
+
+You can build final releases this way too, but they may not match the
+reproducible build outputs we (hope to) get by using Nix.  This should work if
+you've already done a `make -e download`:
+
+1. `make -e build FLUTTER_BUILD="web appbundle ios"` (or just
+   `FLUTTER_BUILD="web"`, etc.)
+1. Copy outputs from `./out`
 
 ### Source Code Headers
 

@@ -77,9 +77,6 @@ let
     + lib.optionalString (install-flutter)  "${pkgs.flutter}/bin/flutter"
     + lib.optionalString (!install-flutter) "flutter"
     ;
-  flutterEnv = lib.optionalString (install-flutter) ''
-    export FLUTTER_SDK_ROOT=${pkgs.flutter.unwrapped}
-  '';
 
   flutterConfig = "${flutter} config --android-sdk="
     + lib.optionalString (target-android)  " --enable-android" # --android-studio-dir=${pkgs.android-studio.unwrapped}"
@@ -117,6 +114,11 @@ let
 
   pubCache = pkgs.flutter.mkPubCache { dartPackages = import ../flutter/nm_app/deps.nix; };
 
+  env = lib.optionalAttrs (install-flutter) {
+    FLUTTER_SDK_ROOT = "${pkgs.flutter.unwrapped}";
+    PUB_CACHE = "${pubCache}/libexec/pubcache";
+  };
+
   # Minimum tools required to build Note Maps.
   buildTools = { inherit (pkgs) git go stdenv; inherit fdroid; } // flutterTools;
 
@@ -130,7 +132,7 @@ let
   mkFlutterApp =
   { build # 'appbundle', 'ios', 'web', etc.
   , name ? "note-maps-${build}"
-  }: stdenv.mkDerivation {
+  }: stdenv.mkDerivation ({
     inherit name src;
     buildInputs = builtins.attrValues (buildTools // {
       inherit (pkgs) coreutils findutils moreutils;
@@ -139,12 +141,11 @@ let
       inherit sw_vers;
     });
     PUB_CACHE = "${pubCache}/libexec/pubcache";
-    FLUTTER_BUILD = "${build}";
-    FLUTTER_SDK_ROOT = "${pkgs.flutter.unwrapped}";
     buildPhase = ''
       export src2=$TMP/mutable-src
       cp --recursive $src $src2
       chmod -R u+wX $src2
+      export HOME=$src2/.config
       export XDG_CONFIG_HOME=$src2/.config
       export XDG_CACHE_HOME=$src2/.cache
       make -e OUTDIR=$out DEBUG= build
@@ -153,9 +154,9 @@ let
       cd $out
       ${pkgs.tree}/bin/tree
     '';
-  };
+  } // env);
 
-in rec
+in with builtins ; rec
 {
   inherit pkgs src buildTools;
 
@@ -168,13 +169,19 @@ in rec
 
   # Additional tools useful for code work and repository maintenance.
   devTools = buildTools // {
-    inherit (pkgs) niv;
+    inherit (pkgs) bash niv;
     inherit dart2nix;
   };
 
   buildInputs = builtins.attrValues ciTools;
   shellInputs = builtins.attrValues devTools;
-  shellHook = flutterEnv;
+
+  # Convert env to an 'export KEY=VALUE ...' string:
+  shellHook = "export " + (
+    builtins.concatStringsSep " " (
+      attrValues ( mapAttrs (name: value: name+"="+value) env )
+    )
+  );
 
   app = {
   } // lib.optionalAttrs (target-android) {

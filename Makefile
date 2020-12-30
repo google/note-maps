@@ -39,6 +39,17 @@ FLUTTER_SDK_ROOT = $(TMPDIR)/flutter
 GOMOBILE_TAGS = #android ios macos
 TMPBINDIR := $(TMPDIR)/bin
 
+# Flutter and Go use environment variables like these to decide where to write
+# temporary files during precache and build phases. Nix won't let them write to
+# the default $HOME. Instead, we precache to these folders in an "impure"
+# precache phase so that their contents will be included as part of the source
+# code during the build phase.
+ifdef IN_NIX_SHELL
+export HOME            = $(abspath .)
+export XDG_CONFIG_HOME = $(abspath .config)
+export XDG_CACHE_HOME  = $(abspath .cache)
+endif
+
 ifneq ($(realpath config.mk),)
 include config.mk
 endif
@@ -62,14 +73,6 @@ $(TMPDIR):
 # Make it easy to build temporary binaries that can be found on $PATH during
 # later build steps. Required for `gomobile` to be able to find `gobind`.
 export PATH := $(TMPBINDIR):$(PATH)
-
-# Flutter as wrapped for Nix sometimes tries to write to a read-only path. This
-# is a work-around to make it write to the default Linux/OSX location.
-ifeq ($(shell [ -w $HOME ] && echo home),home)
-export PUB_CACHE := $(HOME)/.pub-cache
-else
-export PUB_CACHE := $(TMPDIR)/.pub-cache
-endif
 
 # Initialize variables that will accumulate names of targets defined in other
 # files.

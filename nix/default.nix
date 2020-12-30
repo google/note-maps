@@ -65,9 +65,8 @@ let
   # TODO: make Nix support installing Flutter on OSX.
   # TODO: make Nix support installing Chrome on OSX.
   flutterTools = lib.optionalAttrs (install-flutter) { inherit (pkgs) flutter; }
-    // lib.optionalAttrs (target-android) { inherit (pkgs) android-studio; }
+    #// lib.optionalAttrs (target-android) { inherit (pkgs) android-studio; }
     // lib.optionalAttrs (target-ios)     { inherit (pkgs) cocoapods; }
-    // lib.optionalAttrs (target-web && !stdenv.isDarwin)    { inherit (pkgs) google-chrome; }
     // lib.optionalAttrs (target-desktop && stdenv.isLinux)  { inherit (pkgs) clang cmake ninja; }
     // lib.optionalAttrs (target-desktop && stdenv.isDarwin) { inherit (pkgs) cocoapods; }
     ;
@@ -82,8 +81,8 @@ let
   '';
 
   flutterConfig = "${flutter} config --android-sdk="
-    + lib.optionalString (target-android)  " --android-studio-dir=${pkgs.android-studio.unwrapped} --enable-android"
-    + lib.optionalString (!target-android) " --android-studio-dir= --no-enable-android"
+    + lib.optionalString (target-android)  " --enable-android" # --android-studio-dir=${pkgs.android-studio.unwrapped}"
+    + lib.optionalString (!target-android) " --no-enable-android" # --android-studio-dir="
     + lib.optionalString (target-ios)      " --enable-ios"
     + lib.optionalString (!target-ios)     " --no-enable-ios"
     + lib.optionalString (target-web)      " --enable-web"

@@ -122,7 +122,9 @@ let
   # Build a Flutter app! It's not a pure deriviation though: it requires the
   # following commands (or something similar) to be run in the root of this
   # repo:
-  #   HOME=$pwd XDG_CACHE_HOME=$pwd/.cache nix-shell --run 'flutter precache'
+  #   ( XDG_CONFIG_HOME=$pwd/.config \
+  #     XDG_CACHE_HOME=$pwd/.cache \
+  #     nix-shell --run 'flutter precache' )
   # This is wrapped up in ./nix.mk.
   mkFlutterApp =
   { build # 'appbundle', 'ios', 'web', etc.
@@ -137,20 +139,30 @@ let
     });
     buildPhase = ''
       export PUB_CACHE="${pubCache}/libexec/pubcache"
-      export HOME="$TMP"
-      mkdir -p $HOME/.config/flutter
-      export XDG_CACHE_HOME="$TMP/.cache"
-      mkdir -p $XDG_CACHE_HOME/flutter
-      ln -s $src/.cache/flutter/* $XDG_CACHE_HOME/flutter/
-      rm $XDG_CACHE_HOME/flutter/lockfile
-      ${flutterConfig}
-      cp --recursive --symbolic-link $src $HOME/mutable-src
-      cd $HOME/mutable-src/flutter/nm_app
+      echo "\$PUB_CACHE=$PUB_CACHE"
+
+      export src2=$TMP/mutable-src
+      cp --recursive $src $src2
+      chmod -R u+wX $src2
+
+      export HOME="$src2"
+      echo "\$HOME=$HOME"
+      export XDG_CONFIG_HOME=$src2/.config
+      export XDG_CACHE_HOME=$src2/.cache
+
+      echo "\$XDG_CONFIG_HOME/flutter:"
+      ${pkgs.tree}/bin/tree -L 3 $XDG_CONFIG_HOME/flutter
+      echo "\$XDG_CACHE_HOME/flutter:"
+      ${pkgs.tree}/bin/tree -L 3 $XDG_CACHE_HOME/flutter
+
+      #${flutterConfig}
+      cd $src2/flutter/nm_app
+      ${pkgs.flutter}/bin/flutter config --build-dir=$( realpath --relative-to=. $out )
       ${pkgs.flutter}/bin/flutter build ${build} --no-pub
     '';
     installPhase = ''
-      cd $HOME/mutable-src/flutter/nm_app/build/app
-      cp -r * $out/
+      cd $out
+      ${pkgs.tree}/bin/tree
     '';
   };
 

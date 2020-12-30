@@ -35,7 +35,7 @@ all: clean precache apk appbundle ios linux macos web
 
 precache: .precache.mk
 .precache.mk:
-	HOME=$(abspath .) XDG_CACHE_HOME=$(abspath .cache) nix-shell --run "flutter precache"
+	export HOME=$(abspath .) XDG_CACHE_HOME=$(abspath .cache) ; nix-shell --run "flutter precache"
 	touch $@
 
 apk:       ; nix-build -A app.$@ -o $@

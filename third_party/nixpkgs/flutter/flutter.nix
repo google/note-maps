@@ -1,23 +1,33 @@
 { channel, pname, version, sha256Hash, patches, dart
 , dartPackages ? []
-, filename ? "flutter_linux_${version}-${channel}.tar.xz"}:
+}:
 
-{ bash, buildFHSUserEnv, cacert, coreutils, git, makeWrapper, runCommand, stdenv
+{ bash, cacert, coreutils, git, lib, makeWrapper, runCommand, stdenvNoCC
 , fetchurl, alsaLib, dbus, expat, libpulseaudio, libuuid, libX11, libxcb
 , libXcomposite, libXcursor, libXdamage, libXfixes, libGL, nspr, nss
-, symlinkJoin, systemd,tree }:
+, symlinkJoin, systemd, unzip }:
 
 let
+  stdenv = stdenvNoCC;
+  platform
+    = lib.optionalString (stdenv.isLinux) "linux"
+    + lib.optionalString (stdenv.isDarwin) "macos"
+    ;
+  extension
+    = lib.optionalString (stdenv.isLinux) "tar.xz"
+    + lib.optionalString (stdenv.isDarwin) "zip"
+    ;
   drvName = "flutter-${channel}-${version}";
   flutter = stdenv.mkDerivation {
     name = "${drvName}-unwrapped";
 
     src = fetchurl {
       url =
-        "https://storage.googleapis.com/flutter_infra/releases/${channel}/linux/${filename}";
+        "https://storage.googleapis.com/flutter_infra/releases/${channel}/${platform}/flutter_${platform}_${version}-${channel}.${extension}";
       sha256 = sha256Hash;
     };
 
+    nativeBuildInputs = lib.optional (extension == "zip") [ unzip ];
     buildInputs = [ makeWrapper git pub_cache ];
 
     inherit patches;
@@ -63,50 +73,6 @@ let
     '';
   };
 
-  # Wrap flutter inside an fhs user env to allow execution of binary,
-  # like adb from $ANDROID_HOME or java from android-studio.
-  fhsEnv = buildFHSUserEnv {
-    name = "${drvName}-fhs-env";
-    multiPkgs = pkgs: [
-      # Flutter only use these certificates
-      (runCommand "fedoracert" { } ''
-        mkdir -p $out/etc/pki/tls/
-        ln -s ${cacert}/etc/ssl/certs $out/etc/pki/tls/certs
-      '')
-      pkgs.zlib
-    ];
-    targetPkgs = pkgs:
-      with pkgs; [
-        bash
-        curl
-        dart
-        git
-        unzip
-        which
-        xz
-
-        # flutter test requires this lib
-        libGLU
-
-        # for android emulator
-        alsaLib
-        dbus
-        expat
-        libpulseaudio
-        libuuid
-        libX11
-        libxcb
-        libXcomposite
-        libXcursor
-        libXdamage
-        libXfixes
-        libGL
-        nspr
-        nss
-        systemd
-      ];
-  };
-
   # Create a Dart package for use with PUB_CACHE=$nix_profile/libexec/pubcache.
   dartPackage = { src, name ? "${src.name}", pubpath ? "hosted/pub.dartlang.org" }:
   stdenv.mkDerivation {
@@ -144,7 +110,7 @@ in runCommand drvName {
     #!${bash}/bin/bash
     export PUB_CACHE=''${PUB_CACHE:-"$HOME/.pub-cache"}
     export ANDROID_EMULATOR_USE_SYSTEM_LIBS=1
-    ${fhsEnv}/bin/${drvName}-fhs-env ${flutter}/bin/flutter --no-version-check "$@"
+    ${flutter}/bin/flutter --no-version-check "$@"
   '';
   preferLocalBuild = true;
   allowSubstitutes = false;
@@ -157,7 +123,7 @@ in runCommand drvName {
     '';
     homepage = "https://flutter.dev";
     license = licenses.bsd3;
-    platforms = [ "x86_64-linux" ];
+    platforms = [ "x86_64-linux" "x86_64-darwin" ];
     maintainers = with maintainers; [ babariviere ericdallo ];
   };
 } ''

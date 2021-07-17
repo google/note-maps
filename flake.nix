@@ -18,50 +18,36 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    gomod2nix.url = "github:tweag/gomod2nix";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils, gomod2nix }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         namePrefix = "notemaps";
-
-        pkgs = import nixpkgs { inherit system;
+        pkgs = import nixpkgs {
+          inherit system;
           config = { allowUnfree = true; };
           overlays = [
+            gomod2nix.overlay
             (self: super: {
-              dart = import ./third_party/nixpkgs/dart {
-                inherit (super) stdenv fetchurl unzip;
-              };
               fastlane = import ./third_party/nixpkgs/fastlane {
                 inherit (super) stdenv bundlerEnv ruby bundlerUpdateScript makeWrapper;
               };
             })
-            (self: super: {
-              flutterPackages =
-                self.recurseIntoAttrs (import ./third_party/nixpkgs/flutter {
-                  dart = super.dart;
-                  #inherit (super) callPackage;
-                });
-            })
-            (self: super: { flutter = super.flutterPackages.dev; })
           ];
         };
-
-        localPackages = import ./packages.nix { inherit pkgs; };
-
-        packages = {
-          "${namePrefix}-web" = localPackages.app.web;
-          "${namePrefix}-apk" = localPackages.app.apk;
-        };
-
+        goPackages = import ./go.nix { inherit pkgs; };
+      in
+      {
+        packages = { "${namePrefix}" = goPackages."${namePrefix}"; };
         devShell = pkgs.mkShell {
-          inherit (localPackages) shellHook;
-          nativeBuildInputs = localPackages.shellInputs;
+          buildInputs = with pkgs; [
+            flutter
+            go
+            pkgs.gomod2nix
+          ];
         };
-
-      in {
-        inherit packages devShell;
-        defaultPackage = self.packages.${system}."${namePrefix}-web";
+        defaultPackage = self.packages.${system}."${namePrefix}";
       });
 }
-

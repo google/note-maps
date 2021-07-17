@@ -15,4 +15,4 @@
 // Package pb includes protocol buffer message types.
 package pb
 
-//go:generate protoc --go_out=paths=source_relative:. pb.proto
+//go:generate protoc --go_out=paths=source_relative:. tmdb_models_internal.proto

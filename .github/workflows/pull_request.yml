@@ -4,7 +4,7 @@ env:
   NIXPKGS_ALLOW_UNFREE: 1
 jobs:
   build-preview:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-21.10
     steps:
     - uses: actions/checkout@v2.4.0
     - uses: cachix/install-nix-action@v16
@@ -23,7 +23,7 @@ jobs:
   deploy-preview:
     needs:
     - build-preview
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-21.10
     steps:
     - uses: actions/checkout@v2.4.0
     - uses: actions/download-artifact@master

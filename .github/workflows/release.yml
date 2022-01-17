@@ -1,46 +1,51 @@
-name: publish
+name: release
 on:
-  release:
   push:
-    branches: [main]
-    tags:
+    branches-ignore: '**'
 env:
   NIXPKGS_ALLOW_UNFREE: 1
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-21.10
     steps:
-    - uses: actions/checkout@v2.3.4
-    - uses: cachix/install-nix-action@v12
-    - uses: cachix/cachix-action@v8
+    - uses: actions/checkout@v2.4.0
+    - uses: cachix/install-nix-action@v16
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+    - uses: cachix/cachix-action@v10
       with:
         name: note-maps
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: nix-shell --run "make -e download lint test DEBUG=1"
+    - run: nix shell -c make -e download lint test DEBUG=1
   build-apk:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-21.10
     steps:
-    - uses: actions/checkout@v2.3.4
-    - uses: cachix/install-nix-action@v12
-    - uses: cachix/cachix-action@v8
+    - uses: actions/checkout@v2.4.0
+    - uses: cachix/install-nix-action@v16
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+    - uses: cachix/cachix-action@v10
       with:
         name: note-maps
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: nix-shell --run "yes | flutter doctor --android-licenses ; make -e download build DEBUG= FLUTTER_BUILD=apk"
+    - run: yes | nix shell -c flutter doctor --android-licenses
+    - run: nix shell -c make -e download build DEBUG= FLUTTER_BUILD=apk
     - uses: actions/upload-artifact@v2
       with:
         name: apk
         path: ./out/flutter/nm_app/app/outputs/apk/release/*
   build-web:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-21.10
     steps:
-    - uses: actions/checkout@v2.3.4
-    - uses: cachix/install-nix-action@v12
-    - uses: cachix/cachix-action@v8
+    - uses: actions/checkout@v2.4.0
+    - uses: cachix/install-nix-action@v16
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+    - uses: cachix/cachix-action@v10
       with:
         name: note-maps
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: nix-shell --run "make -e download build DEBUG= FLUTTER_BUILD=web"
+    - run: nix shell --run "make -e download build DEBUG= FLUTTER_BUILD=web"
     - uses: actions/upload-artifact@v2
       with:
         name: web
@@ -49,9 +54,9 @@ jobs:
     needs:
     - test
     - build-web
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-21.10
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v2.4.0
     - uses: actions/download-artifact@master
       with:
         name: web

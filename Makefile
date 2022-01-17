@@ -87,16 +87,19 @@ include build/make/gomobile_globals.mk
 
 include build/make/common.mk
 include build/make/go.mk
-include build/make/dart.mk
-include build/make/flutter.mk
+#include build/make/dart.mk # not in use right now
+#include build/make/flutter.mk # not in use right now
 
 # TODO: resolve build problems with keychain module on OSX
 #include cmd/note-maps/build.mk
-include dart/nm_delta/build.mk
-include dart/nm_delta_notus/build.mk
+
+# TODO: bring third_party/zefyr customizations up to date or remove it.
+#include dart/nm_delta/build.mk
+#include dart/nm_delta_notus/build.mk
+#include flutter/nm_app/build.mk
+
 # TODO: resolve build problems with nm_gql_go_link
 #include flutter/nm_gql_go_link/build.mk
-include flutter/nm_app/build.mk
 
 .PHONY: clean test real-all
 download: $(OUTDIR) $(TMPDIR) $(DOWNLOAD_TARGETS)

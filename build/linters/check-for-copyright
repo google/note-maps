@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+#
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Run this linter from the root of the Git working tree to find files that
+# might be missing copyright headers.
+
+# Prints the path of every file that is versioned by Git.
+print-all-versioned-files() { git ls-tree -r --name-only HEAD ; }
+
+# Input: none.
+#
+# Arguments: FORMAT PATTERN...
+#   FORMAT: a printf format string containing '%s'.
+#   PATTERN: a regular expression.
+#
+# Output: a regular expression matching any PATTERN, formatted by FORMAT 
+regexp(){ local fmt="${1}" IFS='|'; shift; printf "$fmt" "(${*})" ; }
+
+full-path() { regexp "^%s$" "${@}" ; }
+top-level-directory() { regexp "^%s/" "${@}" ; }
+subdirectory() { regexp "/%s/" "${@}" ; }
+filename() { regexp "/%s$" "${@}" ; }
+extension() { regexp "\.%s$" "${@}" ; }
+
+filter-by-path() {
+  local patterns=(
+    # The LICENSE file is ok by definition, no need to check it for a header.
+    "$( full-path LICENSE )"
+
+    # Third-party code comes with its own license.
+    "$( top-level-directory third_party )"
+
+    # Automatically generated files don't need a copyright header.
+    "$( subdirectory bindata )"
+
+    "$( filename Appfile Fastfile Gemfile Podfile Snapfile 'deps\.nix' )"
+    "$( regexp "%s" example generated '\.g\.' )"
+
+    # Any file that is probably a generic configuration-only or data-only file.
+    "$( extension entitlements firebaserc )"
+    "$( extension xml ya?ml )"  # correct in... approximately all cases
+
+    # Special purpose configuration files that are just trivial.
+    "$( filename envrc )"
+
+    # Ignore .gitignore and similar files.
+    "$( extension 'git[^/]*' )"
+
+    # TODO: add proper explanations and/or sort into groups above:
+    "$( extension gradle iml jpg json lock md metadata mod modulemap 'pb\.go' plist )"
+    "$( extension properties png storyboard sum toml 'xc[^.]*' xib '[^./]*xproj' )"
+  )
+  local pattern="$( regexp "%s" "${patterns[@]}" )"
+  grep --invert-match --extended "${pattern}"
+  echo "${pattern}"
+  #cat
+}
+
+filter-by-content() {
+  while read path
+  do
+    if [ -f "${path}" ] && ! grep --quiet 'Copyright' "${path}" && ! ( head -n 5 "${path}" | grep --quiet --ignore-case --extended ' (re)?generated|Created by ' )
+    then
+      echo "${path}"
+    fi
+  done
+}
+
+print-all-versioned-files | filter-by-path | filter-by-content

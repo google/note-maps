@@ -19,6 +19,6 @@
 // storage.
 package pb
 
-//go:generate protoc --go_out=paths=source_relative:. pb.proto
+//go:generate protoc --go_out=paths=source_relative:. tmaps.proto
 
-//go:generate protoc --dart_out=../../note_maps/lib/mobileapi/store/pb pb.proto
+//go:generate protoc --dart_out=../../note_maps/lib/mobileapi/store/pb tmaps.proto

@@ -8,7 +8,7 @@ environment:
   sdk: '>=2.8.1 <3.0.0'
 
 dependencies:
-  quill_delta: ^2.0.0
+  quill_delta: ^3.0.0-nullsafety.2
 
 dev_dependencies:
   pedantic: ^1.9.0

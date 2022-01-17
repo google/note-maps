@@ -1,9 +1,5 @@
-name: publish
-on:
-  release:
-  push:
-    branches: [main]
-    tags:
+name: release
+on: [ ]
 env:
   NIXPKGS_ALLOW_UNFREE: 1
 jobs:

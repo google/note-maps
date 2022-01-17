@@ -12,9 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-{ project ? import ./nix { }
-}:
-project.pkgs.mkShell {
-  nativeBuildInputs = project.shellInputs;
-  inherit (project) shellHook;
+{ pkgs }: {
+  notemaps = pkgs.buildGoApplication rec {
+    pname = "notemaps";
+    version = "0.1.1";
+    src = ./.;
+    modules = ./gomod2nix.toml;
+    meta = with pkgs.lib; {
+      platforms = platforms.linux ++ platforms.darwin;
+    };
+  };
 }

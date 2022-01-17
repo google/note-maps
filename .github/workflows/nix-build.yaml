@@ -1,9 +1,9 @@
-name: push
-on: [ ]
+name: nix-build
+on: [ pull_request push release ]
 env:
   NIXPKGS_ALLOW_UNFREE: 1
 jobs:
-  test:
+  build:
     runs-on: ubuntu-21.10
     steps:
     - uses: actions/checkout@v2.3.4
@@ -14,6 +14,4 @@ jobs:
       with:
         name: note-maps
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-    - run: nix shell -c make -e download
-    - run: nix shell -c make -e -j lint test
-    - run: nix shell -c make -e build
+    - run: nix build

@@ -43,8 +43,6 @@
         packages = { "${namePrefix}" = goPackages."${namePrefix}"; };
         devShell = pkgs.mkShell {
           buildInputs = with pkgs; [
-            dart
-            flutter
             go
             pkgs.gomod2nix
           ];

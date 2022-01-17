@@ -1,5 +1,7 @@
 name: pull_request
-on: [ ]
+on:
+  push:
+    branches-ignore: '**'
 env:
   NIXPKGS_ALLOW_UNFREE: 1
 jobs:

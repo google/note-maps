@@ -1,5 +1,5 @@
 name: nix-flake-check
-on: [ pull_request push release ]
+on: [ push ]
 env:
   NIXPKGS_ALLOW_UNFREE: 1
 jobs:

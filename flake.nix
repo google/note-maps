@@ -55,7 +55,17 @@
         };
       in with pkgs;
       let
-        goPackages = import ./go.nix { inherit pkgs; };
+        goPackages = {
+          notemaps-go = pkgs.buildGoApplication rec {
+            pname = "${namePrefix}-go";
+            inherit version;
+            src = ./.;
+            modules = ./gomod2nix.toml;
+            meta = with pkgs.lib; {
+              platforms = platforms.linux ++ platforms.darwin;
+            };
+          };
+        };
         mkRustPackages = (rustExtensions:
           let
             rust = pkgs.rust-bin.nightly.latest.default.override {
@@ -67,8 +77,8 @@
               rustc = rust;
             };
           in {
-            note-maps-rust = naersk-lib.buildPackage {
-              pname = "note-maps-rust";
+            notemaps-rust = naersk-lib.buildPackage {
+              pname = "${namePrefix}-rust";
               inherit version;
               src = self;
               nativeBuildInputs = with pkgs; [
@@ -80,22 +90,28 @@
               copyLibs = true;
             };
           });
+        withAllInOne = (packages:
+          packages // {
+            "${namePrefix}" = symlinkJoin {
+              name = "${namePrefix}";
+              paths = builtins.attrValues packages;
+            };
+          });
       in {
-        packages = { "${namePrefix}" = goPackages."${namePrefix}"; };
+        packages = withAllInOne( goPackages // mkRustPackages [ ] );
+        defaultPackage = self.packages.${system}."${namePrefix}";
         devShell = pkgs.mkShell {
           inputsFrom = with pkgs;
-            builtins.attrValues goPackages ++ builtins.attrValues
-            (mkRustPackages [
+            builtins.attrValues (goPackages // (mkRustPackages [
               "clippy-preview"
               "llvm-tools-preview"
               "rust-analyzer-preview"
               #"rust-docs" # not available in all platforms
               #"rustc-docs" # not available in all platforms
               "rustfmt-preview"
-            ]);
+            ]));
           buildInputs = [ go gomod2nix ];
           depsBuildBuild = with pkgs; [ cargo-edit cargo-tarpaulin ];
         };
-        defaultPackage = self.packages.${system}."${namePrefix}";
       });
 }

@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2020-2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,33 +19,81 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     gomod2nix.url = "github:tweag/gomod2nix";
+    naersk = {
+      url = "github:nix-community/naersk";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, gomod2nix }:
+  outputs = { self, nixpkgs, flake-utils, gomod2nix, naersk, rust-overlay }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         namePrefix = "notemaps";
+        version = "0.2.0";
         pkgs = import nixpkgs {
           inherit system;
-          config = { allowUnfree = true; };
+          config = {
+            android_sdk.accept_license = true;
+            allowUnfreePredicate = pkg:
+              builtins.elem (nixpkgs.lib.getName pkg)
+              [ "android-studio-stable" ];
+          };
           overlays = [
             gomod2nix.overlay
+            rust-overlay.overlay
             (self: super: {
               fastlane = import ./third_party/nixpkgs/fastlane {
-                inherit (super) stdenv bundlerEnv ruby bundlerUpdateScript makeWrapper;
+                inherit (super)
+                  stdenv bundlerEnv ruby bundlerUpdateScript makeWrapper;
               };
             })
           ];
         };
+      in with pkgs;
+      let
         goPackages = import ./go.nix { inherit pkgs; };
-      in
-      {
+        mkRustPackages = (rustExtensions:
+          let
+            rust = pkgs.rust-bin.nightly.latest.default.override {
+              extensions = [ "cargo" "rust-src" "rust-std" "rustc" ]
+                ++ rustExtensions;
+            };
+            naersk-lib = naersk.lib."${system}".override {
+              cargo = rust;
+              rustc = rust;
+            };
+          in {
+            note-maps-rust = naersk-lib.buildPackage {
+              pname = "note-maps-rust";
+              inherit version;
+              src = self;
+              nativeBuildInputs = with pkgs; [
+                clang
+                clangStdenv # for flutter to build linux desktop apps
+                pkg-config
+                rust
+              ];
+              copyLibs = true;
+            };
+          });
+      in {
         packages = { "${namePrefix}" = goPackages."${namePrefix}"; };
         devShell = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            go
-            pkgs.gomod2nix
-          ];
+          inputsFrom = with pkgs;
+            [ go gomod2nix ] ++ builtins.attrValues goPackages
+            ++ builtins.attrValues (mkRustPackages [
+              "clippy-preview"
+              "llvm-tools-preview"
+              "rust-analyzer-preview"
+              "rust-docs"
+              "rustc-docs"
+              "rustfmt-preview"
+            ]);
+          depsBuildBuild = with pkgs; [ cargo-edit cargo-tarpaulin ];
         };
         defaultPackage = self.packages.${system}."${namePrefix}";
       });

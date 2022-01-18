@@ -89,8 +89,8 @@
               "clippy-preview"
               "llvm-tools-preview"
               "rust-analyzer-preview"
-              "rust-docs"
-              "rustc-docs"
+              #"rust-docs" # not available in all platforms
+              #"rustc-docs" # not available in all platforms
               "rustfmt-preview"
             ]);
           depsBuildBuild = with pkgs; [ cargo-edit cargo-tarpaulin ];

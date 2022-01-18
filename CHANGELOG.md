@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - Unreleased
+
+### Changed
+
+- Fixed links in CHANGELOG (this file).
+
 ## [0.1.2] - 2020-12-30
 
 A delayed release capturing v0.1 efforts before moving development on to v0.2.
@@ -142,6 +148,7 @@ to additional 0.1.x releases.
 - Flutter app `note_maps`, using `tmaps`.
 
 [Unreleased]: https://github.com/google/note-maps/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/google/note-maps/compare/v0.1.2...v0.1
 [0.1.2]: https://github.com/google/note-maps/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/google/note-maps/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/google/note-maps/compare/v0.0.6...v0.1.0

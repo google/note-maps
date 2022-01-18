@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2020-12-30
+
+A delayed release capturing v0.1 efforts before moving development on to v0.2.
+Any updates to this version will be tracked in the `v0.1` branch, and may lead
+to additional 0.1.x releases.
+
+### Added
+
+- Added (but also removed) an F-Droid deployment workflow.
+- Early work to deploy automatically through Fastlane. Eventually, this can
+  support deploying to iOS devices via Test Flight.
+- Many minor CI/CD improvements and tweaks.
+- UI tests for the iOS app.
+
+### Changed
+
+- Attempted F-Droid deployment.
+- Build separate `apk` files for Android with `--split-per-abi`
+- Fixed firebase deployment workflow.
+- Switched to nixpkgs-unstable.
+- Updated Android-specific dependencies: addressable, Gradle.
+- Updated Flutter version.
+- Updated GitHub issue templates.
+
+### Removed
+
+- Minor improvements to the (still quite rough) UI showing a little more of
+  what's going on.
+- Added "About" page with app version.
+
 ## [0.1.1] - 2020-12-22
 
 ### Added

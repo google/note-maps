@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- rust/notemaps: An empty Rust application.
+
+### Changed
+
+- Switched from using Nix _without_ flakes to using Nix _with_ flakes.
+- Replaced GitHub actions with new, simpler actions focused on using Nix with
+  flakes and named after what they do (instead how they're triggered).
+
+### Deprecated
+
+- flutter: Flutter and Dart targets are disabled.
+
 ## [0.1.3] - Unreleased
 
 A security fix release, including a couple of security fixes that showed up as

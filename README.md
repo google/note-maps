@@ -5,9 +5,10 @@
 [![Build Status](https://travis-ci.org/google/note-maps.svg?branch=main)](https://travis-ci.org/google/note-maps)
 [![Coverage Status](https://coveralls.io/repos/github/google/note-maps/badge.svg?branch=main)](https://coveralls.io/github/google/note-maps?branch=main)
 
-Note Maps is a personal knowledge base intended for use on mobile devices.
-Notes are structured a bit like the contents of a dictionary, or the index at
-the back of a book.
+Note Maps aims to become a [personal knowledge base][] that can be used on
+smartphones and laptops.
+
+[personal knowledge base]: https://en.wikipedia.org/wiki/Personal_knowledge_base
 
 Each note map is a collection of information about a set of topics. Any topic
 can be described with a set of names, types, and miscellaneous notes that may
@@ -17,9 +18,9 @@ described as another topic. Even the role played by a topic in an association
 can, itself, be described as a topic.
 
 This model is isomorphic to the Topic Maps Data Model defined in [ISO/IEC
-13250-2:2006][]. With Note Maps, it will be possible to for topic maps to be
-imported from or exported to standard data formats including XTM ([ISO/IEC
-13250-3:2013][]) and JTM ([JTM 1.1][]).
+13250-2:2006][]. Note Maps may some day be able to import from or export to
+standard Topic Map data formats like XTM ([ISO/IEC 13250-3:2013][]) and JTM
+([JTM 1.1][]).
 
 [ISO/IEC 13250-2:2006]: https://www.iso.org/standard/40017.html
 [ISO/IEC 13250-3:2013]: https://www.iso.org/standard/59303.html
@@ -31,57 +32,12 @@ explored.
 
 This is not an officially supported Google product.
 
-## Mobile App
-
-The mobile app is a [Flutter][] front end with a UI focused on entering and
-organizing notes.
-
-[Badger]: https://github.com/dgraph-io/badger
-[Flutter]: https://flutter.dev
-[Go]: https://golang.org
-
-Code paths:
-
-- `flutter/nm_app`
-
-### Roadmap
-
-v0.next:
-
-- [ ] Notes are stored in a structure that might become isomorphic with topic
-  maps, initially supporting at least "occurrences" and "names".
-- [ ] Notes can be edited through a rich-text editor.
-- [ ] Notes can be deleted.
-- [ ] All existing notes can be found.
-- [ ] UI includes warnings about the fragility of local data storage.
-
-v0.next+1;
-
-- [ ] Notes can represent "associations" with "roles".
-- [ ] Notes can have one or more "types", where each type is a note.
-- [ ] Notes can have "scope", where a scope is a set of notes.
-
-## Command Line Interface
-
-Emphasis on plain text representations of notes, plausible integration with
-text editor, and client-side-encrypted peer-to-peer storage.
-
-Code paths:
-
-- `./cmd`
-- `./notes`
-
-### Roadmap
-
-- [x] Use [Textilio's ThreadsDB](https://docs.textile.io/threads/) for storage.
-- [ ] Support a minimal [Zettelkasten](https://zettelkasten.de/) workflow.
-
 ## Development
 
 ### Install Git Hooks
 
-This repository comes with a Git pre-commit hook in `./githooks`. Install it:
-`cp ./githooks/pre-commit .git/hooks/pre-commit`.
+This repository comes with a Git pre-commit hook in `./githooks`. Optionally,
+install it: `cp ./githooks/pre-commit .git/hooks/pre-commit`.
 
 ### Manage Git Subtrees
 
@@ -99,62 +55,25 @@ How to update a subtree:
 
 ### Development Environment
 
-Requirements:
-
-*   GNU Make
-
-Optional:
-
-*   Flutter. To re-use an existing Flutter installation, create a `config.mk`
-    file in the root of this repository and set `FLUTTER_ROOT` to the location
-    of your Flutter installation. However, note the current version of Flutter
-    in `FLUTTER_ROOT` will be modified by `make download`.
-
-If you've got the time and the disk space, [Nix][] is a neat way to get a
-consistent set of build tools for reproducible builds:
-
 1. [Install Nix][].
-1. Copy `nix/shell.nix` to the root of this repository.
-1. In the root of this repository, run `nix-shell` to launch a shell that
-   includes all build dependencies. The first time this is done, it will take a
-   few minutes.
-
-You can use [direnv][] to make this easier:
-
-1. [install direnv][].
-1. In the root of this repository, run `cp nix/envrc .envrc` and `direnv
-   allow`.
-1. Optionally install [nix-direnv][] to cache the `nix-shell` environment.
-
-[Nix]: https://nixos.org/
-[Install Nix]: https://nixos.org/guides/install-nix.html
-[direnv]: https://direnv.net/
-[install direnv]: https://direnv.net/docs/installation.html
-[nix-direnv]: https://github.com/nix-community/nix-direnv
-[Install Flutter]: https://flutter.dev/docs/get-started/install
+1. [Install direnv][].
+1. Install [nix-direnv][].
+1. In the root of this repository: `echo "use flake" > .envrc`
 
 ### Building
 
-Most tasks are automated through a [GNU Make][] makefile in the root of this
-repository:
+Build everything:
 
-    gnumake format lint test build
+    nix build
 
-[GNU Make]: https://www.gnu.org/software/make/
+The development environment configured above provides some of the standard
+development tools for the programming languages used in this repository. For
+example:
 
-Installing and running the Flutter app is best done directly through the
-`flutter` command.
-
-    cd flutter
-    cd nm_app
-    flutter run
+    go test ./...
+    cargo test
 
 ### Source Code Headers
-
-Every file containing source code must include copyright and license
-information. This includes any JS/CSS files that you might be serving out to
-browsers. (This is to help well-intentioned people avoid accidental copying that
-doesn't comply with the license.)
 
 Apache header:
 

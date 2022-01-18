@@ -24,3 +24,5 @@
 /fdroid/archive
 # Ignore authentication credentials and private keys
 /secret
+# Ignore Rust temporary build outputs
+/target

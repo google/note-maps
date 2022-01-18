@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "rust/notemaps",
+  "rust/notemaps_core",
 ]
 
 [profile.release]

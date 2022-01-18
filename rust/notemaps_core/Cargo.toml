@@ -1,0 +1,28 @@
+[package]
+name = "notemaps_core"
+version = "0.1.0"
+authors = ["Joshua Tacoma <jtacoma@google.com>"]
+edition = "2021"
+description = "Common structs and traits for representing and editing note maps."
+repository = "https://github.com/google/note-maps"
+license = "Apache-2.0"
+keywords = ["notemaps"]
+categories = ["data-structures", "text-processing"]
+publish = false
+
+[dependencies]
+automerge = { git="https://github.com/automerge/automerge-rs", branch="main" }
+automerge-persistent = { git="https://github.com/jeffa5/automerge-persistent", branch="main" }
+automerge-persistent-sled = { git="https://github.com/jeffa5/automerge-persistent", branch="main" }
+automerge-protocol = { git="https://github.com/automerge/automerge-rs", branch="main" }
+directories = "4.0"
+env_logger = "0.9.0"
+im = "15"
+log = "0.4.14"
+petgraph = "0.6"
+sled = "0.34"
+smol_str = "0.1"
+thiserror = "1.0.30"
+tinyvec = "1.5"
+unicode-segmentation = "1.7"
+uuid = { version="0.8", features=["v4", "v5"] }

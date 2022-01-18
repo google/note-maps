@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.3] - Unreleased
 
+A security fix release, including a couple of security fixes that showed up as
+pull requests.
+
 ### Changed
 
 - Fixed links in CHANGELOG (this file).
+- Bumped version of 'addressable' in Flutter, for both Android and iOS.
 
 ## [0.1.2] - 2020-12-30
 
@@ -147,8 +151,8 @@ to additional 0.1.x releases.
 - Go library `tmaps` for working with Topic Maps, using `kv`.
 - Flutter app `note_maps`, using `tmaps`.
 
-[Unreleased]: https://github.com/google/note-maps/compare/v0.1.2...HEAD
-[0.1.2]: https://github.com/google/note-maps/compare/v0.1.2...v0.1
+[Unreleased]: https://github.com/google/note-maps/compare/v0.1.3...v0.1
+[0.1.3]: https://github.com/google/note-maps/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/google/note-maps/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/google/note-maps/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/google/note-maps/compare/v0.0.6...v0.1.0

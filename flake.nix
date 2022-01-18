@@ -84,8 +84,8 @@
         packages = { "${namePrefix}" = goPackages."${namePrefix}"; };
         devShell = pkgs.mkShell {
           inputsFrom = with pkgs;
-            [ go gomod2nix ] ++ builtins.attrValues goPackages
-            ++ builtins.attrValues (mkRustPackages [
+            builtins.attrValues goPackages ++ builtins.attrValues
+            (mkRustPackages [
               "clippy-preview"
               "llvm-tools-preview"
               "rust-analyzer-preview"
@@ -93,6 +93,7 @@
               #"rustc-docs" # not available in all platforms
               "rustfmt-preview"
             ]);
+          buildInputs = [ go gomod2nix ];
           depsBuildBuild = with pkgs; [ cargo-edit cargo-tarpaulin ];
         };
         defaultPackage = self.packages.${system}."${namePrefix}";

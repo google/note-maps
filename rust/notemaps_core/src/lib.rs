@@ -48,12 +48,14 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use unicode_segmentation::UnicodeSegmentation;
 
-/// The essence of a note is just its identifier.
+/// A [Note] is just an identifier.
 ///
 /// This module copies an idea about type names from entity component systems: the "entity" is just
 /// an identifier while the schema of its properties may be context-dependent.
 ///
-/// Each note has a unique random value:
+/// # Examples
+///
+/// In most cases, create a new note by creating a random one:
 /// ```
 /// use notemaps_core::Note;
 /// let some_note = Note::random();
@@ -63,8 +65,8 @@ use unicode_segmentation::UnicodeSegmentation;
 /// The default note is zero-valued and const constructible:
 /// ```
 /// use notemaps_core::Note;
-/// const nil_note: Note = Note::nil();
-/// assert_eq!(nil_note, Note::default());
+/// const ZERO_NOTE: Note = Note::nil();
+/// assert_eq!(ZERO_NOTE, Note::default());
 /// ```
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct Note(uuid::Uuid);
@@ -341,11 +343,11 @@ impl std::str::FromStr for Note {
 }
 
 #[cfg(test)]
-mod test_node {
-    use super::*;
+mod a_default_note {
+    use super::Note;
 
     #[test]
-    fn default_to_string_is_zeros() {
+    fn is_all_zeros() {
         assert_eq!(
             Note::default().to_string(),
             "00000000000000000000000000000000"
@@ -354,7 +356,7 @@ mod test_node {
     }
 
     #[test]
-    fn zeros_parse_as_default() {
+    fn can_be_parsed_from_zeros() {
         assert_eq!(
             "00000000000000000000000000000000".parse::<Note>().unwrap(),
             Note::default()
@@ -363,14 +365,19 @@ mod test_node {
         let actual: Note = "00000000000000000000000000000000".try_into().unwrap();
         assert_eq!(actual, Note::default());
     }
+}
+
+#[cfg(test)]
+mod a_random_note {
+    use super::Note;
 
     #[test]
-    fn random_is_unique() {
+    fn is_unique() {
         assert_ne!(Note::random(), Note::random());
     }
 
     #[test]
-    fn to_string_and_parse_is_identity() {
+    fn can_be_formatted_and_parsed() {
         assert_eq!(
             Note::default().to_string().parse::<Note>().unwrap(),
             Note::default()

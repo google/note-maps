@@ -18,21 +18,25 @@
 //! the [AtomicNoteMap] trait, which provides shortlived [NoteMap] values that extend [NoteMap]
 //! with [PropertiesMut] properties. The canonical implementation of [AtomicNoteMap] is AutomergeNoteMap.
 
-#![feature(toowned_clone_into)]
-#![feature(extend_one)]
 #![feature(associated_type_bounds)]
+#![feature(extend_one)]
 #![feature(generic_associated_types)]
 #![feature(in_band_lifetimes)]
+#![feature(iter_advance_by)]
+#![feature(step_trait)]
+#![feature(toowned_clone_into)]
 
 mod am;
 pub mod base; // TODO: move or remove or document or rename or something
 mod error;
+mod markup;
 mod text;
 
 pub use self::am::Automerge;
 pub use self::error::Lint;
 pub use self::error::ReadError;
 pub use self::error::UserError;
+pub use self::markup::*;
 pub use self::text::*;
 
 use im::Vector;

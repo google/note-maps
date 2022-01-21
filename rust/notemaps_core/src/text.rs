@@ -48,6 +48,11 @@ pub mod offsets {
             $(#[$outer])*
             #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
             $pub struct $tuple (pub $type);
+            impl From<usize> for $tuple {
+                fn from(src: usize) -> Self {
+                    $tuple(src)
+                }
+            }
             impl Add for $tuple {
                 type Output = Self;
                 fn add(self, other: Self) -> Self {
@@ -62,6 +67,17 @@ pub mod offsets {
             }
             impl Borrow<$type> for $tuple {
                 fn borrow(&self) -> &$type { &self.0 }
+            }
+            impl iter::Step for $tuple {
+                fn steps_between(start: &Self, end: &Self) -> Option<usize> {
+                    iter::Step::steps_between(&start.0, &end.0)
+                }
+                fn forward_checked(x:Self, count: usize) -> Option<Self> {
+                    Some($tuple(iter::Step::forward_checked(x.0, count)?))
+                }
+                fn backward_checked(x:Self, count: usize) -> Option<Self> {
+                    Some($tuple(iter::Step::backward_checked(x.0, count)?))
+                }
             }
         };
     }
@@ -131,6 +147,7 @@ pub mod offsets {
         Copy
         + Eq
         + Ord
+        + From<usize>
         + fmt::Debug
         + Add<Output = Self>
         + Sub<Output = Self>
@@ -138,7 +155,7 @@ pub mod offsets {
         + internal::Sealed
     {
         const ZERO: Self;
-        fn measure(s: &str) -> Self;
+        fn offset_len(s: &str) -> Self;
         fn next_byte<'a>(s: &'a str) -> Option<Byte>;
         fn get_slice<'a>(s: &'a str, range: Range<Self>) -> &'a str;
     }
@@ -146,7 +163,7 @@ pub mod offsets {
     impl Offset for Byte {
         const ZERO: Self = Self(0);
 
-        fn measure(s: &str) -> Byte {
+        fn offset_len(s: &str) -> Byte {
             Byte(str::len(s))
         }
 
@@ -166,7 +183,7 @@ pub mod offsets {
     impl Offset for Char {
         const ZERO: Self = Self(0);
 
-        fn measure(s: &str) -> Char {
+        fn offset_len(s: &str) -> Char {
             Char(s.char_indices().count())
         }
 
@@ -182,7 +199,7 @@ pub mod offsets {
     impl Offset for Grapheme {
         const ZERO: Self = Self(0);
 
-        fn measure(s: &str) -> Grapheme {
+        fn offset_len(s: &str) -> Grapheme {
             use unicode_segmentation::UnicodeSegmentation;
             Grapheme(s.grapheme_indices(/*extended=*/ true).count())
         }
@@ -216,7 +233,21 @@ pub mod offsets {
 
     impl<'a> From<&'a str> for Offsets {
         fn from(s: &'a str) -> Self {
-            Self(Byte::measure(s), Char::measure(s), Grapheme::measure(s))
+            Self(
+                Byte::offset_len(s),
+                Char::offset_len(s),
+                Grapheme::offset_len(s),
+            )
+        }
+    }
+
+    impl<'a> From<&'a super::MeasuredStr> for Offsets {
+        fn from(s: &'a super::MeasuredStr) -> Self {
+            Self(
+                super::MeasuredStr::offset_len(s),
+                super::MeasuredStr::offset_len(s),
+                super::MeasuredStr::offset_len(s),
+            )
         }
     }
 
@@ -291,7 +322,33 @@ pub mod offsets {
         }
     }
 
-    /// [ToByteOffsets] can be implemented for any type that represents UTF-8 encoded text.
+    /// The [Iterator] type returned by [StrExt::byte_offsets] for `StrExt<Char>` and
+    /// `StrExt<Grapheme>`.
+    pub struct ByteOffsets<I: Iterator<Item = (usize, X)>, X>(I, iter::Once<usize>);
+
+    impl<I: Iterator<Item = (usize, X)>, X> ByteOffsets<I, X> {
+        fn new(iter: I, len: usize) -> Self {
+            Self(iter, iter::once(len))
+        }
+    }
+
+    impl<I: Iterator<Item = (usize, X)>, X> Iterator for ByteOffsets<I, X> {
+        type Item = Byte;
+        fn next(&mut self) -> Option<Byte> {
+            self.0
+                .next()
+                .map(|t| t.0)
+                .or_else(|| self.1.next())
+                .map(Into::into)
+        }
+    }
+
+    /// An associated types trait for [StrExt].
+    pub trait StrExtTypes<'a, O: Offset> {
+        type ByteOffsets: Iterator<Item = Byte>;
+    }
+
+    /// [StrExt] can be implemented for any type that represents UTF-8 encoded text.
     ///
     /// Implementations must be able to convert any [RangeBounds] type with offsets of type `O` to
     /// a simple [Range] value with offsets of type [Byte]. In the general case, and for `O` types
@@ -303,7 +360,7 @@ pub mod offsets {
     ///
     /// # Panics
     ///
-    /// [ToByteOffsets::try_to_byte_offsets] implementations _should_ safely return an error when
+    /// [StrExt::try_to_byte_offsets] implementations _should_ safely return an error when
     /// given offsets beyond the length of the contained text. However, some implementations may
     /// panic.
     ///
@@ -313,22 +370,75 @@ pub mod offsets {
     /// # Examples
     ///
     /// ```rust
-    /// use notemaps_core::offsets::ToByteOffsets;
+    /// use notemaps_core::offsets::StrExt;
     /// use notemaps_core::offsets::*;
     ///
     /// let hello = "👋🏻";
     /// assert_eq!(hello.try_to_byte_offsets(..Char(1)), Ok(Byte(0)..Byte(4)));
     /// assert_eq!(hello.try_to_byte_offsets(..Grapheme(1)), Ok(Byte(0)..Byte(8)));
     /// ```
-    pub trait ToByteOffsets<O: Copy + Eq + fmt::Debug> {
-        fn max_offset(&self) -> O;
+    pub trait StrExt<O: Offset>
+    where
+        for<'a> &'a Self: StrExtTypes<'a, O>,
+    {
+        /// Returns an iterator over all byte offsets that delimit `O` units within the [str]-like
+        /// value `self`.
+        ///
+        /// Implementations must include:
+        ///
+        /// 1. The initial (zero) offset that marks the beginning of the first unit.
+        /// 1. Each offset that separates one unit from the next.
+        /// 1. The final offset that marks the end of the last unit, or zero if the string is empty.
+        ///
+        /// Following the above, for an empty string this method should return an iterator that
+        /// finds only one (zero) value, indicating the byte offset of the end of the string.
+        fn byte_offsets<'a>(&'a self) -> <&'a Self as StrExtTypes<'a, O>>::ByteOffsets;
+
+        /// Returns the byte offset at the beginning of the `O` unit at `offset` in `self`.
+        fn try_byte_offset_at(&self, offset: O) -> Result<Byte, OffsetOutOfBoundsError<O>> {
+            self.byte_offsets()
+                .nth(*offset.borrow())
+                .ok_or(offset.into())
+        }
+
+        /// Returns the length of [str]-like value `self`, measured in `O` units.
+        fn max_offset(&self) -> O {
+            (self.byte_offsets().count() - 1).into()
+        }
+
         fn try_to_byte_offsets<R: RangeBounds<O>>(
             &self,
             range: R,
-        ) -> Result<Range<Byte>, OffsetOutOfBoundsError<O>>;
+        ) -> Result<Range<Byte>, OffsetOutOfBoundsError<O>> {
+            use std::ops::Bound::*;
+            let mut bytes = self.byte_offsets();
+            let offset_0 = match range.start_bound() {
+                Included(offset) => *offset,
+                Excluded(offset) => *offset + 1.into(),
+                Unbounded => O::ZERO,
+            };
+            let byte_0 = bytes.by_ref().nth(*offset_0.borrow()).unwrap();
+            let byte_n = match range.end_bound() {
+                Included(_offset) => todo!("range to inclusive end bound"),
+                Excluded(offset) => {
+                    let mut bytes = iter::once(byte_0).chain(bytes);
+                    bytes.nth(*(*offset - offset_0).borrow()).unwrap()
+                }
+                Unbounded => bytes.last().unwrap_or(byte_0),
+            };
+            Ok(byte_0..byte_n)
+        }
     }
 
-    impl ToByteOffsets<Byte> for str {
+    impl<'a> StrExtTypes<'a, Byte> for &'a str {
+        type ByteOffsets = Range<Byte>;
+    }
+
+    impl StrExt<Byte> for str {
+        fn byte_offsets<'a>(&'a self) -> <&'a Self as StrExtTypes<'a, Byte>>::ByteOffsets {
+            Byte(0)..Byte(self.len() + 1)
+        }
+
         fn max_offset(&self) -> Byte {
             Byte(self.len())
         }
@@ -352,92 +462,140 @@ pub mod offsets {
         }
     }
 
-    impl ToByteOffsets<Char> for str {
-        fn max_offset(&self) -> Char {
-            Char(self.char_indices().count())
-        }
+    impl<'a> StrExtTypes<'a, Char> for &'a str {
+        type ByteOffsets = ByteOffsets<std::str::CharIndices<'a>, char>;
+    }
 
-        fn try_to_byte_offsets<R: RangeBounds<Char>>(
-            &self,
-            range: R,
-        ) -> Result<Range<Byte>, OffsetOutOfBoundsError<Char>> {
-            use std::ops::Bound::*;
-            let mut indices = self
-                .char_indices()
-                .map(|t| Byte(t.0))
-                .chain(iter::once(Byte(self.len())));
-            let char_0 = match range.start_bound() {
-                Included(offset) => *offset,
-                Excluded(offset) => *offset + Char(1),
-                Unbounded => Char(0),
-            };
-            let byte_0 = indices.by_ref().nth(char_0.0).unwrap();
-            let byte_n = match range.end_bound() {
-                Included(_offset) => todo!("range to inclusive end bound"),
-                Excluded(offset) => {
-                    let mut indices = iter::once(byte_0).chain(indices);
-                    Excluded(indices.nth((*offset - char_0).0).unwrap())
-                }
-                Unbounded => Unbounded,
-            };
-            self.try_to_byte_offsets((Included(byte_0), byte_n))
-                .map_err(|_| {
-                    match range.end_bound() {
-                        Included(o) => *o + Char(1),
-                        Excluded(o) => *o,
-                        Unbounded => match range.start_bound() {
-                            Included(o) => *o + Char(1),
-                            Excluded(o) => *o,
-                            Unbounded => Char(0),
-                        },
-                    }
-                    .into()
-                })
+    impl StrExt<Char> for str {
+        fn byte_offsets<'a>(&'a self) -> <&'a Self as StrExtTypes<'a, Char>>::ByteOffsets {
+            ByteOffsets::new(self.char_indices(), self.len())
         }
     }
 
-    impl ToByteOffsets<Grapheme> for str {
-        fn max_offset(&self) -> Grapheme {
+    impl<'a> StrExtTypes<'a, Grapheme> for &'a str {
+        type ByteOffsets = ByteOffsets<unicode_segmentation::GraphemeIndices<'a>, &'a str>;
+    }
+
+    impl StrExt<Grapheme> for str {
+        fn byte_offsets<'a>(&'a self) -> <&'a Self as StrExtTypes<'a, Grapheme>>::ByteOffsets {
             use unicode_segmentation::UnicodeSegmentation;
-            Grapheme(self.grapheme_indices(/*extended=*/ true).count())
+            ByteOffsets::new(self.grapheme_indices(/*extended=*/ true), self.len())
         }
-        fn try_to_byte_offsets<R: RangeBounds<Grapheme>>(
-            &self,
-            range: R,
-        ) -> Result<Range<Byte>, OffsetOutOfBoundsError<Grapheme>> {
-            use std::ops::Bound::*;
+    }
+
+    /// The [Iterator] type returned by [IntoGraphemeOffsetIterator::byte_offsets] as implemented
+    /// for `&str`.
+    #[derive(Clone)]
+    pub struct GraphemeBoundaries<'a>(unicode_segmentation::GraphemeIndices<'a>, iter::Once<Byte>);
+
+    impl<'a> GraphemeBoundaries<'a> {}
+
+    impl<'a> Iterator for GraphemeBoundaries<'a> {
+        type Item = Byte;
+        fn next(&mut self) -> Option<Self::Item> {
+            self.0.next().map(|t| Byte(t.0)).or(self.1.next())
+        }
+        fn advance_by(&mut self, n: usize) -> Result<(), usize> {
+            self.0.advance_by(n)
+        }
+    }
+
+    impl<'a> DoubleEndedIterator for GraphemeBoundaries<'a> {
+        fn next_back(&mut self) -> Option<Self::Item> {
+            self.1
+                .next()
+                .or_else(|| self.0.next_back().map(|t| Byte(t.0)))
+        }
+        fn advance_back_by(&mut self, n: usize) -> Result<(), usize> {
+            match self.1.advance_by(n) {
+                Ok(_) => Ok(()),
+                Err(one) => self.0.advance_back_by(n - one),
+            }
+        }
+    }
+
+    pub trait IntoGraphemeOffsetIterator {
+        type IntoGraphemeOffsets: Iterator<Item = Byte>;
+        //+ DoubleEndedIterator
+        //+ Clone
+        //+ Into<Self>;
+
+        fn into_grapheme_offsets(self) -> Self::IntoGraphemeOffsets;
+
+        fn into_grapheme_len(self) -> Grapheme
+        where
+            Self: Sized, // TODO: remove this constraint (or find out why it can't be removed.)
+            Self::IntoGraphemeOffsets: ExactSizeIterator,
+        {
+            self.into_grapheme_offsets().len().into()
+        }
+
+        fn into_grapheme_slice(self, range: Range<Grapheme>) -> Self::IntoGraphemeOffsets
+        where
+            Self: Sized, // TODO: remove this constraint (or find out why it can't be removed.)
+            Self::IntoGraphemeOffsets: ExactSizeIterator + DoubleEndedIterator,
+        {
+            let (skip_front, len): (usize, usize) = (*range.start.borrow(), *range.end.borrow());
+            let mut iter = self.into_grapheme_offsets();
+            iter.advance_by(skip_front).unwrap();
+            iter.advance_back_by(iter.len() - len).ok();
+            iter
+        }
+    }
+
+    impl<'a> IntoGraphemeOffsetIterator for &'a str {
+        type IntoGraphemeOffsets = GraphemeBoundaries<'a>;
+
+        fn into_grapheme_offsets(self) -> Self::IntoGraphemeOffsets {
             use unicode_segmentation::UnicodeSegmentation;
-            let mut indices = self
-                .grapheme_indices(/*extended=*/ true)
-                .map(|t| Byte(t.0))
-                .chain(iter::once(Byte(self.len())));
-            let grapheme_0 = match range.start_bound() {
-                Included(offset) => *offset,
-                Excluded(offset) => *offset + Grapheme(1),
-                Unbounded => Grapheme(0),
-            };
-            let byte_0 = indices.by_ref().nth(grapheme_0.0).unwrap();
-            let byte_n = match range.end_bound() {
-                Included(_offset) => todo!("range to inclusive end bound"),
-                Excluded(offset) => {
-                    let mut indices = iter::once(byte_0).chain(indices);
-                    Excluded(indices.nth((*offset - grapheme_0).0).unwrap())
-                }
-                Unbounded => Unbounded,
-            };
-            self.try_to_byte_offsets((Included(byte_0), byte_n))
-                .map_err(|_| {
-                    match range.end_bound() {
-                        Included(o) => *o + Grapheme(1),
-                        Excluded(o) => *o,
-                        Unbounded => match range.start_bound() {
-                            Included(o) => *o + Grapheme(1),
-                            Excluded(o) => *o,
-                            Unbounded => Grapheme(0),
-                        },
-                    }
-                    .into()
-                })
+            GraphemeBoundaries(
+                self.grapheme_indices(/*extended=*/ true),
+                iter::once(Byte(self.len())),
+            )
+        }
+    }
+
+    impl<'a> From<GraphemeBoundaries<'a>> for &'a str {
+        fn from(iter: GraphemeBoundaries<'a>) -> Self {
+            iter.0.as_str()
+        }
+    }
+
+    #[cfg(test)]
+    mod any_str {
+        use super::Byte;
+        use super::IntoGraphemeOffsetIterator;
+
+        #[test]
+        fn can_be_converted_into_a_sequence_of_graphemes() {
+            let text = "a̐éö̲\r\n";
+            assert_eq!(text.into_grapheme_offsets().next(), Some(Byte(0)));
+            assert_eq!(text.into_grapheme_offsets().nth(0), Some(Byte(0)));
+            assert_eq!(text.into_grapheme_offsets().nth(1), Some(Byte(3)));
+            assert_eq!(text.into_grapheme_offsets().nth(2), Some(Byte(6)));
+            assert_eq!(text.into_grapheme_offsets().nth(3), Some(Byte(11)));
+            assert_eq!(text.into_grapheme_offsets().nth(4), Some(Byte(13)));
+            assert_eq!(text.into_grapheme_offsets().nth(5), None);
+        }
+
+        #[test]
+        fn can_be_converted_into_a_double_ended_sequence_of_graphemes() {
+            let text = "a̐éö̲\r\n";
+            assert_eq!(text.into_grapheme_offsets().nth_back(0), Some(Byte(13)));
+            assert_eq!(text.into_grapheme_offsets().nth_back(1), Some(Byte(11)));
+            assert_eq!(text.into_grapheme_offsets().nth_back(2), Some(Byte(6)));
+            assert_eq!(text.into_grapheme_offsets().nth_back(3), Some(Byte(3)));
+            assert_eq!(text.into_grapheme_offsets().nth_back(4), Some(Byte(0)));
+            assert_eq!(text.into_grapheme_offsets().nth_back(5), None);
+        }
+
+        #[test]
+        fn can_be_reconstructed_from_a_sequence_of_graphemes() {
+            let text = "a̐éö̲\r\n";
+            let mut iter = text.into_grapheme_offsets();
+            iter.by_ref().advance_by(1).unwrap();
+            let slice: &str = iter.into();
+            assert_eq!(slice, "éö̲\r\n");
         }
     }
 }
@@ -539,7 +697,7 @@ mod a_str {
 
     #[test]
     fn measures_its_own_length() {
-        use super::offsets::ToByteOffsets;
+        use super::offsets::StrExt;
         let s = "a̐éö̲\r\n";
         let (bytes, chars, graphemes): (Byte, Char, Grapheme) =
             (s.max_offset(), s.max_offset(), s.max_offset());

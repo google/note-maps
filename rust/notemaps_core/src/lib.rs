@@ -27,11 +27,13 @@
 mod am;
 pub mod base; // TODO: move or remove or document or rename or something
 mod error;
+mod text;
 
 pub use self::am::Automerge;
 pub use self::error::Lint;
 pub use self::error::ReadError;
 pub use self::error::UserError;
+pub use self::text::*;
 
 use im::Vector;
 use smol_str::SmolStr;

@@ -12,35 +12,11 @@
 
 use super::offsets;
 use super::offsets::Grapheme;
+use core::any::Any;
 use core::ops::Range;
 use std::rc::Rc;
-use std::collections::HashMap;
-use core::any::Any;
-use core::any::TypeId;
 
-pub struct Bag{
-    map: HashMap<TypeId, Rc<dyn Any>>,
-}
-impl Bag{
-    pub fn new()->Self{Self{map:HashMap::new()}}
-    pub fn push<T:Any>(&mut self, item: Rc<T>)->Option<Rc<T>>{
-        self.map.insert((&*item).type_id(), item).map(|v|v.downcast().expect("items in a bag should match their own type"))
-    }
-}
-
-#[cfg(test)]
-mod a_bag{
-    use super::*;
-
-    #[test]
-    fn can_push_new_items_into_itself(){
-        let mut bag=Bag::new();
-        let one = Rc::new(1);
-        let two = Rc::new(2);
-        assert_eq!(bag.push(one.clone()), None);
-        assert_eq!(bag.push(two.clone()), Some(one));
-    }
-}
+use crate::*;
 
 /// Any type implementing [Mark] can be used to mark up text in a [MarkStr].
 ///
@@ -81,6 +57,34 @@ pub trait Mark {
         Self: Clone,
     {
         MarkStr::new(self.clone(), s)
+    }
+}
+
+#[derive(Clone,Default, Debug)]
+pub struct MarkSet {
+    marks: SingletonnRcSet,
+}
+
+impl MarkSet {
+    pub fn new() -> Self {
+        Self {
+            marks: SingletonnRcSet::new(),
+        }
+    }
+    pub fn contains<M: Any + Mark + PartialEq>(&self, mark: &M) -> bool {
+        self.marks.contains(mark)
+    }
+    pub fn contains_any<M: Any + Mark>(&self) -> bool {
+        self.marks.contains_any::<M>()
+    }
+    pub fn get<M: Any + Mark>(&self) -> Option<&M> {
+        self.marks.get()
+    }
+    pub fn push<M: Any + Mark>(&mut self, mark: Rc<M>) -> Option<Rc<M>> {
+        self.marks.push(mark)
+    }
+    pub fn remove_any<M: Any + Mark>(&mut self) -> Option<Rc<M>> {
+        self.marks.remove_any()
     }
 }
 
@@ -342,11 +346,15 @@ impl<M: Mark, S: AsRef<str>> MarkStrInput<M, S> {
 }
 
 pub struct Command<'a, E> {
-    commit_fn: Box<dyn 'a+FnOnce() -> Result<(), E>>,
+    commit_fn: Box<dyn 'a + FnOnce() -> Result<(), E>>,
 }
 
-impl<'a,E> Command<'a,E> {
-    pub fn new<F:'a+FnOnce()->Result<(),E>>(commit_fn:F)->Self{Self{commit_fn:Box::new(commit_fn)}}
+impl<'a, E> Command<'a, E> {
+    pub fn new<F: 'a + FnOnce() -> Result<(), E>>(commit_fn: F) -> Self {
+        Self {
+            commit_fn: Box::new(commit_fn),
+        }
+    }
     pub fn into_result(self) -> Result<(), E> {
         let commit = self.commit_fn;
         commit()
@@ -388,7 +396,7 @@ mod example {
         name: String,
     }
 
-    #[derive(Clone,Debug)]
+    #[derive(Clone, Debug)]
     enum MyMark {
         Name,
         Delimiter,
@@ -421,25 +429,20 @@ mod example {
             &mut self,
             input: MarkStrInput<MyMark, S>,
         ) -> Result<Command<Self::CommandError>, Self::InterpreterError> {
-            if input.context().len()!=1{
+            if input.context().len() != 1 {
                 Err("can only act on one segment at a time for now")
-            }else {
+            } else {
                 let segment = &input.context()[0];
-                match segment.mark(){
-                    MyMark::Name=>{
-                        Ok(Command::new(||{
-                            Ok(())
-                        }))
-                    }
-                    _=>Err("cannot interpret command from attempt to edit this segment"),
+                match segment.mark() {
+                    MyMark::Name => Ok(Command::new(|| Ok(()))),
+                    _ => Err("cannot interpret command from attempt to edit this segment"),
                 }
             }
         }
     }
 
     #[test]
-    fn documents_made_of_marked_strings() {
-    }
+    fn documents_made_of_marked_strings() {}
 
     #[test]
     fn interpret_input_to_command() {
@@ -456,8 +459,8 @@ mod example {
         let input = document
             .iter()
             .into_input(Grapheme(7)..Grapheme(12), Replacement::Str("Test".into()));
-        println!("{:?}",input.context());
-        println!("{:?}",interpreter._model  );
+        println!("{:?}", input.context());
+        println!("{:?}", interpreter._model);
         //interpreter.interpret(input).expect("input should be interpretable");
     }
 }

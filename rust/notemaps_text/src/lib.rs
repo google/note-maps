@@ -20,8 +20,10 @@
 #![feature(step_trait)]
 #![feature(toowned_clone_into)]
 
-mod text;
 mod markup;
+mod singleton_set;
+mod text;
 
-pub use text::*;
 pub use markup::*;
+pub(crate) use singleton_set::*;
+pub use text::*;

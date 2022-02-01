@@ -2,6 +2,7 @@
 members = [
   "rust/notemaps",
   "rust/notemaps_core",
+  "rust/notemaps_text",
 ]
 
 [profile.release]

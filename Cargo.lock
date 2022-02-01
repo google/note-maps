@@ -513,6 +513,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "notemaps_text"
+version = "0.2.0"
+dependencies = [
+ "log",
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "opaque-debug"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

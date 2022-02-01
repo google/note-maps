@@ -1,0 +1,15 @@
+[package]
+name = "notemaps_text"
+version = "0.2.0"
+authors = ["Joshua Tacoma <jtacoma@google.com>"]
+edition = "2021"
+description = "Some ideas about representing semantic markup (ropes, piece tables, ...?)"
+repository = "https://github.com/google/note-maps"
+license = "Apache-2.0"
+keywords = ["notemaps"]
+categories = ["data-structures", "text-processing"]
+publish = false
+
+[dependencies]
+log = "0.4.14"
+unicode-segmentation = "1.7"

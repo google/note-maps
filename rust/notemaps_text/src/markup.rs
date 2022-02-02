@@ -10,289 +10,21 @@
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::offsets;
-use super::offsets::Grapheme;
-use core::any::Any;
-use core::ops::Range;
-use std::rc::Rc;
+//use super::offsets::Grapheme;
+//use core::ops::Range;
 
-use crate::*;
+//use crate::*;
 
-/// Any type implementing [Mark] can be used to mark up text in a [MarkStr].
-///
-/// # Examples
-///
-/// ```rust
-/// use notemaps_text::Mark;
-///
-/// #[derive(Clone)]
-/// enum FontFamily { Serif, SansSerif }
-///
-/// impl Mark for FontFamily {}
-///
-/// use FontFamily::*;
-///
-/// let formatted_text = vec![
-///     Serif.mark("Hello, "),
-///     SansSerif.mark("World!"),
-/// ];
-/// ```
-pub trait Mark {
-    /// Creates a [MarkStr] that applies self to s.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use notemaps_text::Mark;
-    ///
-    /// #[derive(Clone)]
-    /// struct PointSize (u8);
-    ///
-    /// impl Mark for PointSize {}
-    ///
-    /// PointSize(12).mark("Hello, World!");
-    /// ```
-    fn mark<S: AsRef<str>>(&self, s: S) -> MarkStr<Self, S>
-    where
-        Self: Clone,
-    {
-        MarkStr::new(self.clone(), s)
-    }
-}
-
-#[derive(Clone,Default, Debug)]
-pub struct MarkSet {
-    marks: SingletonnRcSet,
-}
-
-impl MarkSet {
-    pub fn new() -> Self {
-        Self {
-            marks: SingletonnRcSet::new(),
-        }
-    }
-    pub fn contains<M: Any + Mark + PartialEq>(&self, mark: &M) -> bool {
-        self.marks.contains(mark)
-    }
-    pub fn contains_any<M: Any + Mark>(&self) -> bool {
-        self.marks.contains_any::<M>()
-    }
-    pub fn get<M: Any + Mark>(&self) -> Option<&M> {
-        self.marks.get()
-    }
-    pub fn push<M: Any + Mark>(&mut self, mark: Rc<M>) -> Option<Rc<M>> {
-        self.marks.push(mark)
-    }
-    pub fn remove_any<M: Any + Mark>(&mut self) -> Option<Rc<M>> {
-        self.marks.remove_any()
-    }
-}
-
-/// A contiguous piece of marked up text that has the same mark from beginning to end.
-///
-/// With a sufficiently expressive implementation of [Mark], any rich text document can be
-/// represented as a sequence of [MarkStr] values.
-///
-/// # Examples
-///
-/// ```rust
-/// use notemaps_text::Mark;
-/// use notemaps_text::MarkStr;
-///
-/// #[derive(Clone)]
-/// enum Style { Regular, Italic }
-///
-/// impl Mark for Style {}
-///
-/// use Style::*;
-///
-/// let document: Vec<MarkStr<Style, &'static str>> = [
-///     Regular.mark("Hello, "),
-///     Italic.mark("World!"),
-/// ].to_vec();
-/// ```
-#[derive(Debug)]
-pub struct MarkStr<M: Mark, S: AsRef<str> = Rc<str>> {
-    mark: M,
-    string: S,
-}
-
-impl<M: Mark, S: AsRef<str>> MarkStr<M, S> {
-    fn new(mark: M, string: S) -> Self {
-        Self { mark, string }
-    }
-    pub fn as_str(&self) -> &str {
-        self.string.as_ref()
-    }
-    pub fn mark(&self) -> &M {
-        &self.mark
-    }
-    pub fn mark_mut(&mut self) -> &mut M {
-        &mut self.mark
-    }
-    pub fn map_str<T: AsRef<str>, F: FnOnce(S) -> T>(self, f: F) -> MarkStr<M, T> {
-        MarkStr {
-            mark: self.mark,
-            string: f(self.string),
-        }
-    }
-    pub fn map_mark<N: Mark, F: FnOnce(M) -> N>(self, f: F) -> MarkStr<N, S> {
-        MarkStr {
-            mark: f(self.mark),
-            string: self.string,
-        }
-    }
-}
-
-impl<M: Mark, S: AsRef<str>> Default for MarkStr<M, S>
-where
-    S: Default,
-    M: Default,
-{
-    fn default() -> Self {
-        Self::new(Default::default(), Default::default())
-    }
-}
-
-impl<M: Mark, S: AsRef<str>> Clone for MarkStr<M, S>
-where
-    S: Clone,
-    M: Clone,
-{
-    fn clone(&self) -> Self {
-        Self::new(self.mark.clone(), self.string.clone())
-    }
-}
-
-impl<'a, M: Mark, S: AsRef<str>> From<&'a str> for MarkStr<M, S>
-where
-    S: From<&'a str>,
-    M: Default,
-{
-    fn from(src: &'a str) -> Self {
-        Self::new(Default::default(), src.into())
-    }
-}
-
-impl<'a, M: Mark, S: AsRef<str>> From<(M, S)> for MarkStr<M, S> {
-    fn from(src: (M, S)) -> Self {
-        Self::new(src.0, src.1)
-    }
-}
-
-impl<M: Mark, S: AsRef<str>> AsRef<str> for MarkStr<M, S>
-where
-    S: AsRef<str>,
-{
-    fn as_ref(&self) -> &str {
-        self.string.as_ref()
-    }
-}
-
-/// Extensions for [Iterator] types.
-pub trait IteratorExt: Iterator {
-    fn count_bytes(&mut self) -> offsets::Byte
-    where
-        <Self as Iterator>::Item: AsRef<str>,
-    {
-        offsets::Byte(self.map(|s| s.as_ref().len()).sum())
-    }
-
-    fn count_chars(&mut self) -> offsets::Char
-    where
-        <Self as Iterator>::Item: AsRef<str>,
-    {
-        offsets::Char(self.map(|s| s.as_ref().char_indices().count()).sum())
-    }
-
-    fn count_graphemes(&mut self) -> offsets::Grapheme
-    where
-        <Self as Iterator>::Item: AsRef<str>,
-    {
-        use unicode_segmentation::UnicodeSegmentation;
-        offsets::Grapheme(
-            self.map(|s| s.as_ref().grapheme_indices(/*extended=*/ true).count())
-                .sum(),
-        )
-    }
-
-    fn into_input<M: Mark, S: AsRef<str>>(
-        self,
-        range: Range<Grapheme>,
-        r: Replacement<M, S>,
-    ) -> MarkStrInput<M, S>
-    where
-        Self: Sized,
-        <Self as Iterator>::Item: std::borrow::Borrow<MarkStr<M, S>>,
-        M: Clone,
-        S: Clone,
-    {
-        MarkStrInput::new(self, range, r)
-    }
-}
-
-impl<T: Iterator> IteratorExt for T {}
-
-#[cfg(test)]
-mod a_collection_of_mark_strs {
-    use super::offsets::{Byte, Char, Grapheme};
-    use super::IteratorExt;
-    use super::Mark;
-    use super::MarkStr;
-
-    #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
-    enum Font {
-        Serif,
-        SansSerif,
-    }
-
-    impl Mark for Font {}
-    impl Mark for std::rc::Rc<Font> {}
-
-    impl Default for Font {
-        fn default() -> Self {
-            Font::Serif
-        }
-    }
-
-    #[test]
-    fn can_be_cheaply_converted_to_a_str_reference() {
-        let mut text: Vec<MarkStr<Font>> = vec!["hello".into()];
-        assert_eq!(text[0].as_str(), "hello");
-        assert_eq!(text[0].as_ref(), "hello");
-        assert_eq!(*text[0].mark(), Font::Serif);
-        *text[0].mark_mut() = Font::SansSerif;
-        assert_eq!(*text[0].mark(), Font::SansSerif);
-        assert_eq!(
-            vec![Font::Serif.mark("a̐éö̲"), Font::SansSerif.mark("\r\n")]
-                .iter()
-                .count_bytes(),
-            Byte(13)
-        );
-        assert_eq!(
-            vec![Font::Serif.mark("a̐éö̲"), Font::SansSerif.mark("\r\n")]
-                .iter()
-                .count_chars(),
-            Char(9)
-        );
-        assert_eq!(
-            vec![Font::Serif.mark("a̐éö̲"), Font::SansSerif.mark("\r\n")]
-                .iter()
-                .count_graphemes(),
-            Grapheme(4)
-        );
-    }
-}
-
+/*
 #[derive(Clone)]
 pub enum Replacement<M: Mark, S: AsRef<str>> {
-    Mark(M),
+    Mark(Rc<M>),
     Str(S),
 }
 
 #[derive(Clone)]
 pub struct MarkStrInput<M: Mark, S: AsRef<str>> {
-    context: Vec<MarkStr<M, S>>,
+    context: Vec<MarkStr< S>>,
     range: Range<Grapheme>,
     replacement: Replacement<M, S>,
 }
@@ -304,7 +36,7 @@ impl<M: Mark, S: AsRef<str>> MarkStrInput<M, S> {
         replacement: Replacement<M, S>,
     ) -> Self
     where
-        <I as Iterator>::Item: std::borrow::Borrow<MarkStr<M, S>>,
+        <I as Iterator>::Item: std::borrow::Borrow<MarkStr< S>>,
         M: Clone,
         S: Clone,
     {
@@ -316,7 +48,7 @@ impl<M: Mark, S: AsRef<str>> MarkStrInput<M, S> {
         }
     }
 
-    pub fn context(&self) -> &[MarkStr<M, S>] {
+    pub fn context(&self) -> &[MarkStr< S>] {
         self.context.as_ref()
     }
 
@@ -407,12 +139,12 @@ mod example {
     struct View {}
 
     impl View {
-        fn render(&self, model: &MyModel) -> Vec<MarkStr<MyMark>> {
+        fn render(&self, model: &MyModel) -> Vec<MarkStr<>> {
             vec![
-                MyMark::Delimiter.mark("Hello, ".into()),
-                MyMark::Name.mark(model.name.as_str().into()),
-                MyMark::Delimiter.mark("!".into()),
-                MyMark::Delimiter.mark("\n".into()),
+                (MyMark::Delimiter,"Hello, ".into()).into(),
+                (MyMark::Name,model.name.as_str().into()).into(),
+                (MyMark::Delimiter,"!".into()).into(),
+                (MyMark::Delimiter,"\n".into()).into(),
             ]
         }
     }
@@ -433,8 +165,8 @@ mod example {
                 Err("can only act on one segment at a time for now")
             } else {
                 let segment = &input.context()[0];
-                match segment.mark() {
-                    MyMark::Name => Ok(Command::new(|| Ok(()))),
+                match segment.marks().get::<MyMark>() {
+                    Some(&MyMark::Name) => Ok(Command::new(|| Ok(()))),
                     _ => Err("cannot interpret command from attempt to edit this segment"),
                 }
             }
@@ -464,3 +196,4 @@ mod example {
         //interpreter.interpret(input).expect("input should be interpretable");
     }
 }
+*/

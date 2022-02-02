@@ -65,6 +65,16 @@ pub mod offsets {
                     Self(self.0 - other.0)
                 }
             }
+            impl std::iter::Sum<$tuple> for $tuple {
+                fn sum<I>(iter: I) -> Self
+                where I: Iterator<Item = $tuple>
+                {
+                    Self(iter.map(|t|t.0).sum())
+                }
+            }
+            impl AsRef<$type> for $tuple {
+                fn as_ref(&self) -> &$type { &self.0 }
+            }
             impl Borrow<$type> for $tuple {
                 fn borrow(&self) -> &$type { &self.0 }
             }

@@ -20,10 +20,14 @@
 #![feature(step_trait)]
 #![feature(toowned_clone_into)]
 
+mod cursor;
+mod mark_set;
+mod mark_str;
 mod markup;
-mod singleton_set;
 mod text;
 
+pub use cursor::*;
+pub use mark_set::*;
+pub use mark_str::*;
 pub use markup::*;
-pub(crate) use singleton_set::*;
 pub use text::*;

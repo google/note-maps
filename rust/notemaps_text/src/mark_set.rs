@@ -15,37 +15,84 @@ use core::any::TypeId;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+/// A set of reference-counted "mark" values, containing up to one value per value type.
+///
+/// # Example
+///
+/// ```rust
+/// use notemaps_text::MarkSet;
+/// use std::rc::Rc;
+///
+/// let mut marks = MarkSet::new();
+/// let thing_one: Rc<String> = "thing one".to_string().into();
+/// let thing_two: Rc<String> = "thing two".to_string().into();
+///
+/// marks.push(thing_one.clone());
+/// assert!(marks.contains(thing_one.as_ref()));
+/// assert_eq!(marks.get::<String>(), Some(thing_one.as_ref()));
+///
+/// marks.push(thing_two.clone());
+/// assert_eq!(marks.get::<String>(), Some(thing_two.as_ref()));
+/// ```
 #[derive(Clone, Default, Debug)]
-pub(crate) struct SingletonnRcSet {
+pub struct MarkSet {
     map: HashMap<TypeId, Rc<dyn Any>>,
 }
 
-impl SingletonnRcSet {
+impl MarkSet {
+    /// Create a new, empty [MarkSet].
     pub fn new() -> Self {
-        Self {
-            map: HashMap::new(),
-        }
+        Default::default()
     }
-    pub fn push<T: Any>(&mut self, item: Rc<T>) -> Option<Rc<T>> {
-        self.map
-            .insert((&*item).type_id(), item)
-            .map(|v| v.downcast().expect(""))
+
+    /// Create a new [MarkSet] containing one mark, `m`.
+    pub fn new_with<T: Any>(m: Rc<T>) -> Self {
+        let mut self_ = Self::new();
+        self_.push(m);
+        self_
     }
-    pub fn contains<T: Any + PartialEq>(&self, item: &T) -> bool {
-        self.get::<T>().map_or(false, |x| x == item)
+
+    /// Return `true` if and only if `m` was the last mark of type `T` pushed into this [MarkSet]
+    /// and it has not yet been removed.
+    pub fn contains<T: Any + PartialEq>(&self, m: &T) -> bool {
+        self.get::<T>() == Some(m)
     }
+
+    /// Return `true` if and only if a mark of type `T` was pushed into this [MarkSet] and has not
+    /// yet been removed.
     pub fn contains_any<T: Any>(&self) -> bool {
         self.map.contains_key(&TypeId::of::<T>())
     }
+
+    /// Return a reference to the mark of type `T` that was last pushed into this [MarkSet] if that
+    /// value has not yet been removed.
     pub fn get<T: Any>(&self) -> Option<&T> {
         self.map
             .get(&TypeId::of::<T>())
             .map(|rc| rc.as_ref().downcast_ref().expect(""))
     }
-    pub fn remove_any<T: Any>(&mut self) -> Option<Rc<T>> {
+
+    /// Add mark `m` of type `T` into this [MarkSet]. Return the mark of type `T` that was already
+    /// present, if any.
+    pub fn push<T: Any>(&mut self, m: Rc<T>) -> Option<Rc<T>> {
+        self.map
+            .insert((&*m).type_id(), m)
+            .map(|v| v.downcast().expect(""))
+    }
+
+    /// Remove from this [MarkSet] the mark of type `T`, if any.
+    pub fn take_any<T: Any>(&mut self) -> Option<Rc<T>> {
         self.map
             .remove(&TypeId::of::<T>())
             .map(|rc| rc.downcast().expect(""))
+    }
+
+    /// Add to this [MarkSet] all marks from `other`. Marks of the same type in `self` will be
+    /// discarded.
+    pub fn push_all(&mut self, other: Self) {
+        other.map.into_iter().for_each(|(type_id, rc)| {
+            self.map.insert(type_id, rc);
+        });
     }
 }
 
@@ -55,7 +102,7 @@ mod a_bag {
 
     #[test]
     fn pushes_new_items() {
-        let mut bag = SingletonnRcSet::new();
+        let mut bag = MarkSet::new();
         let one = Rc::new(1i8);
         let three = Rc::new(3i64);
         assert_eq!(bag.push(one.clone()), None);
@@ -64,7 +111,7 @@ mod a_bag {
 
     #[test]
     fn confirms_push_with_contains() {
-        let mut bag = SingletonnRcSet::new();
+        let mut bag = MarkSet::new();
         let one = Rc::new(1i8);
         let three = Rc::new(3i64);
         assert!(!bag.contains(&*one));
@@ -79,7 +126,7 @@ mod a_bag {
 
     #[test]
     fn confirms_push_with_contains_any() {
-        let mut bag = SingletonnRcSet::new();
+        let mut bag = MarkSet::new();
         let one = Rc::new(1i8);
         let three = Rc::new(3i64);
         assert!(!bag.contains_any::<i8>());
@@ -94,7 +141,7 @@ mod a_bag {
 
     #[test]
     fn confirms_push_with_get() {
-        let mut bag = SingletonnRcSet::new();
+        let mut bag = MarkSet::new();
         let one = Rc::new(1i8);
         let three = Rc::new(3i64);
         assert_eq!(bag.get::<i8>(), None);
@@ -109,7 +156,7 @@ mod a_bag {
 
     #[test]
     fn pops_old_items_when_new_are_pushed() {
-        let mut bag = SingletonnRcSet::new();
+        let mut bag = MarkSet::new();
         let one = Rc::new(1i8);
         let two = Rc::new(2i8);
         let three = Rc::new(3i64);
@@ -125,18 +172,31 @@ mod a_bag {
     }
 
     #[test]
+    fn pushes_all_items() {
+        let mut bag0 = MarkSet::new();
+        bag0.push(1i8.into());
+        let mut bag1 = MarkSet::new();
+        bag1.push(2i8.into());
+        bag1.push(3i64.into());
+        bag0.push_all(bag1);
+        assert!(!bag0.contains(&1i8));
+        assert!(bag0.contains(&2i8));
+        assert!(bag0.contains(&3i64));
+    }
+
+    #[test]
     fn removes_items_by_type() {
-        let mut bag = SingletonnRcSet::new();
+        let mut bag = MarkSet::new();
         let one = Rc::new(1i8);
         let three = Rc::new(3i64);
         assert_eq!(bag.push(one.clone()), None);
         assert_eq!(bag.push(three.clone()), None);
         assert_eq!(bag.contains_any::<i8>(), true);
         assert_eq!(bag.contains_any::<i64>(), true);
-        assert_eq!(bag.remove_any(), Some(one));
+        assert_eq!(bag.take_any(), Some(one));
         assert_eq!(bag.contains_any::<i8>(), false);
         assert_eq!(bag.contains_any::<i64>(), true);
-        assert_eq!(bag.remove_any(), Some(three));
+        assert_eq!(bag.take_any(), Some(three));
         assert_eq!(bag.contains_any::<i8>(), false);
         assert_eq!(bag.contains_any::<i64>(), false);
     }

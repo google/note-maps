@@ -21,12 +21,14 @@ pub enum Dir {
     Prev,
 }
 
-/// Describes a location in a [Text].
+/// A representation of a location within a [Text], intended to be close to the mental model of
+/// location that a user might have while moving a cursor in a text editor.
 ///
-/// Every [Point] describes a location in a [Text] that is either:
-/// - at the beginning of the text,
-/// - at the end of the text,
-/// - or between two graphemes within the text.
+/// Every [Point] represents a location within the [Text] it was created with, and the location is
+/// always one of:
+/// - the beginning of the text,
+/// - the end of the text,
+/// - between two graphemes within the text.
 ///
 /// # Examples
 ///
@@ -34,9 +36,10 @@ pub enum Dir {
 /// use notemaps_text::Point;
 /// use notemaps_text::Text;
 ///
-/// let text: Text = "Hello, world!".into();
-/// let point = Point::new(&text);
-/// assert_eq!(point.offset().0, 0);
+/// let text: Text = "Hello, World!\r\n".into();
+/// let point = Point::new(&text, 13.into());
+/// assert_eq!(point.peek_grapheme_prev(), Some("!"));
+/// assert_eq!(point.peek_grapheme_next(), Some("\r\n"));
 /// ```
 #[derive(Copy, Clone)]
 pub struct Point<'a> {
@@ -47,12 +50,32 @@ pub struct Point<'a> {
 }
 
 impl<'a> Point<'a> {
-    pub fn new(text: &'a Text) -> Self {
+    pub fn new(text: &'a Text, offset: Grapheme) -> Self {
         Self {
             text,
             text_offset: Grapheme(0),
             piece: 0,
             piece_offset: Byte(0),
+        }
+        .with_offset(offset)
+    }
+
+    /// Consumes `self`, setting the offset of this [Point] to `offset`.
+    #[must_use]
+    pub fn with_offset(mut self, offset: Grapheme) -> Self {
+        self.set_offset(offset).ok();
+        self
+    }
+
+    pub fn set_offset(&mut self, offset: Grapheme) -> Result<(), Grapheme> {
+        let (piece, byte) = self.text.locate(offset);
+        self.piece = piece;
+        self.piece_offset = byte;
+        if self.text.len() < offset {
+            self.text_offset = self.text.len();
+            Err(self.text_offset)
+        } else {
+            Ok(())
         }
     }
 
@@ -108,6 +131,16 @@ impl<'a> Point<'a> {
             .map(|p| (p, self.piece_offset))
     }
 
+    pub fn peek_grapheme_next(&self) -> Option<&str> {
+        self.get_piece_offset_next()
+            .and_then(|(p, o)| (&p.as_str()[o.0..]).graphemes(true).next())
+    }
+
+    pub fn peek_grapheme_prev(&self) -> Option<&str> {
+        self.get_piece_offset_prev()
+            .and_then(|(p, o)| (&p.as_str()[..o.0]).graphemes(true).next_back())
+    }
+
     pub fn peek_grapheme(&self, d: Dir) -> Option<&str> {
         match d {
             Dir::Next => self
@@ -137,6 +170,7 @@ impl<'a> Point<'a> {
 
 #[cfg(test)]
 mod a_point {
+    use crate::offsets::Grapheme;
     use crate::*;
     use std::rc::Rc;
 
@@ -147,8 +181,8 @@ mod a_point {
     fn starts_at_the_beginning() {
         let word: Rc<Word> = Rc::default();
         let text = Text::from(Piece::from("AB").with_mark(word.clone()));
-        let point = Point::new(&text);
-        assert_eq!(point.offset(), offsets::Grapheme(0));
+        let point = Point::new(&text, Grapheme(0));
+        assert_eq!(point.offset(), Grapheme(0));
         assert!(point.is_piece_boundary());
         assert_eq!(point.peek_grapheme(Dir::Next), Some("A"));
         assert!(point.peek_marks(Dir::Next).unwrap().contains(&*word));
@@ -160,23 +194,23 @@ mod a_point {
     fn can_move_to_next_point() {
         let word: Rc<Word> = Rc::default();
         let text = Text::from(Piece::from("ABC").with_mark(word.clone()));
-        let mut point = Point::new(&text);
+        let mut point = Point::new(&text, Grapheme(0));
         point.move_next();
-        assert_eq!(point.offset(), offsets::Grapheme(1));
+        assert_eq!(point.offset(), Grapheme(1));
         assert!(!point.is_piece_boundary());
         assert_eq!(point.peek_grapheme(Dir::Next), Some("B"));
         assert!(point.peek_marks(Dir::Next).unwrap().contains(&*word));
         assert_eq!(point.peek_grapheme(Dir::Prev), Some("A"));
         assert!(point.peek_marks(Dir::Prev).unwrap().contains(&*word));
         point.move_next();
-        assert_eq!(point.offset(), offsets::Grapheme(2));
+        assert_eq!(point.offset(), Grapheme(2));
         assert!(!point.is_piece_boundary());
         assert_eq!(point.peek_grapheme(Dir::Next), Some("C"));
         assert!(point.peek_marks(Dir::Next).unwrap().contains(&*word));
         assert_eq!(point.peek_grapheme(Dir::Prev), Some("B"));
         assert!(point.peek_marks(Dir::Prev).unwrap().contains(&*word));
         point.move_next();
-        assert_eq!(point.offset(), offsets::Grapheme(3));
+        assert_eq!(point.offset(), Grapheme(3));
         assert!(point.is_piece_boundary());
         assert_eq!(point.peek_grapheme(Dir::Next), None);
         assert!(point.peek_marks(Dir::Next).is_none());
@@ -186,7 +220,7 @@ mod a_point {
         // library implements circular navigation. As this is also a cursor, users may expect the
         // same semantics here.
         point.move_next();
-        assert_eq!(point.offset(), offsets::Grapheme(0));
+        assert_eq!(point.offset(), Grapheme(0));
         assert!(point.is_piece_boundary());
         assert_eq!(point.peek_grapheme(Dir::Next), Some("A"));
         assert!(point.peek_marks(Dir::Next).unwrap().contains(&*word));
@@ -197,24 +231,25 @@ mod a_point {
     #[test]
     fn can_be_moved_to_random_location() {
         let word: Rc<Word> = Rc::default();
-
         let text = Text::from_iter([
-            Piece::from("Testing").with_mark(word.clone()),
-            Piece::from(", "),
-            Piece::from("testing").with_mark(word.clone()),
-            Piece::from("..."),
-            Piece::from("\n"),
+            Piece::from("a̐éö̲").with_mark(word.clone()),
+            Piece::from("\r\n"),
         ]);
-        let point = Point::new(&text);
-
-        assert_eq!(point.offset(), offsets::Grapheme(0));
-        assert!(point.is_piece_boundary());
-
-        assert_eq!(point.peek_grapheme(Dir::Next), Some("T"));
-        assert!(point.peek_marks(Dir::Next).unwrap().contains(&*word));
-
-        assert_eq!(point.peek_grapheme(Dir::Prev), None);
-        assert!(point.peek_marks(Dir::Prev).is_none());
+        let point = Point::new(&text, Grapheme(0));
+        assert_eq!(point.peek_grapheme_prev(), None);
+        assert_eq!(point.peek_grapheme_next(), Some("a̐"));
+        let point = Point::new(&text, Grapheme(1));
+        assert_eq!(point.peek_grapheme_prev(), Some("a̐"));
+        assert_eq!(point.peek_grapheme_next(), Some("é"));
+        let point = Point::new(&text, Grapheme(2));
+        assert_eq!(point.peek_grapheme_prev(), Some("é"));
+        assert_eq!(point.peek_grapheme_next(), Some("ö̲"));
+        let point = Point::new(&text, Grapheme(3));
+        assert_eq!(point.peek_grapheme_prev(), Some("ö̲"));
+        assert_eq!(point.peek_grapheme_next(), Some("\r\n"));
+        let point = Point::new(&text, Grapheme(4));
+        assert_eq!(point.peek_grapheme_prev(), Some("\r\n"));
+        assert_eq!(point.peek_grapheme_next(), None);
     }
 }
 

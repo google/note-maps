@@ -89,8 +89,9 @@ impl Piece {
     pub fn len(&self) -> Grapheme {
         self.len_graphemes
     }
+
     pub fn len_bytes(&self) -> Byte {
-        self.byte_range.len().into()
+        Byte(self.byte_range.end - self.byte_range.start)
     }
 
     pub fn as_str(&self) -> &str {
@@ -109,6 +110,16 @@ impl Piece {
     pub fn with_mark<M: Any>(mut self, m: Rc<M>) -> Self {
         self.marks.push(m);
         self
+    }
+
+    /// Returns the low-level ([Byte]) representation of the location of `offset` in this [Piece].
+    pub fn locate(&self, offset: Grapheme) -> Byte {
+        use unicode_segmentation::UnicodeSegmentation;
+        self.as_str()
+            .grapheme_indices(true)
+            .nth(offset.0)
+            .map(|(o, _)| offsets::Byte(o))
+            .unwrap_or(Byte(self.byte_range.end - self.byte_range.start))
     }
 }
 

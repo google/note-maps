@@ -16,6 +16,7 @@ use core::ops::Range;
 use std::iter;
 use std::rc::Rc;
 
+use crate::offsets::Byte;
 use crate::offsets::Grapheme;
 use crate::*;
 
@@ -29,6 +30,20 @@ struct Table {
 impl Table {
     pub fn len(&self) -> Grapheme {
         self.len_graphemes
+    }
+
+    fn locate(&self, offset: Grapheme) -> (usize, Byte) {
+        if offset < self.len_graphemes {
+            let mut todo = offset;
+            for (i, p) in self.pieces.iter().enumerate() {
+                if p.len() > todo {
+                    return (i, p.locate(todo));
+                } else {
+                    todo -= p.len();
+                }
+            }
+        }
+        (self.pieces.len(), Byte(0))
     }
 }
 
@@ -105,6 +120,18 @@ impl Text {
             TextInternal::Piece(piece) => piece.len(),
             TextInternal::Table(table) => table.len(),
         }
+    }
+
+    pub fn locate(&self, offset: Grapheme) -> (usize, Byte) {
+        match &self.0 {
+            TextInternal::Empty => (0, Byte(0)),
+            TextInternal::Piece(piece) => (0, piece.locate(offset)),
+            TextInternal::Table(table) => table.locate(offset),
+        }
+    }
+
+    pub fn cursor(&self, offset: Grapheme) -> Point {
+        Point::new(self, offset)
     }
 
     #[must_use]

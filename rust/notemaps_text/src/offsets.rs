@@ -463,12 +463,12 @@ impl AsRef<Grapheme> for Offsets {
 /// }
 /// ```
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
-pub struct OffsetOutOfBoundsError<O: Copy + Eq + fmt::Debug> {
+pub struct OffsetOutOfBoundsError<O> {
     max: Option<O>,
     arg: O,
 }
 
-impl<O: Copy + Eq + fmt::Debug> OffsetOutOfBoundsError<O> {
+impl<O> OffsetOutOfBoundsError<O> {
     #[must_use]
     pub fn with_max(mut self, max: O) -> Self {
         self.max = Some(max);
@@ -476,15 +476,15 @@ impl<O: Copy + Eq + fmt::Debug> OffsetOutOfBoundsError<O> {
     }
 }
 
-impl<O: Copy + Eq + fmt::Debug> From<O> for OffsetOutOfBoundsError<O> {
+impl<O> From<O> for OffsetOutOfBoundsError<O> {
     fn from(arg: O) -> Self {
         Self { arg, max: None }
     }
 }
 
-impl<O: Copy + Eq + fmt::Debug> fmt::Display for OffsetOutOfBoundsError<O> {
+impl<O: fmt::Debug> fmt::Display for OffsetOutOfBoundsError<O> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        match self.max {
+        match &self.max {
             Some(max) => write!(
                 f,
                 "offset {:?} is out of bounds for a string of length {:?}",

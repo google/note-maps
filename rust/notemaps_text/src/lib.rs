@@ -24,12 +24,16 @@ mod cursor;
 mod mark_set;
 mod mark_str;
 mod markup;
+mod piece;
+mod table;
 mod text;
 
 pub use cursor::*;
 pub use mark_set::*;
 pub use mark_str::*;
 pub use markup::*;
+pub use piece::*;
+pub use table::*;
 pub use text::*;
 
 pub mod offsets;

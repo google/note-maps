@@ -13,6 +13,7 @@
 //use super::offsets::Byte;
 use super::offsets::Grapheme;
 //use core::any::Any;
+use core::ops;
 use core::ops::Range;
 use std::rc::Rc;
 //use core::ops::Deref;
@@ -81,7 +82,7 @@ impl Piece {
             buffer: self.buffer.clone(),
             byte_range: start..end,
             len_graphemes: (r.end - r.start).into(),
-            marks: MarkSet::new(),
+            marks: self.marks.clone(),
         }
     }
 
@@ -100,6 +101,11 @@ impl Piece {
     pub fn marks_mut(&mut self) -> &mut MarkSet {
         &mut self.marks
     }
+
+    pub fn with_mark<M: Any>(mut self, m: Rc<M>) -> Self {
+        self.marks.push(m);
+        self
+    }
 }
 
 impl AsRef<str> for Piece {
@@ -114,6 +120,7 @@ impl<'a> From<&'a str> for Piece {
     }
 }
 
+// An internal-only helper type for [Text].
 #[derive(Clone, Debug)]
 struct Table {
     pieces: Vec<Piece>,
@@ -123,11 +130,6 @@ struct Table {
 impl Table {
     pub fn len(&self) -> Grapheme {
         self.len_graphemes
-    }
-    pub fn mark<M: Any>(&mut self, m: Rc<M>) {
-        for piece in &mut self.pieces {
-            piece.marks_mut().push(m.clone());
-        }
     }
 }
 
@@ -164,11 +166,23 @@ use std::any::Any;
 pub struct Text(TextInternal);
 
 impl Text {
+    pub fn new() -> Self {
+        Self(TextInternal::Empty)
+    }
+
     pub fn pieces(&self) -> Pieces {
         Pieces(match &self.0 {
             TextInternal::Empty => PiecesInternal::Empty(iter::empty()),
             TextInternal::Piece(piece) => PiecesInternal::Piece(iter::once(&piece)),
             TextInternal::Table(table) => PiecesInternal::Table(table.pieces.iter()),
+        })
+    }
+
+    pub fn pieces_mut(&mut self) -> PiecesMut {
+        PiecesMut(match &mut self.0 {
+            TextInternal::Empty => PiecesMutInternal::Empty(iter::empty()),
+            TextInternal::Piece(piece) => PiecesMutInternal::Piece(iter::once(piece)),
+            TextInternal::Table(table) => PiecesMutInternal::Table(table.pieces.iter_mut()),
         })
     }
 
@@ -230,15 +244,23 @@ impl Text {
     }
 
     pub fn mark<M: Any>(&mut self, m: Rc<M>) {
-        match &mut self.0 {
-            TextInternal::Empty => {}
-            TextInternal::Piece(piece) => {
-                piece.marks_mut().push(m);
-            }
-            TextInternal::Table(table) => {
-                table.mark(m);
+        for piece in self.pieces_mut() {
+            piece.marks_mut().push(m.clone());
+        }
+    }
+
+    pub fn unmark<M: Any + PartialEq>(&mut self, m: &M) {
+        for piece in self.pieces_mut() {
+            if piece.marks_mut().contains(&*m) {
+                piece.marks_mut().take_any::<M>();
             }
         }
+    }
+}
+
+impl FromIterator<Text> for Text {
+    fn from_iter<T: IntoIterator<Item = Text>>(iter: T) -> Self {
+        iter.into_iter().fold(Text::new(), |acc, elem| acc + elem)
     }
 }
 
@@ -266,7 +288,20 @@ impl<'a> FromIterator<&'a str> for Text {
     }
 }
 
-use core::ops;
+impl From<Piece> for Text {
+    fn from(piece: Piece) -> Self {
+        iter::once(piece).collect()
+    }
+}
+
+impl<'a> From<&'a str> for Text {
+    fn from(string: &'a str) -> Self {
+        Piece::from(string).into()
+    }
+}
+
+// TODO: consider refactoring these implementations of ops::Add to more closely resemble what's
+// done for std::string::String.
 
 impl ops::Add<Self> for Text {
     type Output = Self;
@@ -275,6 +310,28 @@ impl ops::Add<Self> for Text {
     }
 }
 
+impl ops::Add<Piece> for Text {
+    type Output = Self;
+    fn add(self, other: Piece) -> Self {
+        self.pieces().cloned().chain(iter::once(other)).collect()
+    }
+}
+
+impl ops::Add<Piece> for Piece {
+    type Output = Text;
+    fn add(self, other: Piece) -> Self::Output {
+        Text::from_iter([self, other])
+    }
+}
+
+impl ops::Add<Text> for Piece {
+    type Output = Text;
+    fn add(self, other: Text) -> Self::Output {
+        Text::from_iter(iter::once(self).chain(other.pieces().cloned()))
+    }
+}
+
+// A helper type for [Pieces]
 enum PiecesInternal<'a> {
     Empty(std::iter::Empty<&'a Piece>),
     Piece(std::iter::Once<&'a Piece>),
@@ -287,10 +344,33 @@ pub struct Pieces<'a>(PiecesInternal<'a>);
 impl<'a> Iterator for Pieces<'a> {
     type Item = &'a Piece;
     fn next(&mut self) -> Option<Self::Item> {
+        use PiecesInternal::*;
         match &mut self.0 {
-            PiecesInternal::Empty(iter) => iter.next(),
-            PiecesInternal::Piece(iter) => iter.next(),
-            PiecesInternal::Table(iter) => iter.next(),
+            Empty(iter) => iter.next(),
+            Piece(iter) => iter.next(),
+            Table(iter) => iter.next(),
+        }
+    }
+}
+
+// A helper type for [Pieces]
+enum PiecesMutInternal<'a> {
+    Empty(std::iter::Empty<&'a mut Piece>),
+    Piece(std::iter::Once<&'a mut Piece>),
+    Table(std::slice::IterMut<'a, Piece>),
+}
+
+/// [PiecesMut] is the [Iterator] type returned by [Text::pieces_mut].
+pub struct PiecesMut<'a>(PiecesMutInternal<'a>);
+
+impl<'a> Iterator for PiecesMut<'a> {
+    type Item = &'a mut Piece;
+    fn next(&mut self) -> Option<Self::Item> {
+        use PiecesMutInternal::*;
+        match &mut self.0 {
+            Empty(iter) => iter.next(),
+            Piece(iter) => iter.next(),
+            Table(iter) => iter.next(),
         }
     }
 }
@@ -300,13 +380,71 @@ mod a_text {
     use super::*;
 
     #[test]
-    fn is_made_pieces_pieces() {
-        let text = Text::from_iter([Piece::from("a̐éö̲"), Piece::from("\r\n")]);
+    fn can_be_built_from_a_str() {
+        let text: Text = "a̐éö̲\r\n".into();
+        assert_eq!(text.to_string(), "a̐éö̲\r\n");
+    }
+
+    #[test]
+    fn can_be_built_from_a_piece() {
+        let text: Text = Piece::new(Rc::from("a̐éö̲\r\n")).into();
+        assert_eq!(text.to_string(), "a̐éö̲\r\n");
+    }
+
+    #[test]
+    fn can_be_collected_from_strs() {
+        let text: Text = ["a̐éö̲", "\r\n"].into_iter().collect();
         assert_eq!(text.to_string(), "a̐éö̲\r\n");
         assert_eq!(text.len(), Grapheme(4));
         assert_eq!(
             text.pieces().map(|p| p.as_str()).collect::<Vec<&str>>(),
             vec!["a̐éö̲", "\r\n"]
+        );
+    }
+
+    #[test]
+    fn can_be_collected_from_pieces() {
+        let text: Text = [Piece::from("a̐éö̲"), Piece::from("\r\n")]
+            .into_iter()
+            .collect();
+        assert_eq!(text.to_string(), "a̐éö̲\r\n");
+        assert_eq!(text.len(), Grapheme(4));
+        assert_eq!(
+            text.pieces().map(|p| p.as_str()).collect::<Vec<&str>>(),
+            vec!["a̐éö̲", "\r\n"]
+        );
+    }
+
+    #[test]
+    fn can_be_collected_from_texts() {
+        let text: Text = [Text::from("a̐éö̲"), Text::from("\r\n")]
+            .into_iter()
+            .collect();
+        assert_eq!(text.to_string(), "a̐éö̲\r\n");
+        assert_eq!(text.len(), Grapheme(4));
+        assert_eq!(
+            text.pieces().map(|p| p.as_str()).collect::<Vec<&str>>(),
+            vec!["a̐éö̲", "\r\n"]
+        );
+    }
+
+    #[test]
+    fn can_be_built_from_concatenation() {
+        assert_eq!(
+            (Text::from("a̐éö̲") + Text::from("\r\n")).to_string(),
+            "a̐éö̲\r\n"
+        );
+        assert_eq!(
+            (Text::from("a̐éö̲") + Piece::from("\r\n")).to_string(),
+            "a̐éö̲\r\n"
+        );
+        assert_eq!(
+            (Piece::from("a̐éö̲") + Piece::from("\r\n")).to_string(),
+            "a̐éö̲\r\n"
+        );
+        assert_eq!(
+            (Piece::from("a̐éö̲") + Text::from("\r\n")).to_string(),
+            "a̐éö̲\r\n"
         );
     }
 
@@ -322,6 +460,34 @@ mod a_text {
         assert_eq!(text.slice(Grapheme(2)..Grapheme(4)).to_string(), "ö̲\r\n");
         assert_eq!(text.slice(Grapheme(3)..Grapheme(4)).to_string(), "\r\n");
         assert_eq!(text.slice(Grapheme(4)..Grapheme(4)).to_string(), "");
+    }
+
+    #[test]
+    fn can_be_marked_and_unmarked() {
+        let mut text = Text::from_iter([Piece::from("a̐éö̲"), Piece::from("\r\n")]);
+        text.mark(Rc::new("test mark"));
+        assert!(text.pieces().all(|p| p.marks().contains(&"test mark")));
+        text.unmark(&"test mark");
+        assert!(text.pieces().all(|p| !p.marks().contains(&"test mark")));
+    }
+
+    #[test]
+    fn foo() {
+        struct Word {}
+        let is_word = Rc::from(Word {});
+        let text = Text::from_iter([
+            Piece::from("Hello").with_mark(is_word.clone()),
+            Piece::from(", "),
+            Piece::from("world").with_mark(is_word.clone()),
+            Piece::from("!"),
+        ]);
+        assert_eq!(
+            text.pieces()
+                .filter(|p| p.marks().contains_any::<Word>())
+                .map(|p| p.as_str())
+                .collect::<Vec<&str>>(),
+            vec!["Hello", "world"]
+        );
     }
 }
 

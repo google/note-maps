@@ -10,12 +10,13 @@
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::offsets::Grapheme;
+use core::any::Any;
 use core::ops;
 use core::ops::Range;
 use std::iter;
 use std::rc::Rc;
 
+use crate::offsets::Grapheme;
 use crate::*;
 
 // An internal-only helper type for [Text].
@@ -42,13 +43,12 @@ impl FromIterator<Piece> for Table {
     }
 }
 
+#[derive(Clone, Debug)]
 enum TextInternal {
     Empty,
     Piece(Piece),
     Table(Table),
 }
-
-use std::any::Any;
 
 /// [Text] is a "piece chain" or "piece table" using [Piece] to represent a
 /// formatted, or "rich-text", document.
@@ -61,16 +61,26 @@ use std::any::Any;
 /// let text: Text = ["Hello, world!", "\n"].into_iter().collect();
 /// assert_eq!(text.to_string(), "Hello, world!\n");
 /// ```
+#[derive(Clone, Debug)]
 pub struct Text(TextInternal);
 
 impl Text {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self(TextInternal::Empty)
     }
 
     pub fn graphemes(&self) -> impl Iterator<Item = &str> {
         use unicode_segmentation::UnicodeSegmentation;
         self.pieces().flat_map(|p| p.as_str().graphemes(true))
+    }
+
+    pub fn get_piece(&self, n: usize) -> Option<&Piece> {
+        use TextInternal::*;
+        match &self.0 {
+            Piece(piece) if n == 0 => Some(piece),
+            Table(table) if n < table.pieces.len() => Some(&table.pieces[n]),
+            _ => None,
+        }
     }
 
     pub fn pieces(&self) -> Pieces {
@@ -243,6 +253,7 @@ pub struct Pieces<'a>(PiecesInternal<'a>);
 
 impl<'a> Iterator for Pieces<'a> {
     type Item = &'a Piece;
+
     fn next(&mut self) -> Option<Self::Item> {
         use PiecesInternal::*;
         match &mut self.0 {
@@ -251,7 +262,40 @@ impl<'a> Iterator for Pieces<'a> {
             Table(iter) => iter.next(),
         }
     }
+
+    fn advance_by(&mut self, n: usize) -> Result<(), usize> {
+        use PiecesInternal::*;
+        match &mut self.0 {
+            Empty(iter) => iter.advance_by(n),
+            Piece(iter) => iter.advance_by(n),
+            Table(iter) => iter.advance_by(n),
+        }
+    }
+
+    fn fold<B, F>(mut self, init: B, f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        use PiecesInternal::*;
+        match &mut self.0 {
+            Empty(iter) => iter.fold(init, f),
+            Piece(iter) => iter.fold(init, f),
+            Table(iter) => iter.fold(init, f),
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        use PiecesInternal::*;
+        match &self.0 {
+            Empty(iter) => iter.size_hint(),
+            Piece(iter) => iter.size_hint(),
+            Table(iter) => iter.size_hint(),
+        }
+    }
 }
+
+impl<'a> ExactSizeIterator for Pieces<'a> {}
 
 // A helper type for [Pieces]
 enum PiecesMutInternal<'a> {

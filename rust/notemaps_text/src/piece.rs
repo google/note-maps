@@ -16,6 +16,7 @@ use core::ops::Range;
 use std::iter;
 use std::rc::Rc;
 
+use crate::offsets::Byte;
 use crate::offsets::Grapheme;
 use crate::*;
 
@@ -87,6 +88,9 @@ impl Piece {
 
     pub fn len(&self) -> Grapheme {
         self.len_graphemes
+    }
+    pub fn len_bytes(&self) -> Byte {
+        self.byte_range.len().into()
     }
 
     pub fn as_str(&self) -> &str {

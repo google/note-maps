@@ -10,22 +10,223 @@
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
+use unicode_segmentation::UnicodeSegmentation;
+
+use crate::offsets::Byte;
+use crate::offsets::Grapheme;
+use crate::*;
+
+pub enum Dir {
+    Next,
+    Prev,
+}
+
+/// Describes a location in a [Text].
+///
+/// Every [Point] describes a location in a [Text] that is either:
+/// - at the beginning of the text,
+/// - at the end of the text,
+/// - or between two graphemes within the text.
+///
+/// # Examples
+///
+/// ```rust
+/// use notemaps_text::Point;
+/// use notemaps_text::Text;
+///
+/// let text: Text = "Hello, world!".into();
+/// let point = Point::new(&text);
+/// assert_eq!(point.offset().0, 0);
+/// ```
+#[derive(Copy, Clone)]
+pub struct Point<'a> {
+    text: &'a Text,
+    text_offset: Grapheme,
+    piece: usize,
+    piece_offset: Byte,
+}
+
+impl<'a> Point<'a> {
+    pub fn new(text: &'a Text) -> Self {
+        Self {
+            text,
+            text_offset: Grapheme(0),
+            piece: 0,
+            piece_offset: Byte(0),
+        }
+    }
+
+    pub fn move_next(&mut self) {
+        match self.text.get_piece(self.piece) {
+            None => {
+                self.text_offset = Grapheme(0);
+                self.piece = 0;
+                self.piece_offset = Byte(0);
+            }
+            Some(piece) => {
+                self.text_offset += 1;
+                match (&piece.as_str()[self.piece_offset.0..])
+                    .grapheme_indices(true)
+                    .nth(1)
+                    .map(|(o, _)| Byte(o))
+                {
+                    Some(grapheme_width) => {
+                        self.piece_offset += grapheme_width;
+                    }
+                    None => {
+                        self.piece += 1;
+                        self.piece_offset = Byte(0);
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn offset(&self) -> Grapheme {
+        self.text_offset
+    }
+
+    fn get_piece_offset_prev(&self) -> Option<(&Piece, Byte)> {
+        if self.piece_offset == Byte(0) {
+            if self.piece == 0 {
+                None
+            } else {
+                self.text
+                    .get_piece(self.piece - 1)
+                    .map(|p| (p, p.len_bytes()))
+            }
+        } else {
+            self.text
+                .get_piece(self.piece)
+                .map(|p| (p, self.piece_offset))
+        }
+    }
+
+    fn get_piece_offset_next(&self) -> Option<(&Piece, Byte)> {
+        self.text
+            .get_piece(self.piece)
+            .map(|p| (p, self.piece_offset))
+    }
+
+    pub fn peek_grapheme(&self, d: Dir) -> Option<&str> {
+        match d {
+            Dir::Next => self
+                .get_piece_offset_next()
+                .and_then(|(p, o)| (&p.as_str()[o.0..]).graphemes(true).next()),
+            Dir::Prev => self
+                .get_piece_offset_prev()
+                .and_then(|(p, o)| (&p.as_str()[..o.0]).graphemes(true).next_back()),
+        }
+    }
+
+    pub fn peek_marks(&self, d: Dir) -> Option<&MarkSet> {
+        match d {
+            Dir::Next => self.get_piece_offset_next().map(|(p, _)| p.marks()),
+            Dir::Prev => self.get_piece_offset_prev().map(|(p, _)| p.marks()),
+        }
+    }
+
+    pub fn is_piece_boundary(&self) -> bool {
+        self.piece_offset.0 == 0
+            || match self.text.get_piece(self.piece) {
+                Some(piece) => piece.len_bytes() == self.piece_offset,
+                None => true,
+            }
+    }
+}
+
+#[cfg(test)]
+mod a_point {
+    use crate::*;
+    use std::rc::Rc;
+
+    #[derive(Default, Eq, PartialEq, Hash)]
+    struct Word {}
+
+    #[test]
+    fn starts_at_the_beginning() {
+        let word: Rc<Word> = Rc::default();
+        let text = Text::from(Piece::from("AB").with_mark(word.clone()));
+        let point = Point::new(&text);
+        assert_eq!(point.offset(), offsets::Grapheme(0));
+        assert!(point.is_piece_boundary());
+        assert_eq!(point.peek_grapheme(Dir::Next), Some("A"));
+        assert!(point.peek_marks(Dir::Next).unwrap().contains(&*word));
+        assert_eq!(point.peek_grapheme(Dir::Prev), None);
+        assert!(point.peek_marks(Dir::Prev).is_none());
+    }
+
+    #[test]
+    fn can_move_to_next_point() {
+        let word: Rc<Word> = Rc::default();
+        let text = Text::from(Piece::from("ABC").with_mark(word.clone()));
+        let mut point = Point::new(&text);
+        point.move_next();
+        assert_eq!(point.offset(), offsets::Grapheme(1));
+        assert!(!point.is_piece_boundary());
+        assert_eq!(point.peek_grapheme(Dir::Next), Some("B"));
+        assert!(point.peek_marks(Dir::Next).unwrap().contains(&*word));
+        assert_eq!(point.peek_grapheme(Dir::Prev), Some("A"));
+        assert!(point.peek_marks(Dir::Prev).unwrap().contains(&*word));
+        point.move_next();
+        assert_eq!(point.offset(), offsets::Grapheme(2));
+        assert!(!point.is_piece_boundary());
+        assert_eq!(point.peek_grapheme(Dir::Next), Some("C"));
+        assert!(point.peek_marks(Dir::Next).unwrap().contains(&*word));
+        assert_eq!(point.peek_grapheme(Dir::Prev), Some("B"));
+        assert!(point.peek_marks(Dir::Prev).unwrap().contains(&*word));
+        point.move_next();
+        assert_eq!(point.offset(), offsets::Grapheme(3));
+        assert!(point.is_piece_boundary());
+        assert_eq!(point.peek_grapheme(Dir::Next), None);
+        assert!(point.peek_marks(Dir::Next).is_none());
+        assert_eq!(point.peek_grapheme(Dir::Prev), Some("C"));
+        assert!(point.peek_marks(Dir::Prev).unwrap().contains(&*word));
+        // An experimental API for a LinkedList cursor currently rolling out in the Rust standard
+        // library implements circular navigation. As this is also a cursor, users may expect the
+        // same semantics here.
+        point.move_next();
+        assert_eq!(point.offset(), offsets::Grapheme(0));
+        assert!(point.is_piece_boundary());
+        assert_eq!(point.peek_grapheme(Dir::Next), Some("A"));
+        assert!(point.peek_marks(Dir::Next).unwrap().contains(&*word));
+        assert_eq!(point.peek_grapheme(Dir::Prev), None);
+        assert!(point.peek_marks(Dir::Prev).is_none());
+    }
+
+    #[test]
+    fn can_be_moved_to_random_location() {
+        let word: Rc<Word> = Rc::default();
+
+        let text = Text::from_iter([
+            Piece::from("Testing").with_mark(word.clone()),
+            Piece::from(", "),
+            Piece::from("testing").with_mark(word.clone()),
+            Piece::from("..."),
+            Piece::from("\n"),
+        ]);
+        let point = Point::new(&text);
+
+        assert_eq!(point.offset(), offsets::Grapheme(0));
+        assert!(point.is_piece_boundary());
+
+        assert_eq!(point.peek_grapheme(Dir::Next), Some("T"));
+        assert!(point.peek_marks(Dir::Next).unwrap().contains(&*word));
+
+        assert_eq!(point.peek_grapheme(Dir::Prev), None);
+        assert!(point.peek_marks(Dir::Prev).is_none());
+    }
+}
+
 /*
-pub trait Cursor {
-    type Item:?Sized;
-    fn move_next(&mut self);
-    fn move_prev(&mut self);
-    fn current(&self) -> Option<&Self::Item>;
-    fn index(&self)->Option<usize>;
+pub struct TextCursor<'a> {
+    text: &'a Text,
+    text_offset: Grapheme,
+    piece: usize,
+    piece_offset: Byte,
 }
 
-pub struct SliceCursor<'a, T> {
-    slice: &'a [T],
-    i: usize,
-}
-
-impl<'a, T> Cursor for SliceCursor<'a, T> {
-    type Item = T;
+impl TextCursor<'a> {
     fn move_next(&mut self) {
         if self.i < self.slice.len() {
             self.i += 1;

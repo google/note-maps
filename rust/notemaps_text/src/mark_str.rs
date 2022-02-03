@@ -16,10 +16,7 @@ use std::rc::Rc;
 
 use crate::*;
 
-/// A contiguous piece of marked up text that has the same mark from beginning to end.
-///
-/// With a sufficiently expressive implementation of [Mark], any rich text document can be
-/// represented as a sequence of [MarkStr] values.
+/// A contiguous piece of marked up text that has the same set of marks from beginning to end.
 ///
 /// # Examples
 ///

@@ -212,7 +212,7 @@ impl Text {
         for piece in all_pieces.by_ref() {
             let piece_len = piece.len();
             if piece_len < start {
-                start = start - piece_len;
+                start -= piece_len;
             } else {
                 first_piece = Some(piece.slice(start..piece_len));
                 break;
@@ -223,7 +223,7 @@ impl Text {
         if first_piece.len() >= take {
             return Self(TextInternal::Piece(first_piece.slice(Grapheme(0)..take)));
         } else {
-            take = take - first_piece.len();
+            take -= first_piece.len();
         }
         let mut pieces = vec![first_piece];
         for piece in all_pieces {

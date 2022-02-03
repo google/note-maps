@@ -10,11 +10,13 @@
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! The `offsets` module contains minimalist wrappers for numeric types that are helpful when
-//! a function definition must do simple arithmetic with more than one unit of measurement.
+//! The `offsets` module contains measurement unit types defined as singleton tuple wrappers around
+//! primitive numeric types.
 //!
-//! Many bugs can be prevented by wrapping a measurement in a type that indicate the unit of the
-//! measurement. Some such bugs were caught while implementing this crate!
+//! Measurement unit types are helpful when one function definition or code block must do
+//! arithmetic with two or more units of measurement, as when computing the length of a `str` in
+//! graphemes, chars, or bytes.  Many bugs can be prevented by wrapping a measurement in a type
+//! that indicate the unit of the measurement. Some were even caught while implementing this crate!
 //!
 //! How long is the string `a̐`? It looks like one character so it's just one grapheme. However,
 //! it's expressed in _two_ Unicode code points. The UTF-8 encoded representation of these two code
@@ -35,32 +37,86 @@
 
 use std::borrow::Borrow;
 use std::fmt;
-use std::hash::Hash;
 use std::iter;
 use std::ops::*;
 
 macro_rules! numeric_singleton {
-    ($(#[$outer:meta])* $pub:vis struct $tuple:ident ($type:ident)) => {
+    (
+        $(#[$outer:meta])* $pub:vis struct $tuple:ident ($type:ident)
+        $plural:literal singular $singular:literal test $test_mod:ident;
+    )  => {
         $(#[$outer])*
         #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
         $pub struct $tuple (pub $type);
+
         impl From<usize> for $tuple {
             fn from(src: usize) -> Self {
                 $tuple(src)
             }
         }
-        impl Add for $tuple {
+
+        impl core::ops::Add for $tuple {
             type Output = Self;
             fn add(self, other: Self) -> Self {
                 Self(self.0 + other.0)
             }
         }
-        impl Sub for $tuple {
+
+        impl core::ops::Add<$type> for $tuple {
+            type Output = Self;
+            fn add(self, other: $type) -> Self {
+                Self(self.0 + other)
+            }
+        }
+
+        impl core::ops::AddAssign for $tuple {
+            fn add_assign(&mut self, other: Self) {
+                self.0 += other.0
+            }
+        }
+
+        impl core::ops::AddAssign<$type> for $tuple {
+            fn add_assign(&mut self, other: $type) {
+                self.0 += other
+            }
+        }
+        impl core::ops::Sub for $tuple {
             type Output = Self;
             fn sub(self, other: Self) -> Self {
                 Self(self.0 - other.0)
             }
         }
+        impl core::ops::Sub<$type> for $tuple {
+            type Output = Self;
+            fn sub(self, other: $type) -> Self {
+                Self(self.0 - other)
+            }
+        }
+        impl core::ops::SubAssign for $tuple {
+            fn sub_assign(&mut self, other: Self) {
+                self.0 -= other.0
+            }
+        }
+
+        impl core::ops::SubAssign<$type> for $tuple {
+            fn sub_assign(&mut self, other: $type) {
+                self.0 -= other
+            }
+        }
+
+        impl core::ops::Mul<$type> for $tuple {
+            type Output = Self;
+            fn mul(self, other: $type) -> Self {
+                Self(self.0 * other)
+            }
+        }
+
+        impl core::ops::MulAssign<$type> for $tuple {
+            fn mul_assign(&mut self, other: $type) {
+                self.0 *= other
+            }
+        }
+
         impl std::iter::Sum<$tuple> for $tuple {
             fn sum<I>(iter: I) -> Self
             where I: Iterator<Item = $tuple>
@@ -68,21 +124,132 @@ macro_rules! numeric_singleton {
                 Self(iter.map(|t|t.0).sum())
             }
         }
+
         impl AsRef<$type> for $tuple {
             fn as_ref(&self) -> &$type { &self.0 }
         }
+
         impl Borrow<$type> for $tuple {
             fn borrow(&self) -> &$type { &self.0 }
         }
-        impl iter::Step for $tuple {
+
+        impl std::iter::Step for $tuple {
             fn steps_between(start: &Self, end: &Self) -> Option<usize> {
-                iter::Step::steps_between(&start.0, &end.0)
+                std::iter::Step::steps_between(&start.0, &end.0)
             }
             fn forward_checked(x:Self, count: usize) -> Option<Self> {
-                Some($tuple(iter::Step::forward_checked(x.0, count)?))
+                Some($tuple(std::iter::Step::forward_checked(x.0, count)?))
             }
             fn backward_checked(x:Self, count: usize) -> Option<Self> {
-                Some($tuple(iter::Step::backward_checked(x.0, count)?))
+                Some($tuple(std::iter::Step::backward_checked(x.0, count)?))
+            }
+        }
+
+        impl std::fmt::Display for $tuple {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+                self.0.fmt(f)?;
+                if self.0 == 1 {
+                    $singular.fmt(f)
+                } else {
+                    $plural.fmt(f)
+                }
+            }
+        }
+
+        #[cfg(test)]
+        mod $test_mod {
+            use super::$tuple;
+
+            #[test]
+            fn supports_addition_with_self(){
+                assert_eq!($tuple(0)+$tuple(0), $tuple(0));
+                assert_eq!($tuple(0)+$tuple(1), $tuple(1));
+                assert_eq!($tuple(1)+$tuple(0), $tuple(1));
+                assert_eq!($tuple($type::MAX-1)+$tuple(1), $tuple($type::MAX));
+                assert_eq!($tuple(1)+$tuple($type::MAX-1), $tuple($type::MAX));
+            }
+
+            #[test]
+            fn supports_addition_with_primitive_numeric(){
+                assert_eq!($tuple(0)+0, $tuple(0));
+                assert_eq!($tuple(0)+1, $tuple(1));
+                assert_eq!($tuple(1)+0, $tuple(1));
+                assert_eq!($tuple($type::MAX-1)+1, $tuple($type::MAX));
+                assert_eq!($tuple(1)+($type::MAX-1), $tuple($type::MAX));
+            }
+
+            #[test]
+            fn supports_addition_in_place(){
+                let mut x=$tuple(0);
+                x+=$tuple(1);
+                assert_eq!(x, $tuple(1));
+                x+=1;
+                assert_eq!(x, $tuple(2));
+                x+=$tuple($type::MAX-3);
+                assert_eq!(x, $tuple($type::MAX-1));
+                x+=1;
+                assert_eq!(x, $tuple($type::MAX));
+            }
+
+            #[test]
+            fn supports_subtraction_with_self(){
+                assert_eq!($tuple(0)-$tuple(0), $tuple(0));
+                assert_eq!($tuple(1)-$tuple(0), $tuple(1));
+                assert_eq!($tuple($type::MAX)-$tuple(1), $tuple($type::MAX-1));
+                assert_eq!($tuple($type::MAX)-$tuple($type::MAX-1), $tuple(1));
+            }
+
+            #[test]
+            fn supports_subtraction_with_primitive_numeric(){
+                assert_eq!($tuple(0)-0, $tuple(0));
+                assert_eq!($tuple(1)-0, $tuple(1));
+                assert_eq!($tuple($type::MAX)-1, $tuple($type::MAX-1));
+                assert_eq!($tuple($type::MAX)-($type::MAX-1), $tuple(1));
+            }
+
+            #[test]
+            fn supports_subtraction_in_place(){
+                let mut x=$tuple($type::MAX);
+                x -= $type::MAX-3;
+                assert_eq!(x, $tuple(3));
+                x -= $tuple(1);
+                assert_eq!(x, $tuple(2));
+            }
+
+            #[test]
+            fn supports_multiplication_with_primtive_numeric(){
+                assert_eq!($tuple(0)*0, $tuple(0));
+                assert_eq!($tuple(1)*0, $tuple(0));
+                assert_eq!($tuple(1)*1, $tuple(1));
+                assert_eq!($tuple(2)*($type::MAX/2), $tuple(2*($type::MAX/2)));
+            }
+
+            #[test]
+            fn supports_multiplication_in_place(){
+                let mut x = $tuple($type::MAX);
+                x*=0;
+                assert_eq!(x, $tuple(0));
+                let mut x = $tuple(1);
+                x *= 1;
+                assert_eq!(x, $tuple(1));
+                x *= $type::MAX;
+                assert_eq!(x, $tuple($type::MAX));
+            }
+
+            #[test]
+            fn can_be_used_in_a_range(){
+                assert_eq!(
+                    vec![$tuple(1), $tuple(2)],
+                    ($tuple(1)..$tuple(3)).collect::<Vec<_>>());
+                assert_eq!(
+                    vec![$tuple(1), $tuple(2)],
+                    ($tuple(1)..).take(2).collect::<Vec<_>>());
+            }
+
+            #[test]
+            fn can_be_summed_across_a_sequence(){
+                assert_eq!( $tuple(3), [$tuple(1), $tuple(2)].into_iter().sum() );
+                assert_eq!( ($tuple(1)..).take(2).collect::<Vec<_>>(), vec![$tuple(1), $tuple(2)]);
             }
         }
     };
@@ -103,7 +270,7 @@ numeric_singleton! {
     /// assert_eq!((Byte(1) + Byte(2)).0, 3);
     /// // let byte_3 = Byte(1) + Grapheme(2); // does not compile!
     /// ```
-    pub struct Byte(usize)
+    pub struct Byte(usize) " bytes" singular " byte" test a_byte;
 }
 
 numeric_singleton! {
@@ -120,7 +287,7 @@ numeric_singleton! {
     /// assert_eq!((Char(1) + Char(2)).0, 3);
     /// // let char_3 = Char(1) + Byte(2); // does not compile!
     /// ```
-    pub struct Char(usize)
+    pub struct Char(usize)  " chars" singular " char" test a_char;
 }
 
 numeric_singleton! {
@@ -137,7 +304,7 @@ numeric_singleton! {
     /// assert_eq!((Grapheme(1) + Grapheme(2)).0, 3);
     /// // let grapheme_3 = Graphme(1) + Byte(2); // does not compile!
     /// ```
-    pub struct Grapheme(usize)
+    pub struct Grapheme(usize) " graphemes" singular " grapheme" test a_grapheme;
 }
 
 mod internal {
@@ -147,8 +314,8 @@ mod internal {
     impl Sealed for super::Grapheme {}
 }
 
-/// A public trait implemented exclusively by the offset unit types in this module: [Byte],
-/// [Char], and [Grapheme].
+/// A public trait implemented exclusively by the measurement unit types defined in this module
+/// ([Byte], [Char], and [Grapheme].)
 pub trait Offset:
     Copy
     + Eq

@@ -59,6 +59,7 @@ impl Piece {
         }
     }
 
+    #[must_use]
     pub fn slice(&self, r: Range<Grapheme>) -> Self {
         use unicode_segmentation::UnicodeSegmentation;
         let mut graphemes = self
@@ -81,7 +82,7 @@ impl Piece {
         Self {
             buffer: self.buffer.clone(),
             byte_range: start..end,
-            len_graphemes: (r.end - r.start).into(),
+            len_graphemes: r.end - r.start,
             marks: self.marks.clone(),
         }
     }
@@ -102,6 +103,7 @@ impl Piece {
         &mut self.marks
     }
 
+    #[must_use]
     pub fn with_mark<M: Any>(mut self, m: Rc<M>) -> Self {
         self.marks.push(m);
         self
@@ -170,10 +172,15 @@ impl Text {
         Self(TextInternal::Empty)
     }
 
+    pub fn graphemes(&self) -> impl Iterator<Item = &str> {
+        use unicode_segmentation::UnicodeSegmentation;
+        self.pieces().flat_map(|p| p.as_str().graphemes(true))
+    }
+
     pub fn pieces(&self) -> Pieces {
         Pieces(match &self.0 {
             TextInternal::Empty => PiecesInternal::Empty(iter::empty()),
-            TextInternal::Piece(piece) => PiecesInternal::Piece(iter::once(&piece)),
+            TextInternal::Piece(piece) => PiecesInternal::Piece(iter::once(piece)),
             TextInternal::Table(table) => PiecesInternal::Table(table.pieces.iter()),
         })
     }
@@ -194,10 +201,7 @@ impl Text {
         }
     }
 
-    pub fn to_string(&self) -> String {
-        self.pieces().map(|p| p.as_str()).collect()
-    }
-
+    #[must_use]
     pub fn slice(&self, r: Range<Grapheme>) -> Self {
         if r.end <= r.start {
             return Text(TextInternal::Empty);
@@ -205,7 +209,7 @@ impl Text {
         let mut start = r.start;
         let mut all_pieces = self.pieces();
         let mut first_piece = None;
-        while let Some(piece) = all_pieces.next() {
+        for piece in all_pieces.by_ref() {
             let piece_len = piece.len();
             if piece_len < start {
                 start = start - piece_len;
@@ -236,6 +240,7 @@ impl Text {
         panic!("text slice r exceeds length of text");
     }
 
+    #[must_use]
     pub fn with_insert<I: IntoIterator>(&self, _at: Grapheme, _text: I) -> Self
     where
         Text: FromIterator<I::Item>,
@@ -255,6 +260,12 @@ impl Text {
                 piece.marks_mut().take_any::<M>();
             }
         }
+    }
+}
+
+impl Default for Text {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -328,6 +339,13 @@ impl ops::Add<Text> for Piece {
     type Output = Text;
     fn add(self, other: Text) -> Self::Output {
         Text::from_iter(iter::once(self).chain(other.pieces().cloned()))
+    }
+}
+
+use std::fmt;
+impl fmt::Display for Text {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.pieces().try_for_each(|p| p.as_str().fmt(f))
     }
 }
 

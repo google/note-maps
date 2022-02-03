@@ -11,7 +11,6 @@
 // limitations under the License.
 
 use std::borrow::Borrow;
-use std::hash::{Hash, Hasher};
 use std::ops;
 use std::ops::Range;
 
@@ -39,7 +38,7 @@ use crate::offsets::*;
 /// assert_eq!(&example[Char(2)..Char(4)], "a̐");
 /// assert_eq!(&example[Byte(3)..Byte(6)], "a̐");
 /// ```
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct IndexStr<T: Borrow<str>>(T);
 
 impl<T: Borrow<str>> IndexStr<T> {
@@ -77,15 +76,6 @@ impl<T: Borrow<str>> From<T> for IndexStr<T> {
 }
 
 impl<T: Borrow<str>> Copy for IndexStr<T> where T: Copy {}
-
-impl<T: Borrow<str>> Hash for IndexStr<T> {
-    fn hash<H>(&self, state: &mut H)
-    where
-        H: Hasher,
-    {
-        self.0.borrow().hash(state)
-    }
-}
 
 impl<T: Borrow<str>> PartialEq<str> for IndexStr<T> {
     fn eq(&self, other: &str) -> bool {
@@ -249,7 +239,7 @@ impl MeasuredStr {
         IndexStr(self.text.clone())
     }
 
-    pub fn to_arc_str(self) -> Arc<str> {
+    pub fn to_arc_str(&self) -> Arc<str> {
         self.text.clone()
     }
 }

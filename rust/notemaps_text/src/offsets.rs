@@ -162,8 +162,8 @@ pub trait Offset:
 {
     const ZERO: Self;
     fn offset_len(s: &str) -> Self;
-    fn next_byte<'a>(s: &'a str) -> Option<Byte>;
-    fn get_slice<'a>(s: &'a str, range: Range<Self>) -> &'a str;
+    fn next_byte(s: &str) -> Option<Byte>;
+    fn get_slice(s: &str, range: Range<Self>) -> &str;
 }
 
 impl Offset for Byte {
@@ -173,7 +173,7 @@ impl Offset for Byte {
         Byte(str::len(s))
     }
 
-    fn next_byte<'a>(s: &'a str) -> Option<Byte> {
+    fn next_byte(s: &str) -> Option<Byte> {
         if s.is_empty() {
             None
         } else {
@@ -181,7 +181,7 @@ impl Offset for Byte {
         }
     }
 
-    fn get_slice<'a>(s: &'a str, range: Range<Self>) -> &'a str {
+    fn get_slice(s: &str, range: Range<Self>) -> &str {
         &s[range.start.0..range.end.0]
     }
 }
@@ -193,11 +193,11 @@ impl Offset for Char {
         Char(s.char_indices().count())
     }
 
-    fn next_byte<'a>(s: &'a str) -> Option<Byte> {
+    fn next_byte(s: &str) -> Option<Byte> {
         s.char_indices().next().map(|t| Byte(t.0))
     }
 
-    fn get_slice<'a>(s: &'a str, range: Range<Self>) -> &'a str {
+    fn get_slice(s: &str, range: Range<Self>) -> &str {
         Byte::get_slice(s, s.try_to_byte_offsets(range).unwrap())
     }
 }
@@ -210,14 +210,14 @@ impl Offset for Grapheme {
         Grapheme(s.grapheme_indices(/*extended=*/ true).count())
     }
 
-    fn next_byte<'a>(s: &'a str) -> Option<Byte> {
+    fn next_byte(s: &str) -> Option<Byte> {
         use unicode_segmentation::UnicodeSegmentation;
         s.grapheme_indices(/*extended=*/ true)
             .next()
             .map(|t| Byte(t.0))
     }
 
-    fn get_slice<'a>(s: &'a str, range: Range<Self>) -> &'a str {
+    fn get_slice(s: &str, range: Range<Self>) -> &str {
         Byte::get_slice(s, s.try_to_byte_offsets(range).unwrap())
     }
 }
@@ -398,13 +398,13 @@ where
     ///
     /// Following the above, for an empty string this method should return an iterator that
     /// finds only one (zero) value, indicating the byte offset of the end of the string.
-    fn byte_offsets<'a>(&'a self) -> <&'a Self as StrExtTypes<'a, O>>::ByteOffsets;
+    fn byte_offsets(&self) -> <&Self as StrExtTypes<'_, O>>::ByteOffsets;
 
     /// Returns the byte offset at the beginning of the `O` unit at `offset` in `self`.
     fn try_byte_offset_at(&self, offset: O) -> Result<Byte, OffsetOutOfBoundsError<O>> {
         self.byte_offsets()
             .nth(*offset.borrow())
-            .ok_or(offset.into())
+            .ok_or_else(|| offset.into())
     }
 
     /// Returns the length of [str]-like value `self`, measured in `O` units.
@@ -441,7 +441,7 @@ impl<'a> StrExtTypes<'a, Byte> for &'a str {
 }
 
 impl StrExt<Byte> for str {
-    fn byte_offsets<'a>(&'a self) -> <&'a Self as StrExtTypes<'a, Byte>>::ByteOffsets {
+    fn byte_offsets(&self) -> <&Self as StrExtTypes<'_, Byte>>::ByteOffsets {
         Byte(0)..Byte(self.len() + 1)
     }
 
@@ -473,7 +473,7 @@ impl<'a> StrExtTypes<'a, Char> for &'a str {
 }
 
 impl StrExt<Char> for str {
-    fn byte_offsets<'a>(&'a self) -> <&'a Self as StrExtTypes<'a, Char>>::ByteOffsets {
+    fn byte_offsets(&self) -> <&Self as StrExtTypes<'_, Char>>::ByteOffsets {
         ByteOffsets::new(self.char_indices(), self.len())
     }
 }
@@ -483,7 +483,7 @@ impl<'a> StrExtTypes<'a, Grapheme> for &'a str {
 }
 
 impl StrExt<Grapheme> for str {
-    fn byte_offsets<'a>(&'a self) -> <&'a Self as StrExtTypes<'a, Grapheme>>::ByteOffsets {
+    fn byte_offsets(&self) -> <&Self as StrExtTypes<'_, Grapheme>>::ByteOffsets {
         use unicode_segmentation::UnicodeSegmentation;
         ByteOffsets::new(self.grapheme_indices(/*extended=*/ true), self.len())
     }
@@ -499,7 +499,7 @@ impl<'a> GraphemeBoundaries<'a> {}
 impl<'a> Iterator for GraphemeBoundaries<'a> {
     type Item = Byte;
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|t| Byte(t.0)).or(self.1.next())
+        self.0.next().map(|t| Byte(t.0)).or_else(|| self.1.next())
     }
     fn advance_by(&mut self, n: usize) -> Result<(), usize> {
         self.0.advance_by(n)

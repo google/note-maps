@@ -64,6 +64,7 @@ impl<S: AsRef<str>> MarkStr<S> {
             string: f(self.string),
         }
     }
+    #[must_use]
     pub fn with_marks(mut self, marks: MarkSet) -> Self {
         self.marks_mut().push_all(marks);
         self

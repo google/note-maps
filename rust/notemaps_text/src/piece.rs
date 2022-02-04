@@ -16,8 +16,7 @@ use core::ops::Range;
 use std::iter;
 use std::rc::Rc;
 
-use crate::offsets::Byte;
-use crate::offsets::Grapheme;
+use crate::offsets::*;
 use crate::*;
 
 /// [Piece] is a `str`-like type that also:
@@ -41,6 +40,7 @@ use crate::*;
 pub struct Piece {
     buffer: Rc<str>,
     byte_range: Range<usize>,
+    len_chars: Char,
     len_graphemes: Grapheme,
     marks: MarkSet,
 }
@@ -49,10 +49,12 @@ impl Piece {
     pub fn new(buffer: Rc<str>) -> Self {
         use unicode_segmentation::UnicodeSegmentation;
         let byte_range = 0..buffer.len();
+        let len_chars = buffer.chars().count().into();
         let len_graphemes = buffer.graphemes(true).count().into();
         Self {
             buffer,
             byte_range,
+            len_chars,
             len_graphemes,
             marks: MarkSet::new(),
         }
@@ -81,11 +83,19 @@ impl Piece {
         Self {
             buffer: self.buffer.clone(),
             byte_range: start..end,
+            len_chars: (&self.buffer[start..end]).chars().count().into(),
             len_graphemes: r.end - r.start,
             marks: self.marks.clone(),
         }
     }
 
+    pub fn len_offsets(&self) -> Offsets {
+        Offsets(
+            Byte(self.byte_range.len()),
+            self.len_chars,
+            self.len_graphemes,
+        )
+    }
     pub fn len(&self) -> Grapheme {
         self.len_graphemes
     }
@@ -112,14 +122,15 @@ impl Piece {
         self
     }
 
-    /// Returns the low-level ([Byte]) representation of the location of `offset` in this [Piece].
-    pub fn locate(&self, offset: Grapheme) -> Byte {
-        use unicode_segmentation::UnicodeSegmentation;
+    /// Returns the location of `offset` in this [Piece] as a [Byte] offset into the string
+    /// returned by [Piece::as_str].
+    ///
+    /// If `offset` is out of bounds, returns the bounds of this piece.
+    pub fn locate(&self, offset: Grapheme) -> Result<Offsets, Offsets> {
         self.as_str()
-            .grapheme_indices(true)
-            .nth(offset.0)
-            .map(|(o, _)| offsets::Byte(o))
-            .unwrap_or(Byte(self.byte_range.end - self.byte_range.start))
+            .try_byte_offset_at(offset)
+            .map(|byte| Offsets::from_grapheme_byte(byte, offset, self.as_str()))
+            .map_err(|_| self.len_offsets())
     }
 }
 

@@ -13,75 +13,39 @@
 use core::any::Any;
 use core::ops;
 use core::ops::Range;
+use std::fmt;
 use std::iter;
 use std::rc::Rc;
 
-use crate::offsets::Byte;
-use crate::offsets::Grapheme;
+use crate::offsets::*;
 use crate::*;
 
-// An internal-only helper type for [Text].
-#[derive(Clone, Debug)]
-struct Table {
-    pieces: Vec<Piece>,
-    len_graphemes: Grapheme,
-}
-
-impl Table {
-    pub fn len(&self) -> Grapheme {
-        self.len_graphemes
-    }
-
-    fn locate(&self, offset: Grapheme) -> (usize, Byte) {
-        if offset < self.len_graphemes {
-            let mut todo = offset;
-            for (i, p) in self.pieces.iter().enumerate() {
-                if p.len() > todo {
-                    return (i, p.locate(todo));
-                } else {
-                    todo -= p.len();
-                }
-            }
-        }
-        (self.pieces.len(), Byte(0))
-    }
-}
-
-impl FromIterator<Piece> for Table {
-    fn from_iter<T: IntoIterator<Item = Piece>>(iter: T) -> Self {
-        let pieces: Vec<_> = iter.into_iter().collect();
-        let len_graphemes = pieces.iter().map(|m| m.len()).sum();
-        Self {
-            pieces,
-            len_graphemes,
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-enum TextInternal {
-    Empty,
-    Piece(Piece),
-    Table(Table),
-}
-
-/// [Text] is a "piece chain" or "piece table" using [Piece] to represent a
-/// formatted, or "rich-text", document.
+/// [Text] is a "piece chain" or "piece table" which, together with [Piece] which can apply
+/// arbitrary marks, can represent almost any rich-text document.
 ///
 /// # Examples
 ///
 /// ```rust
 /// use notemaps_text::Text;
+/// use notemaps_text::Piece;
 ///
-/// let text: Text = ["Hello, world!", "\n"].into_iter().collect();
+/// let text: Text = [Piece::from("Hello, world!"), Piece::from("\n")].into_iter().collect();
 /// assert_eq!(text.to_string(), "Hello, world!\n");
 /// ```
 #[derive(Clone, Debug)]
-pub struct Text(TextInternal);
+pub struct Text {
+    pieces: Vec<Piece>,
+    len: Offsets,
+}
+
+pub type PieceLocus = (usize, Offsets);
 
 impl Text {
     pub const fn new() -> Self {
-        Self(TextInternal::Empty)
+        Self {
+            pieces: Vec::new(),
+            len: Offsets::new_zero(),
+        }
     }
 
     pub fn graphemes(&self) -> impl Iterator<Item = &str> {
@@ -90,44 +54,66 @@ impl Text {
     }
 
     pub fn get_piece(&self, n: usize) -> Option<&Piece> {
-        use TextInternal::*;
-        match &self.0 {
-            Piece(piece) if n == 0 => Some(piece),
-            Table(table) if n < table.pieces.len() => Some(&table.pieces[n]),
-            _ => None,
+        if n < self.pieces.len() {
+            Some(&self.pieces[n])
+        } else {
+            None
         }
     }
 
     pub fn pieces(&self) -> Pieces {
-        Pieces(match &self.0 {
-            TextInternal::Empty => PiecesInternal::Empty(iter::empty()),
-            TextInternal::Piece(piece) => PiecesInternal::Piece(iter::once(piece)),
-            TextInternal::Table(table) => PiecesInternal::Table(table.pieces.iter()),
-        })
+        Pieces(self.pieces.iter())
     }
 
     pub fn pieces_mut(&mut self) -> PiecesMut {
-        PiecesMut(match &mut self.0 {
-            TextInternal::Empty => PiecesMutInternal::Empty(iter::empty()),
-            TextInternal::Piece(piece) => PiecesMutInternal::Piece(iter::once(piece)),
-            TextInternal::Table(table) => PiecesMutInternal::Table(table.pieces.iter_mut()),
-        })
+        PiecesMut(self.pieces.iter_mut())
+    }
+
+    pub fn len_offsets(&self) -> Offsets {
+        self.len
     }
 
     pub fn len(&self) -> Grapheme {
-        match &self.0 {
-            TextInternal::Empty => Grapheme(0),
-            TextInternal::Piece(piece) => piece.len(),
-            TextInternal::Table(table) => table.len(),
-        }
+        *self.len.as_ref()
     }
 
-    pub fn locate(&self, offset: Grapheme) -> (usize, Byte) {
-        match &self.0 {
-            TextInternal::Empty => (0, Byte(0)),
-            TextInternal::Piece(piece) => (0, piece.locate(offset)),
-            TextInternal::Table(table) => table.locate(offset),
+    pub fn locate(&self, offset: Grapheme) -> Result<PieceLocus, PieceLocus> {
+        if self.pieces.is_empty() {
+            return if offset.0 == 0 {
+                Ok((0, Offsets::new_zero()))
+            } else {
+                Err((0, Offsets::new_zero()))
+            };
         }
+        use std::cmp;
+        match offset.cmp(&self.len.grapheme()) {
+            cmp::Ordering::Greater => {
+                return Err((
+                    self.pieces.len() - 1,
+                    self.pieces[self.pieces.len() - 1].len_offsets(),
+                ));
+            }
+            cmp::Ordering::Equal => {
+                return Ok((
+                    self.pieces.len() - 1,
+                    self.pieces[self.pieces.len() - 1].len_offsets(),
+                ));
+            }
+            _ => {}
+        }
+        let mut todo = offset;
+        for (i, p) in self.pieces.iter().enumerate() {
+            if p.len() > todo {
+                return Ok((
+                    i,
+                    p.locate(todo)
+                        .expect("locating an offset less than the length always works"),
+                ));
+            } else {
+                todo -= p.len();
+            }
+        }
+        panic!("this should never happen...");
     }
 
     pub fn cursor(&self, offset: Grapheme) -> Point {
@@ -137,40 +123,26 @@ impl Text {
     #[must_use]
     pub fn slice(&self, r: Range<Grapheme>) -> Self {
         if r.end <= r.start {
-            return Text(TextInternal::Empty);
+            return Text::new();
         }
-        let mut start = r.start;
-        let mut all_pieces = self.pieces();
-        let mut first_piece = None;
-        for piece in all_pieces.by_ref() {
-            let piece_len = piece.len();
-            if piece_len < start {
-                start -= piece_len;
-            } else {
-                first_piece = Some(piece.slice(start..piece_len));
-                break;
-            }
+        let start = self
+            .locate(r.start)
+            .expect("argument to slice is always valid");
+        let end = self
+            .locate(r.end)
+            .expect("argument to slice is always valid");
+        if start == end {
+            return Text::new();
         }
-        let first_piece = first_piece.expect("text slice range within bounds");
-        let mut take = r.end - r.start;
-        if first_piece.len() >= take {
-            return Self(TextInternal::Piece(first_piece.slice(Grapheme(0)..take)));
-        } else {
-            take -= first_piece.len();
+        if start.0 == end.0 {
+            return self.pieces[start.0].slice(start.1.to()..end.1.to()).into();
         }
-        let mut pieces = vec![first_piece];
-        for piece in all_pieces {
-            if piece.len() < take {
-                pieces.push(piece.clone());
-            } else {
-                pieces.push(piece.slice(Grapheme(0)..take));
-                return Self(TextInternal::Table(Table {
-                    pieces,
-                    len_graphemes: r.end - r.start,
-                }));
-            }
-        }
-        panic!("text slice r exceeds length of text");
+        iter::once(self.pieces[start.0].slice(start.1.to()..self.pieces[start.0].len()))
+            .chain(self.pieces[(start.0 + 1)..end.0].iter().cloned())
+            .chain(iter::once(
+                self.pieces[end.0].slice(Grapheme(0)..end.1.to()),
+            ))
+            .collect()
     }
 
     #[must_use]
@@ -202,33 +174,11 @@ impl Default for Text {
     }
 }
 
-impl FromIterator<Text> for Text {
-    fn from_iter<T: IntoIterator<Item = Text>>(iter: T) -> Self {
-        iter.into_iter().fold(Text::new(), |acc, elem| acc + elem)
-    }
-}
-
 impl FromIterator<Piece> for Text {
     fn from_iter<T: IntoIterator<Item = Piece>>(iter: T) -> Self {
-        let mut iter = iter.into_iter();
-        Text(match iter.next() {
-            Some(piece0) => match iter.next() {
-                Some(piece1) => TextInternal::Table(
-                    iter::once(piece0)
-                        .chain(iter::once(piece1))
-                        .chain(iter)
-                        .collect(),
-                ),
-                None => TextInternal::Piece(piece0),
-            },
-            None => TextInternal::Empty,
-        })
-    }
-}
-
-impl<'a> FromIterator<&'a str> for Text {
-    fn from_iter<T: IntoIterator<Item = &'a str>>(iter: T) -> Self {
-        iter.into_iter().map(Piece::from).collect()
+        let pieces: Vec<Piece> = iter.into_iter().map(Into::into).collect();
+        let len: Offsets = pieces.iter().map(|p| p.len_offsets()).sum();
+        Self { pieces, len }
     }
 }
 
@@ -261,88 +211,65 @@ impl ops::Add<Piece> for Text {
     }
 }
 
-use std::fmt;
 impl fmt::Display for Text {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.pieces().try_for_each(|p| p.as_str().fmt(f))
     }
 }
 
-// A helper type for [Pieces]
-enum PiecesInternal<'a> {
-    Empty(std::iter::Empty<&'a Piece>),
-    Piece(std::iter::Once<&'a Piece>),
-    Table(std::slice::Iter<'a, Piece>),
-}
-
 /// [Pieces] is the [Iterator] type returned by [Text::pieces].
-pub struct Pieces<'a>(PiecesInternal<'a>);
+pub struct Pieces<'a>(std::slice::Iter<'a, Piece>);
 
 impl<'a> Iterator for Pieces<'a> {
     type Item = &'a Piece;
 
     fn next(&mut self) -> Option<Self::Item> {
-        use PiecesInternal::*;
-        match &mut self.0 {
-            Empty(iter) => iter.next(),
-            Piece(iter) => iter.next(),
-            Table(iter) => iter.next(),
-        }
+        self.0.next()
     }
 
     fn advance_by(&mut self, n: usize) -> Result<(), usize> {
-        use PiecesInternal::*;
-        match &mut self.0 {
-            Empty(iter) => iter.advance_by(n),
-            Piece(iter) => iter.advance_by(n),
-            Table(iter) => iter.advance_by(n),
-        }
+        self.0.advance_by(n)
     }
 
-    fn fold<B, F>(mut self, init: B, f: F) -> B
+    fn fold<B, F>(self, init: B, f: F) -> B
     where
         Self: Sized,
         F: FnMut(B, Self::Item) -> B,
     {
-        use PiecesInternal::*;
-        match &mut self.0 {
-            Empty(iter) => iter.fold(init, f),
-            Piece(iter) => iter.fold(init, f),
-            Table(iter) => iter.fold(init, f),
-        }
+        self.0.fold(init, f)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        use PiecesInternal::*;
-        match &self.0 {
-            Empty(iter) => iter.size_hint(),
-            Piece(iter) => iter.size_hint(),
-            Table(iter) => iter.size_hint(),
-        }
+        self.0.size_hint()
     }
 }
 
 impl<'a> ExactSizeIterator for Pieces<'a> {}
 
-// A helper type for [Pieces]
-enum PiecesMutInternal<'a> {
-    Empty(std::iter::Empty<&'a mut Piece>),
-    Piece(std::iter::Once<&'a mut Piece>),
-    Table(std::slice::IterMut<'a, Piece>),
-}
-
 /// [PiecesMut] is the [Iterator] type returned by [Text::pieces_mut].
-pub struct PiecesMut<'a>(PiecesMutInternal<'a>);
+pub struct PiecesMut<'a>(std::slice::IterMut<'a, Piece>);
 
 impl<'a> Iterator for PiecesMut<'a> {
     type Item = &'a mut Piece;
+
     fn next(&mut self) -> Option<Self::Item> {
-        use PiecesMutInternal::*;
-        match &mut self.0 {
-            Empty(iter) => iter.next(),
-            Piece(iter) => iter.next(),
-            Table(iter) => iter.next(),
-        }
+        self.0.next()
+    }
+
+    fn advance_by(&mut self, n: usize) -> Result<(), usize> {
+        self.0.advance_by(n)
+    }
+
+    fn fold<B, F>(self, init: B, f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        self.0.fold(init, f)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
     }
 }
 
@@ -363,32 +290,8 @@ mod a_text {
     }
 
     #[test]
-    fn can_be_collected_from_strs() {
-        let text: Text = ["a̐éö̲", "\r\n"].into_iter().collect();
-        assert_eq!(text.to_string(), "a̐éö̲\r\n");
-        assert_eq!(text.len(), Grapheme(4));
-        assert_eq!(
-            text.pieces().map(|p| p.as_str()).collect::<Vec<&str>>(),
-            vec!["a̐éö̲", "\r\n"]
-        );
-    }
-
-    #[test]
     fn can_be_collected_from_pieces() {
         let text: Text = [Piece::from("a̐éö̲"), Piece::from("\r\n")]
-            .into_iter()
-            .collect();
-        assert_eq!(text.to_string(), "a̐éö̲\r\n");
-        assert_eq!(text.len(), Grapheme(4));
-        assert_eq!(
-            text.pieces().map(|p| p.as_str()).collect::<Vec<&str>>(),
-            vec!["a̐éö̲", "\r\n"]
-        );
-    }
-
-    #[test]
-    fn can_be_collected_from_texts() {
-        let text: Text = [Text::from("a̐éö̲"), Text::from("\r\n")]
             .into_iter()
             .collect();
         assert_eq!(text.to_string(), "a̐éö̲\r\n");

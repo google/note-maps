@@ -40,7 +40,7 @@ use std::fmt;
 use std::iter;
 use std::ops::*;
 
-macro_rules! numeric_singleton {
+macro_rules! natural_unit {
     (
         $(#[$outer:meta])* $pub:vis struct $tuple:ident ($type:ident)
         $plural:literal singular $singular:literal test $test_mod:ident;
@@ -255,7 +255,7 @@ macro_rules! numeric_singleton {
     };
 }
 
-numeric_singleton! {
+natural_unit! {
     /// Represents a number of [u8] bytes or octets, typically in the context of some UTF-8
     /// encoded text.
     ///
@@ -273,7 +273,7 @@ numeric_singleton! {
     pub struct Byte(usize) " bytes" singular " byte" test a_byte;
 }
 
-numeric_singleton! {
+natural_unit! {
     /// Represents a number of [char] characters, or Unicode code points.
     ///
     /// Intended to help avoid bugs caused by unintentionally mixing measurements of different
@@ -290,7 +290,7 @@ numeric_singleton! {
     pub struct Char(usize)  " chars" singular " char" test a_char;
 }
 
-numeric_singleton! {
+natural_unit! {
     /// Represents a number of graphemes, or user-perceived characters.
     ///
     /// Intended to help avoid bugs caused by unintentionally mixing measurements of different
@@ -402,7 +402,32 @@ impl Offset for Grapheme {
 /// assert_eq!(Byte(13), *length.as_ref());
 /// ```
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
-pub struct Offsets(Byte, Char, Grapheme);
+pub struct Offsets(pub(crate) Byte, pub(crate) Char, pub(crate) Grapheme);
+
+impl Offsets {
+    pub const fn new_zero() -> Self {
+        Self(Byte(0), Char(0), Grapheme(0))
+    }
+    pub fn from_grapheme_byte(b: Byte, g: Grapheme, s: &str) -> Self {
+        Self(b, Char(s[0..b.0].chars().count()), g)
+    }
+    pub fn to<T>(&self) -> T
+    where
+        T: Clone,
+        Self: AsRef<T>,
+    {
+        self.as_ref().clone()
+    }
+    pub fn byte(&self) -> Byte {
+        self.0
+    }
+    pub fn char(&self) -> Char {
+        self.1
+    }
+    pub fn grapheme(&self) -> Grapheme {
+        self.2
+    }
+}
 
 impl<'a> From<&'a str> for Offsets {
     fn from(s: &'a str) -> Self {
@@ -426,9 +451,33 @@ impl<'a> From<&'a super::MeasuredStr> for Offsets {
 
 impl Add for Offsets {
     type Output = Self;
-
     fn add(self, other: Self) -> Self {
         Self(self.0 + other.0, self.1 + other.1, self.2 + other.2)
+    }
+}
+
+impl core::ops::AddAssign for Offsets {
+    fn add_assign(&mut self, other: Self) {
+        self.0 += other.0;
+        self.1 += other.1;
+        self.2 += other.2;
+    }
+}
+
+impl Sub for Offsets {
+    type Output = Self;
+    fn sub(self, other: Self) -> Self {
+        Self(self.0 - other.0, self.1 - other.1, self.2 - other.2)
+    }
+}
+
+impl iter::Sum for Offsets {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let mut acc = Offsets::new_zero();
+        for offset in iter {
+            acc += offset;
+        }
+        acc
     }
 }
 

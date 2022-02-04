@@ -20,8 +20,15 @@ use std::rc::Rc;
 use crate::offsets::*;
 use crate::*;
 
-/// [Text] is a "piece chain" or "piece table" which, together with [Piece] which can apply
-/// arbitrary marks, can represent almost any rich-text document.
+/// [Text] is a sequence of [Piece] values, effectively a [piece table][].
+///
+/// Although currently based on a [Vec], future iterations of development may replace the internal
+/// implementation with something like a [rope][] or [gap buffer][]. The API of [Text] is
+/// deliberately agnostic to these implementation details.
+///
+/// [piece table]: https://en.wikipedia.org/wiki/Piece_table
+/// [rope]: https://en.wikipedia.org/wiki/Rope_(computer_science)
+/// [gap buffer]: https://en.wikipedia.org/wiki/Gap_buffer
 ///
 /// # Examples
 ///
@@ -35,16 +42,16 @@ use crate::*;
 #[derive(Clone, Debug)]
 pub struct Text {
     pieces: Vec<Piece>,
-    len: Offsets,
+    len: Locus,
 }
 
-pub type PieceLocus = (usize, Offsets);
+pub type PieceLocus = (usize, Locus);
 
 impl Text {
     pub const fn new() -> Self {
         Self {
             pieces: Vec::new(),
-            len: Offsets::new_zero(),
+            len: Locus::new_zero(),
         }
     }
 
@@ -69,7 +76,7 @@ impl Text {
         PiecesMut(self.pieces.iter_mut())
     }
 
-    pub fn len_offsets(&self) -> Offsets {
+    pub fn len_offsets(&self) -> Locus {
         self.len
     }
 
@@ -80,9 +87,9 @@ impl Text {
     pub fn locate(&self, offset: Grapheme) -> Result<PieceLocus, PieceLocus> {
         if self.pieces.is_empty() {
             return if offset.0 == 0 {
-                Ok((0, Offsets::new_zero()))
+                Ok((0, Locus::new_zero()))
             } else {
-                Err((0, Offsets::new_zero()))
+                Err((0, Locus::new_zero()))
             };
         }
         use std::cmp;
@@ -116,8 +123,8 @@ impl Text {
         panic!("this should never happen...");
     }
 
-    pub fn cursor(&self, offset: Grapheme) -> Point {
-        Point::new(self, offset)
+    pub fn cursor(&self, offset: Grapheme) -> Cursor {
+        Cursor::new(self, offset)
     }
 
     #[must_use]
@@ -135,12 +142,14 @@ impl Text {
             return Text::new();
         }
         if start.0 == end.0 {
-            return self.pieces[start.0].slice(start.1.to()..end.1.to()).into();
+            return self.pieces[start.0]
+                .slice(start.1.whatever()..end.1.whatever())
+                .into();
         }
-        iter::once(self.pieces[start.0].slice(start.1.to()..self.pieces[start.0].len()))
+        iter::once(self.pieces[start.0].slice(start.1.whatever()..self.pieces[start.0].len()))
             .chain(self.pieces[(start.0 + 1)..end.0].iter().cloned())
             .chain(iter::once(
-                self.pieces[end.0].slice(Grapheme(0)..end.1.to()),
+                self.pieces[end.0].slice(Grapheme(0)..end.1.whatever()),
             ))
             .collect()
     }
@@ -177,7 +186,7 @@ impl Default for Text {
 impl FromIterator<Piece> for Text {
     fn from_iter<T: IntoIterator<Item = Piece>>(iter: T) -> Self {
         let pieces: Vec<Piece> = iter.into_iter().map(Into::into).collect();
-        let len: Offsets = pieces.iter().map(|p| p.len_offsets()).sum();
+        let len: Locus = pieces.iter().map(|p| p.len_offsets()).sum();
         Self { pieces, len }
     }
 }

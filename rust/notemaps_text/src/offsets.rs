@@ -44,7 +44,7 @@ macro_rules! natural_unit {
     (
         $(#[$outer:meta])* $pub:vis struct $tuple:ident ($type:ident)
         $plural:literal singular $singular:literal test $test_mod:ident;
-    )  => {
+    ) => {
         $(#[$outer])*
         #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
         $pub struct $tuple (pub $type);
@@ -396,40 +396,45 @@ impl Offset for Grapheme {
 /// ```rust
 /// use notemaps_text::offsets::*;
 ///
-/// let length: Offsets = "a̐éö̲\r\n".into();
+/// let length: Locus = "a̐éö̲\r\n".into();
 /// assert_eq!(Grapheme(4), *length.as_ref());
 /// assert_eq!(Char(9), *length.as_ref());
 /// assert_eq!(Byte(13), *length.as_ref());
 /// ```
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
-pub struct Offsets(pub(crate) Byte, pub(crate) Char, pub(crate) Grapheme);
+pub struct Locus(pub(crate) Byte, pub(crate) Char, pub(crate) Grapheme);
 
-impl Offsets {
+impl Locus {
     pub const fn new_zero() -> Self {
         Self(Byte(0), Char(0), Grapheme(0))
     }
+
     pub fn from_grapheme_byte(b: Byte, g: Grapheme, s: &str) -> Self {
         Self(b, Char(s[0..b.0].chars().count()), g)
     }
-    pub fn to<T>(&self) -> T
+
+    pub fn whatever<T>(&self) -> T
     where
         T: Clone,
         Self: AsRef<T>,
     {
         self.as_ref().clone()
     }
+
     pub fn byte(&self) -> Byte {
         self.0
     }
+
     pub fn char(&self) -> Char {
         self.1
     }
+
     pub fn grapheme(&self) -> Grapheme {
         self.2
     }
 }
 
-impl<'a> From<&'a str> for Offsets {
+impl<'a> From<&'a str> for Locus {
     fn from(s: &'a str) -> Self {
         Self(
             Byte::offset_len(s),
@@ -439,7 +444,7 @@ impl<'a> From<&'a str> for Offsets {
     }
 }
 
-impl<'a> From<&'a super::MeasuredStr> for Offsets {
+impl<'a> From<&'a super::MeasuredStr> for Locus {
     fn from(s: &'a super::MeasuredStr) -> Self {
         Self(
             super::MeasuredStr::offset_len(s),
@@ -449,14 +454,14 @@ impl<'a> From<&'a super::MeasuredStr> for Offsets {
     }
 }
 
-impl Add for Offsets {
+impl Add for Locus {
     type Output = Self;
     fn add(self, other: Self) -> Self {
         Self(self.0 + other.0, self.1 + other.1, self.2 + other.2)
     }
 }
 
-impl core::ops::AddAssign for Offsets {
+impl core::ops::AddAssign for Locus {
     fn add_assign(&mut self, other: Self) {
         self.0 += other.0;
         self.1 += other.1;
@@ -464,16 +469,16 @@ impl core::ops::AddAssign for Offsets {
     }
 }
 
-impl Sub for Offsets {
+impl Sub for Locus {
     type Output = Self;
     fn sub(self, other: Self) -> Self {
         Self(self.0 - other.0, self.1 - other.1, self.2 - other.2)
     }
 }
 
-impl iter::Sum for Offsets {
+impl iter::Sum for Locus {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let mut acc = Offsets::new_zero();
+        let mut acc = Locus::new_zero();
         for offset in iter {
             acc += offset;
         }
@@ -481,19 +486,19 @@ impl iter::Sum for Offsets {
     }
 }
 
-impl AsRef<Byte> for Offsets {
+impl AsRef<Byte> for Locus {
     fn as_ref(&self) -> &Byte {
         &self.0
     }
 }
 
-impl AsRef<Char> for Offsets {
+impl AsRef<Char> for Locus {
     fn as_ref(&self) -> &Char {
         &self.1
     }
 }
 
-impl AsRef<Grapheme> for Offsets {
+impl AsRef<Grapheme> for Locus {
     fn as_ref(&self) -> &Grapheme {
         &self.2
     }

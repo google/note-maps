@@ -163,9 +163,9 @@ mod a_str {
 
 use std::sync::Arc;
 
-/// Wraps a [str] and, upon construction, computes its total length in [Offsets].
+/// Wraps a [str] and, upon construction, computes its total length in [Locus].
 ///
-/// Computing the length of a string in [Offsets] can be expensive: the time complexity is linear
+/// Computing the length of a string in [Locus] can be expensive: the time complexity is linear
 /// to the length of the string. This cost is paid once in the construction of [MeasuredStr] so
 /// that it does not need to paid again every time the length of the string is needed.
 ///
@@ -186,11 +186,11 @@ use std::sync::Arc;
 #[derive(Clone, Debug)]
 pub struct MeasuredStr {
     text: Arc<str>,
-    len: Offsets,
+    len: Locus,
 }
 
 impl MeasuredStr {
-    fn inner_new(text: Arc<str>, len: Offsets) -> Self {
+    fn inner_new(text: Arc<str>, len: Locus) -> Self {
         Self { len, text }
     }
 
@@ -211,12 +211,12 @@ impl MeasuredStr {
     /// ```
     pub fn offset_len<O: Offset>(&self) -> O
     where
-        Offsets: AsRef<O>,
+        Locus: AsRef<O>,
     {
         *self.len.as_ref()
     }
 
-    /// Wraps a [str] and computes its total length in [Offsets] on construction.
+    /// Wraps a [str] and computes its total length in [Locus] on construction.
     ///
     /// The [str] is immutable so that the length does not need to be re-computed. It is wrapped in an
     /// [Arc] for cheap, thread-safe cloning.
@@ -246,7 +246,7 @@ impl MeasuredStr {
 
 impl From<&'a str> for MeasuredStr {
     fn from(text: &'a str) -> Self {
-        Self::inner_new(Arc::from(text), Offsets::from(text))
+        Self::inner_new(Arc::from(text), Locus::from(text))
     }
 }
 

@@ -89,8 +89,8 @@ impl Piece {
         }
     }
 
-    pub fn len_offsets(&self) -> Offsets {
-        Offsets(
+    pub fn len_offsets(&self) -> Locus {
+        Locus(
             Byte(self.byte_range.len()),
             self.len_chars,
             self.len_graphemes,
@@ -126,10 +126,10 @@ impl Piece {
     /// returned by [Piece::as_str].
     ///
     /// If `offset` is out of bounds, returns the bounds of this piece.
-    pub fn locate(&self, offset: Grapheme) -> Result<Offsets, Offsets> {
+    pub fn locate(&self, offset: Grapheme) -> Result<Locus, Locus> {
         self.as_str()
             .try_byte_offset_at(offset)
-            .map(|byte| Offsets::from_grapheme_byte(byte, offset, self.as_str()))
+            .map(|byte| Locus::from_grapheme_byte(byte, offset, self.as_str()))
             .map_err(|_| self.len_offsets())
     }
 }

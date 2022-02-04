@@ -96,8 +96,20 @@ impl Piece {
             self.len_graphemes,
         )
     }
-    pub fn len(&self) -> Grapheme {
-        self.len_graphemes
+
+    /// Returns the total length of the underlying text in `O` elements.
+    pub fn len<O>(&self) -> O
+    where
+        O: Clone,
+        Locus: AsRef<O>,
+    {
+        Locus(
+            Byte(self.byte_range.len()),
+            self.len_chars,
+            self.len_graphemes,
+        )
+        .as_ref()
+        .clone()
     }
 
     pub fn len_bytes(&self) -> Byte {

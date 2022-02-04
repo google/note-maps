@@ -127,46 +127,4 @@ pub trait IteratorExt: Iterator {
                 .sum(),
         )
     }
-
-    //fn into_input<M: Mark, S: AsRef<str>>( self, range: Range<Grapheme>, r: Replacement<M, S>,) -> MarkStrInput<M, S> where Self: Sized, <Self as Iterator>::Item: std::borrow::Borrow<MarkStr< S>>, M: Clone, S: Clone, { MarkStrInput::new(self, range, r) }
 }
-
-/*
-
-impl<T: Iterator> IteratorExt for T {}
-
-#[cfg(test)]
-mod a_collection_of_mark_strs {
-    //use super::offsets::{Byte, Char, Grapheme};
-    //use super::IteratorExt;
-    use super::Mark;
-    use super::MarkStr;
-
-    #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
-    enum Font {
-        Serif,
-        SansSerif,
-    }
-
-    impl Mark for Font {}
-
-    impl Default for Font {
-        fn default() -> Self {
-            Font::Serif
-        }
-    }
-
-    #[test]
-    fn can_be_cheaply_converted_to_a_str_reference() {
-        let mut text: Vec<MarkStr<>> = vec![(Font::default(),"hello".into()).into()];
-        assert_eq!(text[0].as_str(), "hello");
-        assert_eq!(text[0].as_ref(), "hello");
-        assert_eq!(text[0].marks().get(), Some( &Font::Serif));
-        text[0].marks().push( Font::SansSerif.into());
-        assert_eq!(text[0].marks().get(), Some( &Font::SansSerif));
-        //assert_eq!( vec![(Font::Serif, "a̐éö̲").into(), (Font::SansSerif,"\r\n").into()]) .iter() .count_bytes(), Byte(13));
-        //assert_eq!( vec![(Font::Serif,"a̐éö̲").into(), (Font::SansSerif, "\r\n").into()] .iter() .count_chars(), Char(9));
-        //assert_eq!( vec![(Font::Serif, "a̐éö̲").into(), (Font::SansSerif,"\r\n").into()] .iter() .count_graphemes(), Grapheme(4));
-    }
-}
-*/

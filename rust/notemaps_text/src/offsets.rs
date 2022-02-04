@@ -486,6 +486,12 @@ impl iter::Sum for Locus {
     }
 }
 
+impl AsRef<Locus> for Locus {
+    fn as_ref(&self) -> &Locus {
+        self
+    }
+}
+
 impl AsRef<Byte> for Locus {
     fn as_ref(&self) -> &Byte {
         &self.0

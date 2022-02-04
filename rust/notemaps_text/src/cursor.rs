@@ -80,7 +80,7 @@ impl<'a> Cursor<'a> {
                 Ok(())
             }
             Err((piece, offsets)) => {
-                self.text_offsets = self.text.len_offsets();
+                self.text_offsets = self.text.len();
                 self.piece = piece;
                 self.piece_offsets = offsets;
                 Err(self.text_offsets)
@@ -146,10 +146,10 @@ impl<'a> Cursor<'a> {
     /// Returns the total length of the underlying text in `O` elements.
     pub fn len<O>(&self) -> O
     where
-        O: offsets::Offset,
+        O: Clone,
         Locus: AsRef<O>,
     {
-        *self.text_offsets.as_ref()
+        self.text_offsets.as_ref().clone()
     }
 
     /// Returns the cursor position index in `O` elements.
@@ -164,13 +164,11 @@ impl<'a> Cursor<'a> {
     /// Moves the cursor forward by `n` elements.
     pub fn move_by(&mut self, n: Grapheme) -> Result<Locus, Locus> {
         let from = self.text_offsets;
-        self.set_offset(
-            if self.index::<Grapheme>() + n >= *self.text.len_offsets().as_ref() {
-                *self.text.len_offsets().as_ref()
-            } else {
-                self.text_offsets.grapheme() + n
-            },
-        )
+        self.set_offset(if self.index::<Grapheme>() + n >= self.text.len() {
+            self.text.len()
+        } else {
+            self.text_offsets.grapheme() + n
+        })
         .map(|_| self.text_offsets - from)
         .map_err(|_| self.text_offsets - from)
     }
@@ -267,183 +265,3 @@ mod a_point {
         assert_eq!(cursor.peek_next(), None);
     }
 }
-
-/*
-pub struct TextCursor<'a> {
-    text: &'a Text,
-    text_offset: Grapheme,
-    piece: usize,
-    piece_offset: Byte,
-}
-
-impl TextCursor<'a> {
-    fn move_next(&mut self) {
-        if self.i < self.slice.len() {
-            self.i += 1;
-        } else {
-            self.i = 0;
-        }
-    }
-    fn move_prev(&mut self) {
-        if self.i > 0 {
-            self.i -= 1;
-        } else {
-            self.i = self.slice.len();
-        }
-    }
-    fn current(&self) -> Option<&T> {
-        if self.i < self.slice.len() {
-            Some(&self.slice[self.i])
-        } else {
-            None
-        }
-    }
-    fn index(&self)->Option<usize>{
-        if self.i<self.slice.len(){
-            Some(self.i)
-        }else{
-            None
-        }
-    }
-}
-
-impl<'a, T> From<&'a [T]> for SliceCursor<'a, T> {
-    fn from(slice: &'a [T]) -> Self {
-        Self { slice, i: 0 }
-    }
-}
-
-#[cfg(test)]
-mod a_slice_cursor {
-    use super::*;
-
-    #[test]
-    fn moves_forward_through_a_slice_as_ring() {
-        let slice = vec!["red", "blue", "green"];
-        let mut cursor = SliceCursor::from(slice.as_ref());
-        assert_eq!(cursor.current().copied(), Some("red"));
-        cursor.move_next();
-        assert_eq!(cursor.current().copied(), Some("blue"));
-        cursor.move_next();
-        assert_eq!(cursor.current().copied(), Some("green"));
-        cursor.move_next();
-        assert_eq!(cursor.current(), None);
-        cursor.move_next();
-        assert_eq!(cursor.current().copied(), Some("red"));
-    }
-
-    #[test]
-    fn moves_backward_through_a_slice_as_ring() {
-        let slice = vec!["red", "blue", "green"];
-        let mut cursor = SliceCursor::from(slice.as_ref());
-        assert_eq!(cursor.current().copied(), Some("red"));
-        cursor.move_prev();
-        assert_eq!(cursor.current(), None);
-        cursor.move_prev();
-        assert_eq!(cursor.current().copied(), Some("green"));
-        cursor.move_prev();
-        assert_eq!(cursor.current().copied(), Some("blue"));
-    }
-}
-
-use core::ops::Range;
-use unicode_segmentation::GraphemeCursor as GraphemeBoundaryCursor;
-use unicode_segmentation::GraphemeIncomplete;
-//use std::borrow::Cow;
-
-pub struct GraphemeCursor< T> {
-    //'a, T:Cursor<'a,U >, U:AsRef<str>> {
-    strings: T,
-    absolute: Range<usize>,
-    relative: Range<usize>,
-    boundaries: GraphemeBoundaryCursor,
-    broken: Option<GraphemeIncomplete>,
-}
-
-impl< T: Cursor> GraphemeCursor< T> {}
-
-impl< T: Cursor> Cursor for GraphemeCursor< T>
-where
-    T::Item: AsRef<str>,
-{
-    type Item = str;
-
-    fn move_next(&mut self) {
-        //if self.strings.current().is_none() { self.strings.move_next(); self.start = 0; self.boundaries.set_cursor(0); self.broken = None; }
-        while let Some(s) = self.strings.current().map(|s|s.as_ref()) {
-            let start = self.boundaries.cur_cursor();
-            match self.boundaries.next_boundary(s, 0) {
-                Ok(Some(end)) => {
-                    // This is the typical case: we have moved to the next grapheme within the
-                    // current string.
-                    self.relative = start..end;
-                    self.absolute =
-                    return;
-                }
-                Ok(None) => {
-                    // We've reached the end of current string, so let's start anew at the
-                    // beginning of the next one.
-                    self.strings.move_next();
-                    self.cur = 0..0;
-                    self.boundaries.set_cursor(0);
-                }
-                Err(err) => {
-                    self.broken = Some(err);
-                    return;
-                }
-            }
-        }
-        // In case we break out of the loop without returning, we've reached the end of the
-        // sequence of underlying strings.
-    }
-
-    fn move_prev(&mut self) {
-        todo!("")
-    }
-
-    fn current(&self) -> Option<&str> {
-        self.strings.current().map(|s|&s.as_ref()[self.cur.clone()])
-    }
-
-    fn index(&self)->Option<usize>{
-        self.
-    }
-}
-
-impl< T: Cursor> From<T> for GraphemeCursor< T>
-where
-    T::Item: AsRef<str>,
-{
-    fn from(strings: T) -> Self {
-        let mut self_ = Self {
-            strings,
-            cur: 0..0,
-            boundaries: GraphemeBoundaryCursor::new(0, usize::MAX, true),
-            broken: None,
-        };
-        self_.move_next();
-        self_
-    }
-}
-
-#[cfg(test)]
-mod a_grapheme_cursor {
-    use super::*;
-
-    #[test]
-    fn moves_forward_through_slice_of_strings() {
-        let slice = vec!["a̐éö̲", "", "\r\n"];
-        let strs = SliceCursor::from(slice.as_ref());
-        let mut graphemes = GraphemeCursor::from(strs);
-        assert_eq!(graphemes.current(), Some("a̐"));
-        graphemes.move_next();
-        assert_eq!(graphemes.current(), Some("é"));
-        graphemes.move_next();
-        assert_eq!(graphemes.current(), Some("ö̲"));
-        // graphemes.move_next();
-        //assert_eq!(graphemes.current(),Some("\r\n"));
-        // graphemes.move_next();
-        //assert_eq!(graphemes.current(),None);
-    }
-}
-*/

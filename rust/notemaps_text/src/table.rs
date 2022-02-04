@@ -76,12 +76,13 @@ impl Text {
         PiecesMut(self.pieces.iter_mut())
     }
 
-    pub fn len_offsets(&self) -> Locus {
-        self.len
-    }
-
-    pub fn len(&self) -> Grapheme {
-        *self.len.as_ref()
+    /// Returns the total length of the text in `O` elements.
+    pub fn len<O>(&self) -> O
+    where
+        O: Clone,
+        Locus: AsRef<O>,
+    {
+        self.len.as_ref().clone()
     }
 
     pub fn locate(&self, offset: Grapheme) -> Result<PieceLocus, PieceLocus> {
@@ -110,14 +111,14 @@ impl Text {
         }
         let mut todo = offset;
         for (i, p) in self.pieces.iter().enumerate() {
-            if p.len() > todo {
+            if p.len::<Grapheme>() > todo {
                 return Ok((
                     i,
                     p.locate(todo)
                         .expect("locating an offset less than the length always works"),
                 ));
             } else {
-                todo -= p.len();
+                todo -= p.len::<Grapheme>();
             }
         }
         panic!("this should never happen...");
@@ -304,7 +305,7 @@ mod a_text {
             .into_iter()
             .collect();
         assert_eq!(text.to_string(), "a̐éö̲\r\n");
-        assert_eq!(text.len(), Grapheme(4));
+        assert_eq!(text.len::<Grapheme>(), Grapheme(4));
         assert_eq!(
             text.pieces().map(|p| p.as_str()).collect::<Vec<&str>>(),
             vec!["a̐éö̲", "\r\n"]

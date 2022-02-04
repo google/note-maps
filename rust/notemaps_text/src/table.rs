@@ -51,7 +51,7 @@ impl Text {
     pub const fn new() -> Self {
         Self {
             pieces: Vec::new(),
-            len: Locus::new_zero(),
+            len: Locus::zero(),
         }
     }
 
@@ -76,21 +76,22 @@ impl Text {
         PiecesMut(self.pieces.iter_mut())
     }
 
-    /// Returns the total length of the text in `O` elements.
-    pub fn len<O>(&self) -> O
+    /// Returns the total length of the text in `U` elements.
+    pub fn len<U>(&self) -> U
     where
-        O: Clone,
-        Locus: AsRef<O>,
+        U: Clone,
+        Locus: AsRef<U>,
     {
         self.len.as_ref().clone()
     }
 
+    /// Returns a specialized representation of the location of `offset` within `self`.
     pub fn locate(&self, offset: Grapheme) -> Result<PieceLocus, PieceLocus> {
         if self.pieces.is_empty() {
             return if offset.0 == 0 {
-                Ok((0, Locus::new_zero()))
+                Ok((0, Locus::zero()))
             } else {
-                Err((0, Locus::new_zero()))
+                Err((0, Locus::zero()))
             };
         }
         use std::cmp;
@@ -98,13 +99,13 @@ impl Text {
             cmp::Ordering::Greater => {
                 return Err((
                     self.pieces.len() - 1,
-                    self.pieces[self.pieces.len() - 1].len_offsets(),
+                    self.pieces[self.pieces.len() - 1].len(),
                 ));
             }
             cmp::Ordering::Equal => {
                 return Ok((
                     self.pieces.len() - 1,
-                    self.pieces[self.pieces.len() - 1].len_offsets(),
+                    self.pieces[self.pieces.len() - 1].len(),
                 ));
             }
             _ => {}
@@ -187,7 +188,7 @@ impl Default for Text {
 impl FromIterator<Piece> for Text {
     fn from_iter<T: IntoIterator<Item = Piece>>(iter: T) -> Self {
         let pieces: Vec<Piece> = iter.into_iter().map(Into::into).collect();
-        let len: Locus = pieces.iter().map(|p| p.len_offsets()).sum();
+        let len: Locus = pieces.iter().map(|p| p.len()).sum();
         Self { pieces, len }
     }
 }

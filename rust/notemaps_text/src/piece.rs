@@ -89,19 +89,11 @@ impl Piece {
         }
     }
 
-    pub fn len_offsets(&self) -> Locus {
-        Locus(
-            Byte(self.byte_range.len()),
-            self.len_chars,
-            self.len_graphemes,
-        )
-    }
-
-    /// Returns the total length of the underlying text in `O` elements.
-    pub fn len<O>(&self) -> O
+    /// Returns the total length of the underlying text in `U` elements.
+    pub fn len<U>(&self) -> U
     where
-        O: Clone,
-        Locus: AsRef<O>,
+        U: Clone,
+        Locus: AsRef<U>,
     {
         Locus(
             Byte(self.byte_range.len()),
@@ -110,10 +102,6 @@ impl Piece {
         )
         .as_ref()
         .clone()
-    }
-
-    pub fn len_bytes(&self) -> Byte {
-        Byte(self.byte_range.end - self.byte_range.start)
     }
 
     pub fn as_str(&self) -> &str {
@@ -139,10 +127,9 @@ impl Piece {
     ///
     /// If `offset` is out of bounds, returns the bounds of this piece.
     pub fn locate(&self, offset: Grapheme) -> Result<Locus, Locus> {
-        self.as_str()
-            .try_byte_offset_at(offset)
+        Unit::nth_byte_offset(self.as_str(), offset)
             .map(|byte| Locus::from_grapheme_byte(byte, offset, self.as_str()))
-            .map_err(|_| self.len_offsets())
+            .map_err(|_| self.len())
     }
 }
 

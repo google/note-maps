@@ -51,9 +51,9 @@ impl<'a> Cursor<'a> {
     pub fn new(text: &'a Text, offset: Grapheme) -> Self {
         Self {
             text,
-            text_offsets: Locus::new_zero(),
+            text_offsets: Locus::zero(),
             piece: 0,
-            piece_offsets: Locus::new_zero(),
+            piece_offsets: Locus::zero(),
         }
         .with_offset(offset)
     }
@@ -67,15 +67,15 @@ impl<'a> Cursor<'a> {
 
     pub fn set_offset(&mut self, offset: Grapheme) -> Result<(), Locus> {
         match self.text.locate(offset) {
-            Ok((piece, offsets)) => {
+            Ok((n_piece, offsets)) => {
                 self.text_offsets = self
                     .text
                     .pieces()
-                    .take(piece)
-                    .map(Piece::len_offsets)
+                    .take(n_piece)
+                    .map(|p| p.len())
                     .sum::<Locus>()
                     + offsets;
-                self.piece = piece;
+                self.piece = n_piece;
                 self.piece_offsets = offsets;
                 Ok(())
             }
@@ -101,9 +101,7 @@ impl<'a> Cursor<'a> {
             if self.piece == 0 {
                 None
             } else {
-                self.text
-                    .get_piece(self.piece - 1)
-                    .map(|p| (p, p.len_bytes()))
+                self.text.get_piece(self.piece - 1).map(|p| (p, p.len()))
             }
         } else {
             self.text
@@ -128,7 +126,7 @@ impl<'a> Cursor<'a> {
     pub fn is_piece_boundary(&self) -> bool {
         self.piece_offsets.byte() == Byte(0)
             || match self.text.get_piece(self.piece) {
-                Some(piece) => piece.len_bytes() == self.piece_offsets.byte(),
+                Some(piece) => piece.len::<Byte>() == self.piece_offsets.byte(),
                 None => true,
             }
     }
@@ -143,20 +141,20 @@ impl<'a> Cursor<'a> {
             .and_then(|(p, o)| (&p.as_str()[..o.0]).graphemes(true).next_back())
     }
 
-    /// Returns the total length of the underlying text in `O` elements.
-    pub fn len<O>(&self) -> O
+    /// Returns the total length of the underlying text in `U` elements.
+    pub fn len<U>(&self) -> U
     where
-        O: Clone,
-        Locus: AsRef<O>,
+        U: Clone,
+        Locus: AsRef<U>,
     {
         self.text_offsets.as_ref().clone()
     }
 
-    /// Returns the cursor position index in `O` elements.
-    pub fn index<O>(&self) -> O
+    /// Returns the cursor position index in `U` elements.
+    pub fn index<U>(&self) -> U
     where
-        O: offsets::Offset,
-        Locus: AsRef<O>,
+        U: offsets::Unit,
+        Locus: AsRef<U>,
     {
         *self.text_offsets.as_ref()
     }

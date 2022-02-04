@@ -16,7 +16,7 @@ use std::ops::Range;
 
 use crate::offsets::*;
 
-/// Wraps [str] to implement [ops::Index] for [std::ops::RangeBounds] for the [Offset] types
+/// Wraps [str] to implement [ops::Index] for [std::ops::RangeBounds] for the [Unit] types
 /// [Byte], [Char], and [Grapheme].
 ///
 /// NOTE: [IndexStr] is less than ideal for large strings as the time complexity of
@@ -61,11 +61,11 @@ impl<T: Borrow<str>> IndexStr<T> {
     }
 }
 
-impl<O: Offset, T: Borrow<str>> ops::Index<Range<O>> for IndexStr<T> {
+impl<U: Unit, T: Borrow<str>> ops::Index<Range<U>> for IndexStr<T> {
     type Output = str;
 
-    fn index(&self, range: Range<O>) -> &str {
-        O::get_slice(self.0.borrow(), range)
+    fn index(&self, range: Range<U>) -> &str {
+        U::get_slice(self.0.borrow(), range)
     }
 }
 
@@ -102,10 +102,13 @@ mod a_str {
 
     #[test]
     fn measures_its_own_length() {
-        use crate::offsets::StrExt;
+        use crate::offsets::Unit;
         let s = "a̐éö̲\r\n";
-        let (bytes, chars, graphemes): (Byte, Char, Grapheme) =
-            (s.max_offset(), s.max_offset(), s.max_offset());
+        let (bytes, chars, graphemes): (Byte, Char, Grapheme) = (
+            Unit::offset_len(s),
+            Unit::offset_len(s),
+            Unit::offset_len(s),
+        );
         assert_eq!(bytes, Byte(13));
         assert_eq!(chars, Char(9));
         assert_eq!(graphemes, Grapheme(4));
@@ -180,8 +183,8 @@ use std::sync::Arc;
 /// use notemaps_text::offsets::{Char, Grapheme};
 ///
 /// let s: MeasuredStr = "a̐éö̲\r\n".into();
-/// assert_eq!(Char(9), s.offset_len());
-/// assert_eq!(Grapheme(4), s.offset_len());
+/// assert_eq!(Char(9), s.len());
+/// assert_eq!(Grapheme(4), s.len());
 /// ```
 #[derive(Clone, Debug)]
 pub struct MeasuredStr {
@@ -206,14 +209,15 @@ impl MeasuredStr {
     /// use notemaps_text::offsets::{Char, Grapheme};
     ///
     /// let s: MeasuredStr = "a̐éö̲\r\n".into();
-    /// assert_eq!(Char(9), s.offset_len());
-    /// assert_eq!(Grapheme(4), s.offset_len());
+    /// assert_eq!(Char(9), s.len());
+    /// assert_eq!(Grapheme(4), s.len());
     /// ```
-    pub fn offset_len<O: Offset>(&self) -> O
+    pub fn len<U>(&self) -> U
     where
-        Locus: AsRef<O>,
+        U: Clone,
+        Locus: AsRef<U>,
     {
-        *self.len.as_ref()
+        self.len.as_ref().clone()
     }
 
     /// Wraps a [str] and computes its total length in [Locus] on construction.
@@ -228,8 +232,8 @@ impl MeasuredStr {
     /// use notemaps_text::offsets::{Char, Grapheme};
     ///
     /// let s: MeasuredStr = "a̐éö̲\r\n".into();
-    /// assert_eq!(Char(9), s.offset_len());
-    /// assert_eq!(Grapheme(4), s.offset_len());
+    /// assert_eq!(Char(9), s.len());
+    /// assert_eq!(Grapheme(4), s.len());
     /// ```
     pub fn as_str(&self) -> &str {
         self.text.borrow()
@@ -269,8 +273,8 @@ mod a_measured_str {
     #[test]
     fn reports_its_length_accurately() {
         let s: MeasuredStr = "a̐éö̲\r\n".into();
-        assert_eq!(Byte(13), s.offset_len());
-        assert_eq!(Char(9), s.offset_len());
-        assert_eq!(Grapheme(4), s.offset_len());
+        assert_eq!(Byte(13), s.len());
+        assert_eq!(Char(9), s.len());
+        assert_eq!(Grapheme(4), s.len());
     }
 }

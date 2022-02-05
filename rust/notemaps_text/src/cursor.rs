@@ -10,6 +10,7 @@
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::borrow::Borrow;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::offsets::*;
@@ -40,15 +41,15 @@ pub enum Dir {
 /// assert_eq!(cursor.peek_next(), Some("\r\n"));
 /// ```
 #[derive(Copy, Clone)]
-pub struct Cursor<'a> {
-    text: &'a Text,
+pub struct Cursor<'a, S: Borrow<str>> {
+    text: &'a Text<S>,
     text_offsets: Locus,
     piece: usize,
     piece_offsets: Locus,
 }
 
-impl<'a> Cursor<'a> {
-    pub fn new(text: &'a Text, offset: Grapheme) -> Self {
+impl<'a, S: Borrow<str>> Cursor<'a, S> {
+    pub fn new(text: &'a Text<S>, offset: Grapheme) -> Self {
         Self {
             text,
             text_offsets: Locus::zero(),
@@ -72,7 +73,7 @@ impl<'a> Cursor<'a> {
                     .text
                     .pieces()
                     .take(n_piece)
-                    .map(|p| p.len())
+                    .map(|p| p.as_ui_str().len())
                     .sum::<Locus>()
                     + offsets;
                 self.piece = n_piece;
@@ -96,12 +97,14 @@ impl<'a> Cursor<'a> {
         (self.piece, *self.piece_offsets.as_ref())
     }
 
-    fn get_piece_offset_prev(&self) -> Option<(&'a Piece, Byte)> {
+    fn get_piece_offset_prev(&self) -> Option<(&'a MarkStr<S>, Byte)> {
         if self.piece_offsets.byte() == Byte(0) {
             if self.piece == 0 {
                 None
             } else {
-                self.text.get_piece(self.piece - 1).map(|p| (p, p.len()))
+                self.text
+                    .get_piece(self.piece - 1)
+                    .map(|p| (p, p.as_ui_str().len()))
             }
         } else {
             self.text
@@ -110,7 +113,7 @@ impl<'a> Cursor<'a> {
         }
     }
 
-    fn get_piece_offset_next(&self) -> Option<(&'a Piece, Byte)> {
+    fn get_piece_offset_next(&self) -> Option<(&'a MarkStr<S>, Byte)> {
         self.text
             .get_piece(self.piece)
             .map(|p| (p, self.piece_offsets.byte()))
@@ -126,7 +129,7 @@ impl<'a> Cursor<'a> {
     pub fn is_piece_boundary(&self) -> bool {
         self.piece_offsets.byte() == Byte(0)
             || match self.text.get_piece(self.piece) {
-                Some(piece) => piece.len::<Byte>() == self.piece_offsets.byte(),
+                Some(piece) => piece.as_ui_str().len::<Byte>() == self.piece_offsets.byte(),
                 None => true,
             }
     }
@@ -196,7 +199,7 @@ mod a_point {
     #[test]
     fn starts_at_the_beginning() {
         let word: Rc<Word> = Rc::default();
-        let text = Text::from(Piece::from("AB").with_mark(word.clone()));
+        let text = Text::from(MarkStr::<Rc<str>>::from("AB").with_mark(word.clone()));
         let cursor = Cursor::new(&text, Grapheme(0));
         assert_eq!(cursor.offset(), Grapheme(0));
         assert!(cursor.is_piece_boundary());
@@ -209,7 +212,7 @@ mod a_point {
     #[test]
     fn can_move_to_next_point() {
         let word: Rc<Word> = Rc::default();
-        let text = Text::from(Piece::from("ABC").with_mark(word.clone()));
+        let text = Text::<Rc<str>>::from(MarkStr::from("ABC").with_mark(word.clone()));
         let mut cursor = Cursor::new(&text, Grapheme(0));
         cursor
             .move_by(Grapheme(1))
@@ -242,9 +245,9 @@ mod a_point {
     #[test]
     fn can_be_moved_to_random_location() {
         let word: Rc<Word> = Rc::default();
-        let text = Text::from_iter([
-            Piece::from("a̐éö̲").with_mark(word.clone()),
-            Piece::from("\r\n"),
+        let text = Text::<Rc<str>>::from_iter([
+            MarkStr::from("a̐éö̲").with_mark(word.clone()),
+            MarkStr::from("\r\n"),
         ]);
         let cursor = Cursor::new(&text, Grapheme(0));
         assert_eq!(cursor.peek_prev(), None);

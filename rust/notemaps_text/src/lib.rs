@@ -25,6 +25,7 @@ mod mark_set;
 mod mark_str;
 mod markup;
 mod piece;
+mod strtype;
 mod table;
 mod text;
 
@@ -33,6 +34,7 @@ pub use mark_set::*;
 pub use mark_str::*;
 pub use markup::*;
 pub use piece::*;
+pub use strtype::*;
 pub use table::*;
 pub use text::*;
 

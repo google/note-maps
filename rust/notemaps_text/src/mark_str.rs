@@ -12,8 +12,11 @@
 
 use super::offsets;
 use core::any::Any;
+use core::borrow::Borrow;
+use core::ops::Range;
 use std::rc::Rc;
 
+use crate::offsets::*;
 use crate::*;
 
 /// A contiguous piece of marked up text that has the same set of marks from beginning to end.
@@ -34,33 +37,75 @@ use crate::*;
 /// ].to_vec();
 /// ```
 #[derive(Debug, Clone)]
-pub struct MarkStr<S: AsRef<str> = Rc<str>> {
+pub struct MarkStr<S: Borrow<str> = Rc<str>> {
     marks: MarkSet,
-    string: S,
+    string: UiString<S>,
 }
 
-impl<S: AsRef<str>> MarkStr<S> {
-    pub fn new(marks: MarkSet, string: S) -> Self {
+impl<S: Borrow<str>> MarkStr<S> {
+    pub fn new(marks: MarkSet, string: UiString<S>) -> Self {
         Self { marks, string }
     }
-    pub fn get(&self) -> &S {
+
+    pub fn as_str(&self) -> &str {
+        self.string.as_str()
+    }
+
+    pub fn as_ui_str(&self) -> &UiString<S> {
         &self.string
     }
-    pub fn as_str(&self) -> &str {
-        self.string.as_ref()
+
+    pub fn to_ui_str(&self) -> UiString<S>
+    where
+        S: Clone,
+    {
+        self.string.clone()
     }
+
     pub fn marks(&self) -> &MarkSet {
         &self.marks
     }
+
     pub fn marks_mut(&mut self) -> &mut MarkSet {
         &mut self.marks
     }
-    pub fn map_str<T: AsRef<str>, F: FnOnce(S) -> T>(self, f: F) -> MarkStr<T> {
+
+    pub fn map_str<T: Borrow<str>, F: FnOnce(UiString<S>) -> UiString<T>>(
+        self,
+        f: F,
+    ) -> MarkStr<T> {
         MarkStr {
             marks: self.marks,
             string: f(self.string),
         }
     }
+
+    pub fn graphemes(&self) -> impl '_ + Iterator<Item = Self>
+    where
+        S: Clone,
+    {
+        self.string
+            .graphemes()
+            .map(|g| Self::new(self.marks.clone(), g))
+    }
+
+    #[must_use]
+    pub fn slice(&self, r: Range<Grapheme>) -> Self
+    where
+        S: Clone,
+    {
+        Self {
+            string: self.string.slice(r),
+            marks: self.marks.clone(),
+        }
+    }
+
+    #[must_use]
+    pub fn with_mark<M: Any>(mut self, mark: Rc<M>) -> Self {
+        self.marks_mut().push(mark);
+        self
+    }
+
     #[must_use]
     pub fn with_marks(mut self, marks: MarkSet) -> Self {
         self.marks_mut().push_all(marks);
@@ -68,7 +113,7 @@ impl<S: AsRef<str>> MarkStr<S> {
     }
 }
 
-impl<S: AsRef<str>> Default for MarkStr<S>
+impl<S: Borrow<str>> Default for MarkStr<S>
 where
     S: Default,
 {
@@ -77,7 +122,7 @@ where
     }
 }
 
-impl<'a, S: AsRef<str>> From<&'a str> for MarkStr<S>
+impl<'a, S: Borrow<str>> From<&'a str> for MarkStr<S>
 where
     S: From<&'a str>,
 {
@@ -86,18 +131,32 @@ where
     }
 }
 
-impl<'a, M: Any, S: AsRef<str>> From<(M, S)> for MarkStr<S> {
-    fn from(src: (M, S)) -> Self {
-        Self::new(MarkSet::new_with(Rc::new(src.0)), src.1)
+impl<'a, M: Any, S: Borrow<str>, T: Into<UiString<S>>> From<(M, T)> for MarkStr<S> {
+    fn from(src: (M, T)) -> Self {
+        Self::new(MarkSet::new_with(Rc::new(src.0)), src.1.into())
     }
 }
 
-impl<S: AsRef<str>> AsRef<str> for MarkStr<S>
-where
-    S: AsRef<str>,
-{
+impl<S: Borrow<str>> AsRef<str> for MarkStr<S> {
     fn as_ref(&self) -> &str {
-        self.string.as_ref()
+        self.string.as_str()
+    }
+}
+
+use core::iter;
+use core::ops;
+
+impl<S: Borrow<str>> ops::Add<Text<S>> for MarkStr<S> {
+    type Output = Text<S>;
+    fn add(self, other: Text<S>) -> Self::Output {
+        iter::once(self).chain(other.into_iter()).collect()
+    }
+}
+
+impl<S: Borrow<str>> ops::Add<MarkStr<S>> for MarkStr<S> {
+    type Output = Text<S>;
+    fn add(self, other: MarkStr<S>) -> Self::Output {
+        iter::once(self).chain(iter::once(other)).collect()
     }
 }
 

@@ -13,6 +13,7 @@
 use core::any::Any;
 use core::ops;
 use core::ops::Range;
+use std::borrow::Borrow;
 use std::fmt;
 use std::iter;
 use std::rc::Rc;
@@ -20,13 +21,15 @@ use std::rc::Rc;
 use crate::offsets::*;
 use crate::*;
 
-/// [Text] is a sequence of [Piece] values, effectively a [piece table][].
+/// [Text] is a sequence of [MarkStr] values, effectively a [piece table][].
 ///
 /// Although currently based on a [Vec], future iterations of development may replace the internal
 /// implementation with something like a [rope][] or [gap buffer][]. The API of [Text] is
-/// deliberately agnostic to these implementation details.
+/// deliberately agnostic to these implementation details, committing only to presenting the data
+/// as no more than a sequence of [MarkStr] values that may or may not be usefully optimized for
+/// interesting uses.
 ///
-/// [piece table]: https://en.wikipedia.org/wiki/Piece_table
+/// [piece table]: https://en.wikipedia.org/wiki/MarkStr_table
 /// [rope]: https://en.wikipedia.org/wiki/Rope_(computer_science)
 /// [gap buffer]: https://en.wikipedia.org/wiki/Gap_buffer
 ///
@@ -34,33 +37,45 @@ use crate::*;
 ///
 /// ```rust
 /// use notemaps_text::Text;
-/// use notemaps_text::Piece;
+/// use notemaps_text::MarkStr;
 ///
-/// let text: Text = [Piece::from("Hello, world!"), Piece::from("\n")].into_iter().collect();
+/// let text: Text = [MarkStr::from("Hello, world!"), MarkStr::from("\n")].into_iter().collect();
 /// assert_eq!(text.to_string(), "Hello, world!\n");
 /// ```
 #[derive(Clone, Debug)]
-pub struct Text {
-    pieces: Vec<Piece>,
+pub struct Text<S: Borrow<str> = Rc<str>> {
+    pieces: Vec<MarkStr<S>>,
     len: Locus,
 }
 
-pub type PieceLocus = (usize, Locus);
+pub type MarkStrLocus = (usize, Locus);
 
-impl Text {
-    pub const fn new() -> Self {
+impl<S: Borrow<str>> Text<S> {
+    /// Creates a new, empty [Text].
+    pub fn new() -> Self {
         Self {
             pieces: Vec::new(),
             len: Locus::zero(),
         }
     }
 
-    pub fn graphemes(&self) -> impl Iterator<Item = &str> {
-        use unicode_segmentation::UnicodeSegmentation;
-        self.pieces().flat_map(|p| p.as_str().graphemes(true))
+    /// Returns an iterator over all the individual graphemes in `self`.
+    pub fn graphemes(&self) -> impl '_ + Iterator<Item = MarkStr<S>>
+    where
+        S: Clone,
+    {
+        self.pieces().flat_map(|p| p.graphemes())
     }
 
-    pub fn get_piece(&self, n: usize) -> Option<&Piece> {
+    //pub fn marked_graphemes(&self)->impl Iterator<Item=MarkStr>{
+    //self.pieces.iter().map(|p|p.graphemes().m
+    //}
+
+    /// Returns the `n`th piece, or [None] if `n` is greater than the number of pieces in `self`.
+    ///
+    /// NOTE: This is a low-level API that risks coupling the usage of [Text] to implementation
+    /// details.
+    pub fn get_piece(&self, n: usize) -> Option<&MarkStr<S>> {
         if n < self.pieces.len() {
             Some(&self.pieces[n])
         } else {
@@ -68,11 +83,18 @@ impl Text {
         }
     }
 
-    pub fn pieces(&self) -> Pieces {
+    /// Returns a reference to each [MarkStr] in `self`, which is the entire content or meaning of
+    /// this [Text].
+    ///
+    /// NOTE: This is a low-level API that risks coupling the usage of [Text] to implementation
+    /// details.
+    pub fn pieces(&self) -> Pieces<S> {
         Pieces(self.pieces.iter())
     }
 
-    pub fn pieces_mut(&mut self) -> PiecesMut {
+    /// Returns a mutable reference to each [MarkStr] in `self`, which is the entire content or
+    /// meaning of this [Text].
+    pub fn pieces_mut(&mut self) -> PiecesMut<S> {
         PiecesMut(self.pieces.iter_mut())
     }
 
@@ -86,7 +108,7 @@ impl Text {
     }
 
     /// Returns a specialized representation of the location of `offset` within `self`.
-    pub fn locate(&self, offset: Grapheme) -> Result<PieceLocus, PieceLocus> {
+    pub fn locate(&self, offset: Grapheme) -> Result<MarkStrLocus, MarkStrLocus> {
         if self.pieces.is_empty() {
             return if offset.0 == 0 {
                 Ok((0, Locus::zero()))
@@ -99,38 +121,44 @@ impl Text {
             cmp::Ordering::Greater => {
                 return Err((
                     self.pieces.len() - 1,
-                    self.pieces[self.pieces.len() - 1].len(),
+                    self.pieces[self.pieces.len() - 1].as_ui_str().len(),
                 ));
             }
             cmp::Ordering::Equal => {
                 return Ok((
                     self.pieces.len() - 1,
-                    self.pieces[self.pieces.len() - 1].len(),
+                    self.pieces[self.pieces.len() - 1].as_ui_str().len(),
                 ));
             }
             _ => {}
         }
         let mut todo = offset;
         for (i, p) in self.pieces.iter().enumerate() {
-            if p.len::<Grapheme>() > todo {
+            if p.as_ui_str().len::<Grapheme>() > todo {
                 return Ok((
                     i,
-                    p.locate(todo)
+                    p.as_ui_str()
+                        .locate(todo)
                         .expect("locating an offset less than the length always works"),
                 ));
             } else {
-                todo -= p.len::<Grapheme>();
+                todo -= p.as_ui_str().len::<Grapheme>();
             }
         }
         panic!("this should never happen...");
     }
 
-    pub fn cursor(&self, offset: Grapheme) -> Cursor {
+    /// Returns a [Cursor] positioned at `offset` within `self`.
+    pub fn cursor(&self, offset: Grapheme) -> Cursor<S> {
         Cursor::new(self, offset)
     }
 
+    /// Copies the content of `self` from range `r` into a new [Text].
     #[must_use]
-    pub fn slice(&self, r: Range<Grapheme>) -> Self {
+    pub fn slice(&self, r: Range<Grapheme>) -> Self
+    where
+        S: Clone,
+    {
         if r.end <= r.start {
             return Text::new();
         }
@@ -148,28 +176,33 @@ impl Text {
                 .slice(start.1.whatever()..end.1.whatever())
                 .into();
         }
-        iter::once(self.pieces[start.0].slice(start.1.whatever()..self.pieces[start.0].len()))
-            .chain(self.pieces[(start.0 + 1)..end.0].iter().cloned())
-            .chain(iter::once(
-                self.pieces[end.0].slice(Grapheme(0)..end.1.whatever()),
-            ))
-            .collect()
+        iter::once(
+            self.pieces[start.0].slice(start.1.whatever()..self.pieces[start.0].as_ui_str().len()),
+        )
+        .chain(self.pieces[(start.0 + 1)..end.0].iter().cloned())
+        .chain(iter::once(
+            self.pieces[end.0].slice(Grapheme(0)..end.1.whatever()),
+        ))
+        .collect()
     }
 
     #[must_use]
-    pub fn with_insert<I: IntoIterator>(&self, _at: Grapheme, _text: I) -> Self
+    pub fn with_insert<I: IntoIterator>(&self, n: Grapheme, text: I) -> Self
     where
-        Text: FromIterator<I::Item>,
+        Text<S>: FromIterator<I::Item>,
+        S: Clone,
     {
-        todo!("");
+        self.slice(Grapheme::MIN..n) + Self::from_iter(text) + self.slice(n..self.len())
     }
 
+    /// Pushes the mark `m` onto every [MarkStr] in `self`.
     pub fn mark<M: Any>(&mut self, m: Rc<M>) {
         for piece in self.pieces_mut() {
             piece.marks_mut().push(m.clone());
         }
     }
 
+    /// Removes the mark `m` from every [MarkStr] in `self`.
     pub fn unmark<M: Any + PartialEq>(&mut self, m: &M) {
         for piece in self.pieces_mut() {
             if piece.marks_mut().contains(&*m) {
@@ -177,62 +210,85 @@ impl Text {
             }
         }
     }
+
+    /// Consumes `self`, pushes the mark `m` onto every [MarkStr], and returns the result.
+    pub fn with_mark<M: Any>(mut self, m: Rc<M>) -> Self {
+        self.mark(m);
+        self
+    }
+
+    /// Consumes `self`, removes the mark `m` from every [MarkStr], and returns the result.
+    pub fn with_unmark<M: Any + PartialEq>(mut self, m: &M) -> Self {
+        self.unmark(m);
+        self
+    }
 }
 
-impl Default for Text {
+impl<S: Borrow<str>> Default for Text<S> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl FromIterator<Piece> for Text {
-    fn from_iter<T: IntoIterator<Item = Piece>>(iter: T) -> Self {
-        let pieces: Vec<Piece> = iter.into_iter().map(Into::into).collect();
-        let len: Locus = pieces.iter().map(|p| p.len()).sum();
+impl<S: Borrow<str>> FromIterator<MarkStr<S>> for Text<S> {
+    fn from_iter<T: IntoIterator<Item = MarkStr<S>>>(iter: T) -> Self {
+        let pieces: Vec<MarkStr<S>> = iter.into_iter().collect();
+        let len: Locus = pieces.iter().map(|p| p.as_ui_str().len()).sum();
         Self { pieces, len }
     }
 }
 
-impl From<Piece> for Text {
-    fn from(piece: Piece) -> Self {
+impl<S: Borrow<str>> From<MarkStr<S>> for Text<S> {
+    fn from(piece: MarkStr<S>) -> Self {
         iter::once(piece).collect()
     }
 }
 
-impl<'a> From<&'a str> for Text {
+impl<'a, S: Borrow<str>> From<&'a str> for Text<S>
+where
+    S: From<&'a str>,
+{
     fn from(string: &'a str) -> Self {
-        Piece::from(string).into()
+        MarkStr::from(string).into()
     }
 }
 
 // TODO: consider refactoring these implementations of ops::Add to more closely resemble what's
 // done for std::string::String.
 
-impl ops::Add<Self> for Text {
+impl<S: Borrow<str>> ops::Add<Self> for Text<S> {
     type Output = Self;
     fn add(self, other: Self) -> Self {
-        self.pieces().chain(other.pieces()).cloned().collect()
+        self.into_iter().chain(other.into_iter()).collect()
     }
 }
 
-impl ops::Add<Piece> for Text {
+impl<S: Borrow<str>> ops::Add<MarkStr<S>> for Text<S> {
     type Output = Self;
-    fn add(self, other: Piece) -> Self {
-        self.pieces().cloned().chain(iter::once(other)).collect()
+    fn add(self, other: MarkStr<S>) -> Self {
+        self.into_iter().chain(iter::once(other)).collect()
     }
 }
 
-impl fmt::Display for Text {
+impl<S: Borrow<str>> IntoIterator for Text<S> {
+    type Item = MarkStr<S>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.pieces.into_iter()
+    }
+}
+
+impl<S: Borrow<str>> fmt::Display for Text<S> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.pieces().try_for_each(|p| p.as_str().fmt(f))
     }
 }
 
 /// [Pieces] is the [Iterator] type returned by [Text::pieces].
-pub struct Pieces<'a>(std::slice::Iter<'a, Piece>);
+pub struct Pieces<'a, S: Borrow<str>>(std::slice::Iter<'a, MarkStr<S>>);
 
-impl<'a> Iterator for Pieces<'a> {
-    type Item = &'a Piece;
+impl<'a, S: Borrow<str>> Iterator for Pieces<'a, S> {
+    type Item = &'a MarkStr<S>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
@@ -255,13 +311,13 @@ impl<'a> Iterator for Pieces<'a> {
     }
 }
 
-impl<'a> ExactSizeIterator for Pieces<'a> {}
+impl<'a, S: Borrow<str>> ExactSizeIterator for Pieces<'a, S> {}
 
 /// [PiecesMut] is the [Iterator] type returned by [Text::pieces_mut].
-pub struct PiecesMut<'a>(std::slice::IterMut<'a, Piece>);
+pub struct PiecesMut<'a, S: Borrow<str>>(std::slice::IterMut<'a, MarkStr<S>>);
 
-impl<'a> Iterator for PiecesMut<'a> {
-    type Item = &'a mut Piece;
+impl<'a, S: Borrow<str>> Iterator for PiecesMut<'a, S> {
+    type Item = &'a mut MarkStr<S>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
@@ -283,6 +339,8 @@ impl<'a> Iterator for PiecesMut<'a> {
         self.0.size_hint()
     }
 }
+
+impl<'a, S: Borrow<str>> ExactSizeIterator for PiecesMut<'a, S> {}
 
 #[cfg(test)]
 mod a_text {
@@ -296,13 +354,13 @@ mod a_text {
 
     #[test]
     fn can_be_built_from_a_piece() {
-        let text: Text = Piece::new(Rc::from("a̐éö̲\r\n")).into();
+        let text: Text = MarkStr::new(MarkSet::new(), "a̐éö̲\r\n".into()).into();
         assert_eq!(text.to_string(), "a̐éö̲\r\n");
     }
 
     #[test]
     fn can_be_collected_from_pieces() {
-        let text: Text = [Piece::from("a̐éö̲"), Piece::from("\r\n")]
+        let text: Text = [MarkStr::from("a̐éö̲"), MarkStr::from("\r\n")]
             .into_iter()
             .collect();
         assert_eq!(text.to_string(), "a̐éö̲\r\n");
@@ -316,26 +374,26 @@ mod a_text {
     #[test]
     fn can_be_built_from_concatenation() {
         assert_eq!(
-            (Text::from("a̐éö̲") + Text::from("\r\n")).to_string(),
+            (Text::<Rc<str>>::from("a̐éö̲") + Text::from("\r\n")).to_string(),
             "a̐éö̲\r\n"
         );
         assert_eq!(
-            (Text::from("a̐éö̲") + Piece::from("\r\n")).to_string(),
+            (Text::<Rc<str>>::from("a̐éö̲") + MarkStr::from("\r\n")).to_string(),
             "a̐éö̲\r\n"
         );
         assert_eq!(
-            (Piece::from("a̐éö̲") + Piece::from("\r\n")).to_string(),
+            (MarkStr::<Rc<str>>::from("a̐éö̲") + MarkStr::from("\r\n")).to_string(),
             "a̐éö̲\r\n"
         );
         assert_eq!(
-            (Piece::from("a̐éö̲") + Text::from("\r\n")).to_string(),
+            (MarkStr::<Rc<str>>::from("a̐éö̲") + Text::from("\r\n")).to_string(),
             "a̐éö̲\r\n"
         );
     }
 
     #[test]
     fn can_be_sliced() {
-        let text = Text::from_iter([Piece::from("a̐éö̲"), Piece::from("\r\n")]);
+        let text = Text::<Rc<str>>::from_iter([MarkStr::from("a̐éö̲"), MarkStr::from("\r\n")]);
         assert_eq!(text.slice(Grapheme(0)..Grapheme(0)).to_string(), "");
         assert_eq!(text.slice(Grapheme(0)..Grapheme(1)).to_string(), "a̐");
         assert_eq!(text.slice(Grapheme(0)..Grapheme(2)).to_string(), "a̐é");
@@ -349,11 +407,96 @@ mod a_text {
 
     #[test]
     fn can_be_marked_and_unmarked() {
-        let mut text = Text::from_iter([Piece::from("a̐éö̲"), Piece::from("\r\n")]);
+        let mut text = Text::from_iter([MarkStr::from("a̐éö̲"), MarkStr::from("\r\n")]);
         text.mark(Rc::new("test mark"));
-        assert!(text.pieces().all(|p| p.marks().contains(&"test mark")));
+        assert!(text
+            .pieces()
+            .all(|p: &MarkStr| p.marks().contains(&"test mark")));
         text.unmark(&"test mark");
         assert!(text.pieces().all(|p| !p.marks().contains(&"test mark")));
+    }
+
+    #[test]
+    fn creates_new_text_with_insertion() {
+        let text = Text::<Rc<str>>::from("Hello!");
+        let text = text.with_insert(Grapheme(5), [MarkStr::from(", world")]);
+        assert_eq!(text.slice(Grapheme(9)..Grapheme(10)).to_string(), "r");
+        assert_eq!(text.slice(Grapheme(10)..Grapheme(11)).to_string(), "l");
+        assert_eq!(text.slice(Grapheme(11)..Grapheme(12)).to_string(), "d");
+        assert_eq!(text.slice(Grapheme(12)..Grapheme(13)).to_string(), "!");
+    }
+
+    /*
+    #[test]
+    fn can_be_inspected_in_detail(){
+        let text = Text::from("Hello, world!");
+        #[derive(Debug, PartialEq, Hash)]
+        struct Word {}
+        let is_word = Rc::from(Word {});
+        let text:Text = [MarkStr::from("a̐éö̲").with_mark(is_word.clone()), MarkStr::from("\r\n")].into_iter().collect();
+        assert_eq!(text.to_string(),"a̐éö̲\r\n");
+        assert_eq!(
+            text.pieces()
+                .flat_map(|p| p.graphemes().map(|g| (g, p.marks().get::<Word>())))
+                .collect::<Vec<_>>(),
+            [
+                ("H", Some(&*is_word)),
+                ("e", Some(&*is_word)),
+                ("l", Some(&*is_word)),
+                ("l", Some(&*is_word)),
+                ("o", Some(&*is_word)),
+                (",", None),
+                (" ", None),
+                ("w", Some(&*is_word)),
+                ("o", Some(&*is_word)),
+                ("r", Some(&*is_word)),
+                ("l", Some(&*is_word)),
+                ("d", Some(&*is_word)),
+                ("!", None),
+            ]
+        );
+    }
+    */
+
+    #[test]
+    fn can_mark_a_slice() {
+        let text = Text::from("Hello, world!");
+        #[derive(Clone, Debug, PartialEq, Hash)]
+        struct Word {}
+        let is_word = Rc::from(Word {});
+        let text = text
+            .slice(Grapheme(0)..Grapheme(5))
+            .with_mark(is_word.clone())
+            + text.slice(Grapheme(5)..Grapheme(7))
+            + text
+                .slice(Grapheme(7)..Grapheme(12))
+                .with_mark(is_word.clone())
+            + text.slice(Grapheme(12)..Grapheme(13));
+        assert_eq!(
+            text.locate(Grapheme(13)),
+            Ok((3, Locus(1.into(), 1.into(), 1.into())))
+        );
+        assert_eq!(text.get_piece(3).unwrap().as_str(), "!");
+        assert_eq!(
+            text.graphemes()
+                .map(|g: MarkStr| (g.to_ui_str(), g.marks().get::<Word>().cloned()))
+                .collect::<Vec<_>>(),
+            [
+                ("H".into(), Some(is_word.as_ref().clone())),
+                ("e".into(), Some(is_word.as_ref().clone())),
+                ("l".into(), Some(is_word.as_ref().clone())),
+                ("l".into(), Some(is_word.as_ref().clone())),
+                ("o".into(), Some(is_word.as_ref().clone())),
+                (",".into(), None),
+                (" ".into(), None),
+                ("w".into(), Some(is_word.as_ref().clone())),
+                ("o".into(), Some(is_word.as_ref().clone())),
+                ("r".into(), Some(is_word.as_ref().clone())),
+                ("l".into(), Some(is_word.as_ref().clone())),
+                ("d".into(), Some(is_word.as_ref().clone())),
+                ("!".into(), None),
+            ]
+        );
     }
 
     #[test]
@@ -361,14 +504,14 @@ mod a_text {
         struct Word {}
         let is_word = Rc::from(Word {});
         let text = Text::from_iter([
-            Piece::from("Hello").with_mark(is_word.clone()),
-            Piece::from(", "),
-            Piece::from("world").with_mark(is_word.clone()),
-            Piece::from("!"),
+            MarkStr::from("Hello").with_mark(is_word.clone()),
+            MarkStr::from(", "),
+            MarkStr::from("world").with_mark(is_word.clone()),
+            MarkStr::from("!"),
         ]);
         assert_eq!(
             text.pieces()
-                .filter(|p| p.marks().contains_any::<Word>())
+                .filter(|p: &&MarkStr| p.marks().contains_any::<Word>())
                 .map(|p| p.as_str())
                 .collect::<Vec<&str>>(),
             vec!["Hello", "world"]

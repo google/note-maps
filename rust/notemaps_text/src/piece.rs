@@ -10,6 +10,8 @@
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
+/*
+
 use core::any::Any;
 use core::ops;
 use core::ops::Range;
@@ -18,7 +20,6 @@ use std::rc::Rc;
 
 use crate::offsets::*;
 use crate::*;
-
 /// [Piece] is a `str`-like type that also:
 /// - is immutable,
 /// - shares a backing buffer for cheap clones and slices,
@@ -38,10 +39,7 @@ use crate::*;
 /// ```
 #[derive(Clone, Debug)]
 pub struct Piece {
-    buffer: Rc<str>,
-    byte_range: Range<usize>,
-    len_chars: Char,
-    len_graphemes: Grapheme,
+    text: Str,
     marks: MarkSet,
 }
 
@@ -107,6 +105,14 @@ impl Piece {
     pub fn as_str(&self) -> &str {
         &self.buffer[self.byte_range.clone()]
     }
+    pub fn graphemes(&self) -> impl Iterator<Item = &str> {
+        use unicode_segmentation::UnicodeSegmentation;
+        self.as_str().graphemes(true)
+    }
+
+    pub fn marked_graphemes(&self) -> impl '_ + Iterator<Item = Piece> {
+        (Grapheme(0)..self.len()).map(|o| self.slice(o..o + 1))
+    }
 
     pub fn marks(&self) -> &MarkSet {
         &self.marks
@@ -120,6 +126,13 @@ impl Piece {
     pub fn with_mark<M: Any>(mut self, m: Rc<M>) -> Self {
         self.marks.push(m);
         self
+    }
+
+    pub fn map_marks<F, U>(&self, mut f: F) -> (String, U)
+    where
+        F: FnMut(&'_ MarkSet) -> U,
+    {
+        (self.as_str().to_string(), f(self.marks()))
     }
 
     /// Returns the location of `offset` in this [Piece] as a [Byte] offset into the string
@@ -158,3 +171,27 @@ impl ops::Add<Text> for Piece {
         Text::from_iter(iter::once(self).chain(other.pieces().cloned()))
     }
 }
+
+#[cfg(test)]
+mod a_piece {
+    use crate::*;
+    use std::rc::Rc;
+
+    #[test]
+    fn can_produce_marked_graphemes() {
+        let piece = Piece::from("a̐éö̲\r\n").with_mark(Rc::new(1u128));
+        assert_eq!(
+            piece
+                .marked_graphemes()
+                .map(|p| p.map_marks(|ms| ms.get::<u128>().cloned()))
+                .collect::<Vec<_>>(),
+            [
+                ("a̐".to_string(), Some(1u128)),
+                ("é".to_string(), Some(1u128)),
+                ("ö̲".to_string(), Some(1u128)),
+                ("\r\n".to_string(), Some(1u128)),
+            ]
+        );
+    }
+}
+*/

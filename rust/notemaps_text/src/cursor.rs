@@ -44,7 +44,7 @@ pub enum Dir {
 pub struct Cursor<'a, S: Borrow<str>> {
     text: &'a Table<S>,
     text_offsets: Locus,
-    piece: usize,
+    piece: Piece,
     piece_offsets: Locus,
 }
 
@@ -53,7 +53,7 @@ impl<'a, S: Borrow<str>> Cursor<'a, S> {
         Self {
             text,
             text_offsets: Locus::zero(),
-            piece: 0,
+            piece: Piece(0),
             piece_offsets: Locus::zero(),
         }
         .with_offset(offset)
@@ -72,7 +72,7 @@ impl<'a, S: Borrow<str>> Cursor<'a, S> {
                 self.text_offsets = self
                     .text
                     .pieces()
-                    .take(n_piece)
+                    .take(n_piece.0)
                     .map(|p| p.as_ui_str().len())
                     .sum::<Locus>()
                     + offsets;
@@ -93,13 +93,13 @@ impl<'a, S: Borrow<str>> Cursor<'a, S> {
         *self.text_offsets.as_ref()
     }
 
-    pub fn location(&self) -> (usize, Byte) {
+    pub fn location(&self) -> (Piece, Byte) {
         (self.piece, *self.piece_offsets.as_ref())
     }
 
     fn get_piece_offset_prev(&self) -> Option<(&'a MarkStr<S>, Byte)> {
         if self.piece_offsets.byte() == Byte(0) {
-            if self.piece == 0 {
+            if self.piece.0 == 0 {
                 None
             } else {
                 self.text

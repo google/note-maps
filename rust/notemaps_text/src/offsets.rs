@@ -312,6 +312,23 @@ natural_unit! {
     pub struct Grapheme(usize) " graphemes" singular " grapheme" test a_grapheme;
 }
 
+natural_unit! {
+    /// Represents an index into a piece table, like [crate::Table].
+    ///
+    /// Intended to help avoid bugs caused by unintentionally mixing `usize` values that have very
+    /// different meanings.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use notemaps_text::offsets::Piece;
+    ///
+    /// assert_eq!((Piece(1) + Piece(2)).0, 3);
+    /// // let piece_2 = Piece(1) + Graphme(1); // does not compile!
+    /// ```
+    pub struct Piece(usize) " pieces" singular " piece" test a_piece;
+}
+
 mod internal {
     pub trait Sealed {}
     impl Sealed for super::Byte {}

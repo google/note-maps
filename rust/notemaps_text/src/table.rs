@@ -48,7 +48,9 @@ pub struct Table<S: Borrow<str> = Rc<str>> {
     len: Locus,
 }
 
-pub type MarkStrLocus = (usize, Locus);
+pub use offsets::Piece;
+
+pub type PieceLocus = (Piece, Locus);
 
 impl<S: Borrow<str>> Table<S> {
     /// Creates a new, empty [Table].
@@ -75,9 +77,9 @@ impl<S: Borrow<str>> Table<S> {
     ///
     /// NOTE: This is a low-level API that risks coupling the usage of [Table] to implementation
     /// details.
-    pub fn get_piece(&self, n: usize) -> Option<&MarkStr<S>> {
-        if n < self.pieces.len() {
-            Some(&self.pieces[n])
+    pub fn get_piece(&self, n: Piece) -> Option<&MarkStr<S>> {
+        if n.0 < self.pieces.len() {
+            Some(&self.pieces[n.0])
         } else {
             None
         }
@@ -108,32 +110,32 @@ impl<S: Borrow<str>> Table<S> {
     }
 
     /// Returns a specialized representation of the location of `offset` within `self`.
-    pub fn locate(&self, offset: Grapheme) -> Result<MarkStrLocus, MarkStrLocus> {
+    pub fn locate(&self, offset: Grapheme) -> Result<PieceLocus, PieceLocus> {
         if self.pieces.is_empty() {
             return if offset.0 == 0 {
-                Ok((0, Locus::zero()))
+                Ok((Piece(0), Locus::zero()))
             } else {
-                Err((0, Locus::zero()))
+                Err((Piece(0), Locus::zero()))
             };
         }
         use std::cmp;
         match offset.cmp(&self.len.grapheme()) {
             cmp::Ordering::Greater => {
                 return Err((
-                    self.pieces.len() - 1,
+                    Piece(self.pieces.len() - 1),
                     self.pieces[self.pieces.len() - 1].as_ui_str().len(),
                 ));
             }
             cmp::Ordering::Equal => {
                 return Ok((
-                    self.pieces.len() - 1,
+                    Piece(self.pieces.len() - 1),
                     self.pieces[self.pieces.len() - 1].as_ui_str().len(),
                 ));
             }
             _ => {}
         }
         let mut todo = offset;
-        for (i, p) in self.pieces.iter().enumerate() {
+        for (i, p) in self.pieces.iter().enumerate().map(|(i,p)|(Piece(i), p)) {
             if p.as_ui_str().len::<Grapheme>() > todo {
                 return Ok((
                     i,
@@ -172,16 +174,16 @@ impl<S: Borrow<str>> Table<S> {
             return Table::new();
         }
         if start.0 == end.0 {
-            return self.pieces[start.0]
+            return self.pieces[start.0.0]
                 .slice(start.1.whatever()..end.1.whatever())
                 .into();
         }
         iter::once(
-            self.pieces[start.0].slice(start.1.whatever()..self.pieces[start.0].as_ui_str().len()),
+            self.pieces[start.0.0].slice(start.1.whatever()..self.pieces[start.0.0].as_ui_str().len()),
         )
-        .chain(self.pieces[(start.0 + 1)..end.0].iter().cloned())
+        .chain(self.pieces[(start.0 + 1).0..end.0.0].iter().cloned())
         .chain(iter::once(
-            self.pieces[end.0].slice(Grapheme(0)..end.1.whatever()),
+            self.pieces[end.0.0].slice(Grapheme(0)..end.1.whatever()),
         ))
         .collect()
     }
@@ -474,9 +476,9 @@ mod a_text {
             + text.slice(Grapheme(12)..Grapheme(13));
         assert_eq!(
             text.locate(Grapheme(13)),
-            Ok((3, Locus(1.into(), 1.into(), 1.into())))
+            Ok((Piece(3), Locus(1.into(), 1.into(), 1.into())))
         );
-        assert_eq!(text.get_piece(3).unwrap().as_str(), "!");
+        assert_eq!(text.get_piece(Piece(3)).unwrap().as_str(), "!");
         assert_eq!(
             text.graphemes()
                 .map(|g: MarkStr| (g.to_ui_str(), g.marks().get::<Word>().cloned()))

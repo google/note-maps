@@ -135,7 +135,7 @@ impl<S: Borrow<str>> Table<S> {
             _ => {}
         }
         let mut todo = offset;
-        for (i, p) in self.pieces.iter().enumerate().map(|(i,p)|(Piece(i), p)) {
+        for (i, p) in self.pieces.iter().enumerate().map(|(i, p)| (Piece(i), p)) {
             if p.as_ui_str().len::<Grapheme>() > todo {
                 return Ok((
                     i,
@@ -174,16 +174,17 @@ impl<S: Borrow<str>> Table<S> {
             return Table::new();
         }
         if start.0 == end.0 {
-            return self.pieces[start.0.0]
+            return self.pieces[start.0 .0]
                 .slice(start.1.whatever()..end.1.whatever())
                 .into();
         }
         iter::once(
-            self.pieces[start.0.0].slice(start.1.whatever()..self.pieces[start.0.0].as_ui_str().len()),
+            self.pieces[start.0 .0]
+                .slice(start.1.whatever()..self.pieces[start.0 .0].as_ui_str().len()),
         )
-        .chain(self.pieces[(start.0 + 1).0..end.0.0].iter().cloned())
+        .chain(self.pieces[(start.0 + 1).0..end.0 .0].iter().cloned())
         .chain(iter::once(
-            self.pieces[end.0.0].slice(Grapheme(0)..end.1.whatever()),
+            self.pieces[end.0 .0].slice(Grapheme(0)..end.1.whatever()),
         ))
         .collect()
     }
@@ -214,12 +215,14 @@ impl<S: Borrow<str>> Table<S> {
     }
 
     /// Consumes `self`, pushes the mark `m` onto every [MarkStr], and returns the result.
+    #[must_use]
     pub fn with_mark<M: Any>(mut self, m: Rc<M>) -> Self {
         self.mark(m);
         self
     }
 
     /// Consumes `self`, removes the mark `m` from every [MarkStr], and returns the result.
+    #[must_use]
     pub fn with_unmark<M: Any + PartialEq>(mut self, m: &M) -> Self {
         self.unmark(m);
         self
@@ -254,9 +257,6 @@ where
         MarkStr::from(string).into()
     }
 }
-
-// TODO: consider refactoring these implementations of ops::Add to more closely resemble what's
-// done for std::string::String.
 
 impl<S: Borrow<str>> ops::Add<Self> for Table<S> {
     type Output = Self;

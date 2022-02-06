@@ -21,10 +21,10 @@ use std::rc::Rc;
 use crate::offsets::*;
 use crate::*;
 
-/// [Text] is a sequence of [MarkStr] values, effectively a [piece table][].
+/// [Table] is a sequence of [MarkStr] values, effectively a [piece table][].
 ///
 /// Although currently based on a [Vec], future iterations of development may replace the internal
-/// implementation with something like a [rope][] or [gap buffer][]. The API of [Text] is
+/// implementation with something like a [rope][] or [gap buffer][]. The API of [Table] is
 /// deliberately agnostic to these implementation details, committing only to presenting the data
 /// as no more than a sequence of [MarkStr] values that may or may not be usefully optimized for
 /// interesting uses.
@@ -36,22 +36,22 @@ use crate::*;
 /// # Examples
 ///
 /// ```rust
-/// use notemaps_text::Text;
+/// use notemaps_text::Table;
 /// use notemaps_text::MarkStr;
 ///
-/// let text: Text = [MarkStr::from("Hello, world!"), MarkStr::from("\n")].into_iter().collect();
+/// let text: Table = [MarkStr::from("Hello, world!"), MarkStr::from("\n")].into_iter().collect();
 /// assert_eq!(text.to_string(), "Hello, world!\n");
 /// ```
 #[derive(Clone, Debug)]
-pub struct Text<S: Borrow<str> = Rc<str>> {
+pub struct Table<S: Borrow<str> = Rc<str>> {
     pieces: Vec<MarkStr<S>>,
     len: Locus,
 }
 
 pub type MarkStrLocus = (usize, Locus);
 
-impl<S: Borrow<str>> Text<S> {
-    /// Creates a new, empty [Text].
+impl<S: Borrow<str>> Table<S> {
+    /// Creates a new, empty [Table].
     pub fn new() -> Self {
         Self {
             pieces: Vec::new(),
@@ -73,7 +73,7 @@ impl<S: Borrow<str>> Text<S> {
 
     /// Returns the `n`th piece, or [None] if `n` is greater than the number of pieces in `self`.
     ///
-    /// NOTE: This is a low-level API that risks coupling the usage of [Text] to implementation
+    /// NOTE: This is a low-level API that risks coupling the usage of [Table] to implementation
     /// details.
     pub fn get_piece(&self, n: usize) -> Option<&MarkStr<S>> {
         if n < self.pieces.len() {
@@ -84,16 +84,16 @@ impl<S: Borrow<str>> Text<S> {
     }
 
     /// Returns a reference to each [MarkStr] in `self`, which is the entire content or meaning of
-    /// this [Text].
+    /// this [Table].
     ///
-    /// NOTE: This is a low-level API that risks coupling the usage of [Text] to implementation
+    /// NOTE: This is a low-level API that risks coupling the usage of [Table] to implementation
     /// details.
     pub fn pieces(&self) -> Pieces<S> {
         Pieces(self.pieces.iter())
     }
 
     /// Returns a mutable reference to each [MarkStr] in `self`, which is the entire content or
-    /// meaning of this [Text].
+    /// meaning of this [Table].
     pub fn pieces_mut(&mut self) -> PiecesMut<S> {
         PiecesMut(self.pieces.iter_mut())
     }
@@ -153,14 +153,14 @@ impl<S: Borrow<str>> Text<S> {
         Cursor::new(self, offset)
     }
 
-    /// Copies the content of `self` from range `r` into a new [Text].
+    /// Copies the content of `self` from range `r` into a new [Table].
     #[must_use]
     pub fn slice(&self, r: Range<Grapheme>) -> Self
     where
         S: Clone,
     {
         if r.end <= r.start {
-            return Text::new();
+            return Table::new();
         }
         let start = self
             .locate(r.start)
@@ -169,7 +169,7 @@ impl<S: Borrow<str>> Text<S> {
             .locate(r.end)
             .expect("argument to slice is always valid");
         if start == end {
-            return Text::new();
+            return Table::new();
         }
         if start.0 == end.0 {
             return self.pieces[start.0]
@@ -189,7 +189,7 @@ impl<S: Borrow<str>> Text<S> {
     #[must_use]
     pub fn with_insert<I: IntoIterator>(&self, n: Grapheme, text: I) -> Self
     where
-        Text<S>: FromIterator<I::Item>,
+        Table<S>: FromIterator<I::Item>,
         S: Clone,
     {
         self.slice(Grapheme::MIN..n) + Self::from_iter(text) + self.slice(n..self.len())
@@ -224,13 +224,13 @@ impl<S: Borrow<str>> Text<S> {
     }
 }
 
-impl<S: Borrow<str>> Default for Text<S> {
+impl<S: Borrow<str>> Default for Table<S> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<S: Borrow<str>> FromIterator<MarkStr<S>> for Text<S> {
+impl<S: Borrow<str>> FromIterator<MarkStr<S>> for Table<S> {
     fn from_iter<T: IntoIterator<Item = MarkStr<S>>>(iter: T) -> Self {
         let pieces: Vec<MarkStr<S>> = iter.into_iter().collect();
         let len: Locus = pieces.iter().map(|p| p.as_ui_str().len()).sum();
@@ -238,13 +238,13 @@ impl<S: Borrow<str>> FromIterator<MarkStr<S>> for Text<S> {
     }
 }
 
-impl<S: Borrow<str>> From<MarkStr<S>> for Text<S> {
+impl<S: Borrow<str>> From<MarkStr<S>> for Table<S> {
     fn from(piece: MarkStr<S>) -> Self {
         iter::once(piece).collect()
     }
 }
 
-impl<'a, S: Borrow<str>> From<&'a str> for Text<S>
+impl<'a, S: Borrow<str>> From<&'a str> for Table<S>
 where
     S: From<&'a str>,
 {
@@ -256,21 +256,21 @@ where
 // TODO: consider refactoring these implementations of ops::Add to more closely resemble what's
 // done for std::string::String.
 
-impl<S: Borrow<str>> ops::Add<Self> for Text<S> {
+impl<S: Borrow<str>> ops::Add<Self> for Table<S> {
     type Output = Self;
     fn add(self, other: Self) -> Self {
         self.into_iter().chain(other.into_iter()).collect()
     }
 }
 
-impl<S: Borrow<str>> ops::Add<MarkStr<S>> for Text<S> {
+impl<S: Borrow<str>> ops::Add<MarkStr<S>> for Table<S> {
     type Output = Self;
     fn add(self, other: MarkStr<S>) -> Self {
         self.into_iter().chain(iter::once(other)).collect()
     }
 }
 
-impl<S: Borrow<str>> IntoIterator for Text<S> {
+impl<S: Borrow<str>> IntoIterator for Table<S> {
     type Item = MarkStr<S>;
     type IntoIter = std::vec::IntoIter<Self::Item>;
     fn into_iter(self) -> Self::IntoIter {
@@ -278,13 +278,13 @@ impl<S: Borrow<str>> IntoIterator for Text<S> {
     }
 }
 
-impl<S: Borrow<str>> fmt::Display for Text<S> {
+impl<S: Borrow<str>> fmt::Display for Table<S> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.pieces().try_for_each(|p| p.as_str().fmt(f))
     }
 }
 
-/// [Pieces] is the [Iterator] type returned by [Text::pieces].
+/// [Pieces] is the [Iterator] type returned by [Table::pieces].
 pub struct Pieces<'a, S: Borrow<str>>(std::slice::Iter<'a, MarkStr<S>>);
 
 impl<'a, S: Borrow<str>> Iterator for Pieces<'a, S> {
@@ -313,7 +313,7 @@ impl<'a, S: Borrow<str>> Iterator for Pieces<'a, S> {
 
 impl<'a, S: Borrow<str>> ExactSizeIterator for Pieces<'a, S> {}
 
-/// [PiecesMut] is the [Iterator] type returned by [Text::pieces_mut].
+/// [PiecesMut] is the [Iterator] type returned by [Table::pieces_mut].
 pub struct PiecesMut<'a, S: Borrow<str>>(std::slice::IterMut<'a, MarkStr<S>>);
 
 impl<'a, S: Borrow<str>> Iterator for PiecesMut<'a, S> {
@@ -348,19 +348,19 @@ mod a_text {
 
     #[test]
     fn can_be_built_from_a_str() {
-        let text: Text = "a̐éö̲\r\n".into();
+        let text: Table = "a̐éö̲\r\n".into();
         assert_eq!(text.to_string(), "a̐éö̲\r\n");
     }
 
     #[test]
     fn can_be_built_from_a_piece() {
-        let text: Text = MarkStr::new(MarkSet::new(), "a̐éö̲\r\n".into()).into();
+        let text: Table = MarkStr::new(MarkSet::new(), "a̐éö̲\r\n".into()).into();
         assert_eq!(text.to_string(), "a̐éö̲\r\n");
     }
 
     #[test]
     fn can_be_collected_from_pieces() {
-        let text: Text = [MarkStr::from("a̐éö̲"), MarkStr::from("\r\n")]
+        let text: Table = [MarkStr::from("a̐éö̲"), MarkStr::from("\r\n")]
             .into_iter()
             .collect();
         assert_eq!(text.to_string(), "a̐éö̲\r\n");
@@ -374,11 +374,11 @@ mod a_text {
     #[test]
     fn can_be_built_from_concatenation() {
         assert_eq!(
-            (Text::<Rc<str>>::from("a̐éö̲") + Text::from("\r\n")).to_string(),
+            (Table::<Rc<str>>::from("a̐éö̲") + Table::from("\r\n")).to_string(),
             "a̐éö̲\r\n"
         );
         assert_eq!(
-            (Text::<Rc<str>>::from("a̐éö̲") + MarkStr::from("\r\n")).to_string(),
+            (Table::<Rc<str>>::from("a̐éö̲") + MarkStr::from("\r\n")).to_string(),
             "a̐éö̲\r\n"
         );
         assert_eq!(
@@ -386,14 +386,14 @@ mod a_text {
             "a̐éö̲\r\n"
         );
         assert_eq!(
-            (MarkStr::<Rc<str>>::from("a̐éö̲") + Text::from("\r\n")).to_string(),
+            (MarkStr::<Rc<str>>::from("a̐éö̲") + Table::from("\r\n")).to_string(),
             "a̐éö̲\r\n"
         );
     }
 
     #[test]
     fn can_be_sliced() {
-        let text = Text::<Rc<str>>::from_iter([MarkStr::from("a̐éö̲"), MarkStr::from("\r\n")]);
+        let text = Table::<Rc<str>>::from_iter([MarkStr::from("a̐éö̲"), MarkStr::from("\r\n")]);
         assert_eq!(text.slice(Grapheme(0)..Grapheme(0)).to_string(), "");
         assert_eq!(text.slice(Grapheme(0)..Grapheme(1)).to_string(), "a̐");
         assert_eq!(text.slice(Grapheme(0)..Grapheme(2)).to_string(), "a̐é");
@@ -407,7 +407,7 @@ mod a_text {
 
     #[test]
     fn can_be_marked_and_unmarked() {
-        let mut text = Text::from_iter([MarkStr::from("a̐éö̲"), MarkStr::from("\r\n")]);
+        let mut text = Table::from_iter([MarkStr::from("a̐éö̲"), MarkStr::from("\r\n")]);
         text.mark(Rc::new("test mark"));
         assert!(text
             .pieces()
@@ -418,7 +418,7 @@ mod a_text {
 
     #[test]
     fn creates_new_text_with_insertion() {
-        let text = Text::<Rc<str>>::from("Hello!");
+        let text = Table::<Rc<str>>::from("Hello!");
         let text = text.with_insert(Grapheme(5), [MarkStr::from(", world")]);
         assert_eq!(text.slice(Grapheme(9)..Grapheme(10)).to_string(), "r");
         assert_eq!(text.slice(Grapheme(10)..Grapheme(11)).to_string(), "l");
@@ -429,11 +429,11 @@ mod a_text {
     /*
     #[test]
     fn can_be_inspected_in_detail(){
-        let text = Text::from("Hello, world!");
+        let text = Table::from("Hello, world!");
         #[derive(Debug, PartialEq, Hash)]
         struct Word {}
         let is_word = Rc::from(Word {});
-        let text:Text = [MarkStr::from("a̐éö̲").with_mark(is_word.clone()), MarkStr::from("\r\n")].into_iter().collect();
+        let text:Table = [MarkStr::from("a̐éö̲").with_mark(is_word.clone()), MarkStr::from("\r\n")].into_iter().collect();
         assert_eq!(text.to_string(),"a̐éö̲\r\n");
         assert_eq!(
             text.pieces()
@@ -460,7 +460,7 @@ mod a_text {
 
     #[test]
     fn can_mark_a_slice() {
-        let text = Text::from("Hello, world!");
+        let text = Table::from("Hello, world!");
         #[derive(Clone, Debug, PartialEq, Hash)]
         struct Word {}
         let is_word = Rc::from(Word {});
@@ -503,7 +503,7 @@ mod a_text {
     fn foo() {
         struct Word {}
         let is_word = Rc::from(Word {});
-        let text = Text::from_iter([
+        let text = Table::from_iter([
             MarkStr::from("Hello").with_mark(is_word.clone()),
             MarkStr::from(", "),
             MarkStr::from("world").with_mark(is_word.clone()),

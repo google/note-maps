@@ -151,44 +151,43 @@ where
     }
 }
 
-impl Borrow<str> for UiString {
+impl<S: Borrow<str>> Borrow<str> for UiString<S> {
     fn borrow(&self) -> &str {
         self.as_str()
     }
 }
 
-impl AsRef<str> for UiString {
+impl<S: Borrow<str>> AsRef<str> for UiString<S> {
     fn as_ref(&self) -> &str {
         self.as_str()
     }
 }
 
-impl Hash for UiString {
+impl<S: Borrow<str>> Hash for UiString<S> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.as_str().hash(state)
     }
 }
 
-impl PartialEq for UiString {
+impl<S: Borrow<str>> PartialEq for UiString<S> {
     fn eq(&self, other: &Self) -> bool {
         self.as_str() == other.as_str()
     }
 }
 
-impl Eq for UiString {}
+impl<S: Borrow<str>> Eq for UiString<S> {}
 
-impl PartialOrd for UiString {
+impl<S: Borrow<str>> PartialOrd for UiString<S> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.as_str().partial_cmp(other.as_str())
     }
 }
 
-impl Ord for UiString {
+impl<S: Borrow<str>> Ord for UiString<S> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.as_str().cmp(other.as_str())
     }
 }
-
 #[cfg(test)]
 mod a_str {
     use crate::offsets::*;

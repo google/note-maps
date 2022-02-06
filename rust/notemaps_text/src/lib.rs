@@ -34,7 +34,7 @@ pub use mark_set::*;
 pub use mark_str::*;
 pub use markup::*;
 pub use piece::*;
-pub use strtype::*;
+pub use strtype::UiString;
 pub use table::*;
 pub use text::*;
 

@@ -21,10 +21,10 @@ pub enum Dir {
     Prev,
 }
 
-/// A representation of a location within a [Text], intended to be close to the mental model of
+/// A representation of a location within a [Table], intended to be close to the mental model of
 /// location that a user might have while moving a cursor in a text editor.
 ///
-/// Every [Cursor] represents a location within the [Text] it was created with, and the location is
+/// Every [Cursor] represents a location within the [Table] it was created with, and the location is
 /// always one of:
 /// - the beginning of the text,
 /// - the end of the text,
@@ -33,23 +33,23 @@ pub enum Dir {
 /// # Examples
 ///
 /// ```rust
-/// use notemaps_text::{Cursor,Text};
+/// use notemaps_text::{Cursor,Table};
 ///
-/// let text: Text = "Hello, World!\r\n".into();
+/// let text: Table = "Hello, World!\r\n".into();
 /// let cursor = Cursor::new(&text, 13.into());
 /// assert_eq!(cursor.peek_prev(), Some("!"));
 /// assert_eq!(cursor.peek_next(), Some("\r\n"));
 /// ```
 #[derive(Copy, Clone)]
 pub struct Cursor<'a, S: Borrow<str>> {
-    text: &'a Text<S>,
+    text: &'a Table<S>,
     text_offsets: Locus,
     piece: usize,
     piece_offsets: Locus,
 }
 
 impl<'a, S: Borrow<str>> Cursor<'a, S> {
-    pub fn new(text: &'a Text<S>, offset: Grapheme) -> Self {
+    pub fn new(text: &'a Table<S>, offset: Grapheme) -> Self {
         Self {
             text,
             text_offsets: Locus::zero(),
@@ -199,7 +199,7 @@ mod a_point {
     #[test]
     fn starts_at_the_beginning() {
         let word: Rc<Word> = Rc::default();
-        let text = Text::from(MarkStr::<Rc<str>>::from("AB").with_mark(word.clone()));
+        let text = Table::from(MarkStr::<Rc<str>>::from("AB").with_mark(word.clone()));
         let cursor = Cursor::new(&text, Grapheme(0));
         assert_eq!(cursor.offset(), Grapheme(0));
         assert!(cursor.is_piece_boundary());
@@ -212,7 +212,7 @@ mod a_point {
     #[test]
     fn can_move_to_next_point() {
         let word: Rc<Word> = Rc::default();
-        let text = Text::<Rc<str>>::from(MarkStr::from("ABC").with_mark(word.clone()));
+        let text = Table::<Rc<str>>::from(MarkStr::from("ABC").with_mark(word.clone()));
         let mut cursor = Cursor::new(&text, Grapheme(0));
         cursor
             .move_by(Grapheme(1))
@@ -245,7 +245,7 @@ mod a_point {
     #[test]
     fn can_be_moved_to_random_location() {
         let word: Rc<Word> = Rc::default();
-        let text = Text::<Rc<str>>::from_iter([
+        let text = Table::<Rc<str>>::from_iter([
             MarkStr::from("a̐éö̲").with_mark(word.clone()),
             MarkStr::from("\r\n"),
         ]);

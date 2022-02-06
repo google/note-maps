@@ -146,15 +146,17 @@ impl<S: Borrow<str>> AsRef<str> for MarkStr<S> {
 use core::iter;
 use core::ops;
 
-impl<S: Borrow<str>> ops::Add<Text<S>> for MarkStr<S> {
-    type Output = Text<S>;
-    fn add(self, other: Text<S>) -> Self::Output {
+impl<S: Borrow<str>> ops::Add<Table<S>> for MarkStr<S> {
+    type Output = Table<S>;
+
+    fn add(self, other: Table<S>) -> Self::Output {
         iter::once(self).chain(other.into_iter()).collect()
     }
 }
 
 impl<S: Borrow<str>> ops::Add<MarkStr<S>> for MarkStr<S> {
-    type Output = Text<S>;
+    type Output = Table<S>;
+
     fn add(self, other: MarkStr<S>) -> Self::Output {
         iter::once(self).chain(iter::once(other)).collect()
     }

@@ -328,10 +328,14 @@ pub trait Unit:
     + From<usize>
     + fmt::Debug
     + Add<Output = Self>
+    + Add<usize, Output = Self>
     + Sub<Output = Self>
+    + Sub<usize, Output = Self>
     + Borrow<usize>
     + internal::Sealed
+    + iter::Step
 {
+    const MAX: Self;
     fn offset_len(s: &str) -> Self;
     fn next_byte(s: &str) -> Option<Byte> {
         Self::nth_byte_offset(s, 1usize.into()).ok()
@@ -346,6 +350,8 @@ pub trait Unit:
 }
 
 impl Unit for Byte {
+    const MAX: Self = Self::MAX;
+
     fn offset_len(s: &str) -> Byte {
         Byte(str::len(s))
     }
@@ -360,6 +366,8 @@ impl Unit for Byte {
 }
 
 impl Unit for Char {
+    const MAX: Self = Self::MAX;
+
     fn offset_len(s: &str) -> Char {
         Char(s.char_indices().count())
     }
@@ -373,6 +381,8 @@ impl Unit for Char {
 }
 
 impl Unit for Grapheme {
+    const MAX: Self = Self::MAX;
+
     fn offset_len(s: &str) -> Grapheme {
         use unicode_segmentation::UnicodeSegmentation;
         Grapheme(s.grapheme_indices(/*extended=*/ true).count())

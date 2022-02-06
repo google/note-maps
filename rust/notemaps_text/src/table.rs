@@ -190,12 +190,21 @@ impl<S: Borrow<str>> Table<S> {
     }
 
     #[must_use]
+    pub fn with_replace<I: IntoIterator>(&self, r: Range<Grapheme>, text: I) -> Self
+    where
+        Table<S>: FromIterator<I::Item>,
+        S: Clone,
+    {
+        self.slice(Grapheme::MIN..r.start) + Self::from_iter(text) + self.slice(r.end..self.len())
+    }
+
+    #[must_use]
     pub fn with_insert<I: IntoIterator>(&self, n: Grapheme, text: I) -> Self
     where
         Table<S>: FromIterator<I::Item>,
         S: Clone,
     {
-        self.slice(Grapheme::MIN..n) + Self::from_iter(text) + self.slice(n..self.len())
+        self.with_replace(n..n, text)
     }
 
     /// Pushes the mark `m` onto every [MarkStr] in `self`.
@@ -216,16 +225,45 @@ impl<S: Borrow<str>> Table<S> {
 
     /// Consumes `self`, pushes the mark `m` onto every [MarkStr], and returns the result.
     #[must_use]
-    pub fn with_mark<M: Any>(mut self, m: Rc<M>) -> Self {
-        self.mark(m);
-        self
+    pub fn map_marks<F: for<'a> FnMut(&'a mut MarkSet)>(
+        self,
+        r: Range<Grapheme>,
+        mut marker: F,
+    ) -> Self
+    where
+        S: Clone,
+    {
+        self.with_replace(
+            r.clone(),
+            self.slice(r)
+                .into_iter()
+                .map(|p| p.map_marks(|ms| marker(ms))),
+        )
+    }
+
+    /// Consumes `self`, pushes the mark `m` onto every [MarkStr], and returns the result.
+    #[must_use]
+    pub fn with_mark<M: Into<MarkSet>>(self, r: Range<Grapheme>, m: M) -> Self
+    where
+        S: Clone,
+    {
+        let ms: MarkSet = m.into();
+        let mut marked = self.slice(r.clone());
+        for p in marked.pieces_mut() {
+            p.marks_mut().push_all(&ms)
+        }
+        self.with_replace(r, marked)
     }
 
     /// Consumes `self`, removes the mark `m` from every [MarkStr], and returns the result.
     #[must_use]
-    pub fn with_unmark<M: Any + PartialEq>(mut self, m: &M) -> Self {
-        self.unmark(m);
-        self
+    pub fn with_unmark<M: Any + PartialEq>(self, r: Range<Grapheme>, m: &M) -> Self
+    where
+        S: Clone,
+    {
+        let mut unmarked = self.slice(r.clone());
+        unmarked.unmark(m);
+        self.with_replace(r, unmarked)
     }
 }
 
@@ -428,38 +466,6 @@ mod a_text {
         assert_eq!(text.slice(Grapheme(12)..Grapheme(13)).to_string(), "!");
     }
 
-    /*
-    #[test]
-    fn can_be_inspected_in_detail(){
-        let text = Table::from("Hello, world!");
-        #[derive(Debug, PartialEq, Hash)]
-        struct Word {}
-        let is_word = Rc::from(Word {});
-        let text:Table = [MarkStr::from("a̐éö̲").with_mark(is_word.clone()), MarkStr::from("\r\n")].into_iter().collect();
-        assert_eq!(text.to_string(),"a̐éö̲\r\n");
-        assert_eq!(
-            text.pieces()
-                .flat_map(|p| p.graphemes().map(|g| (g, p.marks().get::<Word>())))
-                .collect::<Vec<_>>(),
-            [
-                ("H", Some(&*is_word)),
-                ("e", Some(&*is_word)),
-                ("l", Some(&*is_word)),
-                ("l", Some(&*is_word)),
-                ("o", Some(&*is_word)),
-                (",", None),
-                (" ", None),
-                ("w", Some(&*is_word)),
-                ("o", Some(&*is_word)),
-                ("r", Some(&*is_word)),
-                ("l", Some(&*is_word)),
-                ("d", Some(&*is_word)),
-                ("!", None),
-            ]
-        );
-    }
-    */
-
     #[test]
     fn can_mark_a_slice() {
         let text = Table::from("Hello, world!");
@@ -467,13 +473,12 @@ mod a_text {
         struct Word {}
         let is_word = Rc::from(Word {});
         let text = text
-            .slice(Grapheme(0)..Grapheme(5))
-            .with_mark(is_word.clone())
-            + text.slice(Grapheme(5)..Grapheme(7))
-            + text
-                .slice(Grapheme(7)..Grapheme(12))
-                .with_mark(is_word.clone())
-            + text.slice(Grapheme(12)..Grapheme(13));
+            .map_marks(Grapheme(0)..Grapheme(5), |ms| {
+                ms.push(is_word.clone());
+            })
+            .map_marks(Grapheme(7)..Grapheme(12), |ms| {
+                ms.push(is_word.clone());
+            });
         assert_eq!(
             text.locate(Grapheme(13)),
             Ok((Piece(3), Locus(1.into(), 1.into(), 1.into())))
@@ -506,9 +511,13 @@ mod a_text {
         struct Word {}
         let is_word = Rc::from(Word {});
         let text = Table::from_iter([
-            MarkStr::from("Hello").with_mark(is_word.clone()),
+            MarkStr::from("Hello").map_marks(|ms| {
+                ms.push(is_word.clone());
+            }),
             MarkStr::from(", "),
-            MarkStr::from("world").with_mark(is_word.clone()),
+            MarkStr::from("world").map_marks(|ms| {
+                ms.push(is_word.clone());
+            }),
             MarkStr::from("!"),
         ]);
         assert_eq!(

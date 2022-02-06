@@ -80,6 +80,15 @@ impl<S: Borrow<str>> MarkStr<S> {
         }
     }
 
+    pub fn map_marks<F: for<'a> FnOnce(&'a mut MarkSet)>(self, f: F) -> MarkStr<S> {
+        let mut marks = self.marks.clone();
+        f(&mut marks);
+        MarkStr {
+            marks,
+            string: self.string,
+        }
+    }
+
     pub fn graphemes(&self) -> impl '_ + Iterator<Item = Self>
     where
         S: Clone,
@@ -108,7 +117,7 @@ impl<S: Borrow<str>> MarkStr<S> {
 
     #[must_use]
     pub fn with_marks(mut self, marks: MarkSet) -> Self {
-        self.marks_mut().push_all(marks);
+        self.marks_mut().push_all(&marks);
         self
     }
 }

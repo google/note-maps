@@ -89,10 +89,16 @@ impl MarkSet {
 
     /// Add to this [MarkSet] all marks from `other`. Marks of the same type in `self` will be
     /// discarded.
-    pub fn push_all(&mut self, other: Self) {
-        other.map.into_iter().for_each(|(type_id, rc)| {
-            self.map.insert(type_id, rc);
+    pub fn push_all(&mut self, other: &Self) {
+        other.map.iter().for_each(|(type_id, rc)| {
+            self.map.insert(type_id.clone(), rc.clone());
         });
+    }
+}
+
+impl<M: Any> From<Rc<M>> for MarkSet {
+    fn from(mark: Rc<M>) -> Self {
+        MarkSet::new_with(mark)
     }
 }
 
@@ -178,7 +184,7 @@ mod a_bag {
         let mut bag1 = MarkSet::new();
         bag1.push(2i8.into());
         bag1.push(3i64.into());
-        bag0.push_all(bag1);
+        bag0.push_all(&bag1);
         assert!(!bag0.contains(&1i8));
         assert!(bag0.contains(&2i8));
         assert!(bag0.contains(&3i64));

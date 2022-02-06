@@ -20,6 +20,329 @@ use std::rc::Rc;
 
 use crate::offsets::*;
 
+/*
+pub trait Locii<U: Unit> {
+    fn locus_at(&self, offset: U) -> Result<Locus, Locus>;
+}
+
+impl<'a> Locii<Grapheme> for &'a str {
+    fn locus_at(&self, offset: Grapheme) -> Result<Locus, Locus> {
+        Grapheme::nth_byte_offset(self, offset)
+            .map(|ok| Locus::from_grapheme_byte(ok, offset, self))
+            .map_err(|_| Locus::from_len(self))
+    }
+}
+
+use std::fmt;
+
+pub trait Cursor<U:Unit>{
+    fn move(self, at:U)->Cursor{
+    }
+}
+
+/// Types that implement [Text] support a minimal set of string operations that work as though the
+/// [Unit] type `U` defines the boundaries between the smallest non-divisible atoms of a string.
+///
+/// [Text] requires implementors to implement [fmt::Display] because this eases generic testing and
+/// debugging for [Text] implementations. This should be trivial anyway since every implementor of
+/// [Text] represents a string-like data.
+///
+/// [Text] requires implementors to implement [Clone] because all intended use cases of [Text] will
+/// require implementors to support cloning anyway. In addition to implementing [Clone],
+/// implementors are expected to clone in O(1) constant-time.
+///
+/// # Example
+///
+/// ```rust
+/// use notemaps_text::Text;
+/// use notemaps_text::offsets::Grapheme;
+///
+/// fn take_five_graphemes(string: Text<Grapheme>) -> Text<Grapheme> {
+///     string
+///         .slice(Grapheme(0)..Grapheme(5))
+///         .expect("string is at least 5 graphemes long")
+///         .to_string()
+/// }
+/// ```
+/// smallest indivi
+/// `U`, where type `U` might be [Grapheme].
+pub trait Text<U: Unit>: Clone+fmt::Display {
+    type Slice: Text<U>;
+
+    fn slice(&self, r: Range<U>) -> Result<Self::Slice, Self::Slice>;
+
+    fn len(&self) -> U;
+}
+
+use std::borrow::Cow;
+
+pub struct Split<'a,T:Text<U>+Clone,U:Unit, I:Iterator<Item=U>>(Cow<'a,T>, I );
+
+pub fn atomize<'a,T:Text<U>,U:Unit>(text:&'a T)->Split<'a,T,U,_>{
+    Split( Cow::from(text), U::from(0)..)
+}
+
+
+impl<'a,T:Text<U>,U:Unit, I:Iterator<Item=U>> Iterator for Split<'a,T,U,I>{
+    type Item=T::Slice;
+    fn next(&mut self)->Option<Self::Item>{
+        self.1.next().map(|i| self.0.slice(i..i+1))
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+pub(crate) struct Slow<'a>(pub &'a str);
+
+impl<'a, U: Unit> Text<U> for Slow<'a> {
+    type Slice = Self;
+
+    fn slice(&self, r: Range<U>) -> Result<Self::Slice, Self::Slice> {
+        let (start, err) = U::nth_byte_offset(self.0, r.start)
+            .map_or_else( |err| (err, true), |ok| (ok, false));
+        let (end, err) = if err {
+            (start, err)
+        } else {
+                U::nth_byte_offset(&self.0[start.0..], r.end - r.start)
+            .map_or_else( |err| (start+err, true), |ok| (start+ok, false))
+        };
+        let slice = &self.0[start.0..end.0];
+        if err {
+            Err(Self(slice))
+        } else {
+            Ok(Self(slice))
+        }
+    }
+
+    /*
+    fn prefix(&self, end: U) -> Result<Self::Slice, Self::Slice> {
+        U::nth_byte_offset(self.0, end)
+            .map(|end| Self(&self.0[..end.0]))
+            .map_err(|_| self.clone())
+    }
+
+    fn suffix(&self, start: U) -> Result<Self::Slice, Self::Slice> {
+        U::nth_byte_offset(self.0, start)
+            .map(|ok| Self(&self.0[ok.0..]))
+            .map_err(|err| Self(&self.0[err.0..]))
+    }
+    */
+
+    //fn locus<U:Unit>(&self, offset: U)->Result<Locus, Locus> where Locus:AsRef<U>{ U::nth_byte_offset(self.0, offset) .map(|ok| Locus::from_grapheme_byte(ok, offset, self.0)) .map_err(|_| Locus::from_len( self.0))?; }
+    //fn len<U:Unit>(&self)->U where Locus:AsRef<U>{todo!("");}
+    fn len(&self) -> U {
+        U::offset_len(self.0)
+    }
+}
+
+impl<'a> fmt::Display for Slow<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+pub trait Cursor {
+    type Item;
+    type Index: Sized;
+    fn move_next(&mut self);
+    fn move_prev(&mut self);
+    fn current(&self) -> Option<Self::Item>;
+    fn index(&self) -> Self::Index;
+}
+
+pub struct IterCursor<I: Iterator + Clone> {
+    current: usize,
+    iter: I,
+}
+
+impl<I: Iterator + Clone> Cursor for IterCursor<I> {
+    type Item = I::Item;
+    type Index = usize;
+    fn move_next(&mut self) {
+        if self.current < usize::MAX - 1 && self.iter.clone().advance_by(self.current + 1).is_ok() {
+            self.current += 1
+        }
+    }
+    fn move_prev(&mut self) {
+        if self.current > 0 && self.iter.clone().advance_by(self.current - 1).is_ok() {
+            self.current -= 1
+        }
+    }
+    fn current(&self) -> Option<Self::Item> {
+        self.iter.clone().nth(self.current)
+    }
+    fn index(&self) -> Self::Index {
+        self.current
+    }
+}
+
+pub struct NestedCursor<I: Iterator<Item: Into<C>> + Clone, C: Cursor> {
+    mine: IterCursor<I>,
+    wrapped: Option<C>,
+}
+
+pub trait Slicer<U: Unit> {
+    type Slice;
+    fn slice_nth_next(&mut self, n: U) -> Result<Self::Slice, U>;
+    fn slice_nth_prev(&mut self, n: U) -> Result<Self::Slice, U>;
+    fn offset(&self) -> U;
+}
+
+pub struct StrByteSlicer<'a>(&'a str, Byte);
+impl<'a> Slicer<Byte> for StrByteSlicer<'a> {
+    type Slice = &'a str;
+    fn slice_nth_next(&mut self, n: U) -> Result<Self::Slice, U>;
+    fn slice_nth_prev(&mut self, n: U) -> Result<Self::Slice, U>;
+    fn offset(&self) -> U;
+}
+
+pub struct StrGraphemeCursor<'a> {
+    string: &'a str,
+    wrapped: unicode_segmentation::GraphemeCursor,
+    current: Grapheme,
+}
+
+impl<'a> StrGraphemeCursor<'a> {
+    fn new(string: &'a str) -> Self {
+        Self {
+            string,
+            wrapped: unicode_segmentation::GraphemeCursor::new(0, string.len(), true),
+            current: Grapheme(0),
+        }
+    }
+}
+
+impl<'a> Slicer<Grapheme> for StrGraphemeCursor<'a> {
+    type Slice = &'a str;
+
+    fn slice_nth_next(&mut self, n: Grapheme) -> Result<Self::Slice, Grapheme> {
+        let start = self.wrapped.cur_cursor();
+        let available: Grapheme = (0..n.0)
+            .map_while(|_| self.wrapped.next_boundary(self.string, 0).unwrap_or(None))
+            .count()
+            .into();
+        if available < n {
+            self.wrapped.set_cursor(start);
+            Err(available.into())
+        } else {
+            self.current += available;
+            Ok(&self.string[start..self.wrapped.cur_cursor()])
+        }
+    }
+
+    fn slice_nth_prev(&mut self, n: Grapheme) -> Result<Self::Slice, Grapheme> {
+        let start = self.wrapped.cur_cursor();
+        let available: Grapheme = (0..n.0)
+            .map_while(|_| self.wrapped.prev_boundary(self.string, 0).unwrap_or(None))
+            .count()
+            .into();
+        if available < n {
+            self.wrapped.set_cursor(start);
+            Err(available.into())
+        } else {
+            self.current += available;
+            Ok(&self.string[start..self.wrapped.cur_cursor()])
+        }
+    }
+
+    fn offset(&self) -> Grapheme {
+        self.current
+    }
+}
+
+pub struct Splits<C: Slicer<I::Item>, I: Iterator<Item: Unit>> {
+    cursor: C,
+    iter: I,
+}
+
+impl<C: Slicer<I::Item>, I: Iterator<Item: Unit>> Splits<C, I> {
+    pub fn new(cursor: C, iter: I) -> Self {
+        Self { cursor, iter }
+    }
+}
+
+impl<C: Slicer<I::Item>, I: Iterator<Item: Unit>> Iterator for Splits<C, I> {
+    type Item = C::Slice;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter
+            .next()
+            .and_then(|o| self.cursor.slice_nth_next(o - self.cursor.offset()).ok())
+    }
+}
+
+struct StrTextCursor<'a>(&'a str, Locus);
+
+impl<'a> TextCursor<Grapheme> for StrTextCursor<'a>{
+    type Slice= iter::Once<&'a str>;
+    fn slice<T:Into<Byte>>(&self, end: T)->Self::Slice{
+        iter::once(&self.0[self.index().byte().0..end.into().0])
+    }
+    fn move_nth_next(&mut self, n: Grapheme)->Result<Locus, Locus>{
+        self.1 = Unit::nth_byte_offset(&self.0[self.1.byte().0..], n)
+            .map(|byte| Locus::from_grapheme_byte(byte, n, self.0))
+            .map_err(|_| self.1)?;
+        Ok(self.1)
+    }
+    fn index(&self)->Locus{ self.1 }
+}
+
+pub trait Text {
+    type Slice: Text;
+    type Split: Iterator<Item = Self::Slice>;
+
+    fn slice(&self, r: Range<Grapheme>) -> Self::Slice;
+
+    fn len<U>(&self) -> U
+    where
+        U: Clone,
+        Locus: AsRef<U>;
+
+    fn split<I: IntoIterator<Item = Grapheme>>(&self, at: I) -> Self::Split;
+
+    fn graphemes(&self) -> Self::Split;
+}
+
+impl<S: Borrow<str>> Text for UiString<S> {
+    type Slice = Self;
+    type Split= Split<UiString<S>>;
+
+    fn slice(&self, r: Range<Grapheme>) -> Self::Slice{todo!(""); }
+
+    fn len<U>(&self) -> U
+    where
+        U: Clone,
+        Locus: AsRef<U>{
+        todo!("");
+        }
+
+    fn split<I: IntoIterator<Item = Grapheme>>(&self, at: I) -> Self::Split{
+        todo!("");
+    }
+
+    fn graphemes(&self) -> Self::Split{
+        todo!("");
+    }
+}
+
+
+struct Split<T:Text, >{
+    text: T,
+          start: Grapheme,
+          at: Box<dyn Iterator<Item= Grapheme>>,
+}
+
+impl<T:Text> Iterator for Split<T>{
+type Item=T::Slice;
+fn next(&mut self)->Option<Self::Item>{
+    self.at.next() .map(|end| {
+                let split = self.slice(self.start..end);
+                self.start = end;
+                Some(split)
+            })
+}
+}
+*/
+
 /// An immutable [str] wrapper that re-uses its underlying buffer when taking slices of itself so
 /// that cloning is cheap enough that, for most use cases where a `&str` would be preferred over a
 /// `String`, this [UiString] can simply be copied instead.
@@ -104,15 +427,7 @@ impl<B: Borrow<str>> UiString<B> {
     where
         B: Clone,
     {
-        let mut start = Grapheme(0);
-        at.into_iter()
-            .map_while(|end| {
-                let split = self.slice(start..end);
-                start = end;
-                Some(split)
-            })
-            .collect::<Vec<_>>()
-            .into_iter()
+        Splits::new(StrGraphemeCursor::new(self.as_str()), at.into_iter())
     }
 
     pub fn graphemes(&self) -> impl Iterator<Item = Self>

@@ -142,7 +142,8 @@ impl State {
 
 impl Default for State {
     fn default() -> Self {
-        Self::new(Table::new(), None)
+        let table: Table = Table::new();
+        Self::new(table, None)
     }
 }
 
@@ -156,7 +157,7 @@ impl ops::Add<Input> for State {
 #[derive(Clone, Debug)]
 pub enum Input {
     Select(Range<Grapheme>),
-    Insert(UiString),
+    Insert(Measured),
     Delete,
 }
 
@@ -224,7 +225,7 @@ mod example {
                 ),
                 Marked::new(
                     MarkSet::new_with(MyMark::Name.into()),
-                    UiString::new(Measured::new(Immutable::new(model.name.clone()))),
+                    Measured::new(Immutable::new(model.name.clone())),
                 ),
                 Marked::new(MarkSet::new_with(MyMark::Delimiter.into()), "!".into()),
             ])

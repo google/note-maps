@@ -67,17 +67,29 @@ where
     }
 }
 
-impl<B> Slice<Byte> for Immutable<B>
+impl<B, U: Unit> Slice<U> for Immutable<B>
 where
     B: Borrow<str> + Clone,
 {
-    fn len2(&self) -> Byte {
-        self.as_str().len().into()
+    fn len(&self) -> U {
+        U::offset_len(self.as_str())
     }
-    fn slice(&self, r: Range<Byte>) -> Self {
+
+    fn slice(&self, r: Range<U>) -> Self {
+        // This implementation is necessarily disjoint from the implementation of Slice for str
+        // because Self hides a shared buffer, and Slice::slice doesn't return Byte offsets.
+        //
+        // TODO: decide whether this makes Slice::slice a violation of C-INTERMEDIATE
+        // https://rust-lang.github.io/api-guidelines/flexibility.html#c-intermediate
+        let start: Byte = self.byte_range.start
+            + U::nth_byte_offset(self.as_str(), r.start)
+                .expect("start of range should be within bounds");
+        let end: Byte = self.byte_range.start
+            + U::nth_byte_offset(&self.as_str()[start.0..], r.end - r.start)
+                .expect("end of range should be within bounds");
         Self {
             buffer: self.buffer.clone(),
-            byte_range: self.byte_range.start + r.start..self.byte_range.start + r.end,
+            byte_range: start..end,
         }
     }
 }

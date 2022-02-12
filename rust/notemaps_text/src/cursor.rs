@@ -41,14 +41,17 @@ pub enum Dir {
 /// assert_eq!(cursor.peek_next(), Some("\r\n"));
 /// ```
 #[derive(Copy, Clone)]
-pub struct Cursor<'a, S: Borrow<str>> {
+pub struct Cursor<'a, S> {
     text: &'a Table<S>,
     text_offsets: Locus,
     piece: Piece,
     piece_offsets: Locus,
 }
 
-impl<'a, S: Borrow<str> + Len + Slice<Grapheme>> Cursor<'a, S> {
+impl<'a, S> Cursor<'a, S>
+where
+    S: Borrow<str> + Slice<Byte> + Slice<Char> + Slice<Grapheme>,
+{
     pub fn new(text: &'a Table<S>, offset: Grapheme) -> Self {
         Self {
             text,
@@ -61,19 +64,25 @@ impl<'a, S: Borrow<str> + Len + Slice<Grapheme>> Cursor<'a, S> {
 
     /// Consumes `self`, setting the offset of this [Cursor] to `offset`.
     #[must_use]
-    pub fn with_offset(mut self, offset: Grapheme) -> Self {
+    pub fn with_offset(mut self, offset: Grapheme) -> Self
+    where
+        S: Slice<Byte> + Slice<Char>,
+    {
         self.set_offset(offset).ok();
         self
     }
 
-    pub fn set_offset(&mut self, offset: Grapheme) -> Result<(), Locus> {
+    pub fn set_offset(&mut self, offset: Grapheme) -> Result<(), Locus>
+    where
+        S: Slice<Byte> + Slice<Char>,
+    {
         match self.text.locate(offset) {
             Ok((n_piece, offsets)) => {
                 self.text_offsets = self
                     .text
                     .pieces()
                     .take(n_piece.0)
-                    .map(|p| p.as_ref().len())
+                    .map(|p| Locus::from_len(p.as_ref()))
                     .sum::<Locus>()
                     + offsets;
                 self.piece = n_piece;
@@ -97,7 +106,10 @@ impl<'a, S: Borrow<str> + Len + Slice<Grapheme>> Cursor<'a, S> {
         (self.piece, *self.piece_offsets.as_ref())
     }
 
-    fn get_piece_offset_prev(&self) -> Option<(&'a Marked<S>, Byte)> {
+    fn get_piece_offset_prev(&self) -> Option<(&'a Marked<S>, Byte)>
+    where
+        S: Slice<Byte>,
+    {
         if self.piece_offsets.byte() == Byte(0) {
             if self.piece.0 == 0 {
                 None
@@ -119,7 +131,10 @@ impl<'a, S: Borrow<str> + Len + Slice<Grapheme>> Cursor<'a, S> {
             .map(|p| (p, self.piece_offsets.byte()))
     }
 
-    pub fn peek_marks(&self, d: Dir) -> Option<&MarkSet> {
+    pub fn peek_marks(&self, d: Dir) -> Option<&MarkSet>
+    where
+        S: Slice<Byte>,
+    {
         match d {
             Dir::Next => self.get_piece_offset_next().map(|(p, _)| p.marks()),
             Dir::Prev => self.get_piece_offset_prev().map(|(p, _)| p.marks()),
@@ -129,7 +144,7 @@ impl<'a, S: Borrow<str> + Len + Slice<Grapheme>> Cursor<'a, S> {
     pub fn is_piece_boundary(&self) -> bool {
         self.piece_offsets.byte() == Byte(0)
             || match self.text.get_piece(self.piece) {
-                Some(piece) => piece.as_ref().len::<Byte>() == self.piece_offsets.byte(),
+                Some(piece) => self.piece_offsets.byte() == piece.as_ref().len(),
                 None => true,
             }
     }
@@ -139,7 +154,10 @@ impl<'a, S: Borrow<str> + Len + Slice<Grapheme>> Cursor<'a, S> {
             .and_then(|(p, o)| (&p.as_str()[o.0..]).graphemes(true).next())
     }
 
-    pub fn peek_prev(&self) -> Option<&'a str> {
+    pub fn peek_prev(&self) -> Option<&'a str>
+    where
+        S: Slice<Byte>,
+    {
         self.get_piece_offset_prev()
             .and_then(|(p, o)| (&p.as_str()[..o.0]).graphemes(true).next_back())
     }
@@ -199,7 +217,7 @@ mod a_point {
     #[test]
     fn starts_at_the_beginning() {
         let word: Rc<Word> = Rc::default();
-        let text = Table::from(Marked::<UiString>::from("AB").with_mark(word.clone()));
+        let text = Table::from(Marked::<Measured>::from("AB").with_mark(word.clone()));
         let cursor = Cursor::new(&text, Grapheme(0));
         assert_eq!(cursor.offset(), Grapheme(0));
         assert!(cursor.is_piece_boundary());
@@ -212,7 +230,7 @@ mod a_point {
     #[test]
     fn can_move_to_next_point() {
         let word: Rc<Word> = Rc::default();
-        let text = Table::<UiString>::from(Marked::from("ABC").with_mark(word.clone()));
+        let text = Table::<Measured>::from(Marked::from("ABC").with_mark(word.clone()));
         let mut cursor = Cursor::new(&text, Grapheme(0));
         cursor
             .move_by(Grapheme(1))
@@ -245,7 +263,7 @@ mod a_point {
     #[test]
     fn can_be_moved_to_arbitrary_location() {
         let word: Rc<Word> = Rc::default();
-        let text = Table::<UiString>::from_iter([
+        let text = Table::<Measured>::from_iter([
             Marked::from("a̐éö̲").with_mark(word.clone()),
             Marked::from("\r\n"),
         ]);

@@ -172,7 +172,7 @@ mod a_measured_str {
 
     #[test]
     fn reports_its_length_accurately() {
-        let s = Measured::new(Rc::from("a̐éö̲\r\n"));
+        let s = Measured::new(Immutable::new(Rc::from("a̐éö̲\r\n")));
         assert_eq!(Byte(13), s.len());
         assert_eq!(Char(9), s.len());
         assert_eq!(Grapheme(4), s.len());

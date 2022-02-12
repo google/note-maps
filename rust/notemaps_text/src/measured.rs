@@ -10,7 +10,6 @@
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
-use core::iter;
 use std::borrow::Borrow;
 use std::ops::Range;
 
@@ -38,14 +37,17 @@ use crate::*;
 /// assert_eq!(Grapheme(4), s.len());
 /// ```
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
-pub struct Measured<S> {
+pub struct Measured<S = Immutable> {
     text: S,
     len: Locus,
 }
 
 impl<S: Borrow<str>> Measured<S> {
-    pub fn new(text: S) -> Self {
-        let len = Locus::from_len(text.borrow());
+    pub fn new(text: S) -> Self
+    where
+        S: Slice<Byte> + Slice<Char> + Slice<Grapheme>,
+    {
+        let len = Locus::from_len(&text.borrow());
         Self { text, len }
     }
 
@@ -94,7 +96,7 @@ impl<S: Borrow<str>> Measured<S> {
 
 impl<'a, S> From<&'a str> for Measured<S>
 where
-    S: Borrow<str> + From<&'a str>,
+    S: Borrow<str> + From<&'a str> + Slice<Byte> + Slice<Char> + Slice<Grapheme>,
 {
     fn from(s: &'a str) -> Self {
         Self::new(S::from(s))
@@ -116,56 +118,17 @@ where
     }
 }
 
-impl<S> Slice<Byte> for Measured<S>
+impl<S, U> Slice<U> for Measured<S>
 where
-    S: Borrow<str> + Slice<Byte>,
+    S: Borrow<str> + Slice<U> + Slice<Byte> + Slice<Char> + Slice<Grapheme>,
+    U: Unit,
 {
-    fn len2(&self) -> Byte {
-        self.text.len2()
+    fn len(&self) -> U {
+        self.text.len()
     }
-    fn slice(&self, r: Range<Byte>) -> Self {
+    fn slice(&self, r: Range<U>) -> Self {
         // TODO: avoid re-computing the length of the slice
         Self::new(self.text.slice(r))
-    }
-}
-
-impl<S> Slice<Grapheme> for Measured<S>
-where
-    S: Borrow<str> + Clone + Slice<Byte>,
-{
-    fn len2(&self) -> Grapheme {
-        self.len.grapheme()
-    }
-    fn slice(&self, r: Range<Grapheme>) -> Self {
-        use unicode_segmentation::UnicodeSegmentation;
-        let mut graphemes = self
-            .as_str()
-            .grapheme_indices(true)
-            .map(|t| Byte(t.0))
-            .chain(iter::once(self.text.len2()));
-        let start = graphemes
-            .by_ref()
-            .nth(*r.start.as_ref())
-            .expect("range starts within bounds of this piece");
-        let end = if r.is_empty() {
-            start
-        } else {
-            graphemes
-                .by_ref()
-                .nth(*r.end.as_ref() - 1 - *r.start.as_ref())
-                .expect("range ends within bounds of piece")
-        };
-        self.slice(start..end)
-    }
-}
-
-impl<S: Borrow<str>> Len for Measured<S> {
-    fn len<U>(&self) -> U
-    where
-        U: Clone,
-        Locus: AsRef<U>,
-    {
-        self.len()
     }
 }
 
@@ -176,7 +139,7 @@ mod a_measured_str {
 
     #[test]
     fn reports_its_length_accurately() {
-        let s = Measured::new(Rc::from("a̐éö̲\r\n"));
+        let s = Measured::new(Immutable::new(Rc::from("a̐éö̲\r\n")));
         assert_eq!(Byte(13), s.len());
         assert_eq!(Char(9), s.len());
         assert_eq!(Grapheme(4), s.len());

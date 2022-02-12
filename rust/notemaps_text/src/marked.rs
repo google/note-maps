@@ -37,7 +37,7 @@ use crate::*;
 /// ].to_vec();
 /// ```
 #[derive(Debug, Clone)]
-pub struct Marked<S = UiString> {
+pub struct Marked<S = Measured> {
     marks: MarkSet,
     string: S,
 }
@@ -80,10 +80,10 @@ where
 
     pub fn graphemes(&self) -> impl '_ + Iterator<Item = Self>
     where
-        S: Clone + Len + Slice<Byte> + Slice<Grapheme>,
+        S: Clone + Slice<Byte> + Slice<Grapheme>,
     {
         self.string
-            .split(Grapheme(1)..=self.string.len::<Grapheme>())
+            .split(Grapheme(1)..=self.string.len())
             .map(|g| Self::new(self.marks.clone(), g))
     }
 
@@ -135,8 +135,8 @@ where
     S: Slice<U>,
     U: Unit,
 {
-    fn len2(&self) -> U {
-        self.string.len2()
+    fn len(&self) -> U {
+        self.string.len()
     }
     fn slice(&self, r: Range<U>) -> Self {
         Self {
@@ -151,7 +151,7 @@ use core::ops;
 
 impl<S> ops::Add<Table<S>> for Marked<S>
 where
-    S: Borrow<str> + Len,
+    S: Borrow<str> + Slice<Byte> + Slice<Char> + Slice<Grapheme>,
 {
     type Output = Table<S>;
 
@@ -162,7 +162,7 @@ where
 
 impl<S> ops::Add<Marked<S>> for Marked<S>
 where
-    S: Borrow<str> + Len,
+    S: Borrow<str> + Slice<Byte> + Slice<Char> + Slice<Grapheme>,
 {
     type Output = Table<S>;
 

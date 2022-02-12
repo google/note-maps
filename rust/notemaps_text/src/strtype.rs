@@ -10,6 +10,7 @@
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
+/*
 use core::borrow::Borrow;
 use core::cmp::Ordering;
 use core::hash::Hash;
@@ -42,7 +43,7 @@ impl<B: Borrow<str>> UiString<B> {
 
     pub fn graphemes(&self) -> Split<'_, Self, Grapheme, Range<Grapheme>>
     where
-        B: Clone + Slice<Grapheme> + Len,
+        B: Clone + Slice<Grapheme>,
     {
         self.split(Grapheme(1)..self.len::<Grapheme>() + 1)
     }
@@ -51,55 +52,24 @@ impl<B: Borrow<str>> UiString<B> {
     /// returned by [UiString::as_str].
     ///
     /// If `offset` is out of bounds, returns the bounds of this piece.
-    pub fn locate(&self, offset: Grapheme) -> Result<Locus, Locus>
-    where
-        B: Len,
-    {
+    pub fn locate(&self, offset: Grapheme) -> Result<Locus, Locus> {
         Unit::nth_byte_offset(self.as_str(), offset)
             .map(|byte| Locus::from_grapheme_byte(byte, offset, self.as_str()))
             .map_err(|_| self.len())
     }
 }
 
-impl<B> Slice<Byte> for UiString<B>
+impl<B, U: Unit> Slice<U> for UiString<B>
 where
-    B: Borrow<str> + Clone + Len + Slice<Byte>,
+    B: Slice<U>,
 {
-    fn len2(&self) -> Byte {
-        self.as_str().len().into()
-    }
-    fn slice(&self, r: Range<Byte>) -> Self {
-        Self {
-            immutable: self.immutable.slice(r),
-        }
-    }
-}
-
-impl<B> Slice<Grapheme> for UiString<B>
-where
-    //B: Borrow<str> + Clone + Len + Slice<Byte>,
-    B: Borrow<str> + Clone + Len + Slice<Grapheme>,
-{
-    fn len2(&self) -> Grapheme {
-        self.immutable.len2()
-    }
-    fn slice(&self, r: Range<Grapheme>) -> Self {
-        Self {
-            immutable: self.immutable.slice(r),
-        }
-    }
-}
-
-impl<B> Len for UiString<B>
-where
-    B: Len,
-{
-    fn len<U>(&self) -> U
-    where
-        U: Clone,
-        Locus: AsRef<U>,
-    {
+    fn len(&self) -> U {
         self.immutable.len()
+    }
+    fn slice(&self, r: Range<U>) -> Self {
+        Self {
+            immutable: self.immutable.slice(r),
+        }
     }
 }
 
@@ -215,3 +185,4 @@ mod a_str {
         assert_eq!(Grapheme(4), piece.len());
     }
 }
+*/

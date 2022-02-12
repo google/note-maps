@@ -10,8 +10,9 @@
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
+use core::iter;
+
 use crate::offsets::*;
-use crate::*;
 
 /// A representation of Unicode text that can be sliced to return pieces of itself.
 ///
@@ -19,7 +20,7 @@ use crate::*;
 /// structure of the textual data. It can be implemented for [str] and [String], but it can also be
 /// implemented for ropes and piece tables.
 pub trait Slice<U: Unit>: Sized {
-    fn len2(&self) -> U;
+    fn len(&self) -> U;
 
     fn slice(&self, r: core::ops::Range<U>) -> Self;
 
@@ -31,30 +32,89 @@ pub trait Slice<U: Unit>: Sized {
         Split::new(self, offsets.into_iter())
     }
 
-    /// Translates an `offset` in self to a [Byte] offset into the underlying text.
+    /// Translates an `offset` into the underlying text from `U` units to a `O` units.
     ///
-    /// The maximum value for `offset` is the length of `self`.
+    /// The maximum value for `offset` is the total length of `self` in `U` units.
     ///
-    /// Returns the location of `offset` in [Byte] units. If `offset` is out of bounds, returns the
-    /// maximum allowable value of `offset` as an error.
+    /// Returns the location of `offset` in `O` units. If `offset` is out of bounds, returns the
+    /// maximum allowable value of `offset` in `E` units as an error.
     ///
     /// # Implementation
     ///
     /// The default implementation of this trait method is inefficient.
     fn locate<O, E>(&self, offset: U) -> Result<O, E>
     where
-        Self: Len,
-        E: Clone,
-        O: Clone,
+        Self: Slice<O> + Slice<E>,
+        O: Unit,
+        E: Unit,
         Locus: AsRef<U>,
         Locus: AsRef<O>,
         Locus: AsRef<E>,
     {
-        if offset > self.len::<U>() {
-            Err(self.len::<E>())
+        if offset > Slice::<U>::len(self) {
+            Err(Slice::<E>::len(self))
         } else {
             Ok(self.slice(U::from(0)..offset).len())
         }
+    }
+}
+
+impl<'a> Slice<Byte> for &'a str {
+    fn len(&self) -> Byte {
+        Byte::offset_len(self)
+    }
+    fn slice(&self, r: core::ops::Range<Byte>) -> Self {
+        &(*self)[r.start.0..r.end.0]
+    }
+}
+
+impl<'a> Slice<Char> for &'a str {
+    fn len(&self) -> Char {
+        Char::offset_len(self)
+    }
+    fn slice(&self, r: core::ops::Range<Char>) -> Self {
+        let mut byte_offsets = str::char_indices(self)
+            .map(|t| Byte(t.0))
+            .chain(iter::once(self.len()));
+        let start: Byte = byte_offsets
+            .by_ref()
+            .nth(*r.start.as_ref())
+            .expect("range starts within bounds of this piece");
+        let end: Byte = if r.is_empty() {
+            start
+        } else {
+            byte_offsets
+                .by_ref()
+                .nth(*r.end.as_ref() - 1 - *r.start.as_ref())
+                .expect("range ends within bounds of piece")
+        };
+        self.slice(start..end)
+    }
+}
+
+impl<'a> Slice<Grapheme> for &'a str {
+    fn len(&self) -> Grapheme {
+        Grapheme::offset_len(self)
+    }
+    fn slice(&self, r: core::ops::Range<Grapheme>) -> Self {
+        use unicode_segmentation::UnicodeSegmentation;
+        let mut graphemes = self
+            .grapheme_indices(true)
+            .map(|t| Byte(t.0))
+            .chain(iter::once(self.len()));
+        let start = graphemes
+            .by_ref()
+            .nth(*r.start.as_ref())
+            .expect("range starts within bounds of this piece");
+        let end = if r.is_empty() {
+            start
+        } else {
+            graphemes
+                .by_ref()
+                .nth(*r.end.as_ref() - 1 - *r.start.as_ref())
+                .expect("range ends within bounds of piece")
+        };
+        self.slice(start..end)
     }
 }
 

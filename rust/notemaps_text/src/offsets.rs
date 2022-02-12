@@ -339,15 +339,20 @@ mod internal {
 /// A public trait implemented exclusively by the measurement unit types defined in this module
 /// ([Byte], [Char], and [Grapheme].)
 pub trait Unit:
-    Copy
+    'static
+    + Copy
     + Eq
     + Ord
     + From<usize>
     + fmt::Debug
     + Add<Output = Self>
     + Add<usize, Output = Self>
+    + AddAssign
+    + AddAssign<usize>
     + Sub<Output = Self>
     + Sub<usize, Output = Self>
+    + SubAssign
+    + SubAssign<usize>
     + Borrow<usize>
     + internal::Sealed
     + iter::Step
@@ -429,6 +434,7 @@ impl Unit for Grapheme {
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct Locus(pub(crate) Byte, pub(crate) Char, pub(crate) Grapheme);
 
+use crate::Slice;
 impl Locus {
     pub const fn zero() -> Self {
         Self(Byte(0), Char(0), Grapheme(0))
@@ -438,16 +444,11 @@ impl Locus {
         self.0 .0 == 0 && self.1 .0 == 0 && self.2 .0 == 0
     }
 
-    pub fn from_len(s: &str) -> Self {
-        Self(
-            Byte::offset_len(s),
-            Char::offset_len(s),
-            Grapheme::offset_len(s),
-        )
-    }
-
-    pub(crate) fn from_grapheme_byte(b: Byte, g: Grapheme, s: &str) -> Self {
-        Self(b, Char(s[0..b.0].chars().count()), g)
+    pub fn from_len<S>(s: &S) -> Self
+    where
+        S: Slice<Byte> + Slice<Char> + Slice<Grapheme>,
+    {
+        Self(s.len(), s.len(), s.len())
     }
 
     pub fn whatever<T>(&self) -> T
@@ -477,6 +478,39 @@ impl<'a> From<&'a str> for Locus {
             Byte::offset_len(s),
             Char::offset_len(s),
             Grapheme::offset_len(s),
+        )
+    }
+}
+
+impl<'a, S: Slice<Byte> + Slice<Char> + Slice<Grapheme>> From<(&'a S, Byte)> for Locus {
+    fn from((s, byte): (&S, Byte)) -> Self {
+        Self(
+            byte,
+            Slice::<Byte>::locate::<Char, Byte>(s, byte).expect("offset should be valid"),
+            Slice::<Byte>::locate::<Grapheme, Byte>(s, byte).expect("offset should be valid"),
+        )
+    }
+}
+
+impl<'a, S: Slice<Byte> + Slice<Char> + Slice<Grapheme>> From<(&'a S, Char)> for Locus {
+    fn from((s, chars): (&S, Char)) -> Self {
+        let byte = Slice::<Char>::locate::<Byte, Byte>(s, chars).expect("offset should be valid");
+        Self(
+            byte,
+            chars,
+            Slice::<Byte>::locate::<Grapheme, Byte>(s, byte).expect("offset should be valid"),
+        )
+    }
+}
+
+impl<'a, S: Slice<Byte> + Slice<Char> + Slice<Grapheme>> From<(&'a S, Grapheme)> for Locus {
+    fn from((s, grapheme): (&S, Grapheme)) -> Self {
+        let byte =
+            Slice::<Grapheme>::locate::<Byte, Byte>(s, grapheme).expect("offset should be valid");
+        Self(
+            byte,
+            Slice::<Byte>::locate::<Char, Byte>(s, byte).expect("offset should be valid"),
+            grapheme,
         )
     }
 }

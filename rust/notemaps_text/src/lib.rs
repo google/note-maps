@@ -38,7 +38,6 @@ pub use marked::*;
 pub use markup::*;
 pub use measured::*;
 pub use slice::{Slice, Split};
-pub use strtype::UiString;
 pub use table::*;
 pub use text::*;
 
@@ -48,10 +47,3 @@ pub type Str = Measured<Immutable<std::rc::Rc<str>>>;
 //pub type Piece = Marked<Str>;
 //pub type LocalPiece = offsets::Local<Piece>;
 //pub type Document = Table<Piece>;
-
-pub trait Len {
-    fn len<U>(&self) -> U
-    where
-        U: Clone,
-        offsets::Locus: AsRef<U>;
-}

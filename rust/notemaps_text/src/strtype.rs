@@ -41,11 +41,11 @@ impl<B: Borrow<str>> UiString<B> {
         self.immutable.borrow()
     }
 
-    pub fn graphemes(&self) -> impl Iterator<Item = Self>
+    pub fn graphemes(&self) -> Split<'_, Self, Grapheme, Range<Grapheme>>
     where
         B: Clone + Slice<Byte> + Len,
     {
-        split(self, Grapheme(1)..=self.len::<Grapheme>())
+        self.split(Grapheme(1)..self.len::<Grapheme>() + 1)
     }
 
     /// Returns the location of `offset` in this [UiString] as a [Byte] offset into the string

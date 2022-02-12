@@ -97,22 +97,6 @@ pub trait Slice<U: offsets::Unit>: Sized {
     }
 }
 
-fn split<I, S>(s: &S, at: I) -> impl Iterator<Item = S>
-where
-    S: Clone + Slice<I::Item> + Len,
-    I: IntoIterator<Item: offsets::Unit>,
-{
-    let mut start = I::Item::from(0);
-    at.into_iter()
-        .map_while(|end| {
-            let split = s.slice(start..end);
-            start = end;
-            Some(split)
-        })
-        .collect::<Vec<_>>()
-        .into_iter()
-}
-
 pub struct Split<'a, S: ?Sized + Slice<U>, U: offsets::Unit, I: Iterator> {
     slice: &'a S,
     offsets: I,

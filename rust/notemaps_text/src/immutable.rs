@@ -71,6 +71,9 @@ impl<B> Slice<Byte> for Immutable<B>
 where
     B: Borrow<str> + Clone,
 {
+    fn len2(&self) -> Byte {
+        self.as_str().len().into()
+    }
     fn slice(&self, r: Range<Byte>) -> Self {
         Self {
             buffer: self.buffer.clone(),

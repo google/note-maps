@@ -14,7 +14,6 @@ use core::borrow::Borrow;
 use core::cmp::Ordering;
 use core::hash::Hash;
 use core::hash::Hasher;
-use core::iter;
 use core::ops::Range;
 use std::rc::Rc;
 
@@ -43,7 +42,7 @@ impl<B: Borrow<str>> UiString<B> {
 
     pub fn graphemes(&self) -> Split<'_, Self, Grapheme, Range<Grapheme>>
     where
-        B: Clone + Slice<Byte> + Len,
+        B: Clone + Slice<Grapheme> + Len,
     {
         self.split(Grapheme(1)..self.len::<Grapheme>() + 1)
     }
@@ -66,6 +65,9 @@ impl<B> Slice<Byte> for UiString<B>
 where
     B: Borrow<str> + Clone + Len + Slice<Byte>,
 {
+    fn len2(&self) -> Byte {
+        self.as_str().len().into()
+    }
     fn slice(&self, r: Range<Byte>) -> Self {
         Self {
             immutable: self.immutable.slice(r),
@@ -75,29 +77,15 @@ where
 
 impl<B> Slice<Grapheme> for UiString<B>
 where
-    B: Borrow<str> + Clone + Len + Slice<Byte>,
+    //B: Borrow<str> + Clone + Len + Slice<Byte>,
+    B: Borrow<str> + Clone + Len + Slice<Grapheme>,
 {
+    fn len2(&self) -> Grapheme {
+        self.immutable.len2()
+    }
     fn slice(&self, r: Range<Grapheme>) -> Self {
-        use unicode_segmentation::UnicodeSegmentation;
-        let mut graphemes = self
-            .as_str()
-            .grapheme_indices(true)
-            .map(|t| Byte(t.0))
-            .chain(iter::once(self.immutable.len::<Byte>()));
-        let start = graphemes
-            .by_ref()
-            .nth(*r.start.as_ref())
-            .expect("range starts within bounds of this piece");
-        let end = if r.is_empty() {
-            start
-        } else {
-            graphemes
-                .by_ref()
-                .nth(*r.end.as_ref() - 1 - *r.start.as_ref())
-                .expect("range ends within bounds of piece")
-        };
         Self {
-            immutable: self.immutable.slice(start..end),
+            immutable: self.immutable.slice(r),
         }
     }
 }

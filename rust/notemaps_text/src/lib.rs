@@ -26,8 +26,8 @@ mod mark_set;
 mod marked;
 mod markup;
 mod measured;
-mod strtype;
 mod slice;
+mod strtype;
 mod table;
 mod text;
 
@@ -37,8 +37,8 @@ pub use mark_set::*;
 pub use marked::*;
 pub use markup::*;
 pub use measured::*;
-pub use strtype::UiString;
 pub use slice::{Slice, Split};
+pub use strtype::UiString;
 pub use table::*;
 pub use text::*;
 

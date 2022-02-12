@@ -135,6 +135,9 @@ where
     S: Slice<U>,
     U: Unit,
 {
+    fn len2(&self) -> U {
+        self.string.len2()
+    }
     fn slice(&self, r: Range<U>) -> Self {
         Self {
             string: self.string.slice(r),

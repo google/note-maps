@@ -10,6 +10,7 @@
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
+use core::iter;
 use std::borrow::Borrow;
 use std::ops::Range;
 
@@ -115,14 +116,46 @@ where
     }
 }
 
-impl<S, U> Slice<U> for Measured<S>
+impl<S> Slice<Byte> for Measured<S>
 where
-    S: Borrow<str> + Slice<U>,
-    U: Unit,
+    S: Borrow<str> + Slice<Byte>,
 {
-    fn slice(&self, r: Range<U>) -> Self {
+    fn len2(&self) -> Byte {
+        self.text.len2()
+    }
+    fn slice(&self, r: Range<Byte>) -> Self {
         // TODO: avoid re-computing the length of the slice
         Self::new(self.text.slice(r))
+    }
+}
+
+impl<S> Slice<Grapheme> for Measured<S>
+where
+    S: Borrow<str> + Clone + Slice<Byte>,
+{
+    fn len2(&self) -> Grapheme {
+        self.len.grapheme()
+    }
+    fn slice(&self, r: Range<Grapheme>) -> Self {
+        use unicode_segmentation::UnicodeSegmentation;
+        let mut graphemes = self
+            .as_str()
+            .grapheme_indices(true)
+            .map(|t| Byte(t.0))
+            .chain(iter::once(self.text.len2()));
+        let start = graphemes
+            .by_ref()
+            .nth(*r.start.as_ref())
+            .expect("range starts within bounds of this piece");
+        let end = if r.is_empty() {
+            start
+        } else {
+            graphemes
+                .by_ref()
+                .nth(*r.end.as_ref() - 1 - *r.start.as_ref())
+                .expect("range ends within bounds of piece")
+        };
+        self.slice(start..end)
     }
 }
 

@@ -10,8 +10,8 @@
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::*;
 use crate::offsets::*;
+use crate::*;
 
 /// A representation of Unicode text that can be sliced to return pieces of itself.
 ///
@@ -19,6 +19,8 @@ use crate::offsets::*;
 /// structure of the textual data. It can be implemented for [str] and [String], but it can also be
 /// implemented for ropes and piece tables.
 pub trait Slice<U: Unit>: Sized {
+    fn len2(&self) -> U;
+
     fn slice(&self, r: core::ops::Range<U>) -> Self;
 
     fn split<I>(&self, offsets: I) -> Split<'_, Self, U, I::IntoIter>

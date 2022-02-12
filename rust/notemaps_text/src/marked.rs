@@ -24,42 +24,34 @@ use crate::*;
 /// # Examples
 ///
 /// ```rust
-/// use notemaps_text::MarkStr;
+/// use notemaps_text::Marked;
 ///
 /// #[derive(Clone)]
 /// enum Style { Regular, Italic }
 ///
 /// use Style::*;
 ///
-/// let document: Vec<MarkStr<&'static str>> = [
+/// let document: Vec<Marked<&'static str>> = [
 ///     (Regular, "Hello, ").into(),
 ///     (Italic, "World!").into(),
 /// ].to_vec();
 /// ```
 #[derive(Debug, Clone)]
-pub struct MarkStr<S: Borrow<str> = Rc<str>> {
+pub struct Marked<S = UiString> {
     marks: MarkSet,
-    string: UiString<S>,
+    string: S,
 }
 
-impl<S: Borrow<str>> MarkStr<S> {
-    pub fn new(marks: MarkSet, string: UiString<S>) -> Self {
+impl<S> Marked<S>
+where
+    S: Borrow<str>,
+{
+    pub fn new(marks: MarkSet, string: S) -> Self {
         Self { marks, string }
     }
 
     pub fn as_str(&self) -> &str {
-        self.string.as_str()
-    }
-
-    pub fn as_ui_str(&self) -> &UiString<S> {
-        &self.string
-    }
-
-    pub fn to_ui_str(&self) -> UiString<S>
-    where
-        S: Clone,
-    {
-        self.string.clone()
+        self.string.borrow()
     }
 
     pub fn marks(&self) -> &MarkSet {
@@ -70,20 +62,17 @@ impl<S: Borrow<str>> MarkStr<S> {
         &mut self.marks
     }
 
-    pub fn map_str<T: Borrow<str>, F: FnOnce(UiString<S>) -> UiString<T>>(
-        self,
-        f: F,
-    ) -> MarkStr<T> {
-        MarkStr {
+    pub fn map_str<T, F: FnOnce(S) -> T>(self, f: F) -> Marked<T> {
+        Marked {
             marks: self.marks,
             string: f(self.string),
         }
     }
 
-    pub fn map_marks<F: for<'a> FnOnce(&'a mut MarkSet)>(self, f: F) -> MarkStr<S> {
+    pub fn map_marks<F: for<'a> FnOnce(&'a mut MarkSet)>(self, f: F) -> Marked<S> {
         let mut marks = self.marks.clone();
         f(&mut marks);
-        MarkStr {
+        Marked {
             marks,
             string: self.string,
         }
@@ -91,22 +80,11 @@ impl<S: Borrow<str>> MarkStr<S> {
 
     pub fn graphemes(&self) -> impl '_ + Iterator<Item = Self>
     where
-        S: Clone,
+        S: Clone + Len + Slice<Byte> + Slice<Grapheme>,
     {
         self.string
-            .graphemes()
+            .split(Grapheme(1)..=self.string.len::<Grapheme>())
             .map(|g| Self::new(self.marks.clone(), g))
-    }
-
-    #[must_use]
-    pub fn slice(&self, r: Range<Grapheme>) -> Self
-    where
-        S: Clone,
-    {
-        Self {
-            string: self.string.slice(r),
-            marks: self.marks.clone(),
-        }
     }
 
     #[must_use]
@@ -122,7 +100,7 @@ impl<S: Borrow<str>> MarkStr<S> {
     }
 }
 
-impl<S: Borrow<str>> Default for MarkStr<S>
+impl<S: Borrow<str>> Default for Marked<S>
 where
     S: Default,
 {
@@ -131,7 +109,7 @@ where
     }
 }
 
-impl<'a, S: Borrow<str>> From<&'a str> for MarkStr<S>
+impl<'a, S: Borrow<str>> From<&'a str> for Marked<S>
 where
     S: From<&'a str>,
 {
@@ -140,22 +118,38 @@ where
     }
 }
 
-impl<'a, M: Any, S: Borrow<str>, T: Into<UiString<S>>> From<(M, T)> for MarkStr<S> {
+impl<'a, M: Any, S: Borrow<str>, T: Into<S>> From<(M, T)> for Marked<S> {
     fn from(src: (M, T)) -> Self {
         Self::new(MarkSet::new_with(Rc::new(src.0)), src.1.into())
     }
 }
 
-impl<S: Borrow<str>> AsRef<str> for MarkStr<S> {
-    fn as_ref(&self) -> &str {
-        self.string.as_str()
+impl<S> AsRef<S> for Marked<S> {
+    fn as_ref(&self) -> &S {
+        &self.string
+    }
+}
+
+impl<S, U> Slice<U> for Marked<S>
+where
+    S: Slice<U>,
+    U: Unit,
+{
+    fn slice(&self, r: Range<U>) -> Self {
+        Self {
+            string: self.string.slice(r),
+            marks: self.marks.clone(),
+        }
     }
 }
 
 use core::iter;
 use core::ops;
 
-impl<S: Borrow<str>> ops::Add<Table<S>> for MarkStr<S> {
+impl<S> ops::Add<Table<S>> for Marked<S>
+where
+    S: Borrow<str> + Len,
+{
     type Output = Table<S>;
 
     fn add(self, other: Table<S>) -> Self::Output {
@@ -163,10 +157,13 @@ impl<S: Borrow<str>> ops::Add<Table<S>> for MarkStr<S> {
     }
 }
 
-impl<S: Borrow<str>> ops::Add<MarkStr<S>> for MarkStr<S> {
+impl<S> ops::Add<Marked<S>> for Marked<S>
+where
+    S: Borrow<str> + Len,
+{
     type Output = Table<S>;
 
-    fn add(self, other: MarkStr<S>) -> Self::Output {
+    fn add(self, other: Marked<S>) -> Self::Output {
         iter::once(self).chain(iter::once(other)).collect()
     }
 }

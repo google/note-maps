@@ -80,7 +80,7 @@ impl State {
                 self.document
                     .slice(Grapheme(0)..self.sel_range.start)
                     .into_iter()
-                    .chain(iter::once(MarkStr::new(MarkSet::new(), s.clone())))
+                    .chain(iter::once(Marked::new(MarkSet::new(), s.clone())))
                     .chain(
                         self.document
                             .slice(self.sel_range.end..self.document.len())
@@ -165,7 +165,7 @@ type Marker = Rc<dyn for<'a> Fn(&'a mut MarkSet)>;
 #[derive(Clone)]
 pub enum Output {
     AdjustSelection(Range<Grapheme>),
-    Replace(Range<Grapheme>, MarkStr),
+    Replace(Range<Grapheme>, Marked),
     Mark(Range<Grapheme>, Marker),
 }
 
@@ -213,30 +213,30 @@ mod example {
         Delimiter,
     }
 
-    struct View {}
+    struct Viewer {}
 
-    impl View {
+    impl Viewer {
         fn render(&self, model: &MyModel) -> Table {
             Table::from_iter([
-                MarkStr::new(
+                Marked::new(
                     MarkSet::new_with(MyMark::Delimiter.into()),
                     "Hello, ".into(),
                 ),
-                MarkStr::new(
+                Marked::new(
                     MarkSet::new_with(MyMark::Name.into()),
-                    UiString::new(model.name.clone()),
+                    UiString::new(Measured::new(Immutable::new(model.name.clone()))),
                 ),
-                MarkStr::new(MarkSet::new_with(MyMark::Delimiter.into()), "!".into()),
+                Marked::new(MarkSet::new_with(MyMark::Delimiter.into()), "!".into()),
             ])
         }
     }
 
     use std::sync::{Arc, Mutex};
-    struct MyInterpreter {
+    struct Commander {
         model: Arc<Mutex<MyModel>>,
     }
 
-    impl MyInterpreter {
+    impl Commander {
         fn rules(&self) -> impl IntoIterator<Item = Rule> {
             let model = self.model.clone();
             let f = Box::new(move |change: &Change| {
@@ -279,12 +279,12 @@ mod example {
         let model = Arc::new(Mutex::new(MyModel {
             name: "World".into(),
         }));
-        let interpreter = MyInterpreter {
+        let commander = Commander {
             model: model.clone(),
         };
-        let view = View {};
+        let view = Viewer {};
         let document = view.render(&*model.lock().unwrap());
-        let state = State::new(document, interpreter.rules());
+        let state = State::new(document, commander.rules());
         assert_eq!(state.document().to_string(), "Hello, World!");
         assert_eq!(state.selected_content().to_string(), "");
         assert_eq!(state.selected_range(), Grapheme(0)..Grapheme(0));
@@ -299,6 +299,10 @@ mod example {
         assert_eq!(
             model.lock().expect("model can be locked").name.as_ref(),
             "Test"
+        );
+        assert_eq!(
+            view.render(&*model.lock().unwrap()).to_string(),
+            "Hello, Test!"
         );
     }
 }

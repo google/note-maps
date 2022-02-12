@@ -19,6 +19,7 @@ use core::ops::Range;
 use std::rc::Rc;
 
 use crate::offsets::*;
+use crate::*;
 
 /// An immutable [str] wrapper that re-uses its underlying buffer when taking slices of itself so
 /// that cloning is cheap enough that, for most use cases where a `&str` would be preferred over a
@@ -27,109 +28,90 @@ use crate::offsets::*;
 /// Unlike [String] and [std::borrow::Cow], [UiString] does _not_ implement [core::ops::Deref]. It does,
 /// however, implement [core::borrow::Borrow] and [AsRef] for the underlying [str].
 #[derive(Clone, Debug)]
-pub struct UiString<B: Borrow<str> = Rc<str>> {
-    buffer: B,
-    byte_range: Range<usize>,
-    len_chars: Char,
-    len_graphemes: Grapheme,
+pub struct UiString<B = Measured<Immutable<Rc<str>>>> {
+    immutable: B,
 }
 
 impl<B: Borrow<str>> UiString<B> {
-    pub fn new(buffer: B) -> Self {
-        use unicode_segmentation::UnicodeSegmentation;
-        let byte_range = 0..buffer.borrow().len();
-        let len_chars = buffer.borrow().chars().count().into();
-        let len_graphemes = buffer.borrow().graphemes(true).count().into();
-        Self {
-            buffer,
-            byte_range,
-            len_chars,
-            len_graphemes,
-        }
-    }
-
-    #[must_use]
-    pub fn slice(&self, r: Range<Grapheme>) -> Self
-    where
-        B: Clone,
-    {
-        use unicode_segmentation::UnicodeSegmentation;
-        let mut graphemes = self
-            .as_str()
-            .grapheme_indices(true)
-            .map(|t| t.0)
-            .chain(iter::once(self.as_str().len()));
-        let start = self.byte_range.start
-            + graphemes
-                .by_ref()
-                .nth(*r.start.as_ref())
-                .expect("range starts within bounds of this piece");
-        let end = if r.is_empty() {
-            start
-        } else {
-            self.byte_range.start
-                + graphemes
-                    .by_ref()
-                    .nth(*r.end.as_ref() - 1 - *r.start.as_ref())
-                    .expect("range ends within bounds of piece")
-        };
-        Self {
-            buffer: self.buffer.clone(),
-            byte_range: start..end,
-            len_chars: (&self.buffer.borrow()[start..end]).chars().count().into(),
-            len_graphemes: r.end - r.start,
-        }
-    }
-
-    /// Returns the total length of the underlying text in `U` elements.
-    pub fn len<U>(&self) -> U
-    where
-        U: Clone,
-        Locus: AsRef<U>,
-    {
-        Locus(
-            Byte(self.byte_range.len()),
-            self.len_chars,
-            self.len_graphemes,
-        )
-        .as_ref()
-        .clone()
+    pub fn new(immutable: B) -> Self {
+        Self { immutable }
     }
 
     pub fn as_str(&self) -> &str {
-        &self.buffer.borrow()[self.byte_range.clone()]
-    }
-
-    pub fn split<I: IntoIterator<Item = Grapheme>>(&self, at: I) -> impl Iterator<Item = Self>
-    where
-        B: Clone,
-    {
-        let mut start = Grapheme(0);
-        at.into_iter()
-            .map_while(|end| {
-                let split = self.slice(start..end);
-                start = end;
-                Some(split)
-            })
-            .collect::<Vec<_>>()
-            .into_iter()
+        self.immutable.borrow()
     }
 
     pub fn graphemes(&self) -> impl Iterator<Item = Self>
     where
-        B: Clone,
+        B: Clone + Slice<Byte> + Len,
     {
-        self.split(Grapheme(1)..=self.len_graphemes)
+        split(self, Grapheme(1)..=self.len::<Grapheme>())
     }
 
     /// Returns the location of `offset` in this [UiString] as a [Byte] offset into the string
     /// returned by [UiString::as_str].
     ///
     /// If `offset` is out of bounds, returns the bounds of this piece.
-    pub fn locate(&self, offset: Grapheme) -> Result<Locus, Locus> {
+    pub fn locate(&self, offset: Grapheme) -> Result<Locus, Locus>
+    where
+        B: Len,
+    {
         Unit::nth_byte_offset(self.as_str(), offset)
             .map(|byte| Locus::from_grapheme_byte(byte, offset, self.as_str()))
             .map_err(|_| self.len())
+    }
+}
+
+impl<B> Slice<Byte> for UiString<B>
+where
+    B: Borrow<str> + Clone + Len + Slice<Byte>,
+{
+    fn slice(&self, r: Range<Byte>) -> Self {
+        Self {
+            immutable: self.immutable.slice(r),
+        }
+    }
+}
+
+impl<B> Slice<Grapheme> for UiString<B>
+where
+    B: Borrow<str> + Clone + Len + Slice<Byte>,
+{
+    fn slice(&self, r: Range<Grapheme>) -> Self {
+        use unicode_segmentation::UnicodeSegmentation;
+        let mut graphemes = self
+            .as_str()
+            .grapheme_indices(true)
+            .map(|t| Byte(t.0))
+            .chain(iter::once(self.immutable.len::<Byte>()));
+        let start = graphemes
+            .by_ref()
+            .nth(*r.start.as_ref())
+            .expect("range starts within bounds of this piece");
+        let end = if r.is_empty() {
+            start
+        } else {
+            graphemes
+                .by_ref()
+                .nth(*r.end.as_ref() - 1 - *r.start.as_ref())
+                .expect("range ends within bounds of piece")
+        };
+        Self {
+            immutable: self.immutable.slice(start..end),
+        }
+    }
+}
+
+impl<B> Len for UiString<B>
+where
+    B: Len,
+{
+    fn len<U>(&self) -> U
+    where
+        U: Clone,
+        Locus: AsRef<U>,
+    {
+        self.immutable.len()
     }
 }
 
@@ -142,9 +124,9 @@ where
     }
 }
 
-impl<'a, S: Borrow<str>> From<&'a str> for UiString<S>
+impl<'a, S> From<&'a str> for UiString<S>
 where
-    S: From<&'a str>,
+    S: Borrow<str> + From<&'a str>,
 {
     fn from(s: &'a str) -> Self {
         Self::new(s.into())
@@ -188,15 +170,15 @@ impl<S: Borrow<str>> Ord for UiString<S> {
         self.as_str().cmp(other.as_str())
     }
 }
+
 #[cfg(test)]
 mod a_str {
     use crate::offsets::*;
     use crate::*;
-    use std::rc::Rc;
 
     #[test]
     fn can_slice() {
-        let piece: UiString<Rc<str>> = UiString::from("a̐éö̲\r\n");
+        let piece: UiString = UiString::from("a̐éö̲\r\n");
         assert_eq!(piece.slice(Grapheme(1)..Grapheme(2)).as_str(), "é");
     }
 
@@ -214,7 +196,7 @@ mod a_str {
 
     #[test]
     fn can_split_into_graphemes() {
-        let piece: UiString<Rc<str>> = UiString::from("a̐éö̲\r\n");
+        let piece: UiString = UiString::from("a̐éö̲\r\n");
         assert_eq!(
             piece
                 .graphemes()
@@ -226,7 +208,7 @@ mod a_str {
 
     #[test]
     fn can_slice_and_split_into_graphemes() {
-        let piece: UiString<Rc<str>> = UiString::from("a̐éö̲\r\n");
+        let piece: UiString = UiString::from("a̐éö̲\r\n");
         let slice = piece.slice(Grapheme(1)..Grapheme(4));
         assert_eq!(
             slice
@@ -239,7 +221,7 @@ mod a_str {
 
     #[test]
     fn can_report_its_length_in_different_units() {
-        let piece: UiString<Rc<str>> = UiString::from("a̐éö̲\r\n");
+        let piece: UiString = UiString::from("a̐éö̲\r\n");
         assert_eq!(Byte(13), piece.len());
         assert_eq!(Char(9), piece.len());
         assert_eq!(Grapheme(4), piece.len());

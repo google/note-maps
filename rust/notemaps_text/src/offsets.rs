@@ -426,7 +426,7 @@ impl Unit for Grapheme {
 /// assert_eq!(Char(9), *length.as_ref());
 /// assert_eq!(Byte(13), *length.as_ref());
 /// ```
-#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct Locus(pub(crate) Byte, pub(crate) Char, pub(crate) Grapheme);
 
 impl Locus {
@@ -477,16 +477,6 @@ impl<'a> From<&'a str> for Locus {
             Byte::offset_len(s),
             Char::offset_len(s),
             Grapheme::offset_len(s),
-        )
-    }
-}
-
-impl<'a> From<&'a super::MeasuredStr> for Locus {
-    fn from(s: &'a super::MeasuredStr) -> Self {
-        Self(
-            super::MeasuredStr::len(s),
-            super::MeasuredStr::len(s),
-            super::MeasuredStr::len(s),
         )
     }
 }
@@ -554,3 +544,7 @@ impl AsRef<Grapheme> for Locus {
         &self.2
     }
 }
+
+pub struct Local<T>(Locus, T);
+
+impl<T> Local<T> {}

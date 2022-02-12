@@ -164,115 +164,15 @@ mod a_str {
     }
 }
 
-use std::sync::Arc;
-
-/// Wraps a [str] and, upon construction, computes its total length in [Locus].
-///
-/// Computing the length of a string in [Locus] can be expensive: the time complexity is linear
-/// to the length of the string. This cost is paid once in the construction of [MeasuredStr] so
-/// that it does not need to paid again every time the length of the string is needed.
-///
-/// As a cheap way to keep the computed length up to date, the wrapped [str] is immutable. To
-/// protect this invariant, [MeasuredStr] does not allow customizing the type used to represent a
-/// string the way [IndexStr] does.
-///
-/// # Examples
-///
-/// ```rust
-/// use notemaps_text::MeasuredStr;
-/// use notemaps_text::offsets::{Char, Grapheme};
-///
-/// let s: MeasuredStr = "a̐éö̲\r\n".into();
-/// assert_eq!(Char(9), s.len());
-/// assert_eq!(Grapheme(4), s.len());
-/// ```
-#[derive(Clone, Debug)]
-pub struct MeasuredStr {
-    text: Arc<str>,
-    len: Locus,
-}
-
-impl MeasuredStr {
-    fn inner_new(text: Arc<str>, len: Locus) -> Self {
-        Self { len, text }
-    }
-
-    /// Returns the length of the wrapped [str].
-    ///
-    /// The [str] is immutable so that the length does not need to be re-computed. It is wrapped in an
-    /// [Arc] for cheap, thread-safe cloning.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use notemaps_text::MeasuredStr;
-    /// use notemaps_text::offsets::{Char, Grapheme};
-    ///
-    /// let s: MeasuredStr = "a̐éö̲\r\n".into();
-    /// assert_eq!(Char(9), s.len());
-    /// assert_eq!(Grapheme(4), s.len());
-    /// ```
-    pub fn len<U>(&self) -> U
-    where
-        U: Clone,
-        Locus: AsRef<U>,
-    {
-        self.len.as_ref().clone()
-    }
-
-    /// Wraps a [str] and computes its total length in [Locus] on construction.
-    ///
-    /// The [str] is immutable so that the length does not need to be re-computed. It is wrapped in an
-    /// [Arc] for cheap, thread-safe cloning.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use notemaps_text::MeasuredStr;
-    /// use notemaps_text::offsets::{Char, Grapheme};
-    ///
-    /// let s: MeasuredStr = "a̐éö̲\r\n".into();
-    /// assert_eq!(Char(9), s.len());
-    /// assert_eq!(Grapheme(4), s.len());
-    /// ```
-    pub fn as_str(&self) -> &str {
-        self.text.borrow()
-    }
-
-    pub fn to_index_str(&self) -> IndexStr<Arc<str>> {
-        IndexStr(self.text.clone())
-    }
-
-    pub fn to_arc_str(&self) -> Arc<str> {
-        self.text.clone()
-    }
-}
-
-impl From<&'a str> for MeasuredStr {
-    fn from(text: &'a str) -> Self {
-        Self::inner_new(Arc::from(text), Locus::from(text))
-    }
-}
-
-impl AsRef<str> for MeasuredStr {
-    fn as_ref(&self) -> &str {
-        self.as_str()
-    }
-}
-
-impl Borrow<str> for MeasuredStr {
-    fn borrow(&self) -> &str {
-        self.as_str()
-    }
-}
-
 #[cfg(test)]
 mod a_measured_str {
-    use super::*;
+    use crate::offsets::*;
+    use crate::*;
+    use std::rc::Rc;
 
     #[test]
     fn reports_its_length_accurately() {
-        let s: MeasuredStr = "a̐éö̲\r\n".into();
+        let s = Measured::new(Rc::from("a̐éö̲\r\n"));
         assert_eq!(Byte(13), s.len());
         assert_eq!(Char(9), s.len());
         assert_eq!(Grapheme(4), s.len());

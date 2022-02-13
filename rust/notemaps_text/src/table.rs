@@ -75,10 +75,6 @@ where
         self.pieces().flat_map(|p| p.graphemes())
     }
 
-    //pub fn marked_graphemes(&self)->impl Iterator<Item=Marked>{
-    //self.pieces.iter().map(|p|p.graphemes().m
-    //}
-
     /// Returns the `n`th piece, or [None] if `n` is greater than the number of pieces in `self`.
     ///
     /// NOTE: This is a low-level API that risks coupling the usage of [Table] to implementation
@@ -122,7 +118,6 @@ where
     pub fn locate<U: Unit>(&self, offset: U) -> Result<PieceOffset<Byte>, PieceOffset<U>>
     where
         S: Clone + Slice<Byte> + Slice<Char> + Slice<Grapheme> + Slice<U>,
-        for<'a> Locus: AsRef<U> + From<(&'a S, U)>,
     {
         self.piece_indices()
             .enumerate()
@@ -518,15 +513,15 @@ mod a_text {
     #[test]
     fn can_be_sliced() {
         let text = Table::<Measured>::from_iter([Marked::from("a̐éö̲"), Marked::from("\r\n")]);
-        //assert_eq!(text.slice(Grapheme(0)..Grapheme(0)).to_string(), "");
-        //assert_eq!(text.slice(Grapheme(0)..Grapheme(1)).to_string(), "a̐");
-        //assert_eq!(text.slice(Grapheme(0)..Grapheme(2)).to_string(), "a̐é");
-        //assert_eq!(text.slice(Grapheme(0)..Grapheme(3)).to_string(), "a̐éö̲");
-        //assert_eq!(text.slice(Grapheme(0)..Grapheme(4)).to_string(), "a̐éö̲\r\n");
-        //assert_eq!(text.slice(Grapheme(1)..Grapheme(4)).to_string(), "éö̲\r\n");
+        assert_eq!(text.slice(Grapheme(0)..Grapheme(0)).to_string(), "");
+        assert_eq!(text.slice(Grapheme(0)..Grapheme(1)).to_string(), "a̐");
+        assert_eq!(text.slice(Grapheme(0)..Grapheme(2)).to_string(), "a̐é");
+        assert_eq!(text.slice(Grapheme(0)..Grapheme(3)).to_string(), "a̐éö̲");
+        assert_eq!(text.slice(Grapheme(0)..Grapheme(4)).to_string(), "a̐éö̲\r\n");
+        assert_eq!(text.slice(Grapheme(1)..Grapheme(4)).to_string(), "éö̲\r\n");
         assert_eq!(text.slice(Grapheme(2)..Grapheme(4)).to_string(), "ö̲\r\n");
-        //assert_eq!(text.slice(Grapheme(3)..Grapheme(4)).to_string(), "\r\n");
-        //assert_eq!(text.slice(Grapheme(4)..Grapheme(4)).to_string(), "");
+        assert_eq!(text.slice(Grapheme(3)..Grapheme(4)).to_string(), "\r\n");
+        assert_eq!(text.slice(Grapheme(4)..Grapheme(4)).to_string(), "");
     }
 
     #[test]
@@ -562,6 +557,8 @@ mod a_text {
     #[test]
     fn can_mark_a_slice() {
         let text = Table::from("Hello, world!");
+        assert_eq!(text.get_piece(Piece(0)).unwrap().as_str(), "Hello, world!");
+        assert!(text.get_piece(Piece(1)).is_none());
         #[derive(Clone, Debug, PartialEq, Hash)]
         struct Word {}
         let is_word = Rc::from(Word {});
@@ -572,17 +569,11 @@ mod a_text {
             .map_marks(Grapheme(7)..Grapheme(12), |ms| {
                 ms.push(is_word.clone());
             });
-        //assert_eq!(text.get_piece(Piece(0)).unwrap().as_str(), "Hello");
+        assert_eq!(text.get_piece(Piece(0)).unwrap().as_str(), "Hello");
         assert_eq!(text.get_piece(Piece(1)).unwrap().as_str(), ", ");
         assert_eq!(text.get_piece(Piece(2)).unwrap().as_str(), "world");
         assert_eq!(text.get_piece(Piece(3)).unwrap().as_str(), "!");
         assert!(text.get_piece(Piece(4)).is_none());
-        // Bytes and graphemes line up in this case. The piece table should be:
-        // Piece Start Length Content
-        // 0     0     5      Hello
-        // 1     5     2      ,_
-        // 2     7     5      world
-        // 3     12    1      !
         assert_eq!(Grapheme(13), text.len());
         assert_eq!(text.locate(Grapheme(13)), Ok((Piece(3), Byte(1))));
         assert_eq!(text.get_piece(Piece(3)).unwrap().as_str(), "!");

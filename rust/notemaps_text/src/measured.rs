@@ -16,7 +16,7 @@ use std::ops::Range;
 use crate::offsets::*;
 use crate::*;
 
-/// Wraps a [str] and, upon construction, computes its total length in [Locus].
+/// Wraps a [str]-like type and, upon construction, computes its total length in [Locus].
 ///
 /// Computing the length of a string in [Locus] can be expensive: the time complexity is linear
 /// to the length of the string. This cost is paid once in the construction of [Measured] so
@@ -43,6 +43,19 @@ pub struct Measured<S = Immutable> {
 }
 
 impl<S: Borrow<str>> Measured<S> {
+    /// Creates a new [Measured] string and computes its length in all [Unit] measurement types
+    /// supported by [Locus].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use notemaps_text::Measured;
+    /// use notemaps_text::offsets::{Char, Grapheme};
+    ///
+    /// let s: Measured = "a̐éö̲\r\n".into();
+    /// assert_eq!(Char(9), s.len());
+    /// assert_eq!(Grapheme(4), s.len());
+    /// ```
     pub fn new(text: S) -> Self
     where
         S: Slice<Byte> + Slice<Char> + Slice<Grapheme>,

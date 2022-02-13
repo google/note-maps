@@ -15,6 +15,7 @@ use core::cmp::Ordering;
 use core::hash::Hash;
 use core::hash::Hasher;
 use core::ops::Range;
+use std::fmt;
 use std::rc::Rc;
 
 use crate::offsets::*;
@@ -24,6 +25,16 @@ use crate::*;
 ///
 /// [Immutable] shares an underlying buffer across copies for `O(1)` [Clone::clone] operations. The
 /// same tehnique is used in its implemetation of [Slice::slice].
+///
+/// ```
+/// use notemaps_text::Immutable;
+/// use notemaps_text::*;
+/// use notemaps_text::offsets::Char;
+///
+/// let fizzbuzz: Immutable = "12Fizz4Buzz".into();
+/// let fizz: Immutable = fizzbuzz.slice(Char(2)..Char(6));
+/// assert_eq!(fizz.to_string(), "Fizz");
+/// ```
 #[derive(Clone, Debug)]
 pub struct Immutable<B = Rc<str>> {
     buffer: B,
@@ -37,16 +48,53 @@ where
     /// Creates a new immutable string based on the entire content of `buffer`.
     ///
     /// Slices of the resulting string will share the same underlying buffer.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use notemaps_text::Immutable;
+    ///
+    /// let s: Immutable = "example".into();
+    /// assert_eq!(s.to_string(), "example");
+    /// ```
     pub fn new(buffer: B) -> Self {
         let byte_range = Byte(0)..Byte(buffer.borrow().len());
         Self { buffer, byte_range }
     }
 
+    /// Creates a new immutable string based on `byte_range` within `buffer`.
+    ///
+    /// Slices of the resulting value will share the same underlying buffer.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use notemaps_text::Immutable;
+    ///
+    /// let s: Immutable = "example".into();
+    /// assert_eq!(s.to_string(), "example");
+    /// ```
+    pub fn new_with_range(buffer: B, byte_range: Range<Byte>) -> Self {
+        assert!(byte_range.start <= byte_range.end && byte_range.end.0 <= buffer.borrow().len());
+        Self { buffer, byte_range }
+    }
+
     /// Returns a reference to the [str] representation of this immutable string.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use notemaps_text::Immutable;
+    ///
+    /// let s: Immutable = "example".into();
+    /// assert_eq!(s.as_str(), "example");
+    /// ```
     pub fn as_str(&self) -> &str {
         &self.buffer.borrow()[self.byte_range.start.0..self.byte_range.end.0]
     }
 }
+
+// Constructor traits:
 
 impl<'a, B> From<&'a str> for Immutable<B>
 where
@@ -56,6 +104,8 @@ where
         Self::new(B::from(s))
     }
 }
+
+// Accessor traits:
 
 impl<B> Borrow<str> for Immutable<B>
 where
@@ -75,6 +125,15 @@ where
     }
 }
 
+impl<B> fmt::Display for Immutable<B>
+where
+    B: Borrow<str>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.as_str().fmt(f)
+    }
+}
+
 impl<B, U: Unit> Slice<U> for Immutable<B>
 where
     B: Borrow<str> + Clone,
@@ -86,9 +145,6 @@ where
     fn slice(&self, r: Range<U>) -> Self {
         // This implementation is necessarily disjoint from the implementation of Slice for str
         // because Self hides a shared buffer, and Slice::slice doesn't return Byte offsets.
-        //
-        // TODO: decide whether this makes Slice::slice a violation of C-INTERMEDIATE
-        // https://rust-lang.github.io/api-guidelines/flexibility.html#c-intermediate
         let start: Byte = U::nth_byte_offset(self.as_str(), r.start).expect(
             format!(
                 "start of range should be within bounds: {:?}[{:?}]",
@@ -111,6 +167,15 @@ where
         }
     }
 }
+
+// Equality and comparison traits:
+//
+// These have to be implemented explicitly for [Immutable].
+//
+// Derived implementations of these traits would examine the entire shared buffer rather than just
+// the portion selected by [Immutable::byte_range]. This would make [Immutable] a poor example of a
+// [String]-like type: for example, the resulting equality/comparison results would be incompatible
+// with the requirements of implementing `Borrow<str>`.
 
 impl<B> Hash for Immutable<B>
 where

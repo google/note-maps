@@ -26,7 +26,6 @@
 //!
 //! ```rust
 //! use notemaps_text::offsets::{Byte, Char, Grapheme};
-//! use notemaps_text::IndexStr;
 //!
 //! let graphme_3 = Grapheme(1) + Grapheme(2);
 //! assert_eq!(graphme_3.0, 3usize);
@@ -35,11 +34,18 @@
 //! assert_eq!(char_4.0, 4usize);
 //! ```
 
-use std::borrow::Borrow;
-use std::fmt;
-use std::iter;
-use std::ops::*;
+use core::borrow::Borrow;
+use core::fmt;
+use core::iter;
+use core::ops::*;
 
+/// In this context, a "natural unit" is a unit of measurement that uses only [natural numbers][].
+///
+/// This macro is meant to help define type-safe wrappers for natural units of measurement that
+/// rerpesent offsets into a string. For example, Rust strings natively support byte offsets and
+/// have good support for `char` offsets.
+///
+/// [natural numbers]: https://en.wikipedia.org/wiki/Natural_number
 macro_rules! natural_unit {
     (
         $(#[$outer:meta])* $pub:vis struct $tuple:ident ($type:ident)
@@ -50,7 +56,12 @@ macro_rules! natural_unit {
         $pub struct $tuple (pub $type);
 
         impl $tuple {
+            /// The minimum allowable value for this type: no operation can produce a value smaller
+            /// than [$tuple::MIN].
             pub const MIN: Self = Self($type::MIN);
+
+            /// The maximum allowable value for this type: no operation can produce a value greater
+            /// than [$tuple::MAX].
             pub const MAX: Self = Self($type::MAX);
         }
 
@@ -338,6 +349,10 @@ mod internal {
 
 /// A public trait implemented exclusively by the measurement unit types defined in this module
 /// ([Byte], [Char], and [Grapheme].)
+///
+/// Many traits are required so that type constraints intended to match only [Byte], [Char], or
+/// [Grapheme] by requiring only [Unit] will allow Rust to infer all the other useful traits that
+/// are implemented for each of these types.
 pub trait Unit:
     'static
     + Copy
@@ -357,21 +372,43 @@ pub trait Unit:
     + internal::Sealed
     + iter::Step
 {
+    /// The minimum allowable value for this type: no operation can produce a value smaller than
+    /// [Unit::ZERO].
+    const ZERO: Self;
+
+    /// The maximum allowable value for this type: no operation can produce a value greater than
+    /// [Unit::MAX].
     const MAX: Self;
+
+    /// Returns the maximum valid offset within the [str] `s`.
     fn offset_len(s: &str) -> Self;
+
+    /// Returns the [Byte] offset of the first non-zero `Self` offset in `s`. This is also the
+    /// [Byte] offset corresponding to `Self::from(1)`.
     fn next_byte(s: &str) -> Option<Byte> {
         Self::nth_byte_offset(s, 1usize.into()).ok()
     }
+
+    /// For the `n`th valid offset of type `Self` in `s`, return the [Byte] value of that offset.
+    ///
+    /// If `n` is greater than the maximum valid offset within `s`, that is if it is greater than
+    /// the value returned by [Unit::offset_len], then the maximum allowable offset will be
+    /// returned as an error.
     fn nth_byte_offset(s: &str, n: Self) -> Result<Byte, Byte>;
+
+    /// Returns a slice of a `str` from the given `range`, which is expressed in `Self` units.
     fn get_slice(s: &str, range: Range<Self>) -> &str {
         use std::convert::identity;
         let start = Self::nth_byte_offset(s, range.start).map_or_else(identity, identity);
-        let end = Self::nth_byte_offset(s, range.end).map_or_else(identity, identity);
+        let end = start
+            + Self::nth_byte_offset(&s[start.0..], range.end - range.start)
+                .map_or_else(identity, identity);
         &s[start.0..end.0]
     }
 }
 
 impl Unit for Byte {
+    const ZERO: Self = Self::MIN;
     const MAX: Self = Self::MAX;
 
     fn offset_len(s: &str) -> Byte {
@@ -388,6 +425,7 @@ impl Unit for Byte {
 }
 
 impl Unit for Char {
+    const ZERO: Self = Self::MIN;
     const MAX: Self = Self::MAX;
 
     fn offset_len(s: &str) -> Char {
@@ -404,6 +442,7 @@ impl Unit for Char {
 }
 
 impl Unit for Grapheme {
+    const ZERO: Self = Self::MIN;
     const MAX: Self = Self::MAX;
 
     fn offset_len(s: &str) -> Grapheme {
@@ -421,7 +460,11 @@ impl Unit for Grapheme {
     }
 }
 
-/// Specifies a position within a text from multiple perspectives.
+/// Specifies an offset into a string using multiple [Unit] types: [Byte], [Char], and [Grapheme]
+///
+/// [Locus] is intended to support code that mediates between UI libraries, humane interface
+/// requirements, and peer-to-peer conflict resolution strategies, each of which may have its own
+/// preference for measuring offsets into strings.
 ///
 /// # Examples
 ///
@@ -473,6 +516,8 @@ impl Locus {
         self.2
     }
 }
+
+// Constructor traits:
 
 impl<'a> From<&'a str> for Locus {
     fn from(s: &'a str) -> Self {
@@ -557,6 +602,8 @@ impl iter::Sum for Locus {
     }
 }
 
+// Accessor traits:
+
 impl AsRef<Locus> for Locus {
     fn as_ref(&self) -> &Locus {
         self
@@ -580,7 +627,3 @@ impl AsRef<Grapheme> for Locus {
         &self.2
     }
 }
-
-pub struct Local<T>(Locus, T);
-
-impl<T> Local<T> {}

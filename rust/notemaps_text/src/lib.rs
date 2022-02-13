@@ -27,9 +27,7 @@ mod marked;
 mod markup;
 mod measured;
 mod slice;
-mod strtype;
 mod table;
-mod text;
 
 pub use cursor::{Cursor, Dir};
 pub use immutable::Immutable;
@@ -39,7 +37,6 @@ pub use markup::{Change, Input, Output, State};
 pub use measured::Measured;
 pub use slice::{Slice, Split};
 pub use table::{Piece, PieceIndices, PieceOffset, Pieces, PiecesMut, Table};
-pub use text::IndexStr;
 
 pub mod offsets;
 

@@ -233,6 +233,7 @@ mod example {
     }
 
     use std::sync::{Arc, Mutex};
+
     struct Commander {
         model: Arc<Mutex<MyModel>>,
     }

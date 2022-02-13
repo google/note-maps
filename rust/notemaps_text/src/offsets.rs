@@ -396,8 +396,9 @@ impl Unit for Char {
 
     fn nth_byte_offset(s: &str, n: Self) -> Result<Byte, Byte> {
         s.char_indices()
-            .nth(n.0)
             .map(|t| Byte(t.0))
+            .chain(iter::once(Byte(s.len())))
+            .nth(n.0)
             .ok_or(Byte(s.len()))
     }
 }
@@ -413,8 +414,9 @@ impl Unit for Grapheme {
     fn nth_byte_offset(s: &str, n: Self) -> Result<Byte, Byte> {
         use unicode_segmentation::UnicodeSegmentation;
         s.grapheme_indices(/*extended=*/ true)
-            .nth(n.0)
             .map(|t| Byte(t.0))
+            .chain(iter::once(Byte(s.len())))
+            .nth(n.0)
             .ok_or(Byte(s.len()))
     }
 }

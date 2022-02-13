@@ -81,15 +81,25 @@ where
         //
         // TODO: decide whether this makes Slice::slice a violation of C-INTERMEDIATE
         // https://rust-lang.github.io/api-guidelines/flexibility.html#c-intermediate
-        let start: Byte = self.byte_range.start
-            + U::nth_byte_offset(self.as_str(), r.start)
-                .expect("start of range should be within bounds");
-        let end: Byte = self.byte_range.start
-            + U::nth_byte_offset(&self.as_str()[start.0..], r.end - r.start)
-                .expect("end of range should be within bounds");
+        let start: Byte = U::nth_byte_offset(self.as_str(), r.start).expect(
+            format!(
+                "start of range should be within bounds: {:?}[{:?}]",
+                self.as_str(),
+                r
+            )
+            .as_str(),
+        );
+        let end: Byte = U::nth_byte_offset(&self.as_str()[start.0..], r.end - r.start).expect(
+            format!(
+                "end of range should be within bounds: {:?}[{:?}]",
+                self.as_str(),
+                r
+            )
+            .as_str(),
+        );
         Self {
             buffer: self.buffer.clone(),
-            byte_range: start..end,
+            byte_range: (self.byte_range.start + start)..(self.byte_range.start + start + end),
         }
     }
 }

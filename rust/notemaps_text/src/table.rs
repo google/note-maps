@@ -11,6 +11,7 @@
 // limitations under the License.
 
 use core::any::Any;
+use core::marker::PhantomData;
 use core::ops;
 use core::ops::Range;
 use std::borrow::Borrow;
@@ -50,18 +51,9 @@ pub struct Table<S = Measured> {
 
 pub use offsets::Piece;
 
-pub type PieceLocus = (Piece, Locus);
-
-impl<S> Table<S> {
-    /// Returns the total length of the text in `U` elements.
-    pub fn len<U>(&self) -> U
-    where
-        U: Clone,
-        Locus: AsRef<U>,
-    {
-        self.len.as_ref().clone()
-    }
-}
+/// [PieceOffset] is just a tuple of a [Piece] with some [Unit] type `U`. It may be replaced with
+/// something else soon.
+pub type PieceOffset<U> = (Piece, U);
 
 impl<S> Table<S>
 where
@@ -114,50 +106,52 @@ where
         PiecesMut(self.pieces.iter_mut())
     }
 
-    /// Returns a specialized representation of the location of `offset` within `self`.
-    pub fn locate<U: Unit>(&self, offset: U) -> Result<PieceLocus, PieceLocus>
+    /// Returns a reference to each [Marked] in `self`, which is the entire content or meaning of
+    /// this [Table].
+    ///
+    /// NOTE: This is a low-level API that risks coupling the usage of [Table] to implementation
+    /// details.
+    pub fn piece_indices<U: Unit>(&self) -> PieceIndices<U, S>
     where
-        S: Slice<Byte> + Slice<Char> + Slice<Grapheme> + Slice<U>,
+        S: Slice<U>,
+    {
+        PieceIndices(0.into(), self.pieces.iter())
+    }
+
+    /// Returns a specialized representation of the location of `offset` within `self`.
+    pub fn locate<U: Unit>(&self, offset: U) -> Result<PieceOffset<Byte>, PieceOffset<U>>
+    where
+        S: Clone + Slice<Byte> + Slice<Char> + Slice<Grapheme> + Slice<U>,
         for<'a> Locus: AsRef<U> + From<(&'a S, U)>,
     {
-        if self.pieces.is_empty() {
-            return if offset == U::from(0) {
-                Ok((Piece(0), Locus::zero()))
-            } else {
-                Err((Piece(0), Locus::zero()))
-            };
-        }
-        use std::cmp;
-        match offset.cmp(&self.len()) {
-            cmp::Ordering::Greater => {
-                return Err((
+        self.piece_indices()
+            .enumerate()
+            .find_map(|(n, (start, piece)): (usize, (U, &marked::Marked<S>))| {
+                let piece_len: U = piece.len();
+                let max: U = start + piece_len;
+                if offset <= max {
+                    Some((
+                        Piece(n),
+                        piece
+                            .locate::<Byte, Byte>(offset - start)
+                            .expect("arithmetic should work"),
+                    ))
+                } else {
+                    None
+                }
+            })
+            .ok_or_else(|| {
+                (
                     Piece(self.pieces.len() - 1),
-                    Locus::from_len(self.pieces[self.pieces.len() - 1].as_ref()),
-                ));
-            }
-            cmp::Ordering::Equal => {
-                return Ok((
-                    Piece(self.pieces.len() - 1),
-                    Locus::from_len(self.pieces[self.pieces.len() - 1].as_ref()),
-                ));
-            }
-            _ => {}
-        }
-        let mut todo = offset;
-        for (i, p) in self.pieces.iter().enumerate().map(|(i, p)| (Piece(i), p)) {
-            if Slice::<U>::len(p.as_ref()) > todo {
-                return Ok((i, Locus::from((p.as_ref(), todo))));
-            } else {
-                todo -= Slice::<U>::len(p.as_ref());
-            }
-        }
-        panic!("this should never happen...");
+                    self.pieces[self.pieces.len() - 1].len(),
+                )
+            })
     }
 
     /// Returns a [Cursor] positioned at `offset` within `self`.
     pub fn cursor(&self, offset: Grapheme) -> Cursor<S>
     where
-        S: Slice<Byte> + Slice<Char> + Slice<Grapheme>,
+        S: Clone + Slice<Byte> + Slice<Char> + Slice<Grapheme>,
     {
         Cursor::new(self, offset)
     }
@@ -206,12 +200,11 @@ where
     where
         S: Clone + Slice<Byte> + Slice<Char> + Slice<Grapheme>,
     {
-        self.with_replace(
-            r.clone(),
-            self.slice(r)
-                .into_iter()
-                .map(|p| p.map_marks(|ms| marker(ms))),
-        )
+        let replacement = self
+            .slice(r.start..r.end)
+            .into_iter()
+            .map(|p| p.map_marks(|ms| marker(ms)));
+        self.with_replace(r, replacement)
     }
 
     /// Consumes `self`, pushes the mark `m` onto every [Marked], and returns the result.
@@ -251,7 +244,10 @@ where
     S: Borrow<str> + Slice<Byte> + Slice<Char> + Slice<Grapheme>,
 {
     fn from_iter<T: IntoIterator<Item = Marked<S>>>(iter: T) -> Self {
-        let pieces: Vec<Marked<S>> = iter.into_iter().collect();
+        let pieces: Vec<Marked<S>> = iter
+            .into_iter()
+            .filter(|p| !p.as_str().is_empty())
+            .collect();
         let len: Locus = pieces.iter().map(|p| Locus::from_len(p.as_ref())).sum();
         Self { pieces, len }
     }
@@ -313,35 +309,29 @@ impl<S: Borrow<str>> fmt::Display for Table<S> {
 
 impl<S, U: Unit> Slice<U> for Table<S>
 where
-    S: Borrow<str> + Slice<U> + Slice<Byte> + Slice<Char> + Slice<Grapheme>,
+    S: Clone + Borrow<str> + Slice<U> + Slice<Byte> + Slice<Char> + Slice<Grapheme>,
     for<'a> Locus: AsRef<U> + From<(&'a S, U)>,
-    Marked<S>: Clone,
 {
     fn len(&self) -> U {
-        self.len()
+        self.len.as_ref().clone()
     }
 
     fn slice(&self, r: core::ops::Range<U>) -> Self {
-        if r.end <= r.start {
-            return Self::new();
-        }
+        assert!(r.end >= r.start);
         let piece_start = self
             .locate(r.start)
             .expect("argument to slice is always valid");
         let piece_end = self
             .locate(r.end)
-            .expect("argument to slice is always valid");
-        if piece_start == piece_end {
-            return Table::new();
-        }
+            .expect(format!("argument to slice is always valid: {:?}", r.end).as_str());
         if piece_start.0 == piece_end.0 {
             return self.pieces[piece_start.0 .0]
-                .slice(piece_start.1.byte()..piece_end.1.byte())
+                .slice(piece_start.1..piece_end.1)
                 .into();
         }
         iter::once(
             self.pieces[piece_start.0 .0]
-                .slice(piece_start.1.byte()..self.pieces[piece_start.0 .0].as_ref().len()),
+                .slice(piece_start.1..self.pieces[piece_start.0 .0].as_ref().len()),
         )
         .chain(
             self.pieces[(piece_start.0 + 1).0..piece_end.0 .0]
@@ -349,7 +339,7 @@ where
                 .cloned(),
         )
         .chain(iter::once(
-            self.pieces[piece_end.0 .0].slice(Byte(0)..piece_end.1.byte()),
+            self.pieces[piece_end.0 .0].slice(Byte(0)..piece_end.1),
         ))
         .collect()
     }
@@ -413,7 +403,39 @@ impl<'a, S: Borrow<str>> Iterator for PiecesMut<'a, S> {
 
 impl<'a, S: Borrow<str>> ExactSizeIterator for PiecesMut<'a, S> {}
 
-use core::marker::PhantomData;
+/// [PieceIndices] is the [Iterator] type returned by [Table::pieces].
+pub struct PieceIndices<'a, U: Unit, S: Borrow<str> + Slice<U>>(U, std::slice::Iter<'a, Marked<S>>);
+
+impl<'a, U, S> Iterator for PieceIndices<'a, U, S>
+where
+    U: Unit,
+    S: Borrow<str> + Slice<U>,
+{
+    type Item = (U, &'a Marked<S>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.1.next().map(|piece| {
+            let index = self.0;
+            self.0 += piece.len();
+            (index, piece)
+        })
+    }
+
+    fn advance_by(&mut self, n: usize) -> Result<(), usize> {
+        self.1.advance_by(n)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.1.size_hint()
+    }
+}
+
+impl<'a, U, S> ExactSizeIterator for PieceIndices<'a, U, S>
+where
+    U: Unit,
+    S: Borrow<str> + Slice<U>,
+{
+}
 
 /// [SegmentBy] is the type of [Iterator] returned by [Table::segment_by].
 pub struct SegmentBy<'a, S, M>(iter::Peekable<Pieces<'a, S>>, PhantomData<M>)
@@ -468,7 +490,7 @@ mod a_text {
             .into_iter()
             .collect();
         assert_eq!(text.to_string(), "a̐éö̲\r\n");
-        assert_eq!(text.len::<Grapheme>(), Grapheme(4));
+        assert_eq!(Grapheme(4), text.len());
         assert_eq!(
             text.pieces().map(|p| p.as_str()).collect::<Vec<&str>>(),
             vec!["a̐éö̲", "\r\n"]
@@ -496,12 +518,12 @@ mod a_text {
     #[test]
     fn can_be_sliced() {
         let text = Table::<Measured>::from_iter([Marked::from("a̐éö̲"), Marked::from("\r\n")]);
-        assert_eq!(text.slice(Grapheme(0)..Grapheme(0)).to_string(), "");
-        assert_eq!(text.slice(Grapheme(0)..Grapheme(1)).to_string(), "a̐");
-        assert_eq!(text.slice(Grapheme(0)..Grapheme(2)).to_string(), "a̐é");
-        assert_eq!(text.slice(Grapheme(0)..Grapheme(3)).to_string(), "a̐éö̲");
-        assert_eq!(text.slice(Grapheme(0)..Grapheme(4)).to_string(), "a̐éö̲\r\n");
-        assert_eq!(text.slice(Grapheme(1)..Grapheme(4)).to_string(), "éö̲\r\n");
+        //assert_eq!(text.slice(Grapheme(0)..Grapheme(0)).to_string(), "");
+        //assert_eq!(text.slice(Grapheme(0)..Grapheme(1)).to_string(), "a̐");
+        //assert_eq!(text.slice(Grapheme(0)..Grapheme(2)).to_string(), "a̐é");
+        //assert_eq!(text.slice(Grapheme(0)..Grapheme(3)).to_string(), "a̐éö̲");
+        //assert_eq!(text.slice(Grapheme(0)..Grapheme(4)).to_string(), "a̐éö̲\r\n");
+        //assert_eq!(text.slice(Grapheme(1)..Grapheme(4)).to_string(), "éö̲\r\n");
         assert_eq!(text.slice(Grapheme(2)..Grapheme(4)).to_string(), "ö̲\r\n");
         //assert_eq!(text.slice(Grapheme(3)..Grapheme(4)).to_string(), "\r\n");
         //assert_eq!(text.slice(Grapheme(4)..Grapheme(4)).to_string(), "");
@@ -522,6 +544,15 @@ mod a_text {
     fn creates_new_text_with_insertion() {
         let text = Table::<Measured>::from("Hello!");
         let text = text.with_insert(Grapheme(5), [Marked::from(", world")]);
+        assert_eq!(text.slice(Grapheme(0)..Grapheme(1)).to_string(), "H");
+        assert_eq!(text.slice(Grapheme(1)..Grapheme(2)).to_string(), "e");
+        assert_eq!(text.slice(Grapheme(2)..Grapheme(3)).to_string(), "l");
+        assert_eq!(text.slice(Grapheme(3)..Grapheme(4)).to_string(), "l");
+        assert_eq!(text.slice(Grapheme(4)..Grapheme(5)).to_string(), "o");
+        assert_eq!(text.slice(Grapheme(5)..Grapheme(6)).to_string(), ",");
+        assert_eq!(text.slice(Grapheme(6)..Grapheme(7)).to_string(), " ");
+        assert_eq!(text.slice(Grapheme(7)..Grapheme(8)).to_string(), "w");
+        assert_eq!(text.slice(Grapheme(8)..Grapheme(9)).to_string(), "o");
         assert_eq!(text.slice(Grapheme(9)..Grapheme(10)).to_string(), "r");
         assert_eq!(text.slice(Grapheme(10)..Grapheme(11)).to_string(), "l");
         assert_eq!(text.slice(Grapheme(11)..Grapheme(12)).to_string(), "d");
@@ -541,10 +572,19 @@ mod a_text {
             .map_marks(Grapheme(7)..Grapheme(12), |ms| {
                 ms.push(is_word.clone());
             });
-        assert_eq!(
-            text.locate(Grapheme(13)),
-            Ok((Piece(3), Locus(1.into(), 1.into(), 1.into())))
-        );
+        //assert_eq!(text.get_piece(Piece(0)).unwrap().as_str(), "Hello");
+        assert_eq!(text.get_piece(Piece(1)).unwrap().as_str(), ", ");
+        assert_eq!(text.get_piece(Piece(2)).unwrap().as_str(), "world");
+        assert_eq!(text.get_piece(Piece(3)).unwrap().as_str(), "!");
+        assert!(text.get_piece(Piece(4)).is_none());
+        // Bytes and graphemes line up in this case. The piece table should be:
+        // Piece Start Length Content
+        // 0     0     5      Hello
+        // 1     5     2      ,_
+        // 2     7     5      world
+        // 3     12    1      !
+        assert_eq!(Grapheme(13), text.len());
+        assert_eq!(text.locate(Grapheme(13)), Ok((Piece(3), Byte(1))));
         assert_eq!(text.get_piece(Piece(3)).unwrap().as_str(), "!");
         assert_eq!(
             text.graphemes()

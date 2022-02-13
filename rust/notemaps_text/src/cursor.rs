@@ -50,7 +50,7 @@ pub struct Cursor<'a, S> {
 
 impl<'a, S> Cursor<'a, S>
 where
-    S: Borrow<str> + Slice<Byte> + Slice<Char> + Slice<Grapheme>,
+    S: Borrow<str> + Clone + Slice<Byte> + Slice<Char> + Slice<Grapheme>,
 {
     pub fn new(text: &'a Table<S>, offset: Grapheme) -> Self {
         Self {
@@ -64,36 +64,48 @@ where
 
     /// Consumes `self`, setting the offset of this [Cursor] to `offset`.
     #[must_use]
-    pub fn with_offset(mut self, offset: Grapheme) -> Self
-    where
-        S: Slice<Byte> + Slice<Char>,
-    {
+    pub fn with_offset(mut self, offset: Grapheme) -> Self {
         self.set_offset(offset).ok();
         self
     }
 
-    pub fn set_offset(&mut self, offset: Grapheme) -> Result<(), Locus>
-    where
-        S: Slice<Byte> + Slice<Char>,
-    {
+    pub fn set_offset(&mut self, offset: Grapheme) -> Result<(), Grapheme> {
         match self.text.locate(offset) {
-            Ok((n_piece, offsets)) => {
+            Ok((piece, offsets)) => {
+                self.piece = piece;
+                self.piece_offsets = if offsets.0 == 0 {
+                    Locus::zero()
+                } else {
+                    Locus::from((
+                        self.text
+                            .get_piece(piece)
+                            .expect("piece identified by Table::locate should be valid"),
+                        offsets,
+                    ))
+                };
                 self.text_offsets = self
                     .text
                     .pieces()
-                    .take(n_piece.0)
+                    .take(piece.0)
                     .map(|p| Locus::from_len(p.as_ref()))
                     .sum::<Locus>()
-                    + offsets;
-                self.piece = n_piece;
-                self.piece_offsets = offsets;
+                    + self.piece_offsets;
                 Ok(())
             }
             Err((piece, offsets)) => {
-                self.text_offsets = self.text.len();
+                self.text_offsets = Locus::from_len(self.text);
                 self.piece = piece;
-                self.piece_offsets = offsets;
-                Err(self.text_offsets)
+                self.piece_offsets = if offsets.0 == 0 {
+                    Locus::zero()
+                } else {
+                    Locus::from((
+                        self.text
+                            .get_piece(piece)
+                            .expect("piece identified by Table::locate should be valid"),
+                        offsets,
+                    ))
+                };
+                Err(*self.text_offsets.as_ref())
             }
         }
     }
@@ -126,9 +138,13 @@ where
     }
 
     fn get_piece_offset_next(&self) -> Option<(&'a Marked<S>, Byte)> {
-        self.text
-            .get_piece(self.piece)
-            .map(|p| (p, self.piece_offsets.byte()))
+        self.text.get_piece(self.piece).and_then(|p| {
+            if self.piece_offsets.byte() < p.len() || self.piece.0 == self.text.pieces().len() {
+                Some((p, self.piece_offsets.byte()))
+            } else {
+                self.text.get_piece(self.piece + 1).map(|p| (p, Byte(0)))
+            }
+        })
     }
 
     pub fn peek_marks(&self, d: Dir) -> Option<&MarkSet>

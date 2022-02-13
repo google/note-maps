@@ -31,15 +31,15 @@ mod strtype;
 mod table;
 mod text;
 
-pub use cursor::*;
-pub use immutable::*;
-pub use mark_set::*;
-pub use marked::*;
-pub use markup::*;
-pub use measured::*;
+pub use cursor::{Cursor, Dir};
+pub use immutable::Immutable;
+pub use mark_set::MarkSet;
+pub use marked::{IteratorExt, Marked};
+pub use markup::{Change, Input, Output, State};
+pub use measured::Measured;
 pub use slice::{Slice, Split};
-pub use table::*;
-pub use text::*;
+pub use table::{Piece, PieceIndices, PieceOffset, Pieces, PiecesMut, Table};
+pub use text::IndexStr;
 
 pub mod offsets;
 

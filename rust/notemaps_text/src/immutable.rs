@@ -20,6 +20,10 @@ use std::rc::Rc;
 use crate::offsets::*;
 use crate::*;
 
+/// A [String]-like type with `O(1)` [Clone::clone].
+///
+/// [Immutable] shares an underlying buffer across copies for `O(1)` [Clone::clone] operations. The
+/// same tehnique is used in its implemetation of [Slice::slice].
 #[derive(Clone, Debug)]
 pub struct Immutable<B = Rc<str>> {
     buffer: B,
@@ -30,11 +34,15 @@ impl<B> Immutable<B>
 where
     B: Borrow<str>,
 {
+    /// Creates a new immutable string based on the entire content of `buffer`.
+    ///
+    /// Slices of the resulting string will share the same underlying buffer.
     pub fn new(buffer: B) -> Self {
         let byte_range = Byte(0)..Byte(buffer.borrow().len());
         Self { buffer, byte_range }
     }
 
+    /// Returns a reference to the [str] representation of this immutable string.
     pub fn as_str(&self) -> &str {
         &self.buffer.borrow()[self.byte_range.start.0..self.byte_range.end.0]
     }

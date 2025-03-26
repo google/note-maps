@@ -6,7 +6,7 @@ env:
   NIXPKGS_ALLOW_UNFREE: 1
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: 'ubuntu-24.04'
     steps:
     - uses: actions/checkout@v2.4.0
     - uses: cachix/install-nix-action@v16
@@ -18,7 +18,7 @@ jobs:
         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
     - run: nix shell -c make -e download lint test DEBUG=1
   build-apk:
-    runs-on: ubuntu-20.04
+    runs-on: 'ubuntu-24.04'
     steps:
     - uses: actions/checkout@v2.4.0
     - uses: cachix/install-nix-action@v16
@@ -35,7 +35,7 @@ jobs:
         name: apk
         path: ./out/flutter/nm_app/app/outputs/apk/release/*
   build-web:
-    runs-on: ubuntu-20.04
+    runs-on: 'ubuntu-24.04'
     steps:
     - uses: actions/checkout@v2.4.0
     - uses: cachix/install-nix-action@v16
@@ -54,7 +54,7 @@ jobs:
     needs:
     - test
     - build-web
-    runs-on: ubuntu-20.04
+    runs-on: 'ubuntu-24.04'
     steps:
     - uses: actions/checkout@v2.4.0
     - uses: actions/download-artifact@master

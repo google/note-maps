@@ -14,7 +14,7 @@ require (
 	github.com/onsi/ginkgo v1.14.0 // indirect
 	github.com/textileio/go-threads v1.0.2
 	github.com/vektah/gqlparser/v2 v2.5.14
-	golang.org/x/net v0.23.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
 	google.golang.org/protobuf v1.33.0
 	gopkg.in/yaml.v3 v3.0.1
 )
